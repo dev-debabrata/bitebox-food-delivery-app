@@ -1,0 +1,43 @@
+@let r = restaurant();
+<a class="card" [routerLink]="['/restaurants', r.slug]" [attr.aria-label]="r.name + ', ' + r.cuisines.join(', ')">
+  <div class="media">
+    @if (r.imageUrl) {
+      <img [src]="r.imageUrl" [alt]="''" loading="lazy" />
+    } @else {
+      <div class="placeholder" aria-hidden="true">
+        <mat-icon>restaurant</mat-icon>
+        <span>{{ r.name.charAt(0) }}</span>
+      </div>
+    }
+    @if (!r.isOpenNow) {
+      <span class="closed">Closed now</span>
+    }
+    @if (r.isPureVeg) {
+      <span class="veg-tag"><mat-icon aria-hidden="true">eco</mat-icon>Pure veg</span>
+    }
+  </div>
+
+  <div class="body">
+    <div class="title-row">
+      <h3>{{ r.name }}</h3>
+      @if (rating(); as stars) {
+        <span class="rating" [attr.aria-label]="'Rated ' + stars + ' out of 5'">
+          <mat-icon aria-hidden="true">star</mat-icon>{{ stars }}
+        </span>
+      } @else {
+        <span class="rating new">New</span>
+      }
+    </div>
+    <p class="cuisines">{{ r.cuisines.join(' · ') }}</p>
+    <p class="meta">
+      <span><mat-icon aria-hidden="true">schedule</mat-icon>{{ r.avgPrepTimeMinutes }} min prep</span>
+      <span>{{ r.costForTwoPaise | inr }} for two</span>
+    </p>
+    <p class="locality">
+      {{ locality() }}
+      @if (r.distanceMeters !== undefined) {
+        <span class="distance" title="Straight-line distance, not road distance">· {{ r.distanceMeters | distance }} away</span>
+      }
+    </p>
+  </div>
+</a>

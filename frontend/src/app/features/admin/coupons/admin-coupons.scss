@@ -1,0 +1,42 @@
+@use 'breakpoints' as bp;
+.grid {
+  display: grid;
+  gap: var(--bb-space-3);
+  @include bp.tablet-up {
+    grid-template-columns: 1fr 1fr;
+  }
+  @include bp.desktop-up {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.coupon {
+  border-left: 4px solid var(--bb-amber);
+  &.inactive {
+    opacity: 0.6;
+    border-left-color: var(--bb-border);
+  }
+  header,
+  footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  p {
+    margin: var(--bb-space-1) 0;
+  }
+}
+.code {
+  font-family: ui-monospace, monospace;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+}
+.value {
+  font-weight: 700;
+}
+.small {
+  font-size: 0.85rem;
+}
+.expired {
+  color: var(--bb-danger);
+  font-weight: 700;
+}

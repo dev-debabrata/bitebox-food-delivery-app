@@ -1,0 +1,60 @@
+<header class="bb-form-heading">
+  <h1>{{ heading() }}</h1>
+  <p>Welcome back! Customers, restaurant partners and riders all sign in here.</p>
+</header>
+
+@if (reason() === 'expired') {
+  <div class="bb-alert info" role="status">
+    <mat-icon aria-hidden="true">schedule</mat-icon>
+    <span>Your session expired. Please sign in again.</span>
+  </div>
+}
+@if (reason() === 'reset') {
+  <div class="bb-alert success" role="status">
+    <mat-icon aria-hidden="true">check_circle</mat-icon>
+    <span>Password updated. Sign in with your new password.</span>
+  </div>
+}
+@if (error()) {
+  <div class="bb-alert error" role="alert">
+    <mat-icon aria-hidden="true">error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<form class="bb-form" [formRoot]="form">
+  <np-text-input
+    [formField]="form.email"
+    label="Email"
+    type="email"
+    icon="mail"
+    placeholder="you@example.com"
+    autocomplete="email"
+    inputmode="email"
+    [error]="shownError(form.email)"
+  />
+  <np-text-input
+    [formField]="form.password"
+    label="Password"
+    type="password"
+    icon="lock"
+    placeholder="••••••••"
+    autocomplete="current-password"
+    [error]="shownError(form.password)"
+  />
+
+  <div class="bb-form-actions">
+    <button mat-flat-button type="submit" [disabled]="form().submitting()">
+      @if (form().submitting()) {
+        <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Signing in" />
+      } @else {
+        Sign in
+      }
+    </button>
+    <a routerLink="/forgot-password" class="forgot">Forgot password?</a>
+  </div>
+</form>
+
+<footer class="bb-form-footer">
+  <span>New to BiteBox? <a routerLink="/register">Create an account</a></span>
+</footer>

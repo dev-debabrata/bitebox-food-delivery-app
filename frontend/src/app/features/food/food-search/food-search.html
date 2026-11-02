@@ -1,0 +1,74 @@
+<section class="bb-container page">
+  <header class="head">
+    <h1>Dishes</h1>
+    <p class="bb-muted">Find a dish and see which restaurants serve it.</p>
+  </header>
+
+  <div class="toolbar">
+    <np-text-input
+      class="search"
+      [formField]="filters.search"
+      ariaLabel="Search dishes"
+      placeholder="Search dishes, e.g. biryani"
+      icon="search"
+      clearable
+    />
+    <np-toggle label="Veg only" [checked]="vegOnly()" (checkedChange)="setParams({ veg: $event || null })" />
+  </div>
+
+  @if (categories().length) {
+    <mat-chip-listbox class="categories" aria-label="Filter by food category">
+      @for (c of categories(); track c.id) {
+        <mat-chip-option [selected]="category() === c.id" (click)="setParams({ category: category() === c.id ? null : c.id })">
+          <mat-icon matChipAvatar aria-hidden="true">{{ c.icon }}</mat-icon>
+          {{ c.name }}
+        </mat-chip-option>
+      }
+    </mat-chip-listbox>
+  }
+
+  @if (error()) {
+    <div class="bb-alert error" role="alert">
+      <mat-icon aria-hidden="true">error</mat-icon>
+      <span>{{ error() }} <button class="bb-link-button" (click)="load(1)">Retry</button></span>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="list" aria-busy="true">
+      @for (i of [1, 2, 3, 4, 5]; track i) {
+        <span class="bb-skeleton" style="height: 96px"></span>
+      }
+    </div>
+  } @else if (dishes().length === 0 && !error()) {
+    <bb-empty-state icon="ramen_dining" title="No dishes found" message="Try a different name, or remove the filters.">
+      <a mat-stroked-button routerLink="/restaurants">Browse restaurants instead</a>
+    </bb-empty-state>
+  } @else {
+    <p class="count bb-muted">{{ pagination()?.total }} {{ pagination()?.total === 1 ? 'dish' : 'dishes' }}</p>
+    <ul class="list">
+      @for (d of dishes(); track d.id) {
+        <li>
+          <button type="button" class="dish" (click)="open(d)">
+            @if (d.imageUrl) {
+              <img [src]="d.imageUrl" alt="" loading="lazy" />
+            } @else {
+              <span class="thumb" aria-hidden="true"><mat-icon>{{ d.category?.icon ?? 'restaurant' }}</mat-icon></span>
+            }
+            <span class="text">
+              <span class="name"><bb-veg-badge [veg]="d.isVeg" /> {{ d.name }}</span>
+              <span class="price">{{ d.pricePaise | inr }}</span>
+              <span class="from bb-muted">
+                from <strong>{{ d.restaurant.name }}</strong>{{ d.restaurant.city ? ' · ' + d.restaurant.city : '' }}
+              </span>
+            </span>
+            <mat-icon class="chev" aria-hidden="true">chevron_right</mat-icon>
+          </button>
+        </li>
+      }
+    </ul>
+    @if (canLoadMore()) {
+      <div class="more"><button mat-stroked-button (click)="loadMore()">Show more dishes</button></div>
+    }
+  }
+</section>

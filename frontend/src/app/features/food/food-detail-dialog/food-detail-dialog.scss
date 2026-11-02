@@ -1,0 +1,38 @@
+.hero {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-2);
+}
+.price {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--bb-plum);
+}
+dl {
+  display: grid;
+  gap: var(--bb-space-2);
+  margin: var(--bb-space-3) 0 0;
+}
+dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--bb-ink-muted);
+}
+dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+}

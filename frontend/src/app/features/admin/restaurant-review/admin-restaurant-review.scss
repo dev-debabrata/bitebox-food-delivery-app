@@ -1,0 +1,119 @@
+@use 'breakpoints' as bp;
+
+.back {
+  margin-bottom: var(--bb-space-3);
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bb-space-4);
+  margin-bottom: var(--bb-space-4);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-4);
+
+  img,
+  .avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: var(--bb-radius);
+    object-fit: cover;
+  }
+  .avatar {
+    display: grid;
+    place-items: center;
+    font-size: 2rem;
+    font-weight: 800;
+    background: var(--bb-plum);
+    color: var(--bb-amber);
+  }
+  h1 {
+    margin-bottom: var(--bb-space-1);
+  }
+}
+
+.status {
+  text-transform: capitalize;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 999px;
+
+  &.status-pending {
+    background: var(--bb-amber-100);
+    color: #7a4b00;
+  }
+  &.status-approved {
+    background: #e6f5ec;
+    color: var(--bb-success);
+  }
+  &.status-rejected,
+  &.status-suspended {
+    background: #fdecee;
+    color: var(--bb-danger);
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bb-space-2);
+
+  .danger {
+    --mat-button-filled-container-color: var(--bb-danger);
+  }
+}
+
+.grid {
+  display: grid;
+  gap: var(--bb-space-4);
+  grid-template-columns: 1fr;
+
+  @include bp.desktop-up {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--bb-space-3);
+  margin: 0 0 var(--bb-space-2);
+
+  .wide {
+    grid-column: 1 / -1;
+  }
+}
+
+dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--bb-ink-muted);
+}
+
+dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  word-break: break-word;
+
+  &.cap {
+    text-transform: capitalize;
+  }
+}
+
+address {
+  font-style: normal;
+  line-height: 1.6;
+}
+
+.coords {
+  font-size: 0.85rem;
+  margin-top: var(--bb-space-2);
+}

@@ -1,0 +1,102 @@
+@use 'breakpoints' as bp;
+
+.filters {
+  display: grid;
+  gap: var(--bb-space-3);
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: var(--bb-space-3);
+
+  .search {
+    grid-column: 1 / -1;
+  }
+
+  @include bp.desktop-up {
+    grid-template-columns: 1fr 220px 180px;
+
+    .search {
+      grid-column: auto;
+    }
+  }
+}
+
+.count {
+  margin-bottom: var(--bb-space-2);
+}
+
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: var(--bb-space-3);
+    padding: var(--bb-space-3) var(--bb-space-4);
+    border-bottom: 1px solid var(--bb-border);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    &.off .info {
+      opacity: 0.6;
+    }
+  }
+
+  .none {
+    display: block;
+    text-align: center;
+    padding: var(--bb-space-6);
+  }
+
+  img,
+  .thumb {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--bb-radius-sm);
+    object-fit: cover;
+  }
+
+  .thumb {
+    display: grid;
+    place-items: center;
+    background: var(--bb-amber-100);
+    color: var(--bb-plum);
+  }
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-2);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  font-size: 0.88rem;
+}
+
+
+// "Off" and "Available" get the same width, so the switch does not jump
+// sideways when it is flipped (the label is visually hidden on phones).
+np-toggle.availability {
+  ::ng-deep .toggle-label {
+    display: inline-block;
+    min-width: 9ch;
+  }
+
+  &.on ::ng-deep .toggle-label {
+    color: var(--bb-success);
+    font-weight: 600;
+  }
+}

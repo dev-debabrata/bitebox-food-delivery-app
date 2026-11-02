@@ -1,0 +1,38 @@
+// Mobile-first breakpoints. Write base styles for phones, then layer up.
+//   phone  : < 600px
+//   tablet : 600px - 1023px
+//   desktop: >= 1024px
+$tablet: 600px;
+$desktop: 1024px;
+$wide: 1440px;
+
+@mixin tablet-up {
+  @media (min-width: $tablet) {
+    @content;
+  }
+}
+
+@mixin desktop-up {
+  @media (min-width: $desktop) {
+    @content;
+  }
+}
+
+@mixin wide-up {
+  @media (min-width: $wide) {
+    @content;
+  }
+}
+
+@mixin phone-only {
+  @media (max-width: ($tablet - 1px)) {
+    @content;
+  }
+}
+
+// Phones and tablets (where the bottom tab bar is shown).
+@mixin below-desktop {
+  @media (max-width: ($desktop - 1px)) {
+    @content;
+  }
+}

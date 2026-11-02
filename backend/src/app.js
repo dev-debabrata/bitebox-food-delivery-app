@@ -1,0 +1,96 @@
+import path from "node:path";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import express from "express";
+import helmet from "helmet";
+import { pinoHttp } from "pino-http";
+import swaggerUi from "swagger-ui-express";
+import { env } from "./config/env.js";
+import { logger } from "./config/logger.js";
+import { openApiDocument } from "./docs/openapi.js";
+import { errorHandler, notFound } from "./middleware/error.middleware.js";
+import { mongoSanitize } from "./middleware/security.middleware.js";
+import adminCatalogRoutes from "./routes/admin-catalog.routes.js";
+import adminUsersRoutes from "./routes/admin-users.routes.js";
+import { createAuthRouter } from "./routes/auth.routes.js";
+import { categoriesRouter, foodsRouter, restaurantsRouter } from "./routes/catalog.routes.js";
+import { addressesRouter, adminCouponsRouter, cartRouter, couponsRouter, ordersRouter } from "./routes/checkout.routes.js";
+import { adminDeliveryPartnersRouter, adminOrdersRouter } from "./routes/admin-orders.routes.js";
+import deliveryRoutes from "./routes/delivery.routes.js";
+import geoRoutes from "./routes/geo.routes.js";
+import healthRoutes from "./routes/health.routes.js";
+import myRestaurantRoutes from "./routes/my-restaurant.routes.js";
+import uploadsRoutes from "./routes/uploads.routes.js";
+
+/**
+ * Builds the Express application without starting a server, so tests can
+ * exercise it directly with supertest.
+ */
+export function createApp(options = {}) {
+  const app = express();
+
+  // Needed for correct client IPs (rate limiting) behind a reverse proxy.
+  if (process.env.TRUST_PROXY) app.set("trust proxy", Number(process.env.TRUST_PROXY) || process.env.TRUST_PROXY);
+  app.disable("x-powered-by");
+
+  app.use(pinoHttp({ logger, autoLogging: !env.isTest }));
+  app.use(helmet());
+  app.use(
+    cors({
+      origin: (origin, callback) => callback(null, !origin || env.clientUrls.includes(origin)),
+      credentials: true,
+      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Idempotency-Key"],
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    }),
+  );
+  app.use(express.json({ limit: "100kb" }));
+  app.use(express.urlencoded({ extended: false, limit: "100kb" }));
+  app.use(cookieParser());
+  app.use(mongoSanitize);
+
+  app.get("/", (_req, res) =>
+    res.json({ success: true, message: "BiteBox API", data: { docs: "/api/docs", health: "/api/v1/health" } }),
+  );
+  // Uploaded images. CORP is relaxed so the web app (another origin) can display them;
+  // nosniff + fixed extensions mean files are never interpreted as anything but images.
+  app.use(
+    "/uploads",
+    express.static(path.resolve(env.uploadDir), {
+      index: false,
+      dotfiles: "deny",
+      maxAge: "7d",
+      setHeaders: (res) => {
+        res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+        res.setHeader("X-Content-Type-Options", "nosniff");
+        res.setHeader("Content-Security-Policy", "default-src 'none'");
+      },
+    }),
+  );
+
+  app.get("/api/docs.json", (_req, res) => res.json(openApiDocument));
+  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openApiDocument, { customSiteTitle: "BiteBox API Docs" }));
+
+  app.use("/api/v1/health", healthRoutes);
+  app.use("/api/v1/auth", createAuthRouter(options.rateLimits));
+  app.use("/api/v1/admin/users", adminUsersRoutes);
+  app.use("/api/v1/admin/coupons", adminCouponsRouter);
+  app.use("/api/v1/admin/orders", adminOrdersRouter);
+  app.use("/api/v1/admin/delivery-partners", adminDeliveryPartnersRouter);
+  app.use("/api/v1/admin", adminCatalogRoutes);
+  app.use("/api/v1/restaurants", restaurantsRouter);
+  app.use("/api/v1/categories", categoriesRouter);
+  app.use("/api/v1/foods", foodsRouter);
+  app.use("/api/v1/my/restaurant", myRestaurantRoutes);
+  app.use("/api/v1/uploads", uploadsRoutes);
+  app.use("/api/v1/cart", cartRouter);
+  app.use("/api/v1/addresses", addressesRouter);
+  app.use("/api/v1/orders", ordersRouter);
+  app.use("/api/v1/coupons", couponsRouter);
+  app.use("/api/v1/delivery", deliveryRoutes);
+  app.use("/api/v1/geo", geoRoutes);
+
+  app.use(notFound);
+  app.use(errorHandler);
+
+  return app;
+}

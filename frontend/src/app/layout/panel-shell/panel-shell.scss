@@ -1,0 +1,166 @@
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+  height: 100dvh;
+}
+
+.shell {
+  height: 100%;
+  background: var(--bb-bg);
+}
+
+.sidebar {
+  width: 264px;
+  border-right: 0;
+  border-radius: 0;
+  background: var(--bb-plum);
+  color: #fff6e5;
+  display: flex;
+  flex-direction: column;
+
+  ::ng-deep .mat-drawer-inner-container {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.sidebar-brand {
+  padding: var(--bb-space-5) var(--bb-space-5) var(--bb-space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--bb-space-3);
+}
+
+.panel-chip {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bb-plum);
+  background: var(--bb-amber);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.nav {
+  flex: 1;
+  padding: var(--bb-space-2) var(--bb-space-3);
+  --mat-list-list-item-label-text-color: #e8dcef;
+  --mat-list-list-item-leading-icon-color: #cdb8dc;
+  --mat-list-list-item-hover-label-text-color: #fff;
+  --mat-list-list-item-focus-label-text-color: #fff;
+  --mat-list-active-indicator-color: rgb(255 181 46 / 18%);
+  --mat-list-active-indicator-shape: 12px;
+
+  a {
+    border-radius: 12px;
+    margin-bottom: 2px;
+  }
+
+  a.active {
+    --mat-list-list-item-label-text-color: #fff;
+    --mat-list-list-item-leading-icon-color: var(--bb-amber);
+    font-weight: 700;
+  }
+}
+
+.sidebar-footer {
+  padding: var(--bb-space-3);
+  border-top: 1px solid rgb(255 255 255 / 10%);
+
+  .signout {
+    --mat-button-text-label-text-color: #e8dcef;
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  gap: var(--bb-space-2);
+  background: rgb(255 255 255 / 92%);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--bb-border);
+  padding-inline: var(--bb-space-2) var(--bb-page-gutter);
+
+  @include bp.desktop-up {
+    padding-inline: var(--bb-page-gutter);
+  }
+}
+
+.spacer {
+  flex: 1;
+}
+
+.user-button {
+  --mat-button-text-container-height: 44px;
+}
+
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bb-plum);
+  color: var(--bb-amber);
+  font-weight: 700;
+  font-size: 0.8rem;
+  margin-right: var(--bb-space-2);
+}
+
+.user-name {
+  display: none;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @include bp.tablet-up {
+    display: inline;
+  }
+}
+
+.menu-header {
+  display: flex;
+  flex-direction: column;
+  padding: var(--bb-space-3) var(--bb-space-4);
+  gap: 2px;
+
+  span {
+    color: var(--bb-ink-muted);
+    font-size: 0.85rem;
+  }
+}
+
+.page {
+  flex: 1;
+  width: 100%;
+  max-width: var(--bb-content-max);
+  margin-inline: auto;
+  padding: var(--bb-space-5) var(--bb-page-gutter) var(--bb-space-7);
+}
+
+// Count next to a nav label (e.g. new orders waiting for the restaurant).
+.nav-badge {
+  align-self: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--bb-amber);
+  color: var(--bb-plum);
+  font-size: 0.75rem;
+  font-weight: 800;
+}

@@ -1,0 +1,109 @@
+<a mat-button routerLink="/admin/restaurants" class="back"><mat-icon>arrow_back</mat-icon>All restaurants</a>
+
+@if (loading()) {
+  <span class="bb-skeleton" style="height: 360px"></span>
+} @else if (notFound()) {
+  <bb-empty-state icon="storefront" title="Restaurant not found">
+    <a mat-flat-button routerLink="/admin/restaurants">Back to restaurants</a>
+  </bb-empty-state>
+} @else if (error()) {
+  <div class="bb-alert error" role="alert">
+    <mat-icon aria-hidden="true">error</mat-icon>
+    <span>{{ error() }} <button class="bb-link-button" (click)="load()">Retry</button></span>
+  </div>
+} @else if (restaurant(); as r) {
+  <header class="head">
+    <div class="identity">
+      @if (r.imageUrl) {
+        <img [src]="r.imageUrl" alt="" />
+      } @else {
+        <span class="avatar" aria-hidden="true">{{ r.name.charAt(0) }}</span>
+      }
+      <div>
+        <h1>{{ r.name }}</h1>
+        <span class="status status-{{ r.status }}">{{ r.status }}</span>
+      </div>
+    </div>
+    <div class="actions">
+      @for (a of actions(); track a.status) {
+        <button mat-flat-button [class.danger]="a.danger" [disabled]="acting()" (click)="act(a)">
+          <mat-icon>{{ a.icon }}</mat-icon>{{ a.label }}
+        </button>
+      }
+      @if (r.status === 'approved') {
+        <a mat-stroked-button [routerLink]="['/restaurants', r.slug]" target="_blank" rel="noopener">
+          <mat-icon>open_in_new</mat-icon>Public page
+        </a>
+      }
+    </div>
+  </header>
+
+  @if (r.statusReason) {
+    <div class="bb-alert info" role="note">
+      <mat-icon aria-hidden="true">sticky_note_2</mat-icon>
+      <span><strong>Reason on record:</strong> {{ r.statusReason }}</span>
+    </div>
+  }
+
+  <div class="grid">
+    <section class="bb-card">
+      <h3>Business</h3>
+      <dl>
+        <div><dt>Cuisines</dt><dd>{{ r.cuisines.join(', ') }}</dd></div>
+        @if (r.description) {
+          <div class="wide"><dt>Description</dt><dd>{{ r.description }}</dd></div>
+        }
+        <div><dt>Phone</dt><dd>{{ r.phone }}</dd></div>
+        <div><dt>Email</dt><dd>{{ r.email || '—' }}</dd></div>
+        <div><dt>Hours</dt><dd>{{ r.openingTime }} – {{ r.closingTime }}</dd></div>
+        <div><dt>Pure veg</dt><dd>{{ r.isPureVeg ? 'Yes' : 'No' }}</dd></div>
+        <div><dt>Cost for two</dt><dd>{{ r.costForTwoPaise | inr }}</dd></div>
+        <div><dt>Minimum order</dt><dd>{{ r.minOrderPaise | inr }}</dd></div>
+        <div><dt>Avg. prep time</dt><dd>{{ r.avgPrepTimeMinutes }} min</dd></div>
+      </dl>
+    </section>
+
+    <section class="bb-card">
+      <h3>Location</h3>
+      <address>
+        {{ r.address.line1 }}<br />
+        @if (r.address.line2) {
+          {{ r.address.line2 }}<br />
+        }
+        @if (r.address.area) {
+          {{ r.address.area }}<br />
+        }
+        {{ r.address.city }}, {{ r.address.state }} {{ r.address.postalCode }}
+      </address>
+      <p class="bb-muted coords">
+        {{ r.location.coordinates[1] }}, {{ r.location.coordinates[0] }}
+        @if (mapLink(); as link) {
+          · <a [href]="link" target="_blank" rel="noopener noreferrer">View on OpenStreetMap</a>
+        }
+      </p>
+    </section>
+
+    <section class="bb-card">
+      <h3>Owner</h3>
+      <dl>
+        <div><dt>Name</dt><dd>{{ r.owner.name }}</dd></div>
+        <div><dt>Email</dt><dd>{{ r.owner.email }}</dd></div>
+        <div><dt>Phone</dt><dd>{{ r.owner.phone || '—' }}</dd></div>
+        <div><dt>Account</dt><dd class="cap">{{ r.owner.status }}</dd></div>
+      </dl>
+    </section>
+
+    <section class="bb-card">
+      <h3>Menu & history</h3>
+      <dl>
+        @if (stats(); as s) {
+          <div><dt>Menu items</dt><dd>{{ s.totalItems }} ({{ s.availableItems }} available)</dd></div>
+          <div><dt>Categories</dt><dd>{{ s.categoriesUsed }}</dd></div>
+        }
+        <div><dt>Submitted</dt><dd>{{ r.createdAt | date: 'medium' }}</dd></div>
+        <div><dt>Last reviewed</dt><dd>{{ r.reviewedAt ? (r.reviewedAt | date: 'medium') : 'Not yet' }}</dd></div>
+      </dl>
+      <a mat-button routerLink="/admin/foods" [queryParams]="{ restaurant: r.id }"><mat-icon>menu_book</mat-icon>View menu items</a>
+    </section>
+  </div>
+}

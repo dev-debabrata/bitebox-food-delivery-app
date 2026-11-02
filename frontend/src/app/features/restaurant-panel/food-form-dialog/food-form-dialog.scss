@@ -1,0 +1,13 @@
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bb-space-3);
+  margin-bottom: var(--bb-space-3);
+}
+.prep {
+  width: 140px;
+}
+bb-image-upload {
+  margin-top: var(--bb-space-3);
+}

@@ -1,0 +1,14 @@
+@let c = copy();
+<div class="bb-alert banner {{ c.tone }}" role="status">
+  <mat-icon aria-hidden="true">{{ c.icon }}</mat-icon>
+  <div>
+    <strong>{{ c.title }}</strong>
+    <p>{{ c.text }}</p>
+    @if (restaurant().statusReason) {
+      <p class="reason"><strong>Reason:</strong> {{ restaurant().statusReason }}</p>
+    }
+    @if (restaurant().status === 'rejected' && showFixLink()) {
+      <a mat-stroked-button routerLink="/restaurant/details">Update details</a>
+    }
+  </div>
+</div>

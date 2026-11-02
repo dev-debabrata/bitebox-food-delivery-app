@@ -1,0 +1,132 @@
+import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { firstValueFrom } from 'rxjs';
+import { MAX_USABLE_ACCURACY_M } from './geolocation.service';
+import { RiderService } from './order-management.service';
+import { LocationAck, RealtimeService } from './realtime.service';
+
+export interface GpsFix {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  at: number;
+}
+
+/** During a delivery: at most one update this often... */
+const DELIVERY_MIN_GAP_MS = 4_000;
+/** ...and at least one this often, even when standing still. */
+const DELIVERY_MAX_GAP_MS = 15_000;
+/** Moving at least this far triggers an update (after the minimum gap). */
+const DELIVERY_MIN_MOVE_M = 15;
+/** Online but idle: keep the position fresh enough for dispatch. */
+const IDLE_GAP_MS = 60_000;
+
+const metres = (a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) => {
+  const r = (d: number) => (d * Math.PI) / 180;
+  const h = Math.sin(r(b.latitude - a.latitude) / 2) ** 2 + Math.cos(r(a.latitude)) * Math.cos(r(b.latitude)) * Math.sin(r(b.longitude - a.longitude) / 2) ** 2;
+  return 2 * 6_371_000 * Math.asin(Math.sqrt(h));
+};
+
+/**
+ * The rider's device GPS while they are online. Shares positions with the
+ * server over Socket.IO (REST fallback when idle and disconnected):
+ * frequently during a delivery so the customer's map moves smoothly, rarely
+ * when idle. Imprecise readings are never sent.
+ */
+@Injectable({ providedIn: 'root' })
+export class RiderGps {
+  private readonly realtime = inject(RealtimeService);
+  private readonly rider = inject(RiderService);
+  private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  /** Latest reading from the device (even if too imprecise to share). */
+  readonly fix = signal<GpsFix | null>(null);
+  /** Why sharing is not working, in words for the rider. */
+  readonly problem = signal<string | null>(null);
+  /** When a position was last accepted by the server. */
+  readonly lastSharedAt = signal<number | null>(null);
+
+  private watchId: number | null = null;
+  private delivering = false;
+  private lastSent: GpsFix | null = null;
+  private sending = false;
+
+  get watching(): boolean {
+    return this.watchId !== null;
+  }
+
+  /** Start watching (idempotent). `delivering` switches to frequent updates. */
+  start(delivering: boolean): void {
+    this.delivering = delivering;
+    if (!this.browser || this.watchId !== null) return;
+    if (!('geolocation' in navigator)) {
+      this.problem.set('This device cannot share its location, so customers cannot see you on the map.');
+      return;
+    }
+    this.watchId = navigator.geolocation.watchPosition(
+      ({ coords }) => this.onFix({ latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy, at: Date.now() }),
+      (error) =>
+        this.problem.set(
+          error.code === error.PERMISSION_DENIED
+            ? 'Location permission is off. Allow it in your browser settings so customers can follow the delivery.'
+            : 'Your location is unavailable right now (weak GPS?). Updates resume automatically.',
+        ),
+      { enableHighAccuracy: true, maximumAge: 5_000, timeout: 30_000 },
+    );
+  }
+
+  setDelivering(delivering: boolean): void {
+    const changed = delivering !== this.delivering;
+    this.delivering = delivering;
+    // Starting a delivery: share the current position straight away.
+    if (changed && delivering && this.fix()) void this.share(this.fix()!, true);
+  }
+
+  stop(): void {
+    if (this.watchId !== null) navigator.geolocation.clearWatch(this.watchId);
+    this.watchId = null;
+    this.problem.set(null);
+    this.lastSent = null;
+  }
+
+  private onFix(fix: GpsFix): void {
+    this.fix.set(fix);
+    if (fix.accuracy > MAX_USABLE_ACCURACY_M) {
+      this.problem.set("Your GPS signal is weak, so your position isn't being shared. Move into the open or turn on precise location.");
+      return;
+    }
+    this.problem.set(null);
+    void this.share(fix);
+  }
+
+  private async share(fix: GpsFix, force = false): Promise<void> {
+    if (this.sending) return;
+    const since = this.lastSent ? fix.at - this.lastSent.at : Infinity;
+    const moved = this.lastSent ? metres(this.lastSent, fix) : Infinity;
+    const due = this.delivering
+      ? since >= DELIVERY_MAX_GAP_MS || (since >= DELIVERY_MIN_GAP_MS && moved >= DELIVERY_MIN_MOVE_M)
+      : since >= IDLE_GAP_MS;
+    if (!force && !due) return;
+
+    this.sending = true;
+    try {
+      const point = { latitude: fix.latitude, longitude: fix.longitude, accuracy: Math.round(fix.accuracy) };
+      let ack: LocationAck = await this.realtime.sendRiderLocation(point);
+      if (!ack.ok && ack.error === 'NOT_CONNECTED' && !this.delivering) {
+        // Idle and no live connection: the REST endpoint keeps dispatch working.
+        ack = await firstValueFrom(this.rider.reportLocation(point.latitude, point.longitude)).then(
+          () => ({ ok: true }),
+          () => ({ ok: false, error: 'NOT_CONNECTED' as const }),
+        );
+      }
+      if (ack.ok) {
+        this.lastSent = fix;
+        this.lastSharedAt.set(Date.now());
+      } else if (ack.error === 'NOT_CONNECTED' && this.delivering) {
+        this.problem.set('Reconnecting… your position will be shared again in a moment.');
+      }
+    } finally {
+      this.sending = false;
+    }
+  }
+}

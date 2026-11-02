@@ -1,0 +1,54 @@
+@let item = data.item;
+@if (item.imageUrl) {
+  <img class="hero" [src]="item.imageUrl" alt="" />
+}
+<h2 mat-dialog-title>
+  <bb-veg-badge [veg]="item.isVeg" />
+  {{ item.name }}
+</h2>
+<mat-dialog-content>
+  <p class="price">{{ item.pricePaise | inr }}</p>
+  @if (!item.isAvailable) {
+    <div class="bb-alert error" role="status">
+      <mat-icon aria-hidden="true">block</mat-icon>
+      <span>Currently unavailable</span>
+    </div>
+  } @else if (data.restaurant.isOpenNow === false) {
+    <div class="bb-alert info" role="status">
+      <mat-icon aria-hidden="true">schedule</mat-icon>
+      <span>{{ data.restaurant.name }} is closed right now.</span>
+    </div>
+  }
+  @if (item.description) {
+    <p>{{ item.description }}</p>
+  }
+  <dl>
+    @if (item.category) {
+      <div>
+        <dt>Category</dt>
+        <dd>
+          <mat-icon aria-hidden="true">{{ item.category.icon }}</mat-icon
+          >{{ item.category.name }}
+        </dd>
+      </div>
+    }
+    <div>
+      <dt>Restaurant</dt>
+      <dd>{{ data.restaurant.name }}</dd>
+    </div>
+    @if (item.prepTimeMinutes) {
+      <div>
+        <dt>Prep time</dt>
+        <dd>~{{ item.prepTimeMinutes }} min</dd>
+      </div>
+    }
+  </dl>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  @if (data.showRestaurantLink) {
+    <a mat-stroked-button [routerLink]="['/restaurants', data.restaurant.slug]" mat-dialog-close
+      >View menu</a
+    >
+  }
+  <button mat-flat-button mat-dialog-close cdkFocusInitial>Close</button>
+</mat-dialog-actions>

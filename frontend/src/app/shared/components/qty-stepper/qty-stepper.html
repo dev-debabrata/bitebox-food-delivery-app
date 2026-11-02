@@ -1,0 +1,31 @@
+@if (quantity() === 0) {
+  <button
+    type="button"
+    class="add"
+    (click)="add.emit(); $event.stopPropagation()"
+    [disabled]="disabled()"
+    [attr.aria-label]="'Add ' + label()"
+  >
+    ADD
+  </button>
+} @else {
+  <div class="stepper" role="group" [attr.aria-label]="'Quantity of ' + label()">
+    <button
+      type="button"
+      (click)="changed.emit(quantity() - 1); $event.stopPropagation()"
+      [disabled]="disabled()"
+      [attr.aria-label]="'Remove one ' + label()"
+    >
+      <mat-icon>remove</mat-icon>
+    </button>
+    <span aria-live="polite">{{ quantity() }}</span>
+    <button
+      type="button"
+      (click)="changed.emit(quantity() + 1); $event.stopPropagation()"
+      [disabled]="disabled() || quantity() >= max()"
+      [attr.aria-label]="'Add one more ' + label()"
+    >
+      <mat-icon>add</mat-icon>
+    </button>
+  </div>
+}

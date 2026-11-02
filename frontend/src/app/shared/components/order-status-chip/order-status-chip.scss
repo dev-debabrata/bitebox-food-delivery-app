@@ -1,0 +1,34 @@
+:host {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.6;
+  padding: 1px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+:host(.tone-waiting) {
+  background: var(--bb-amber-100);
+  color: #7a4b00;
+}
+:host(.tone-cooking) {
+  background: #e7efff;
+  color: #2a4fa8;
+}
+:host(.tone-handover) {
+  background: var(--bb-plum-100);
+  color: var(--bb-plum);
+}
+:host(.tone-road) {
+  background: #e2f4f4;
+  color: #12706f;
+}
+:host(.tone-done) {
+  background: #e6f5ec;
+  color: var(--bb-success);
+}
+:host(.tone-stopped) {
+  background: #fdecee;
+  color: var(--bb-danger);
+}

@@ -1,0 +1,25 @@
+:host {
+  display: inline-flex;
+  vertical-align: middle;
+}
+.mark {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid;
+  border-radius: 3px;
+  display: grid;
+  place-items: center;
+  &::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+}
+.veg {
+  color: #1f8a4c;
+}
+.nonveg {
+  color: #c62839;
+}

@@ -1,0 +1,80 @@
+<mat-sidenav-container class="shell" autosize>
+  <mat-sidenav
+    #drawer
+    class="sidebar"
+    [mode]="isDesktop() ? 'side' : 'over'"
+    [opened]="isDesktop()"
+    [fixedInViewport]="!isDesktop()"
+    role="navigation"
+    aria-label="Panel navigation"
+  >
+    <div class="sidebar-brand">
+      <bb-brand-logo variant="light" [height]="34" />
+      <span class="panel-chip">{{ panelLabel() }}</span>
+    </div>
+
+    <mat-nav-list class="nav">
+      @for (item of navItems(); track item.link) {
+        <a
+          mat-list-item
+          [routerLink]="item.link"
+          routerLinkActive="active"
+          #rla="routerLinkActive"
+          [routerLinkActiveOptions]="{ exact: !!item.exact }"
+          [activated]="rla.isActive"
+          [attr.aria-current]="rla.isActive ? 'page' : null"
+        >
+          <mat-icon matListItemIcon aria-hidden="true">{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+          @if (item.badge?.(); as count) {
+            <span matListItemMeta class="nav-badge" [attr.aria-label]="count + ' new'">{{ count }}</span>
+          }
+        </a>
+      }
+    </mat-nav-list>
+
+    <div class="sidebar-footer">
+      <button mat-button class="signout" (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        Sign out
+      </button>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="content">
+    <mat-toolbar class="topbar">
+      @if (!isDesktop()) {
+        <button mat-icon-button (click)="drawer.toggle()" aria-label="Open navigation menu">
+          <mat-icon>menu</mat-icon>
+        </button>
+        <bb-brand-logo [height]="28" />
+      }
+      <span class="spacer"></span>
+
+      <button mat-button class="user-button" [matMenuTriggerFor]="userMenu" aria-label="Account menu">
+        <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+        <span class="user-name">{{ user()?.name }}</span>
+        <mat-icon iconPositionEnd>expand_more</mat-icon>
+      </button>
+      <mat-menu #userMenu="matMenu" xPosition="before">
+        <div class="menu-header" (click)="$event.stopPropagation()" role="presentation">
+          <strong>{{ user()?.name }}</strong>
+          <span>{{ user()?.email }}</span>
+        </div>
+        <mat-divider />
+        <a mat-menu-item [routerLink]="profileLink()">
+          <mat-icon>manage_accounts</mat-icon>
+          <span>Profile</span>
+        </a>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Sign out</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <main class="page">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

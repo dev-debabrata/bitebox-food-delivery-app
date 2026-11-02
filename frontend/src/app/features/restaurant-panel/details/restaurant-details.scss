@@ -1,0 +1,168 @@
+@use 'breakpoints' as bp;
+
+.banner {
+  display: block;
+  margin-bottom: var(--bb-space-4);
+}
+
+.layout {
+  display: grid;
+  gap: var(--bb-space-4);
+  grid-template-columns: 1fr;
+
+  @include bp.desktop-up {
+    grid-template-columns: 1fr 340px;
+    align-items: start;
+  }
+}
+
+.main,
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-4);
+}
+
+.side {
+  @include bp.desktop-up {
+    position: sticky;
+    top: 88px;
+  }
+}
+
+.bb-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.row-3 {
+  display: grid;
+  gap: 0 var(--bb-space-3);
+  grid-template-columns: 1fr;
+
+  @include bp.tablet-up {
+    grid-template-columns: 3fr 3fr 2fr;
+  }
+
+  > * {
+    min-width: 0;
+  }
+}
+
+.location {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--bb-border);
+  padding-top: var(--bb-space-4);
+  margin-top: var(--bb-space-2);
+
+  h4 {
+    margin: 0 0 4px;
+  }
+  p {
+    font-size: 0.88rem;
+  }
+  button {
+    align-self: flex-start;
+  }
+}
+
+.field-error {
+  color: var(--bb-danger);
+  font-size: 0.8rem;
+  margin: 0 0 var(--bb-space-2);
+}
+
+.save {
+  width: 100%;
+}
+
+.address-fields {
+  display: flex;
+  flex-direction: column;
+}
+
+.find {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bb-space-2);
+  margin-bottom: var(--bb-space-3);
+
+  .place-search {
+    flex: 1 1 240px;
+    width: auto;
+  }
+
+  // Same height as the NexPrime search field so both line up.
+  button {
+    --mat-button-outlined-container-height: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+}
+
+.results {
+  list-style: none;
+  margin: 0 0 var(--bb-space-2);
+  padding: 0;
+  border: 1px solid var(--bb-border);
+  border-radius: var(--bb-radius-sm);
+  max-height: 220px;
+  overflow-y: auto;
+
+  button {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--bb-space-2);
+    padding: var(--bb-space-2) var(--bb-space-3);
+    border: 0;
+    border-bottom: 1px solid var(--bb-border);
+    background: none;
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--bb-surface-alt);
+    }
+  }
+
+  span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  small {
+    color: var(--bb-ink-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+bb-map-picker {
+  margin-bottom: var(--bb-space-2);
+}
+
+.manual-toggle {
+  align-self: flex-start;
+  font-size: 0.85rem;
+  margin: var(--bb-space-2) 0;
+}
+
+// Leave room for the first field's floating label under each card heading.
+.bb-card > h3 {
+  margin-bottom: var(--bb-space-4);
+}
+
+.cuisines .chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bb-space-2);
+  margin-top: var(--bb-space-2);
+}

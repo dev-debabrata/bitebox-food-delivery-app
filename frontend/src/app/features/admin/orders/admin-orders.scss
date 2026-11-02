@@ -1,0 +1,105 @@
+@use 'breakpoints' as bp;
+
+.filters {
+  display: grid;
+  gap: var(--bb-space-3);
+  margin-bottom: var(--bb-space-4);
+
+  @include bp.tablet-up {
+    grid-template-columns: 1fr 260px;
+  }
+}
+
+.list-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.row-skeleton {
+  display: block;
+  height: 56px;
+  margin: var(--bb-space-3) var(--bb-space-4);
+}
+
+.dim {
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li + li {
+    border-top: 1px solid var(--bb-border);
+  }
+}
+
+.row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'main amount chev'
+    'status status chev';
+  align-items: center;
+  gap: var(--bb-space-1) var(--bb-space-3);
+  padding: var(--bb-space-3) var(--bb-space-4);
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--bb-surface-alt);
+  }
+
+  @include bp.tablet-up {
+    grid-template-columns: minmax(0, 1fr) auto 150px auto;
+    grid-template-areas: 'main amount status chev';
+  }
+}
+
+.main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  span {
+    font-size: 0.85rem;
+  }
+}
+
+.amount {
+  grid-area: amount;
+  font-weight: 700;
+}
+
+bb-order-status-chip {
+  grid-area: status;
+  justify-self: start;
+}
+
+.chev {
+  grid-area: chev;
+  color: var(--bb-ink-muted);
+}
+
+.empty {
+  text-align: center;
+  padding: var(--bb-space-7) var(--bb-space-4);
+  color: var(--bb-ink-muted);
+
+  mat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 48px;
+    color: var(--bb-plum-500);
+  }
+}

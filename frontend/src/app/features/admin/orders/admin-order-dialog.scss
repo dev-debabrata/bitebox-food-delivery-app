@@ -1,0 +1,97 @@
+@use 'breakpoints' as bp;
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-3);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-4);
+}
+
+h3 {
+  margin: 0 0 var(--bb-space-1);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bb-ink-muted);
+}
+
+p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.cols {
+  display: grid;
+  gap: var(--bb-space-4);
+
+  @include bp.tablet-up {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    &.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}
+
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+  }
+}
+
+.note {
+  margin-top: var(--bb-space-2);
+}
+
+.history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-2);
+
+  li {
+    display: flex;
+    flex-direction: column;
+    padding-left: var(--bb-space-3);
+    border-left: 2px solid var(--bb-plum-100);
+    font-size: 0.88rem;
+  }
+}
+
+.when {
+  font-size: 0.75rem;
+  color: var(--bb-ink-muted);
+}
+
+.note-line {
+  font-size: 0.8rem;
+}
+
+.danger {
+  --mat-button-outlined-label-text-color: var(--bb-danger);
+}
+
+.map-note {
+  margin-top: var(--bb-space-1);
+  font-size: 0.82rem;
+  color: var(--bb-ink-muted);
+}

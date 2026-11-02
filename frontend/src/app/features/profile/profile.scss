@@ -1,0 +1,85 @@
+@use 'breakpoints' as bp;
+
+.layout {
+  display: grid;
+  gap: var(--bb-space-4);
+  grid-template-columns: 1fr;
+
+  @include bp.desktop-up {
+    grid-template-columns: 300px 1fr;
+    align-items: start;
+  }
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  h2 {
+    margin: var(--bb-space-3) 0 var(--bb-space-2);
+    font-size: 1.25rem;
+  }
+
+  dl {
+    width: 100%;
+    margin: var(--bb-space-5) 0 0;
+    display: grid;
+    gap: var(--bb-space-3);
+    text-align: left;
+  }
+
+  dt {
+    font-size: 0.78rem;
+    color: var(--bb-ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-weight: 600;
+    word-break: break-word;
+  }
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.8rem;
+  font-weight: 800;
+  background: var(--bb-plum);
+  color: var(--bb-amber);
+}
+
+.role-chip {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--bb-plum);
+  background: var(--bb-amber-100);
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.forms {
+  display: grid;
+  gap: var(--bb-space-4);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+
+  button {
+    width: 100%;
+
+    @include bp.tablet-up {
+      width: auto;
+      min-width: 160px;
+    }
+  }
+}

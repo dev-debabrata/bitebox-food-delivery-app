@@ -1,0 +1,238 @@
+@use 'breakpoints' as bp;
+
+.page {
+  padding-block: var(--bb-space-5) var(--bb-space-7);
+}
+
+.placed {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-3);
+  background: #e6f5ec;
+  color: var(--bb-success);
+  border-radius: var(--bb-radius-lg);
+  padding: var(--bb-space-4) var(--bb-space-5);
+
+  mat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 48px;
+  }
+  h1 {
+    color: var(--bb-success);
+    margin: 0;
+  }
+  p {
+    margin: 0;
+    color: var(--bb-ink);
+  }
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--bb-space-3);
+  margin-bottom: var(--bb-space-4);
+
+  h2 {
+    margin: var(--bb-space-2) 0 0;
+  }
+  p {
+    margin: 0;
+  }
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--bb-ink-muted);
+  text-decoration: none;
+  font-weight: 600;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+}
+
+.status {
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--bb-amber-100);
+  color: #7a4b00;
+
+  &.status-delivered {
+    background: #e6f5ec;
+    color: var(--bb-success);
+  }
+  &.status-cancelled,
+  &.status-rejected {
+    background: #fdecee;
+    color: var(--bb-danger);
+  }
+}
+
+.layout {
+  display: grid;
+  gap: var(--bb-space-4);
+
+  @include bp.desktop-up {
+    grid-template-columns: 1fr 360px;
+    align-items: start;
+  }
+}
+
+.main,
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-4);
+}
+
+.journey {
+  display: block;
+  margin-bottom: var(--bb-space-3);
+}
+
+.placed-confetti {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--bb-radius-lg);
+  margin-bottom: var(--bb-space-5);
+
+  // Self-contained positioning for NexPrime's confetti canvas. NexPrime's global
+  // theme.css sets the same rules, but if it ever fails to load an unpositioned
+  // canvas grows with every resize (ResizeObserver loop) and freezes the page.
+  ::ng-deep {
+    .np-effect__canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .np-effect__content {
+      position: relative;
+    }
+  }
+}
+
+.small {
+  font-size: 0.82rem;
+}
+
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--bb-space-3);
+    padding: var(--bb-space-2) 0;
+    border-bottom: 1px dashed var(--bb-border);
+  }
+}
+
+.note {
+  margin: var(--bb-space-3) 0 0;
+  font-size: 0.9rem;
+}
+
+.payment {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: var(--bb-space-3) 0 0;
+  font-weight: 600;
+
+  .pay-pending {
+    color: #7a4b00;
+  }
+  .pay-paid {
+    color: var(--bb-success);
+  }
+}
+
+address {
+  font-style: normal;
+  line-height: 1.6;
+}
+
+.pending-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bb-space-2);
+
+  p {
+    margin: 0;
+  }
+}
+
+.cancel {
+  --mat-button-outlined-label-text-color: var(--bb-danger);
+}
+
+.rider-row {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-3);
+
+  > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  span.bb-muted {
+    font-size: 0.85rem;
+  }
+}
+
+.rider-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bb-plum);
+  color: var(--bb-amber);
+  font-weight: 800;
+}
+
+.track-status {
+  margin: 0 0 var(--bb-space-3);
+}
+
+.stale {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--bb-space-2);
+  padding: var(--bb-space-2);
+  border-radius: var(--bb-radius-sm);
+  background: var(--bb-amber-100);
+  font-size: 0.85rem;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+}
+
+.estimate-note {
+  margin: var(--bb-space-2) 0 0;
+}

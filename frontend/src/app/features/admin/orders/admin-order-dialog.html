@@ -1,0 +1,119 @@
+@if (order(); as o) {
+  <h2 mat-dialog-title class="title">
+    <span>{{ o.orderNumber }}</span>
+    <bb-order-status-chip [status]="o.status" />
+  </h2>
+  <mat-dialog-content class="content">
+    @if (o.cancellation; as c) {
+      <div class="bb-alert error" role="status">
+        <mat-icon aria-hidden="true">cancel</mat-icon>
+        <span>{{ o.status === 'rejected' ? 'Rejected' : 'Cancelled' }} by {{ c.by }}{{ c.reason ? ': ' + c.reason : '' }}</span>
+      </div>
+    }
+
+    <div class="cols">
+      <section>
+        <h3>Restaurant</h3>
+        <p><strong>{{ o.restaurantSnapshot.name }}</strong><br />{{ o.restaurantSnapshot.address }}<br />{{ o.restaurantSnapshot.phone }}</p>
+      </section>
+      <section>
+        <h3>Deliver to</h3>
+        @let a = o.deliveryAddress;
+        <p>
+          <strong>{{ a.recipientName }}</strong> · {{ a.phone }}<br />
+          {{ a.line1 }}{{ a.line2 ? ', ' + a.line2 : '' }}, {{ a.area ? a.area + ', ' : '' }}{{ a.city }} {{ a.postalCode }}
+        </p>
+      </section>
+      <section>
+        <h3>Rider</h3>
+        @if (o.rider; as r) {
+          <p>
+            <strong>{{ r.name }}</strong> · {{ r.phone }}<br />
+            {{ r.vehicleType ? vehicleLabel[r.vehicleType] : '' }}{{ r.vehicleNumber ? ' · ' + r.vehicleNumber : '' }}
+          </p>
+        } @else if (o.offer; as offer) {
+          <p class="bb-muted">Offered to {{ offer.rider?.name }} until {{ offer.expiresAt | date: 'h:mm:ss a' }}</p>
+        } @else if (o.status === 'ready_for_pickup') {
+          <p class="bb-muted">No rider available yet. Retrying automatically.</p>
+        } @else {
+          <p class="bb-muted">Not assigned</p>
+        }
+      </section>
+    </div>
+
+    @if (onTheRoad(o)) {
+      <section>
+        <h3>Live position</h3>
+        <bb-tracking-map
+          [restaurant]="tracking.restaurant()"
+          [destination]="tracking.destination()"
+          [rider]="tracking.rider()"
+          [riderStale]="tracking.riderStale()"
+          [route]="tracking.plannedRoute()?.path ?? null"
+          [label]="'Live map for order ' + o.orderNumber"
+        />
+        <p class="map-note">
+          @if (tracking.riderSeenSeconds(); as s) {
+            Rider location updated {{ s < 120 ? s + 's' : (s / 60 | number: '1.0-0') + ' min' }} ago{{ tracking.riderStale() ? ' (stale)' : '' }}.
+          } @else {
+            No live location from the rider yet.
+          }
+        </p>
+      </section>
+    }
+
+    <section>
+      <h3>Items</h3>
+      <ul class="items">
+        @for (item of o.items; track item.foodItem) {
+          <li>
+            <bb-veg-badge [veg]="item.isVeg" />
+            <span class="name">{{ item.quantity }} × {{ item.name }}</span>
+          </li>
+        }
+      </ul>
+      @if (o.note) {
+        <p class="note"><strong>Note:</strong> {{ o.note }}</p>
+      }
+    </section>
+
+    <div class="cols two">
+      <section>
+        <h3>Bill · Cash on delivery ({{ o.paymentStatus }})</h3>
+        <bb-bill-summary [pricing]="o.pricing" [couponCode]="o.coupon?.code" [distanceMeters]="o.distanceMeters" />
+      </section>
+      <section>
+        <h3>History</h3>
+        <ol class="history">
+          @for (h of o.statusHistory; track $index) {
+            <li>
+              <span class="when">{{ h.at | date: 'd MMM, h:mm:ss a' }}</span>
+              <span>{{ statusLabel[h.status] }}</span>
+              @if (h.note) {
+                <span class="bb-muted note-line">{{ h.note }}</span>
+              }
+            </li>
+          }
+        </ol>
+      </section>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    @if (o.status === 'assigned') {
+      <button mat-stroked-button [disabled]="busy()" (click)="unassign(o)">Unassign rider</button>
+    }
+    @if (canCancel(o)) {
+      <button mat-stroked-button class="danger" [disabled]="busy()" (click)="cancel(o)">Cancel order</button>
+    }
+    <button mat-flat-button [mat-dialog-close]="changed()">Close</button>
+  </mat-dialog-actions>
+} @else if (error(); as message) {
+  <mat-dialog-content>
+    <div class="bb-alert error" role="alert">
+      <mat-icon aria-hidden="true">error</mat-icon><span>{{ message }} <button class="bb-link-button" (click)="load()">Retry</button></span>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end"><button mat-button mat-dialog-close>Close</button></mat-dialog-actions>
+} @else {
+  <mat-dialog-content><span class="bb-skeleton" style="height: 320px"></span></mat-dialog-content>
+}

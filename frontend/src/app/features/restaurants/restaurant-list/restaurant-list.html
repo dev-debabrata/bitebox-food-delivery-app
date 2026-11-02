@@ -1,0 +1,119 @@
+<section class="bb-container page">
+  <header class="head">
+    <h1>Restaurants</h1>
+    <p class="bb-muted">
+      @if (pagination(); as p) {
+        {{ p.total }} {{ p.total === 1 ? 'place' : 'places' }}
+        @if (coords(); as c) {
+          delivering to {{ c.label }}
+        }
+      } @else {
+        Finding great food near you…
+      }
+    </p>
+  </header>
+
+  <div class="toolbar">
+    <np-text-input
+      class="search"
+      [formField]="filters.search"
+      ariaLabel="Search restaurants"
+      placeholder="Search restaurants, cuisines or dishes"
+      icon="search"
+      clearable
+    />
+    <np-select
+      ariaLabel="Cuisine"
+      [options]="cuisineOptions()"
+      [value]="cuisine() ?? ''"
+      (valueChange)="setParams({ cuisine: $event || null })"
+    />
+    <np-select
+      ariaLabel="Sort by"
+      [options]="sortOptions()"
+      [value]="sort() ?? (nearby() ? 'distance' : 'rating')"
+      (valueChange)="setParams({ sort: $event })"
+    />
+  </div>
+
+  <div class="quick-filters">
+    @if (coords(); as c) {
+      <button mat-flat-button class="bb-btn-accent location-chip" (click)="chooseLocation()" [attr.aria-label]="'Delivering to ' + c.label + '. Change location'">
+        <mat-icon>location_on</mat-icon>
+        <span class="chip-label">{{ c.label }}</span>
+      </button>
+      <button mat-button (click)="showAll()">Show all restaurants</button>
+    } @else {
+      <button mat-stroked-button (click)="chooseLocation()">
+        <mat-icon>my_location</mat-icon>
+        {{ deliveryLocation() ? 'Only near ' + deliveryLocation()!.label : 'Set delivery location' }}
+      </button>
+    }
+    <np-toggle label="Pure veg" [checked]="vegOnly()" (checkedChange)="setParams({ veg: $event || null })" />
+    @if (hasFilters()) {
+      <button mat-button (click)="clearFilters()">Clear all</button>
+    }
+  </div>
+
+  @if (categories().length) {
+    <mat-chip-listbox class="categories" aria-label="Filter by food category">
+      @for (c of categories(); track c.id) {
+        <mat-chip-option [selected]="category() === c.id" (click)="toggleCategory(c.id)">
+          <mat-icon matChipAvatar aria-hidden="true">{{ c.icon }}</mat-icon>
+          {{ c.name }}
+        </mat-chip-option>
+      }
+    </mat-chip-listbox>
+  }
+
+  @if (error()) {
+    <div class="bb-alert error" role="alert">
+      <mat-icon aria-hidden="true">error</mat-icon>
+      <span>{{ error() }} <button class="bb-link-button" (click)="retry()">Retry</button></span>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="grid" aria-busy="true" aria-label="Loading restaurants">
+      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+        <div class="skeleton-card">
+          <span class="bb-skeleton media"></span>
+          <span class="bb-skeleton line"></span>
+          <span class="bb-skeleton line short"></span>
+        </div>
+      }
+    </div>
+  } @else if (restaurants().length === 0 && !error()) {
+    <bb-empty-state
+      icon="storefront"
+      title="No restaurants found"
+      [message]="nearby() ? 'No restaurants deliver here yet. Try another location or show all restaurants.' : hasFilters() ? 'Try removing a filter or searching for something else.' : 'Restaurants will appear here once they are approved.'"
+    >
+      @if (nearby()) {
+        <button mat-stroked-button (click)="showAll()">Show all restaurants</button>
+      } @else if (hasFilters()) {
+        <button mat-stroked-button (click)="clearFilters()">Clear filters</button>
+      }
+    </bb-empty-state>
+  } @else {
+    <div class="grid">
+      @for (r of restaurants(); track r.id) {
+        <bb-restaurant-card [restaurant]="r" />
+      }
+    </div>
+    @if (canLoadMore()) {
+      <div class="more">
+        <button mat-stroked-button (click)="loadMore()" [disabled]="loadingMore()">
+          {{ loadingMore() ? 'Loading…' : 'Show more restaurants' }}
+        </button>
+      </div>
+    }
+  }
+
+  @if (search()) {
+    <p class="dish-link bb-muted">
+      Looking for a specific dish?
+      <a routerLink="/dishes" [queryParams]="{ search: search() }">See dishes matching “{{ search() }}”</a>
+    </p>
+  }
+</section>

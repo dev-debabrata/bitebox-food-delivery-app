@@ -1,0 +1,85 @@
+<header class="hello">
+  <div>
+    <h1>Hello, {{ user()?.name?.split(' ')?.[0] }} 👋</h1>
+    <p>Manage your restaurant, menu and availability.</p>
+  </div>
+</header>
+
+@if (error()) {
+  <div class="bb-alert error" role="alert">
+    <mat-icon aria-hidden="true">error</mat-icon>
+    <span>{{ error() }} <button class="bb-link-button" (click)="load()">Retry</button></span>
+  </div>
+} @else if (!state()) {
+  <div class="grid" aria-busy="true">
+    @for (i of [1, 2, 3]; track i) {
+      <span class="bb-skeleton" style="height: 120px"></span>
+    }
+  </div>
+} @else if (state()!.restaurant === null) {
+  <section class="bb-card onboarding">
+    <mat-icon aria-hidden="true">storefront</mat-icon>
+    <h2>Set up your restaurant</h2>
+    <p class="bb-muted">
+      Add your business details, location and opening hours. Our team will review them before your restaurant goes live.
+    </p>
+    <a mat-flat-button class="bb-btn-accent" routerLink="/restaurant/details">Add restaurant details</a>
+  </section>
+} @else {
+  @let r = state()!.restaurant!;
+  @let stats = state()!.stats!;
+  <bb-status-banner [restaurant]="r" />
+
+  <section class="bb-card summary" aria-labelledby="restaurant-name">
+    <div class="identity">
+      @if (r.imageUrl) {
+        <img [src]="r.imageUrl" alt="" />
+      } @else {
+        <span class="avatar" aria-hidden="true">{{ r.name.charAt(0) }}</span>
+      }
+      <div>
+        <h2 id="restaurant-name">{{ r.name }}</h2>
+        <p class="bb-muted">{{ r.cuisines.join(' · ') }} · {{ r.address.city }}</p>
+        <p class="bb-muted">{{ r.openingTime }}–{{ r.closingTime }} · {{ r.costForTwoPaise | inr }} for two</p>
+      </div>
+    </div>
+    <div class="orders-toggle">
+      <np-toggle
+        #accepting
+        [checked]="r.isAcceptingOrders"
+        [disabled]="toggling()"
+        [label]="r.isAcceptingOrders ? 'Accepting orders' : 'Orders paused'"
+        (checkedChange)="toggleOrders($event, accepting)"
+      />
+      <span class="open-state" [class.open]="r.isOpenNow">{{ r.isOpenNow ? 'Open now' : 'Closed now' }}</span>
+    </div>
+  </section>
+
+  <section class="grid stats" aria-label="Menu statistics">
+    <a class="bb-card stat" routerLink="/restaurant/menu">
+      <mat-icon aria-hidden="true">menu_book</mat-icon>
+      <strong>{{ stats.totalItems }}</strong>
+      <span>Menu items</span>
+    </a>
+    <a class="bb-card stat" routerLink="/restaurant/menu" [queryParams]="{ available: 'true' }">
+      <mat-icon aria-hidden="true">check_circle</mat-icon>
+      <strong>{{ stats.availableItems }}</strong>
+      <span>Available now</span>
+    </a>
+    <a class="bb-card stat" routerLink="/restaurant/menu">
+      <mat-icon aria-hidden="true">category</mat-icon>
+      <strong>{{ stats.categoriesUsed }}</strong>
+      <span>Categories</span>
+    </a>
+  </section>
+
+  <section class="actions">
+    <a mat-flat-button routerLink="/restaurant/menu"><mat-icon>add</mat-icon>Add a dish</a>
+    <a mat-stroked-button routerLink="/restaurant/details"><mat-icon>edit</mat-icon>Edit restaurant details</a>
+    @if (r.status === 'approved') {
+      <a mat-button [routerLink]="['/restaurants', r.slug]" target="_blank" rel="noopener">
+        <mat-icon>open_in_new</mat-icon>View public page
+      </a>
+    }
+  </section>
+}

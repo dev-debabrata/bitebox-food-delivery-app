@@ -1,0 +1,73 @@
+<bb-page-header title="Restaurants" subtitle="Review new applications and manage live restaurants." />
+
+<mat-tab-group [selectedIndex]="activeTab()" (selectedIndexChange)="selectTab($event)" mat-stretch-tabs="false" aria-label="Restaurant status">
+  @for (tab of tabs; track tab.status) {
+    <mat-tab>
+      <ng-template mat-tab-label>
+        {{ tab.label }}
+        @if (counts(); as c) {
+          <span class="count" [class.alert]="tab.status === 'pending' && c[tab.status] > 0">{{ c[tab.status] }}</span>
+        }
+      </ng-template>
+    </mat-tab>
+  }
+</mat-tab-group>
+
+<np-text-input
+  class="search"
+  [formField]="filters.search"
+  ariaLabel="Search restaurants"
+  placeholder="Search by name, city or cuisine"
+  icon="search"
+  clearable
+/>
+
+@if (error()) {
+  <div class="bb-alert error" role="alert">
+    <mat-icon aria-hidden="true">error</mat-icon>
+    <span>{{ error() }} <button class="bb-link-button" (click)="load(1)">Retry</button></span>
+  </div>
+}
+
+<div class="bb-card list-card" [attr.aria-busy]="loading()">
+  @if (loading() && restaurants().length === 0) {
+    @for (i of [1, 2, 3]; track i) {
+      <span class="bb-skeleton row-skeleton"></span>
+    }
+  } @else if (restaurants().length === 0) {
+    <bb-empty-state
+      icon="storefront"
+      [title]="'No ' + tabs[activeTab()].label.toLowerCase() + ' restaurants'"
+      [message]="tabs[activeTab()].status === 'pending' ? 'New applications will appear here for review.' : undefined"
+    />
+  } @else {
+    <ul class="rows" [class.dim]="loading()">
+      @for (r of restaurants(); track r.id) {
+        <li>
+          <a [routerLink]="['/admin/restaurants', r.id]" class="row">
+            @if (r.imageUrl) {
+              <img [src]="r.imageUrl" alt="" loading="lazy" />
+            } @else {
+              <span class="avatar" aria-hidden="true">{{ r.name.charAt(0) }}</span>
+            }
+            <span class="info">
+              <strong>{{ r.name }}</strong>
+              <span class="bb-muted">{{ r.cuisines.join(', ') }} · {{ r.address.city }}</span>
+              <span class="bb-muted small">Owner: {{ r.owner.name }} ({{ r.owner.email }})</span>
+            </span>
+            <span class="when bb-muted small">Submitted {{ r.createdAt | date: 'mediumDate' }}</span>
+            <mat-icon class="chev" aria-hidden="true">chevron_right</mat-icon>
+          </a>
+        </li>
+      }
+    </ul>
+  }
+  <mat-paginator
+    [length]="pagination().total"
+    [pageIndex]="pagination().page - 1"
+    [pageSize]="pagination().limit"
+    [pageSizeOptions]="[10, 25, 50]"
+    (page)="onPage($event)"
+    aria-label="Select page of restaurants"
+  />
+</div>

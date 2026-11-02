@@ -1,0 +1,90 @@
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, viewChild } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatIconModule } from '@angular/material/icon';
+import { MatListModule } from '@angular/material/list';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { filter, map } from 'rxjs';
+import { AuthService } from '../../core/auth/auth.service';
+import { BrandLogo } from '../../shared/components/brand-logo/brand-logo';
+
+export interface NavItem {
+  label: string;
+  icon: string;
+  link: string;
+  /** Match the link exactly (use for index routes such as the dashboard). */
+  exact?: boolean;
+  /** Count shown next to the label (e.g. new orders); hidden when 0. */
+  badge?: Signal<number>;
+}
+
+/**
+ * Shared chrome for the Admin, Restaurant and Delivery panels.
+ * Desktop (>= 1024px): persistent sidebar. Tablet/phone: overlay drawer
+ * opened from the toolbar and closed automatically after navigation.
+ */
+@Component({
+  selector: 'bb-panel-shell',
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    MatButtonModule,
+    MatDividerModule,
+    MatIconModule,
+    MatListModule,
+    MatMenuModule,
+    MatSidenavModule,
+    MatToolbarModule,
+    BrandLogo,
+  ],
+  templateUrl: './panel-shell.html',
+  styleUrl: './panel-shell.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class PanelShell {
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
+  readonly panelLabel = input.required<string>();
+  readonly navItems = input.required<NavItem[]>();
+  readonly profileLink = input.required<string>();
+
+  private readonly sidenav = viewChild.required(MatSidenav);
+
+  protected readonly user = this.auth.user;
+  protected readonly initials = computed(() =>
+    (this.user()?.name ?? '?')
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join(''),
+  );
+
+  protected readonly isDesktop = toSignal(
+    inject(BreakpointObserver)
+      .observe('(min-width: 1024px)')
+      .pipe(map((state) => state.matches)),
+    { initialValue: true },
+  );
+
+  constructor() {
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        if (!this.isDesktop()) void this.sidenav().close();
+      });
+  }
+
+  protected logout(): void {
+    this.auth.logout().subscribe();
+  }
+}

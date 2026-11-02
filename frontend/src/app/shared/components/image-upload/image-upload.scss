@@ -1,0 +1,32 @@
+:host {
+  display: block;
+}
+
+.box {
+  position: relative;
+
+  // NexPrime's host element is inline by default; make the drop zone fill the card.
+  np-image-upload {
+    display: block;
+    width: 100%;
+  }
+
+  &.busy {
+    opacity: 0.75;
+  }
+}
+
+// Upload progress along the bottom edge of the image box.
+.progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 0 0 var(--bb-radius) var(--bb-radius);
+}
+
+.error {
+  margin: var(--bb-space-1) 0 0;
+  font-size: 0.8rem;
+  color: var(--bb-danger);
+}

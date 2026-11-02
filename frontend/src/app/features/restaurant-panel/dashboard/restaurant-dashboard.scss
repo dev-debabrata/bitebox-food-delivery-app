@@ -1,0 +1,142 @@
+@use 'breakpoints' as bp;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-4);
+}
+
+.hello {
+  padding: var(--bb-space-5);
+  border-radius: var(--bb-radius-lg);
+  color: #fff6e5;
+  background:
+    radial-gradient(circle at 100% 0%, rgb(255 181 46 / 35%) 0, transparent 50%),
+    var(--bb-plum);
+
+  h1 {
+    color: #fff6e5;
+  }
+  p {
+    margin: 0;
+    opacity: 0.85;
+  }
+}
+
+.grid {
+  display: grid;
+  gap: var(--bb-space-4);
+  grid-template-columns: 1fr;
+
+  @include bp.tablet-up {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.onboarding {
+  text-align: center;
+  padding: var(--bb-space-7) var(--bb-space-5);
+
+  mat-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 56px;
+    color: var(--bb-amber-600);
+  }
+  p {
+    max-width: 480px;
+    margin-inline: auto;
+  }
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bb-space-4);
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-4);
+  min-width: 0;
+
+  img,
+  .avatar {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    border-radius: var(--bb-radius);
+    object-fit: cover;
+  }
+
+  .avatar {
+    display: grid;
+    place-items: center;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--bb-amber);
+    background: var(--bb-plum);
+  }
+
+  h2 {
+    margin: 0 0 4px;
+    font-size: 1.3rem;
+  }
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+}
+
+.orders-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-2);
+  align-items: flex-start;
+}
+
+.open-state {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #fdecee;
+  color: var(--bb-danger);
+
+  &.open {
+    background: #e6f5ec;
+    color: var(--bb-success);
+  }
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-decoration: none;
+  color: inherit;
+
+  mat-icon {
+    color: var(--bb-amber-600);
+    margin-bottom: var(--bb-space-2);
+  }
+  strong {
+    font-size: 1.8rem;
+    line-height: 1;
+  }
+  span {
+    color: var(--bb-ink-muted);
+  }
+  &:hover {
+    box-shadow: var(--bb-shadow);
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bb-space-2);
+}

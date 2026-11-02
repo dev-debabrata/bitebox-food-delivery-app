@@ -1,0 +1,42 @@
+dl {
+  margin: 0;
+  display: grid;
+  gap: var(--bb-space-2);
+}
+div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--bb-space-3);
+}
+dt {
+  color: var(--bb-ink-muted);
+  small {
+    display: block;
+    font-size: 0.75rem;
+  }
+}
+dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+.discount dd,
+.free {
+  color: var(--bb-success);
+}
+.muted {
+  color: var(--bb-ink-muted);
+  font-weight: 400;
+}
+.total {
+  border-top: 1px solid var(--bb-border);
+  padding-top: var(--bb-space-3);
+  margin-top: var(--bb-space-1);
+  dt,
+  dd {
+    color: var(--bb-ink);
+    font-weight: 800;
+    font-size: 1.1rem;
+  }
+}

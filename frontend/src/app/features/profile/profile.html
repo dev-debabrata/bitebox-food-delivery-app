@@ -1,0 +1,123 @@
+<bb-page-header title="Profile" subtitle="Manage your personal details and password." />
+
+@if (user(); as u) {
+  <div class="layout">
+    <aside class="bb-card summary">
+      <div class="avatar" aria-hidden="true">{{ u.name.charAt(0).toUpperCase() }}</div>
+      <h2>{{ u.name }}</h2>
+      <span class="role-chip">{{ roleLabel() }}</span>
+      <dl>
+        <div>
+          <dt>Email</dt>
+          <dd>{{ u.email }}</dd>
+        </div>
+        <div>
+          <dt>Member since</dt>
+          <dd>{{ u.createdAt | date: 'mediumDate' }}</dd>
+        </div>
+        @if (u.lastLoginAt) {
+          <div>
+            <dt>Last sign-in</dt>
+            <dd>{{ u.lastLoginAt | date: 'medium' }}</dd>
+          </div>
+        }
+      </dl>
+    </aside>
+
+    <div class="forms">
+      <section class="bb-card" aria-labelledby="details-title">
+        <h3 id="details-title">Personal details</h3>
+        @if (profileError()) {
+          <div class="bb-alert error" role="alert">
+            <mat-icon aria-hidden="true">error</mat-icon><span>{{ profileError() }}</span>
+          </div>
+        }
+        <form class="bb-form" [formRoot]="profileForm">
+          <div class="bb-form-row">
+            <np-text-input
+              [formField]="profileForm.name"
+              label="Full name"
+              autocomplete="name"
+              [error]="shownError(profileForm.name)"
+            />
+            <np-text-input
+              [formField]="profileForm.phone"
+              label="Mobile number"
+              type="tel"
+              hint="Leave empty to remove"
+              autocomplete="tel"
+              inputmode="tel"
+              [error]="shownError(profileForm.phone)"
+            />
+          </div>
+          <div class="actions">
+            <button
+              mat-flat-button
+              type="submit"
+              [disabled]="profileForm().submitting() || !profileForm().dirty()"
+            >
+              @if (profileForm().submitting()) {
+                <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Saving" />
+              } @else {
+                Save changes
+              }
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="bb-card" aria-labelledby="password-title">
+        <h3 id="password-title">Change password</h3>
+        <p class="bb-muted">You'll be signed out on all devices after changing your password.</p>
+        @if (passwordError()) {
+          <div class="bb-alert error" role="alert">
+            <mat-icon aria-hidden="true">error</mat-icon><span>{{ passwordError() }}</span>
+          </div>
+        }
+        <form class="bb-form" [formRoot]="passwordForm">
+          <np-text-input
+            [formField]="passwordForm.currentPassword"
+            label="Current password"
+            type="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            [error]="shownError(passwordForm.currentPassword)"
+          />
+          <div class="bb-form-row">
+            <np-text-input
+              [formField]="passwordForm.newPassword"
+              label="New password"
+              type="password"
+              placeholder="••••••••"
+              hint="At least 8 characters, with a letter and a number"
+              autocomplete="new-password"
+              [error]="shownError(passwordForm.newPassword)"
+            />
+            <np-text-input
+              [formField]="passwordForm.confirmPassword"
+              label="Confirm new password"
+              type="password"
+              placeholder="••••••••"
+              autocomplete="new-password"
+              [error]="shownError(passwordForm.confirmPassword)"
+            />
+          </div>
+          <div class="actions">
+            <button mat-stroked-button type="submit" [disabled]="passwordForm().submitting()">
+              @if (passwordForm().submitting()) {
+                <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Updating" />
+              } @else {
+                Update password
+              }
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+} @else {
+  <div class="layout" aria-busy="true">
+    <span class="bb-skeleton" style="height: 280px"></span>
+    <span class="bb-skeleton" style="height: 280px"></span>
+  </div>
+}

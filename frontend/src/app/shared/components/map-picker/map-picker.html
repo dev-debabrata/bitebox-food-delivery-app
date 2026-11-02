@@ -1,0 +1,6 @@
+<div #map class="map" role="application" aria-label="Map. Drag the pin or tap to set the delivery location."></div>
+@if (loadError()) {
+  <p class="map-error" role="alert">{{ loadError() }}</p>
+} @else {
+  <p class="map-hint">Drag the pin or tap the map to mark your exact building.</p>
+}

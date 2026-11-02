@@ -1,0 +1,19 @@
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--bb-space-3);
+  margin-bottom: var(--bb-space-5);
+}
+h1 {
+  margin-bottom: var(--bb-space-1);
+}
+p {
+  margin: 0;
+}
+.actions {
+  display: flex;
+  gap: var(--bb-space-2);
+  flex-wrap: wrap;
+}

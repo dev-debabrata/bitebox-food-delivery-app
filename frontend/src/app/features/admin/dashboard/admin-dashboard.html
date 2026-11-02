@@ -1,0 +1,76 @@
+<bb-page-header
+  [title]="'Hello, ' + (user()?.name?.split(' ')?.[0] ?? 'Admin')"
+  subtitle="Overview of BiteBox accounts."
+>
+  <a mat-flat-button routerLink="/admin/users">
+    <mat-icon>group</mat-icon>
+    Manage users
+  </a>
+</bb-page-header>
+
+@if (error()) {
+  <div class="bb-alert error" role="alert">
+    <mat-icon aria-hidden="true">error</mat-icon>
+    <span>{{ error() }} <button class="bb-link-button" (click)="load()">Retry</button></span>
+  </div>
+}
+
+@if (restaurantCounts(); as rc) {
+  <section class="approvals bb-card" aria-labelledby="approvals-title">
+    <span class="approvals-icon" aria-hidden="true"><mat-icon>pending_actions</mat-icon></span>
+    <div>
+      <h3 id="approvals-title">
+        {{ rc.pending }} restaurant {{ rc.pending === 1 ? 'application' : 'applications' }} awaiting review
+      </h3>
+      <p class="bb-muted">{{ rc.approved }} live · {{ rc.suspended }} suspended · {{ rc.rejected }} rejected</p>
+    </div>
+    <a mat-flat-button [class.bb-btn-accent]="rc.pending > 0" routerLink="/admin/restaurants" [queryParams]="{ status: 'pending' }">
+      Review
+    </a>
+  </section>
+}
+
+<section class="bb-grid cols-4" aria-label="Account totals" [attr.aria-busy]="loading()">
+  @if (loading()) {
+    @for (i of [1, 2, 3, 4]; track i) {
+      <span class="bb-skeleton stat-skeleton"></span>
+    }
+  } @else {
+    @for (card of stats(); track card.role) {
+      <a class="bb-card stat" [routerLink]="'/admin/users'" [queryParams]="{ role: card.role }">
+        <span class="stat-icon"><mat-icon aria-hidden="true">{{ card.icon }}</mat-icon></span>
+        <span class="stat-value">{{ card.value }}</span>
+        <span class="stat-label">{{ card.label }}</span>
+      </a>
+    }
+  }
+</section>
+
+<section class="bb-card recent" aria-labelledby="recent-title">
+  <div class="section-head">
+    <h3 id="recent-title">Newest accounts</h3>
+    <a mat-button routerLink="/admin/users">View all</a>
+  </div>
+
+  @if (loading()) {
+    @for (i of [1, 2, 3]; track i) {
+      <span class="bb-skeleton row-skeleton"></span>
+    }
+  } @else if (recent().length === 0) {
+    <p class="bb-muted">No accounts yet.</p>
+  } @else {
+    <ul class="recent-list">
+      @for (u of recent(); track u.id) {
+        <li>
+          <span class="avatar" aria-hidden="true">{{ u.name.charAt(0).toUpperCase() }}</span>
+          <span class="who">
+            <strong>{{ u.name }}</strong>
+            <span class="bb-muted">{{ u.email }}</span>
+          </span>
+          <span class="bb-role-chip role-{{ u.role }}">{{ roleMeta[u.role].label }}</span>
+          <time class="bb-muted when" [attr.datetime]="u.createdAt">{{ u.createdAt | date: 'mediumDate' }}</time>
+        </li>
+      }
+    </ul>
+  }
+</section>

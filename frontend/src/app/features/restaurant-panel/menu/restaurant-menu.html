@@ -1,0 +1,80 @@
+<bb-page-header title="Menu" subtitle="Add dishes, set prices and switch availability on or off.">
+  @if (!noRestaurant() && !loading()) {
+    <button mat-flat-button (click)="openForm()"><mat-icon>add</mat-icon>Add dish</button>
+  }
+</bb-page-header>
+
+@if (loading()) {
+  @for (i of [1, 2, 3, 4]; track i) {
+    <span class="bb-skeleton" style="height: 72px; margin-bottom: 8px"></span>
+  }
+} @else if (noRestaurant()) {
+  <bb-empty-state icon="storefront" title="Add your restaurant first" message="Create your restaurant profile, then build your menu here.">
+    <a mat-flat-button routerLink="/restaurant/details">Add restaurant details</a>
+  </bb-empty-state>
+} @else if (error()) {
+  <div class="bb-alert error" role="alert">
+    <mat-icon aria-hidden="true">error</mat-icon>
+    <span>{{ error() }} <button class="bb-link-button" (click)="load()">Retry</button></span>
+  </div>
+} @else if (items().length === 0) {
+  <bb-empty-state icon="menu_book" title="Your menu is empty" message="Add your first dish so customers can see what you serve.">
+    <button mat-flat-button (click)="openForm()"><mat-icon>add</mat-icon>Add your first dish</button>
+  </bb-empty-state>
+} @else {
+  <div class="filters">
+    <np-text-input
+      class="search"
+      [formField]="filters.search"
+      ariaLabel="Search dishes"
+      placeholder="Search dishes"
+      icon="search"
+      clearable
+    />
+    <np-select [formField]="filters.category" ariaLabel="Category" [options]="categoryOptions()" />
+    <np-select [formField]="filters.availability" ariaLabel="Availability" [options]="availabilityOptions" />
+  </div>
+
+  <p class="count bb-muted">Showing {{ filtered().length }} of {{ items().length }} dishes</p>
+  @if (total() > items().length) {
+    <div class="bb-alert info" role="status">
+      <mat-icon aria-hidden="true">info</mat-icon>
+      <span>Showing the first {{ items().length }} of {{ total() }} dishes.</span>
+    </div>
+  }
+
+  <ul class="items bb-card">
+    @for (item of filtered(); track item.id) {
+      <li [class.off]="!item.isAvailable" [attr.aria-busy]="busyId() === item.id">
+        @if (item.imageUrl) {
+          <img [src]="item.imageUrl" alt="" loading="lazy" />
+        } @else {
+          <span class="thumb" aria-hidden="true"><mat-icon>{{ item.category.icon }}</mat-icon></span>
+        }
+        <div class="info">
+          <span class="name"><bb-veg-badge [veg]="item.isVeg" /> {{ item.name }}</span>
+          <span class="bb-muted meta">{{ item.category.name }} · {{ item.pricePaise | inr }}</span>
+        </div>
+        <np-toggle
+          #availability
+          [checked]="item.isAvailable"
+          [disabled]="busyId() === item.id"
+          class="availability bb-toggle-success bb-label-hidden-phone"
+          [class.on]="item.isAvailable"
+          [label]="(item.isAvailable ? 'Available' : 'Off')"
+          [attr.title]="'Available: ' + item.name"
+          (checkedChange)="toggleAvailability(item, $event, availability)"
+        />
+        <button mat-icon-button [matMenuTriggerFor]="itemMenu" [attr.aria-label]="'Actions for ' + item.name" [disabled]="busyId() === item.id">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #itemMenu="matMenu" xPosition="before">
+          <button mat-menu-item (click)="openForm(item)"><mat-icon>edit</mat-icon><span>Edit</span></button>
+          <button mat-menu-item (click)="remove(item)"><mat-icon>delete</mat-icon><span>Delete</span></button>
+        </mat-menu>
+      </li>
+    } @empty {
+      <li class="none bb-muted">No dishes match these filters.</li>
+    }
+  </ul>
+}

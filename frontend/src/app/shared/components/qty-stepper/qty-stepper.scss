@@ -1,0 +1,51 @@
+:host {
+  display: inline-flex;
+}
+.add,
+.stepper {
+  min-width: 96px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--bb-border);
+  background: var(--bb-surface);
+  box-shadow: var(--bb-shadow-sm);
+  color: var(--bb-success);
+  font: inherit;
+  font-weight: 800;
+}
+.add {
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  &:hover:not(:disabled) {
+    background: #e6f5ec;
+  }
+}
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+  button {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 8px;
+    &:hover:not(:disabled) {
+      background: #e6f5ec;
+    }
+  }
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

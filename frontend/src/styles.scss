@@ -1,0 +1,503 @@
+@use '@angular/material' as mat;
+@use 'theme-colors' as bb-theme;
+@use 'breakpoints' as bp;
+
+// ---------------------------------------------------------------------------
+// BiteBox design tokens
+// ---------------------------------------------------------------------------
+:root {
+  // Brand
+  --bb-plum: #2e1a3d;
+  --bb-plum-700: #43295a;
+  --bb-plum-500: #6d557c;
+  --bb-plum-100: #f2eaf7;
+  --bb-amber: #ffb52e;
+  --bb-amber-600: #e89a0c;
+  --bb-amber-100: #fff3dc;
+
+  // Neutrals & surfaces
+  --bb-ink: #1d1622;
+  --bb-ink-muted: #6b6372;
+  --bb-border: #e9e4ee;
+  --bb-surface: #ffffff;
+  --bb-surface-alt: #faf8fc;
+  --bb-bg: #f6f3f9;
+
+  // Feedback
+  --bb-success: #1f8a4c;
+  --bb-warning: #b26a00;
+  --bb-danger: #c62839;
+  --bb-info: #2563eb;
+
+  // Shape, depth, spacing
+  --bb-radius-sm: 8px;
+  --bb-radius: 14px;
+  --bb-radius-lg: 22px;
+  --bb-shadow-sm: 0 1px 2px rgb(46 26 61 / 6%), 0 1px 3px rgb(46 26 61 / 8%);
+  --bb-shadow: 0 6px 24px rgb(46 26 61 / 10%);
+  --bb-space-1: 4px;
+  --bb-space-2: 8px;
+  --bb-space-3: 12px;
+  --bb-space-4: 16px;
+  --bb-space-5: 24px;
+  --bb-space-6: 32px;
+  --bb-space-7: 48px;
+  --bb-page-gutter: 16px;
+  --bb-content-max: 1200px;
+
+  --bb-font: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  // NexPrime components read these --ui-* tokens; point them at the BiteBox brand
+  // so np-* components match Angular Material and the rest of the app.
+  --ui-font: var(--bb-font);
+  --ui-primary: var(--bb-plum);
+  --ui-primary-hover: var(--bb-plum-700);
+  --ui-accent: var(--bb-amber);
+  --ui-text: var(--bb-ink);
+  --ui-text-muted: var(--bb-ink-muted);
+  --ui-border: var(--bb-border);
+  --ui-surface: var(--bb-surface);
+  --ui-surface-muted: var(--bb-surface-alt);
+  --ui-success: var(--bb-success);
+  --ui-warning: var(--bb-warning);
+  --ui-danger: var(--bb-danger);
+  --ui-radius: var(--bb-radius-sm);
+  --ui-radius-lg: var(--bb-radius);
+
+  @include bp.tablet-up {
+    --bb-page-gutter: 24px;
+  }
+  @include bp.desktop-up {
+    --bb-page-gutter: 32px;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Angular Material (M3) theme generated from the BiteBox logo colours
+// ---------------------------------------------------------------------------
+html {
+  color-scheme: light;
+  @include mat.theme(
+    (
+      color: (
+        primary: bb-theme.$primary-palette,
+        tertiary: bb-theme.$tertiary-palette,
+      ),
+      typography: (
+        plain-family: var(--bb-font),
+        brand-family: var(--bb-font),
+      ),
+      density: 0,
+    )
+  );
+  // Use the exact brand plum for primary actions.
+  @include mat.theme-overrides(
+    (
+      primary: #2e1a3d,
+      on-primary: #ffffff,
+      primary-container: #f2eaf7,
+      on-primary-container: #2e1a3d,
+    )
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Base
+// ---------------------------------------------------------------------------
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--bb-font);
+  color: var(--bb-ink);
+  background: var(--bb-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0 0 var(--bb-space-3);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--bb-ink);
+}
+
+h1 {
+  font-size: clamp(1.6rem, 1.2rem + 1.8vw, 2.5rem);
+  font-weight: 800;
+}
+h2 {
+  font-size: clamp(1.3rem, 1.1rem + 0.9vw, 1.75rem);
+  font-weight: 750;
+}
+h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+p {
+  margin: 0 0 var(--bb-space-3);
+  line-height: 1.6;
+}
+
+a {
+  color: var(--bb-plum-500);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+:focus-visible {
+  outline: 3px solid var(--bb-amber);
+  outline-offset: 2px;
+}
+
+// ---------------------------------------------------------------------------
+// Utilities
+// ---------------------------------------------------------------------------
+.bb-container {
+  width: 100%;
+  max-width: var(--bb-content-max);
+  margin-inline: auto;
+  padding-inline: var(--bb-page-gutter);
+}
+
+.bb-card {
+  background: var(--bb-surface);
+  border: 1px solid var(--bb-border);
+  border-radius: var(--bb-radius);
+  box-shadow: var(--bb-shadow-sm);
+  padding: var(--bb-space-5);
+}
+
+.bb-muted {
+  color: var(--bb-ink-muted);
+}
+
+.bb-grid {
+  display: grid;
+  gap: var(--bb-space-4);
+  grid-template-columns: 1fr;
+
+  &.cols-2 {
+    @include bp.tablet-up {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  &.cols-3 {
+    @include bp.tablet-up {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    @include bp.desktop-up {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  &.cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    @include bp.desktop-up {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+}
+
+.bb-full-width {
+  width: 100%;
+}
+
+.bb-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Buttons: amber call-to-action variant on top of Material buttons.
+.mat-mdc-unelevated-button.bb-btn-accent {
+  --mat-button-filled-container-color: var(--bb-amber);
+  --mat-button-filled-label-text-color: var(--bb-plum);
+}
+
+.mat-mdc-button-base {
+  --mat-button-filled-container-shape: 12px;
+  --mat-button-outlined-container-shape: 12px;
+  --mat-button-text-container-shape: 12px;
+  --mat-button-filled-container-height: 44px;
+  --mat-button-outlined-container-height: 44px;
+}
+
+.mat-mdc-form-field {
+  --mat-form-field-outlined-container-shape: 12px;
+}
+
+// NexPrime inputs fill their container. Their own (emulated) host styles size
+// them to 200-400px or max-content and outrank a plain element selector.
+:is(np-text-input, np-textarea, np-input-number, np-select, np-search-input, np-calendar, np-time-picker) {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+// Availability switches are green when on (NexPrime fills the track with --ui-gradient).
+np-toggle.bb-toggle-success {
+  --ui-gradient: var(--bb-success);
+}
+
+// np-toggle whose label only names it for screen readers (lists of switches).
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+np-toggle.bb-label-hidden .toggle-label {
+  @include visually-hidden;
+}
+np-toggle.bb-label-hidden-phone .toggle-label {
+  @include bp.phone-only {
+    @include visually-hidden;
+  }
+}
+
+// Same height as the app's 44px buttons, so a field and a button side by side line up.
+:is(np-text-input, np-search-input, np-input-number, np-select, np-calendar, np-time-picker) .ui-control {
+  min-height: 44px;
+}
+
+// The date and time pickers also fix the width of their inner field.
+np-calendar .calendar-field,
+np-time-picker .time-picker-field {
+  width: 100% !important;
+}
+
+// Snackbar variants used by NotificationService
+.bb-snack-success {
+  --mat-snack-bar-container-color: var(--bb-success);
+  --mat-snack-bar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #fff;
+}
+.bb-snack-error {
+  --mat-snack-bar-container-color: var(--bb-danger);
+  --mat-snack-bar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #fff;
+}
+
+// Skeleton loading placeholder
+.bb-skeleton {
+  display: block;
+  border-radius: var(--bb-radius-sm);
+  background: linear-gradient(90deg, #eee8f2 25%, #f7f3fa 37%, #eee8f2 63%);
+  background-size: 400% 100%;
+  animation: bb-shimmer 1.4s ease infinite;
+}
+
+@keyframes bb-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Forms (auth pages, profile, admin forms)
+// ---------------------------------------------------------------------------
+.bb-form,
+// Material's dialog content sets display: block; keep the form layout inside dialogs too.
+.mat-mdc-dialog-content.bb-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-1);
+
+  // Fields always fill their column (otherwise they shrink to Material's default ~180px),
+  // and keep room below for an error/hint line plus the next field's floating label.
+  // A margin (not the container gap) also works for fields nested in cards and groups.
+  .mat-mdc-form-field {
+    width: 100%;
+    margin-bottom: var(--bb-space-4);
+  }
+
+  // Fields with a dynamic subscript (multi-line hints) reserve no space below
+  // themselves, so give them a little more.
+  .mat-mdc-form-field:has(.mat-mdc-form-field-subscript-dynamic-size) {
+    margin-bottom: var(--bb-space-5);
+  }
+
+  // NexPrime fields (and .bb-field wrappers: a control plus its <bb-field-error>).
+  :is(np-text-input, np-textarea, np-input-number, np-select, np-calendar, np-time-picker, .bb-field) {
+    margin-bottom: var(--bb-space-4);
+  }
+  .bb-field > :is(np-text-input, np-textarea, np-input-number, np-select, np-calendar, np-time-picker) {
+    margin-bottom: 0;
+  }
+
+  .bb-form-row {
+    display: grid;
+    gap: 0 var(--bb-space-3);
+    grid-template-columns: 1fr;
+
+    // Let controls shrink to their column instead of overflowing it.
+    > * {
+      min-width: 0;
+    }
+    @include bp.tablet-up {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .bb-form-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--bb-space-3);
+    margin-top: var(--bb-space-2);
+  }
+
+  button[type='submit'] {
+    width: 100%;
+  }
+}
+
+.bb-form-heading {
+  margin-bottom: var(--bb-space-5);
+
+  .bb-eyebrow {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bb-plum-500);
+    background: var(--bb-plum-100);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: var(--bb-space-3);
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    margin-bottom: var(--bb-space-1);
+  }
+
+  p {
+    color: var(--bb-ink-muted);
+    margin: 0;
+  }
+}
+
+.bb-form-footer {
+  margin-top: var(--bb-space-5);
+  text-align: center;
+  color: var(--bb-ink-muted);
+  font-size: 0.95rem;
+  display: grid;
+  gap: var(--bb-space-2);
+
+  a {
+    font-weight: 600;
+    color: var(--bb-plum);
+  }
+}
+
+.bb-alert {
+  display: flex;
+  gap: var(--bb-space-2);
+  align-items: flex-start;
+  padding: var(--bb-space-3) var(--bb-space-4);
+  border-radius: var(--bb-radius-sm);
+  margin-bottom: var(--bb-space-4);
+  font-size: 0.95rem;
+  line-height: 1.45;
+
+  mat-icon {
+    flex-shrink: 0;
+  }
+
+  &.error {
+    background: #fdecee;
+    color: var(--bb-danger);
+  }
+  &.success {
+    background: #e6f5ec;
+    color: var(--bb-success);
+  }
+  &.info {
+    background: var(--bb-amber-100);
+    color: #7a4b00;
+  }
+}
+
+.bb-link-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--bb-plum-500);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+// Role badge used in admin lists
+.bb-role-chip {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--bb-plum-100);
+  color: var(--bb-plum);
+  white-space: nowrap;
+
+  &.role-admin {
+    background: var(--bb-plum);
+    color: var(--bb-amber);
+  }
+  &.role-restaurant {
+    background: var(--bb-amber-100);
+  }
+  &.role-delivery {
+    background: #e3f1ff;
+    color: #12457a;
+  }
+}
+
+// Text prefixes/suffixes (₹, "min") only make sense next to a value. While the
+// label is sitting inside an empty field they would clash with it, so show them
+// only once the label has floated up (field focused or filled).
+.mat-mdc-form-field:has(.mdc-floating-label):not(:has(.mdc-floating-label--float-above)) {
+  .mat-mdc-form-field-text-prefix,
+  .mat-mdc-form-field-text-suffix {
+    visibility: hidden;
+  }
+}

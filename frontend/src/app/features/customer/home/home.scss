@@ -1,0 +1,402 @@
+@use 'breakpoints' as bp;
+
+.hero {
+  color: #fff6e5;
+  background:
+    radial-gradient(circle at 90% 0%, rgb(255 181 46 / 30%) 0, transparent 45%),
+    radial-gradient(circle at 0% 100%, rgb(109 85 124 / 60%) 0, transparent 50%),
+    var(--bb-plum);
+  overflow: hidden;
+}
+
+.hero-inner {
+  display: grid;
+  gap: var(--bb-space-6);
+  padding-block: var(--bb-space-7);
+  align-items: center;
+
+  @include bp.tablet-up {
+    grid-template-columns: 3fr 2fr;
+  }
+  @include bp.desktop-up {
+    padding-block: 88px;
+  }
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgb(255 181 46 / 18%);
+  color: var(--bb-amber);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 4px 12px 4px 8px;
+  border-radius: 999px;
+  margin-bottom: var(--bb-space-4);
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+}
+
+h1 {
+  color: #fff6e5;
+  font-size: clamp(2rem, 1.4rem + 3vw, 3.4rem);
+  margin-bottom: var(--bb-space-4);
+}
+
+.highlight {
+  color: var(--bb-amber);
+}
+
+.hero-copy p {
+  font-size: 1.1rem;
+  opacity: 0.88;
+  max-width: 540px;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bb-space-3);
+  margin-top: var(--bb-space-5);
+  // Same height whether empty, greeting or buttons: the hero never jumps.
+  min-height: 44px;
+
+  a {
+    flex: 1 1 160px;
+    @include bp.tablet-up {
+      flex: 0 0 auto;
+    }
+  }
+}
+
+.ghost {
+  --mat-button-outlined-label-text-color: #fff6e5;
+  --mat-button-outlined-outline-color: rgb(255 246 229 / 45%);
+}
+
+.greeting {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--bb-amber);
+}
+
+// Illustration made from CSS shapes (no third-party imagery).
+.hero-art {
+  position: relative;
+  height: 240px;
+  display: none;
+
+  @include bp.tablet-up {
+    display: block;
+    height: 300px;
+  }
+}
+
+.box {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -45%);
+  width: 180px;
+
+  .lid {
+    height: 42px;
+    border-radius: 14px;
+    background: var(--bb-amber);
+    transform: rotate(-8deg) translateY(-6px);
+  }
+
+  .body {
+    height: 130px;
+    margin-top: 8px;
+    border-radius: 18px;
+    background: var(--bb-amber);
+    display: grid;
+    place-items: center;
+  }
+
+  .smile {
+    width: 70px;
+    height: 34px;
+    border: 7px solid var(--bb-plum);
+    border-top: 0;
+    border-radius: 0 0 70px 70px;
+  }
+}
+
+.float {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: #fff6e5;
+  color: var(--bb-plum);
+  box-shadow: var(--bb-shadow);
+  animation: bob 4s ease-in-out infinite;
+
+  &.float-0 {
+    top: 6%;
+    left: 8%;
+  }
+  &.float-1 {
+    top: 2%;
+    right: 10%;
+    animation-delay: -1s;
+  }
+  &.float-2 {
+    bottom: 6%;
+    left: 4%;
+    animation-delay: -2s;
+  }
+  &.float-3 {
+    bottom: 10%;
+    right: 4%;
+    animation-delay: -3s;
+  }
+}
+
+@keyframes bob {
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.section {
+  padding-block: var(--bb-space-7) 0;
+}
+
+.cravings {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--bb-space-3);
+
+  @include bp.tablet-up {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  li a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--bb-space-2);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--bb-ink);
+    text-decoration: none;
+    text-align: center;
+
+    &:hover .craving-icon {
+      background: var(--bb-amber);
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.craving-skeleton {
+  width: 72px;
+  height: 96px;
+  margin-inline: auto;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bb-space-3);
+}
+
+.popular {
+  display: grid;
+  gap: var(--bb-space-4);
+  grid-template-columns: 1fr;
+
+  @include bp.tablet-up {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @include bp.desktop-up {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.popular-skeleton {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--bb-radius);
+}
+
+.hero-search {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-2);
+  margin-top: var(--bb-space-5);
+  max-width: 560px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 6px;
+  box-shadow: var(--bb-shadow);
+
+  np-text-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  // The pill is the field here: drop the NexPrime input's own border and ring.
+  ::ng-deep np-text-input .ui-control {
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    font-size: 1rem;
+    // The input inherits its colour; the hero's text is light, so set it explicitly.
+    color: var(--bb-ink);
+  }
+
+  &:focus-within {
+    outline: 3px solid var(--bb-amber);
+  }
+}
+
+.craving-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bb-amber-100);
+  color: var(--bb-plum);
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+
+  mat-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 34px;
+  }
+}
+
+.steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--bb-space-4);
+
+  @include bp.tablet-up {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  li {
+    position: relative;
+  }
+
+  mat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 40px;
+    color: var(--bb-amber-600);
+    margin-bottom: var(--bb-space-3);
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.step-num {
+  position: absolute;
+  top: var(--bb-space-4);
+  right: var(--bb-space-4);
+  font-weight: 800;
+  font-size: 2rem;
+  color: var(--bb-plum-100);
+}
+
+.partners {
+  display: grid;
+  gap: var(--bb-space-4);
+  padding-bottom: var(--bb-space-7);
+
+  @include bp.tablet-up {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.partner {
+  border-radius: var(--bb-radius-lg);
+  padding: var(--bb-space-6) var(--bb-space-5);
+
+  mat-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 44px;
+    margin-bottom: var(--bb-space-3);
+  }
+
+  &.restaurant {
+    background: var(--bb-plum);
+    color: #fff6e5;
+
+    h3 {
+      color: #fff6e5;
+    }
+    mat-icon {
+      color: var(--bb-amber);
+    }
+    .light {
+      --mat-button-text-label-text-color: #fff6e5;
+    }
+  }
+
+  &.rider {
+    background: var(--bb-amber-100);
+
+    mat-icon {
+      color: var(--bb-plum);
+    }
+  }
+}
+
+.partner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bb-space-2);
+  margin-top: var(--bb-space-4);
+}
+
+.section-head .bb-link-button {
+  font-size: 0.9rem;
+  margin-bottom: var(--bb-space-3);
+  text-align: left;
+}
+
+.no-nearby {
+  display: flex;
+  gap: var(--bb-space-4);
+  align-items: flex-start;
+
+  > mat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 40px;
+    color: var(--bb-amber-600);
+    flex-shrink: 0;
+  }
+  h3 {
+    margin-bottom: var(--bb-space-1);
+  }
+}
+
+.no-nearby-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bb-space-2);
+}

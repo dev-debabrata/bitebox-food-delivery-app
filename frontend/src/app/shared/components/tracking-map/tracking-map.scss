@@ -1,0 +1,62 @@
+:host {
+  display: block;
+}
+
+.map {
+  height: 280px;
+  border-radius: var(--bb-radius);
+  overflow: hidden;
+  border: 1px solid var(--bb-border);
+  background: var(--bb-surface-alt);
+  // Keep Leaflet's controls under dialogs, menus and the sticky header.
+  z-index: 0;
+  position: relative;
+}
+
+.map-error {
+  margin: var(--bb-space-1) 0 0;
+  font-size: 0.82rem;
+  color: var(--bb-ink-muted);
+}
+
+// Markers are created by Leaflet outside this component's view.
+:host ::ng-deep .bb-track-marker {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 30%);
+  color: #fff;
+
+  .material-symbols-outlined {
+    font-size: 20px;
+  }
+
+  &.bb-track-restaurant {
+    background: var(--bb-amber-600);
+  }
+
+  &.bb-track-home {
+    background: var(--bb-plum);
+  }
+
+  &.bb-track-rider {
+    background: var(--bb-success);
+    // A soft pulse so the moving rider stands out.
+    animation: bb-rider-pulse 2s ease-out infinite;
+
+    &.is-stale {
+      background: #8a8494;
+      animation: none;
+    }
+  }
+}
+
+@keyframes bb-rider-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(31 138 76 / 45%);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgb(31 138 76 / 0%);
+  }
+}

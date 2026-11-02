@@ -1,0 +1,73 @@
+<section class="bb-container page">
+  <bb-page-header title="Saved addresses" subtitle="Where should we deliver?">
+    <button mat-flat-button (click)="open()" [disabled]="addresses().length >= 10">
+      <mat-icon>add</mat-icon>Add address
+    </button>
+  </bb-page-header>
+  @if (error()) {
+    <div class="bb-alert error" role="alert">
+      <mat-icon aria-hidden="true">error</mat-icon><span>{{ error() }}</span>
+    </div>
+  }
+  @if (loading()) {
+    <div class="grid">
+      @for (i of [1, 2]; track i) {
+        <span class="bb-skeleton" style="height: 150px"></span>
+      }
+    </div>
+  } @else if (addresses().length === 0) {
+    <bb-empty-state
+      icon="location_on"
+      title="No saved addresses"
+      message="Add one to check out faster."
+    >
+      <button mat-flat-button (click)="open()">Add your first address</button>
+    </bb-empty-state>
+  } @else {
+    <div class="grid">
+      @for (a of addresses(); track a.id) {
+        <article class="bb-card address" [class.default]="a.isDefault">
+          <header>
+            <span class="label">
+              <mat-icon aria-hidden="true">{{
+                a.label === 'home' ? 'home' : a.label === 'work' ? 'work' : 'place'
+              }}</mat-icon>
+              {{ a.label | titlecase }}
+            </span>
+            @if (a.isDefault) {
+              <span class="chip">Default</span>
+            }
+            <button
+              mat-icon-button
+              [matMenuTriggerFor]="menu"
+              [attr.aria-label]="'Actions for ' + a.label + ' address'"
+            >
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu" xPosition="before">
+              <button mat-menu-item (click)="open(a)">
+                <mat-icon>edit</mat-icon><span>Edit</span>
+              </button>
+              @if (!a.isDefault) {
+                <button mat-menu-item (click)="makeDefault(a)">
+                  <mat-icon>star</mat-icon><span>Make default</span>
+                </button>
+              }
+              <button mat-menu-item (click)="remove(a)">
+                <mat-icon>delete</mat-icon><span>Delete</span>
+              </button>
+            </mat-menu>
+          </header>
+          <p>
+            {{ a.line1 }}{{ a.line2 ? ', ' + a.line2 : '' }}<br />
+            {{ a.area ? a.area + ', ' : '' }}{{ a.city }}, {{ a.state }} {{ a.postalCode }}
+            @if (a.landmark) {
+              <br /><span class="bb-muted">Landmark: {{ a.landmark }}</span>
+            }
+          </p>
+          <p class="bb-muted small">{{ a.recipientName }} · {{ a.phone }}</p>
+        </article>
+      }
+    </div>
+  }
+</section>

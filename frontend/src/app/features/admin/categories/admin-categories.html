@@ -1,0 +1,68 @@
+<bb-page-header
+  title="Food categories"
+  subtitle="Categories organise menus and power category browsing for customers."
+>
+  <button mat-flat-button (click)="open()"><mat-icon>add</mat-icon>New category</button>
+</bb-page-header>
+
+@if (error()) {
+  <div class="bb-alert error" role="alert">
+    <mat-icon aria-hidden="true">error</mat-icon>
+    <span>{{ error() }} <button class="bb-link-button" (click)="load()">Retry</button></span>
+  </div>
+}
+
+@if (loading()) {
+  <div class="grid">
+    @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+      <span class="bb-skeleton" style="height: 120px"></span>
+    }
+  </div>
+} @else if (categories().length === 0) {
+  <bb-empty-state
+    icon="category"
+    title="No categories yet"
+    message="Create categories so restaurants can organise their menus."
+  >
+    <button mat-flat-button (click)="open()">Create the first category</button>
+  </bb-empty-state>
+} @else {
+  <div class="grid">
+    @for (c of categories(); track c.id) {
+      <article class="bb-card category" [class.inactive]="!c.isActive">
+        <span class="icon"
+          ><mat-icon aria-hidden="true">{{ c.icon }}</mat-icon></span
+        >
+        <div class="text">
+          <h3>{{ c.name }}</h3>
+          <span class="bb-muted"
+            >{{ c.itemCount }} {{ c.itemCount === 1 ? 'dish' : 'dishes' }} · order
+            {{ c.sortOrder }}</span
+          >
+        </div>
+        <div class="controls">
+          <np-toggle
+            #active
+            [checked]="c.isActive"
+            (checkedChange)="toggle(c, $event, active)"
+            class="bb-label-hidden"
+            [label]="'Active: ' + c.name"
+          />
+          <button mat-icon-button (click)="open(c)" [attr.aria-label]="'Edit ' + c.name">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <span [matTooltip]="c.itemCount ? 'In use by menu items. Deactivate instead.' : ''">
+            <button
+              mat-icon-button
+              (click)="remove(c)"
+              [disabled]="!!c.itemCount"
+              [attr.aria-label]="'Delete ' + c.name"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </span>
+        </div>
+      </article>
+    }
+  </div>
+}

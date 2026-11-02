@@ -1,0 +1,47 @@
+<section class="bb-container page">
+  <bb-page-header title="My orders" />
+  @if (error()) {
+    <div class="bb-alert error" role="alert">
+      <mat-icon aria-hidden="true">error</mat-icon>
+      <span>{{ error() }} <button class="bb-link-button" (click)="load(1)">Retry</button></span>
+    </div>
+  }
+  @if (loading() && orders().length === 0) {
+    @for (i of [1, 2, 3]; track i) {
+      <span class="bb-skeleton" style="height: 104px; margin-bottom: 12px"></span>
+    }
+  } @else if (orders().length === 0 && !error()) {
+    <bb-empty-state
+      icon="receipt_long"
+      title="No orders yet"
+      message="Your orders will show up here."
+    >
+      <a mat-flat-button routerLink="/restaurants">Order something tasty</a>
+    </bb-empty-state>
+  } @else {
+    <ul class="orders">
+      @for (o of orders(); track o.id) {
+        <li>
+          <a class="bb-card order" [routerLink]="['/orders', o.id]">
+            <div class="top">
+              <strong>{{ o.restaurantSnapshot.name }}</strong>
+              <span class="status status-{{ o.status }}">{{ statusLabel[o.status] }}</span>
+            </div>
+            <span class="bb-muted items">{{ summary(o) }}</span>
+            <div class="bottom bb-muted">
+              <span>{{ o.createdAt | date: 'medium' }} · {{ o.orderNumber }}</span>
+              <strong class="total">{{ o.pricing.totalPaise | inr }}</strong>
+            </div>
+          </a>
+        </li>
+      }
+    </ul>
+    @if (canLoadMore()) {
+      <div class="more">
+        <button mat-stroked-button (click)="load(pagination()!.page + 1)" [disabled]="loading()">
+          Show older orders
+        </button>
+      </div>
+    }
+  }
+</section>

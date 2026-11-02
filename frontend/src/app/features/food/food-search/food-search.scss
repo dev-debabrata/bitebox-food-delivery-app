@@ -1,0 +1,120 @@
+@use 'breakpoints' as bp;
+
+.page {
+  padding-block: var(--bb-space-5) var(--bb-space-7);
+  max-width: 900px;
+}
+
+.head p {
+  margin: 0;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bb-space-3);
+  margin: var(--bb-space-4) 0 var(--bb-space-3);
+
+  .search {
+    flex: 1 1 280px;
+  }
+}
+
+.categories {
+  display: block;
+  margin-bottom: var(--bb-space-4);
+
+  ::ng-deep .mdc-evolution-chip-set__chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: var(--bb-space-1);
+
+    @include bp.desktop-up {
+      flex-wrap: wrap;
+    }
+  }
+}
+
+.count {
+  margin-bottom: var(--bb-space-2);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--bb-space-3);
+}
+
+.dish {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-3);
+  padding: var(--bb-space-3);
+  background: var(--bb-surface);
+  border: 1px solid var(--bb-border);
+  border-radius: var(--bb-radius);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: var(--bb-shadow-sm);
+  }
+
+  img,
+  .thumb {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    border-radius: var(--bb-radius-sm);
+    object-fit: cover;
+  }
+
+  .thumb {
+    display: grid;
+    place-items: center;
+    background: var(--bb-amber-100);
+    color: var(--bb-plum);
+  }
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-2);
+  font-weight: 700;
+}
+
+.price {
+  font-weight: 700;
+}
+
+.from {
+  font-size: 0.88rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chev {
+  color: var(--bb-ink-muted);
+}
+
+.more {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--bb-space-5);
+}

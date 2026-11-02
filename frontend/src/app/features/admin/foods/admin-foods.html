@@ -1,0 +1,68 @@
+<bb-page-header title="Food items" subtitle="Every dish on BiteBox across all restaurants." />
+
+<div class="filters">
+  <np-text-input
+    class="search"
+    [formField]="filters.search"
+    ariaLabel="Search dishes"
+    placeholder="Search dishes"
+    icon="search"
+    clearable
+  />
+  @if (restaurant()) {
+    <button mat-stroked-button (click)="clearRestaurant()">
+      <mat-icon>close</mat-icon>One restaurant only
+    </button>
+  }
+</div>
+
+@if (error()) {
+  <div class="bb-alert error" role="alert">
+    <mat-icon aria-hidden="true">error</mat-icon>
+    <span>{{ error() }} <button class="bb-link-button" (click)="load(1)">Retry</button></span>
+  </div>
+}
+
+<div class="bb-card list-card" [attr.aria-busy]="loading()">
+  @if (loading() && items().length === 0) {
+    @for (i of [1, 2, 3, 4]; track i) {
+      <span class="bb-skeleton row-skeleton"></span>
+    }
+  } @else if (items().length === 0) {
+    <bb-empty-state icon="ramen_dining" title="No dishes found" />
+  } @else {
+    <ul [class.dim]="loading()">
+      @for (item of items(); track item.id) {
+        <li [class.off]="!item.isAvailable">
+          <div class="info">
+            <span class="name"><bb-veg-badge [veg]="item.isVeg" /> {{ item.name }}</span>
+            <span class="bb-muted small">
+              <a [routerLink]="['/admin/restaurants', item.restaurant._id ?? item.restaurant.id]">{{
+                item.restaurant.name
+              }}</a>
+              · {{ item.category.name }} · {{ item.pricePaise | inr }}
+            </span>
+          </div>
+          <np-toggle
+            #availability
+            [checked]="item.isAvailable"
+            (checkedChange)="toggle(item, $event, availability)"
+            class="bb-toggle-success bb-label-hidden"
+            [label]="'Available: ' + item.name"
+          />
+          <button mat-icon-button (click)="remove(item)" [attr.aria-label]="'Delete ' + item.name">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+  <mat-paginator
+    [length]="pagination().total"
+    [pageIndex]="pagination().page - 1"
+    [pageSize]="pagination().limit"
+    [pageSizeOptions]="[20, 50, 100]"
+    (page)="onPage($event)"
+    aria-label="Select page of dishes"
+  />
+</div>

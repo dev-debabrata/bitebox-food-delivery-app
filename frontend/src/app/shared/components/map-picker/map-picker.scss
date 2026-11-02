@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+.map {
+  height: 240px;
+  border-radius: var(--bb-radius);
+  overflow: hidden;
+  border: 1px solid var(--bb-border);
+  background: var(--bb-surface-alt);
+  // Keep Leaflet's panes under dialog overlays and menus.
+  position: relative;
+  z-index: 0;
+}
+
+.map-hint,
+.map-error {
+  font-size: 0.8rem;
+  margin: var(--bb-space-1) 0 0;
+  color: var(--bb-ink-muted);
+}
+
+.map-error {
+  color: var(--bb-danger);
+}
+
+// The pin is created by Leaflet outside Angular's view, so its styles must not be encapsulated.
+::ng-deep .bb-map-pin {
+  span {
+    position: relative;
+    display: block;
+    width: 30px;
+    height: 30px;
+    border-radius: 50% 50% 50% 0;
+    background: var(--bb-plum);
+    border: 3px solid var(--bb-amber);
+    transform: rotate(-45deg);
+    box-shadow: 0 4px 10px rgb(0 0 0 / 30%);
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border-radius: 50%;
+      background: var(--bb-amber);
+    }
+  }
+}

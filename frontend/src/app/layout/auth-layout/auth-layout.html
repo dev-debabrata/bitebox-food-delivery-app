@@ -1,0 +1,28 @@
+<div class="auth-shell">
+  <aside class="brand-panel">
+    <a routerLink="/" class="logo-link" aria-label="BiteBox home">
+      <bb-brand-logo variant="light" [height]="40" />
+    </a>
+
+    <div class="pitch">
+      <h2>Good food, boxed and delivered.</h2>
+      <p>Order from the places you love and follow your rider in real time.</p>
+      <ul>
+        @for (perk of perks; track perk.icon) {
+          <li>
+            <mat-icon aria-hidden="true">{{ perk.icon }}</mat-icon>
+            <span>{{ perk.text }}</span>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <p class="copyright">&copy; {{ year }} BiteBox</p>
+  </aside>
+
+  <main class="form-panel">
+    <div class="form-card">
+      <router-outlet />
+    </div>
+  </main>
+</div>

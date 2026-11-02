@@ -1,0 +1,180 @@
+<section class="bb-container page">
+  @if (loading()) {
+    <span class="bb-skeleton" style="height: 420px"></span>
+  } @else if (notFound()) {
+    <bb-empty-state icon="receipt_long" title="Order not found">
+      <a mat-flat-button routerLink="/orders">My orders</a>
+    </bb-empty-state>
+  } @else if (error()) {
+    <bb-empty-state icon="cloud_off" title="Could not load this order" [message]="error()!">
+      <button mat-flat-button (click)="load()">Try again</button>
+    </bb-empty-state>
+  } @else if (order(); as o) {
+    @if (placed()) {
+      <np-confetti trigger="manual" [count]="140" class="placed-confetti">
+        <div class="placed" role="status">
+          <mat-icon aria-hidden="true">check_circle</mat-icon>
+          <div>
+            <h1>Order placed!</h1>
+            <p>{{ o.restaurantSnapshot.name }} will confirm it shortly. Pay {{ o.pricing.totalPaise | inr }} on delivery.</p>
+          </div>
+        </div>
+      </np-confetti>
+    }
+
+    <header class="head">
+      <div>
+        <a routerLink="/orders" class="back"><mat-icon aria-hidden="true">arrow_back</mat-icon>My orders</a>
+        <h2>Order {{ o.orderNumber }}</h2>
+        <p class="bb-muted">Placed {{ o.createdAt | date: 'medium' }}</p>
+      </div>
+      <span class="status status-{{ o.status }}">{{ statusLabel[o.status] }}</span>
+    </header>
+
+    <div class="layout">
+      <div class="main">
+        @if (!ended() && o.status !== 'delivered') {
+          @let t = tracking;
+          <section class="bb-card" aria-labelledby="track-title">
+            <h3 id="track-title">Live tracking</h3>
+            <p class="track-status" aria-live="polite">
+              @if (o.status === 'assigned') {
+                @if (t.remaining(); as r) {
+                  <strong>{{ o.rider?.name ?? 'Your rider' }}</strong> is heading to the restaurant, about {{ minutes(r.durationSeconds) }} min away.
+                } @else if (t.rider()) {
+                  <strong>{{ o.rider?.name ?? 'Your rider' }}</strong> is heading to the restaurant.
+                } @else {
+                  Rider assigned. Waiting for their location…
+                }
+              } @else if (o.status === 'picked_up' || o.status === 'on_the_way') {
+                @if (t.remaining(); as r) {
+                  Arriving in about <strong>{{ minutes(r.durationSeconds) }} min</strong> · {{ r.distanceMeters / 1000 | number: '1.1-1' }} km by road
+                } @else if (t.straightLineToTarget(); as m) {
+                  Your order is on its way, about {{ m / 1000 | number: '1.1-1' }} km away (straight line).
+                } @else {
+                  Your order is on its way. Waiting for the rider's location…
+                }
+              } @else {
+                The rider's position appears here once someone accepts the delivery.
+              }
+            </p>
+            @if (t.riderStale()) {
+              <p class="stale" role="status">
+                <mat-icon aria-hidden="true">signal_cellular_connected_no_internet_0_bar</mat-icon>
+                Last location update {{ minutes(t.riderSeenSeconds() ?? 0) }} min ago. The rider may have a weak signal.
+              </p>
+            }
+            <bb-tracking-map
+              [restaurant]="t.restaurant()"
+              [destination]="t.destination()"
+              [rider]="t.rider()"
+              [riderStale]="t.riderStale()"
+              [route]="t.remaining()?.path ?? t.plannedRoute()?.path ?? null"
+              [lineFrom]="t.rider() ?? t.restaurant()"
+              [label]="'Map of your delivery from ' + o.restaurantSnapshot.name + ' to ' + (o.deliveryAddress.area || o.deliveryAddress.city)"
+            />
+            <p class="bb-muted small estimate-note">
+              Times and distances are estimates from road routes without live traffic.
+              @if (t.plannedRoute(); as p) {
+                Restaurant to you: {{ p.distanceMeters / 1000 | number: '1.1-1' }} km by road
+                ({{ p.straightLineMeters / 1000 | number: '1.1-1' }} km straight line).
+              }
+              @if (t.rider() && !t.riderStale() && t.riderSeenSeconds() !== null) {
+                Rider location updated {{ t.riderSeenSeconds() }}s ago.
+              }
+            </p>
+          </section>
+        }
+
+        <section class="bb-card" aria-labelledby="progress-title">
+          <h3 id="progress-title">Progress</h3>
+          @if (ended()) {
+            <div class="bb-alert error" role="status">
+              <mat-icon aria-hidden="true">cancel</mat-icon>
+              <span>
+                @switch (o.cancellation?.by) {
+                  @case ('customer') { You cancelled this order. }
+                  @case ('system') { The restaurant did not respond in time, so the order was cancelled. }
+                  @case ('admin') { BiteBox support cancelled this order. }
+                  @default { {{ o.restaurantSnapshot.name }} could not take this order. }
+                }
+                @if (o.cancellation; as c) {
+                  @if (c.reason && c.by !== 'customer' && c.by !== 'system') {
+                    <br /><strong>Reason:</strong> {{ c.reason }}
+                  }
+                }
+                You have not been charged.
+              </span>
+            </div>
+          } @else {
+            <np-timeline [value]="timeline()" [activeIndex]="activeStep()" variant="default" class="journey" />
+            @if (o.status === 'pending') {
+              <div class="pending-row">
+                <p class="bb-muted small">Waiting for {{ o.restaurantSnapshot.name }} to accept. You can cancel until then.</p>
+                <button mat-stroked-button class="cancel" [disabled]="cancelling()" (click)="cancel(o)">Cancel order</button>
+              </div>
+            } @else if (o.status !== 'delivered') {
+              <p class="bb-muted small">Status updates live.</p>
+            }
+          }
+        </section>
+
+        <section class="bb-card" aria-labelledby="items-title">
+          <h3 id="items-title">{{ o.restaurantSnapshot.name }}</h3>
+          <ul class="items">
+            @for (item of o.items; track item.foodItem) {
+              <li>
+                <bb-veg-badge [veg]="item.isVeg" />
+                <span class="name">{{ item.name }} × {{ item.quantity }}</span>
+                <span>{{ item.lineTotalPaise | inr }}</span>
+              </li>
+            }
+          </ul>
+          @if (o.note) {
+            <p class="note"><strong>Note:</strong> {{ o.note }}</p>
+          }
+        </section>
+      </div>
+
+      <aside class="side">
+        <section class="bb-card" aria-labelledby="bill-title">
+          <h3 id="bill-title">Bill</h3>
+          <bb-bill-summary [pricing]="o.pricing" [couponCode]="o.coupon?.code" [distanceMeters]="o.distanceMeters" />
+          <p class="payment">
+            <mat-icon aria-hidden="true">payments</mat-icon>
+            Cash on delivery · <span class="pay-{{ o.paymentStatus }}">{{ o.paymentStatus | titlecase }}</span>
+          </p>
+        </section>
+        @if (o.rider; as r) {
+          <section class="bb-card rider" aria-labelledby="rider-title">
+            <h3 id="rider-title">Your rider</h3>
+            <div class="rider-row">
+              <span class="rider-avatar" aria-hidden="true">{{ r.name.charAt(0) }}</span>
+              <div>
+                <strong>{{ r.name }}</strong>
+                <span class="bb-muted">
+                  {{ r.vehicleType ? vehicleLabel[r.vehicleType] : '' }}{{ r.vehicleNumber ? ' · ' + r.vehicleNumber : '' }}
+                </span>
+              </div>
+              @if (r.phone && o.status !== 'delivered') {
+                <a mat-icon-button [href]="'tel:' + r.phone" [attr.aria-label]="'Call ' + r.name"><mat-icon>call</mat-icon></a>
+              }
+            </div>
+          </section>
+        }
+        <section class="bb-card" aria-labelledby="deliver-title">
+          <h3 id="deliver-title">Delivering to</h3>
+          @let a = o.deliveryAddress;
+          <address>
+            <strong>{{ a.recipientName }}</strong> · {{ a.phone }}<br />
+            {{ a.line1 }}{{ a.line2 ? ', ' + a.line2 : '' }}<br />
+            {{ a.area ? a.area + ', ' : '' }}{{ a.city }} {{ a.postalCode }}
+            @if (a.landmark) {
+              <br /><span class="bb-muted">Landmark: {{ a.landmark }}</span>
+            }
+          </address>
+        </section>
+      </aside>
+    </div>
+  }
+</section>

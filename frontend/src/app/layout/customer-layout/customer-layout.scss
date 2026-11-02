@@ -1,0 +1,254 @@
+@use 'breakpoints' as bp;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--bb-amber);
+  color: var(--bb-plum);
+  padding: var(--bb-space-2) var(--bb-space-4);
+  font-weight: 700;
+
+  &:focus {
+    left: var(--bb-space-2);
+    top: var(--bb-space-2);
+  }
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgb(255 255 255 / 94%);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--bb-border);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-4);
+  height: 64px;
+
+  @include bp.desktop-up {
+    height: 72px;
+  }
+}
+
+.logo {
+  display: inline-flex;
+}
+
+.location-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  max-width: 44vw;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  color: var(--bb-ink);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--bb-plum-100);
+  }
+
+  mat-icon {
+    color: var(--bb-amber-600);
+    flex-shrink: 0;
+  }
+
+  .caret {
+    color: var(--bb-ink-muted);
+  }
+
+  @include bp.desktop-up {
+    max-width: 240px;
+  }
+}
+
+.location-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+
+  strong {
+    border-bottom: 2px solid var(--bb-ink);
+  }
+}
+
+.desktop-nav {
+  display: none;
+  gap: var(--bb-space-5);
+  margin-left: var(--bb-space-3);
+
+  @include bp.desktop-up {
+    display: flex;
+  }
+
+  a {
+    color: var(--bb-ink-muted);
+    text-decoration: none;
+    font-weight: 600;
+    padding: var(--bb-space-2) 0;
+    border-bottom: 2px solid transparent;
+
+    &:hover,
+    &.active {
+      color: var(--bb-plum);
+      border-bottom-color: var(--bb-amber);
+    }
+  }
+}
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-2);
+}
+
+.action-skeleton {
+  width: 96px;
+  height: 36px;
+  // Holds the space while the session is restored (usually a blink), without a grey flash.
+  visibility: hidden;
+}
+
+.hide-phone {
+  @include bp.phone-only {
+    display: none !important;
+  }
+}
+
+.menu-header {
+  display: flex;
+  flex-direction: column;
+  padding: var(--bb-space-3) var(--bb-space-4);
+  gap: 2px;
+
+  span {
+    color: var(--bb-ink-muted);
+    font-size: 0.85rem;
+  }
+}
+
+.site-main {
+  flex: 1;
+}
+
+.site-footer {
+  background: var(--bb-plum);
+  color: #e8dcef;
+  padding: var(--bb-space-7) 0 calc(var(--bb-space-7) + 64px);
+
+  @include bp.desktop-up {
+    padding-bottom: var(--bb-space-5);
+  }
+
+  h3 {
+    color: var(--bb-amber);
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  a {
+    color: #e8dcef;
+    text-decoration: none;
+    display: block;
+    padding: 4px 0;
+
+    &:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+  }
+
+  p {
+    margin-top: var(--bb-space-3);
+    opacity: 0.8;
+  }
+}
+
+.footer-grid {
+  display: grid;
+  gap: var(--bb-space-5);
+  grid-template-columns: 1fr;
+
+  @include bp.tablet-up {
+    grid-template-columns: 2fr 1fr 1fr;
+  }
+}
+
+.copyright {
+  margin-top: var(--bb-space-6);
+  padding-top: var(--bb-space-4);
+  border-top: 1px solid rgb(255 255 255 / 12%);
+  font-size: 0.85rem;
+}
+
+.tab-bar {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--bb-surface);
+  border-top: 1px solid var(--bb-border);
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -4px 16px rgb(46 26 61 / 6%);
+
+  @include bp.desktop-up {
+    display: none;
+  }
+
+  a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: var(--bb-space-2) 0;
+    min-height: 56px;
+    justify-content: center;
+    color: var(--bb-ink-muted);
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 600;
+
+    &.active {
+      color: var(--bb-plum);
+
+      mat-icon {
+        color: var(--bb-amber-600);
+      }
+    }
+  }
+}
+
+// Keep the back-to-top button above the bottom tab bar on phones/tablets.
+.scroll-top {
+  @include bp.below-desktop {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    right: 16px;
+  }
+}
+
+// Wrapper carrying the cart count badge; sized like the icon inside it.
+.badge-host {
+  display: inline-flex;
+  line-height: 0;
+}

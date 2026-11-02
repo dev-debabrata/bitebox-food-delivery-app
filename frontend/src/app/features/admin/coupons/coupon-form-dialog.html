@@ -1,0 +1,106 @@
+<h2 mat-dialog-title>{{ data ? 'Edit coupon' : 'New coupon' }}</h2>
+<form [formRoot]="form">
+  <mat-dialog-content class="bb-form">
+    @if (error()) {
+      <div class="bb-alert error" role="alert">
+        <mat-icon aria-hidden="true">error</mat-icon><span>{{ error() }}</span>
+      </div>
+    }
+    <div class="bb-form-row">
+      <np-text-input
+        [formField]="form.code"
+        label="Code"
+        autocapitalize="characters"
+        cdkFocusInitial
+        [error]="shownError(form.code)"
+      />
+      <mat-button-toggle-group
+        [formField]="form.discountType"
+        aria-label="Discount type"
+        class="type"
+      >
+        <mat-button-toggle value="percent">% off</mat-button-toggle>
+        <mat-button-toggle value="flat">₹ off</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+    <np-text-input
+      [formField]="form.description"
+      label="Description shown to customers"
+      [error]="shownError(form.description)"
+    />
+    <div class="bb-form-row">
+      <div class="bb-field">
+        <np-input-number
+          [formField]="form.discount"
+          [label]="model().discountType === 'percent' ? 'Discount' : 'Discount amount'"
+          [prefix]="model().discountType === 'percent' ? '' : '₹ '"
+          [suffix]="model().discountType === 'percent' ? ' %' : ''"
+          [maxFractionDigits]="model().discountType === 'percent' ? 0 : 2"
+        />
+        <bb-field-error [field]="form.discount" />
+      </div>
+      @if (model().discountType === 'percent') {
+        <div class="bb-field">
+          <np-input-number
+            [formField]="form.maxDiscount"
+            label="Max discount (optional)"
+            prefix="₹ "
+            [maxFractionDigits]="2"
+          />
+          <bb-field-error [field]="form.maxDiscount" />
+        </div>
+      }
+    </div>
+    <div class="bb-form-row">
+      <div class="bb-field">
+        <np-input-number
+          [formField]="form.minOrder"
+          label="Minimum order"
+          prefix="₹ "
+          [maxFractionDigits]="2"
+        />
+        <bb-field-error [field]="form.minOrder" />
+      </div>
+      <div class="bb-field">
+        <np-input-number
+          [formField]="form.perUserLimit"
+          label="Uses per customer"
+          [maxFractionDigits]="0"
+        />
+        <bb-field-error [field]="form.perUserLimit" />
+      </div>
+    </div>
+    <div class="bb-form-row">
+      <div class="bb-field">
+        <np-calendar [formField]="form.validFrom" label="Valid from" dateFormat="dd M yy" showIcon />
+        <bb-field-error [field]="form.validFrom" />
+      </div>
+      <div class="bb-field">
+        <np-calendar
+          [formField]="form.validUntil"
+          label="Valid until"
+          dateFormat="dd M yy"
+          [minDate]="model().validFrom"
+          showIcon
+        />
+        <bb-field-error [field]="form.validUntil" />
+      </div>
+    </div>
+    <div class="bb-field">
+      <np-input-number
+        [formField]="form.usageLimit"
+        label="Total uses allowed"
+        placeholder="Unlimited"
+        [maxFractionDigits]="0"
+      />
+      <bb-field-error [field]="form.usageLimit" />
+    </div>
+    <np-toggle [formField]="form.isActive" label="Active" />
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="form().submitting()">
+      {{ data ? 'Save' : 'Create' }}
+    </button>
+  </mat-dialog-actions>
+</form>

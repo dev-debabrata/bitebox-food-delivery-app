@@ -1,0 +1,19 @@
+<div class="box" [class.busy]="uploading()">
+  <np-image-upload
+    [(value)]="preview"
+    width="100%"
+    [aspectRatio]="aspectRatio()"
+    [maxFileSize]="maxBytes"
+    [label]="label()"
+    hint="JPEG, PNG or WebP up to 2 MB"
+    [disabled]="uploading()"
+    (fileSelect)="onFile($event)"
+    (remove)="onRemove()"
+  />
+  @if (uploading()) {
+    <mat-progress-bar class="progress" mode="indeterminate" aria-label="Uploading image" />
+  }
+</div>
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+}

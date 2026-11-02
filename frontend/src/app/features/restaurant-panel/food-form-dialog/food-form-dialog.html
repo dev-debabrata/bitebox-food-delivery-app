@@ -1,0 +1,67 @@
+<h2 mat-dialog-title>{{ data.item ? 'Edit dish' : 'Add a dish' }}</h2>
+<form [formRoot]="form">
+  <mat-dialog-content class="bb-form">
+    @if (error()) {
+      <div class="bb-alert error" role="alert">
+        <mat-icon aria-hidden="true">error</mat-icon><span>{{ error() }}</span>
+      </div>
+    }
+    <np-text-input
+      [formField]="form.name"
+      label="Dish name"
+      cdkFocusInitial
+      [error]="shownError(form.name)"
+    />
+    <div class="bb-form-row">
+      <div class="bb-field">
+        <np-select [formField]="form.category" label="Category" placeholder="Choose a category" [options]="categoryOptions" />
+        <bb-field-error [field]="form.category" />
+      </div>
+      <div class="bb-field">
+        <np-input-number
+          [formField]="form.price"
+          label="Price"
+          prefix="₹ "
+          [maxFractionDigits]="2"
+        />
+        <bb-field-error [field]="form.price" />
+      </div>
+    </div>
+    <div class="bb-field">
+      <np-textarea
+        [formField]="form.description"
+        label="Description (optional)"
+        rows="2"
+        autoResize
+      />
+      <bb-field-error [field]="form.description" />
+    </div>
+    <div class="row">
+      <mat-button-toggle-group [formField]="form.isVeg" aria-label="Veg or non-veg">
+        <mat-button-toggle [value]="true">Veg</mat-button-toggle>
+        <mat-button-toggle [value]="false">Non-veg</mat-button-toggle>
+      </mat-button-toggle-group>
+      <div class="bb-field">
+        <np-input-number
+          [formField]="form.prepTimeMinutes"
+          label="Prep time"
+          suffix=" min"
+          [maxFractionDigits]="0"
+        />
+        <bb-field-error [field]="form.prepTimeMinutes" />
+      </div>
+    </div>
+    <np-toggle class="bb-toggle-success" [formField]="form.isAvailable" label="Available to order" />
+    <bb-image-upload [(url)]="imageUrl" label="Add a dish photo" aspectRatio="4 / 3" />
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="form().submitting()">
+      @if (form().submitting()) {
+        <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Saving" />
+      } @else {
+        {{ data.item ? 'Save' : 'Add dish' }}
+      }
+    </button>
+  </mat-dialog-actions>
+</form>

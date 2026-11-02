@@ -1,0 +1,183 @@
+@if (loading()) {
+  <section class="bb-container page" aria-busy="true">
+    <span class="bb-skeleton" style="height: 220px; border-radius: var(--bb-radius-lg)"></span>
+    @for (i of [1, 2, 3, 4]; track i) {
+      <span class="bb-skeleton" style="height: 88px; margin-top: 12px"></span>
+    }
+  </section>
+} @else if (notFound()) {
+  <section class="bb-container page">
+    <bb-empty-state icon="storefront" title="Restaurant not found" message="It may have moved or is not available right now.">
+      <a mat-flat-button routerLink="/restaurants">Browse restaurants</a>
+    </bb-empty-state>
+  </section>
+} @else if (error()) {
+  <section class="bb-container page">
+    <bb-empty-state icon="cloud_off" title="Something went wrong" [message]="error()!">
+      <button mat-flat-button (click)="load()">Try again</button>
+    </bb-empty-state>
+  </section>
+} @else if (restaurant(); as r) {
+  <header class="hero" [style.--hero-image]="heroImage()" [class.has-image]="!!r.imageUrl">
+    <div class="bb-container hero-inner">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a routerLink="/restaurants">Restaurants</a>
+        <mat-icon aria-hidden="true">chevron_right</mat-icon>
+        <span aria-current="page">{{ r.name }}</span>
+      </nav>
+      <h1>{{ r.name }}</h1>
+      <p class="cuisines">{{ r.cuisines.join(' · ') }}</p>
+      @if (r.description) {
+        <p class="description">{{ r.description }}</p>
+      }
+      <ul class="facts">
+        <li>
+          @if (rating(); as stars) {
+            <mat-icon aria-hidden="true">star</mat-icon>{{ stars }} <span class="muted">({{ r.rating.count }})</span>
+          } @else {
+            <mat-icon aria-hidden="true">fiber_new</mat-icon>New on BiteBox
+          }
+        </li>
+        <li><mat-icon aria-hidden="true">schedule</mat-icon>{{ r.avgPrepTimeMinutes }} min prep</li>
+        <li><mat-icon aria-hidden="true">payments</mat-icon>{{ r.costForTwoPaise | inr }} for two</li>
+        <li [class.closed]="!r.isOpenNow">
+          <mat-icon aria-hidden="true">{{ r.isOpenNow ? 'storefront' : 'door_front' }}</mat-icon>
+          {{ r.isOpenNow ? 'Open now' : 'Closed now' }} · {{ r.openingTime }}–{{ r.closingTime }}
+        </li>
+        @if (r.isPureVeg) {
+          <li class="veg"><mat-icon aria-hidden="true">eco</mat-icon>Pure veg</li>
+        }
+      </ul>
+      <p class="address">
+        <mat-icon aria-hidden="true">location_on</mat-icon>
+        {{ r.address.line1 }}{{ r.address.area ? ', ' + r.address.area : '' }}, {{ r.address.city }}
+      </p>
+    </div>
+  </header>
+
+  <section class="bb-container menu-layout" [class.with-nav]="sections().length > 1">
+    @if (sections().length > 1) {
+      <nav class="section-nav" aria-label="Menu sections">
+        <h2 class="bb-sr-only">Menu sections</h2>
+        @for (s of visibleSections(); track sectionId(s)) {
+          <button type="button" (click)="scrollTo(s)">
+            {{ s.category?.name ?? 'Other' }} <span>{{ s.items.length }}</span>
+          </button>
+        }
+      </nav>
+    }
+
+    <div class="menu">
+      <div class="menu-tools">
+        <np-text-input
+          class="menu-search"
+          [formField]="menuSearch.search"
+          ariaLabel="Search this menu"
+          placeholder="Search this menu"
+          icon="search"
+          clearable
+        />
+        @if (!r.isPureVeg) {
+          <np-toggle label="Veg only" [(checked)]="vegOnly" />
+        }
+      </div>
+
+      @if (itemCount() === 0) {
+        <bb-empty-state icon="menu_book" title="No dishes yet" message="This restaurant hasn't added its menu yet." />
+      } @else if (visibleSections().length === 0) {
+        <bb-empty-state icon="search_off" title="No matching dishes" message="Try another search or turn off the veg filter." />
+      }
+
+      @for (s of visibleSections(); track sectionId(s)) {
+        <section class="menu-section" [id]="sectionId(s)" [attr.aria-labelledby]="sectionId(s) + '-title'">
+          <h2 [id]="sectionId(s) + '-title'">
+            @if (s.category) {
+              <mat-icon aria-hidden="true">{{ s.category.icon }}</mat-icon>
+            }
+            {{ s.category?.name ?? 'Other' }}
+          </h2>
+          <ul>
+            @for (item of s.items; track item.id) {
+              <li>
+                <div class="dish" [class.unavailable]="!item.isAvailable">
+                  <button type="button" class="dish-text" (click)="openItem(item)" [attr.aria-label]="'Details for ' + item.name">
+                    <span class="dish-name"><bb-veg-badge [veg]="item.isVeg" /> {{ item.name }}</span>
+                    <span class="dish-price">{{ item.pricePaise | inr }}</span>
+                    @if (item.description) {
+                      <span class="dish-desc">{{ item.description }}</span>
+                    }
+                    @if (!item.isAvailable) {
+                      <span class="sold-out">Unavailable</span>
+                    }
+                  </button>
+                  <div class="dish-side">
+                    @if (item.imageUrl) {
+                      <img [src]="item.imageUrl" alt="" loading="lazy" />
+                    }
+                    @if (canOrder() && item.isAvailable) {
+                      <bb-qty-stepper
+                        class="stepper"
+                        [class.over-image]="!!item.imageUrl"
+                        [quantity]="quantityOf(item.id)"
+                        [label]="item.name"
+                        [disabled]="cart.busy()"
+                        (add)="addToCart(item)"
+                        (changed)="cartActions.setQuantity(item.id, $event)"
+                      />
+                    }
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+
+    <!-- Desktop: the cart sits beside the menu. Phones/tablets use the bar below. -->
+    <aside class="cart-panel bb-card" aria-labelledby="cart-panel-title">
+      <h2 id="cart-panel-title">Your cart</h2>
+      @if (cartHere(); as c) {
+        <ul class="cart-lines">
+          @for (line of c.items; track line.foodItemId) {
+            <li [class.unavailable]="!line.isAvailable">
+              <bb-veg-badge [veg]="line.isVeg" />
+              <span class="line-name">{{ line.name }}</span>
+              <bb-qty-stepper
+                [quantity]="line.quantity"
+                [label]="line.name"
+                [disabled]="cart.busy()"
+                (changed)="cartActions.setQuantity(line.foodItemId, $event)"
+              />
+              <span class="line-total">{{ line.lineTotalPaise | inr }}</span>
+            </li>
+          }
+        </ul>
+        <div class="cart-subtotal">
+          <span>Subtotal</span>
+          <strong>{{ cartSubtotal() | inr }}</strong>
+        </div>
+        <p class="bb-muted cart-note">Delivery fee and taxes are added at checkout.</p>
+        <a mat-flat-button class="bb-btn-accent checkout" routerLink="/checkout">
+          Checkout <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+        </a>
+      } @else {
+        <div class="cart-empty">
+          <mat-icon aria-hidden="true">shopping_bag</mat-icon>
+          <p>Your cart is empty. Add dishes from the menu to get started.</p>
+        </div>
+      }
+    </aside>
+  </section>
+
+  @if (cartHere(); as c) {
+    <div class="cart-bar" role="region" aria-label="Your cart">
+      <div class="bb-container cart-bar-inner">
+        <span>
+          <strong>{{ c.itemCount }} {{ c.itemCount === 1 ? 'item' : 'items' }}</strong> · {{ cartSubtotal() | inr }}
+        </span>
+        <a mat-flat-button class="bb-btn-accent" routerLink="/checkout">View cart <mat-icon iconPositionEnd>arrow_forward</mat-icon></a>
+      </div>
+    </div>
+  }
+}

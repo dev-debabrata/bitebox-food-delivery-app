@@ -1,0 +1,57 @@
+<bb-page-header title="Orders" subtitle="Every order on BiteBox. Open one to see its history or step in." />
+
+<div class="filters">
+  <np-text-input
+    class="search"
+    [formField]="filters.search"
+    ariaLabel="Search by order number"
+    placeholder="Search order number, e.g. BB-261102"
+    icon="search"
+    clearable
+  />
+  <np-select [formField]="filters.status" ariaLabel="Order status" [options]="statusOptions()" />
+</div>
+
+@if (error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <mat-icon aria-hidden="true">error</mat-icon>
+    <span>{{ message }} <button class="bb-link-button" (click)="load(1)">Retry</button></span>
+  </div>
+}
+
+<div class="bb-card list-card" [attr.aria-busy]="loading()">
+  @if (!data()) {
+    @for (i of [1, 2, 3, 4, 5]; track i) {
+      <span class="bb-skeleton row-skeleton"></span>
+    }
+  } @else if (data()!.items.length === 0) {
+    <div class="empty">
+      <mat-icon aria-hidden="true">receipt_long</mat-icon>
+      <p>No orders match these filters.</p>
+    </div>
+  } @else {
+    <ul class="rows" [class.dim]="loading()">
+      @for (o of data()!.items; track o.id) {
+        <li>
+          <button type="button" class="row" (click)="open(o)" [attr.aria-label]="'Open order ' + o.orderNumber">
+            <div class="main">
+              <strong>{{ o.orderNumber }}</strong>
+              <span class="bb-muted">{{ o.restaurantSnapshot.name }} · {{ itemCount(o) }} {{ itemCount(o) === 1 ? 'item' : 'items' }} · {{ o.createdAt | date: 'd MMM, h:mm a' }}</span>
+            </div>
+            <span class="amount">{{ o.pricing.totalPaise | inr }}</span>
+            <bb-order-status-chip [status]="o.status" />
+            <mat-icon class="chev" aria-hidden="true">chevron_right</mat-icon>
+          </button>
+        </li>
+      }
+    </ul>
+    <mat-paginator
+      [length]="data()!.pagination.total"
+      [pageIndex]="data()!.pagination.page - 1"
+      [pageSize]="data()!.pagination.limit"
+      [pageSizeOptions]="[20, 50, 100]"
+      (page)="onPage($event)"
+      aria-label="Order pages"
+    />
+  }
+</div>

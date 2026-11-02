@@ -1,0 +1,60 @@
+<bb-page-header title="Coupons" subtitle="Discount codes customers can apply at checkout.">
+  <button mat-flat-button (click)="open()"><mat-icon>add</mat-icon>New coupon</button>
+</bb-page-header>
+@if (error()) {
+  <div class="bb-alert error" role="alert">
+    <mat-icon aria-hidden="true">error</mat-icon><span>{{ error() }}</span>
+  </div>
+}
+@if (loading()) {
+  <span class="bb-skeleton" style="height: 240px"></span>
+} @else if (coupons().length === 0) {
+  <bb-empty-state icon="local_offer" title="No coupons yet">
+    <button mat-flat-button (click)="open()">Create a coupon</button>
+  </bb-empty-state>
+} @else {
+  <div class="grid">
+    @for (c of coupons(); track c.id) {
+      <article class="bb-card coupon" [class.inactive]="!c.isActive || expired(c)">
+        <header>
+          <strong class="code">{{ c.code }}</strong>
+          <np-toggle
+            #active
+            [checked]="c.isActive"
+            (checkedChange)="toggle(c, $event, active)"
+            class="bb-label-hidden"
+            [label]="'Active: ' + c.code"
+          />
+        </header>
+        <p class="value">
+          @if (c.discountType === 'percent') {
+            {{ c.discountValue }}% off{{ c.maxDiscountPaise ? ' up to ' : ''
+            }}{{ c.maxDiscountPaise ? (c.maxDiscountPaise | inr) : '' }}
+          } @else {
+            {{ c.discountValue | inr }} off
+          }
+          @if (c.minOrderPaise) {
+            <span class="bb-muted">on {{ c.minOrderPaise | inr }}+</span>
+          }
+        </p>
+        <p class="bb-muted small">{{ c.description }}</p>
+        <p class="bb-muted small">
+          {{ c.validFrom | date: 'mediumDate' }} – {{ c.validUntil | date: 'mediumDate' }}
+          @if (expired(c)) {
+            <span class="expired">Expired</span>
+          }
+        </p>
+        <p class="small">
+          Used {{ c.usedCount }}{{ c.usageLimit ? ' / ' + c.usageLimit : '' }} times ·
+          {{ c.perUserLimit }} per customer
+        </p>
+        <footer>
+          <button mat-button (click)="open(c)"><mat-icon>edit</mat-icon>Edit</button>
+          <button mat-button (click)="remove(c)" [disabled]="c.usedCount > 0">
+            <mat-icon>delete</mat-icon>Delete
+          </button>
+        </footer>
+      </article>
+    }
+  </div>
+}

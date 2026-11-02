@@ -1,0 +1,186 @@
+<h2 mat-dialog-title>{{ data ? 'Edit address' : 'Add a delivery address' }}</h2>
+<form [formRoot]="form">
+  <mat-dialog-content class="bb-form">
+    @if (error()) {
+      <div class="bb-alert error" role="alert"><mat-icon aria-hidden="true">error</mat-icon><span>{{ error() }}</span></div>
+    } @else if (pinMissing()) {
+      <div class="bb-alert error" role="alert">
+        <mat-icon aria-hidden="true">error</mat-icon>
+        <span>Pin your delivery location first (use your current location, search, or tap the map).</span>
+      </div>
+    }
+
+    <!-- 1. Location pin -->
+    <section class="block" aria-labelledby="pin-title">
+      <h3 id="pin-title">Delivery location</h3>
+
+      <div class="find">
+        <np-search-input
+          class="place-search"
+          placeholder="Search area, street or landmark"
+          [value]="placeQuery()"
+          [loading]="searching()"
+          (search)="placeQuery.set($event)"
+        />
+        @if (geo.supported) {
+          <button mat-stroked-button type="button" class="gps" (click)="useCurrentLocation()" [disabled]="locating()">
+            <mat-icon>my_location</mat-icon>
+            {{ locating() ? 'Finding you…' : 'Current location' }}
+          </button>
+        }
+      </div>
+      @if (searching() || locating()) {
+        <mat-progress-bar mode="indeterminate" aria-label="Looking up location" />
+      }
+      @if (placeResults().length) {
+        <ul class="results" aria-label="Matching places">
+          @for (p of placeResults(); track p.latitude + ',' + p.longitude) {
+            <li>
+              <button type="button" (click)="pickPlace(p)">
+                <mat-icon aria-hidden="true">place</mat-icon>
+                <span><strong>{{ p.label }}</strong><small>{{ p.displayName }}</small></span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+      @if (locationError()) {
+        <div class="bb-alert info" role="status">
+          <mat-icon aria-hidden="true">location_off</mat-icon>
+          <span>{{ locationError() }}</span>
+        </div>
+      }
+      <bb-map-picker
+        [latitude]="model().latitude"
+        [longitude]="model().longitude"
+        (moved)="onPinMoved($event)"
+      />
+
+      @if (pinned()) {
+        <div class="pin pinned" role="status">
+          <mat-icon aria-hidden="true">where_to_vote</mat-icon>
+          <div class="pin-text">
+            <strong>Delivering here</strong>
+            <span>{{ pinLabel() || (model().latitude + ', ' + model().longitude) }}</span>
+          </div>
+        </div>
+      } @else {
+        <div class="pin" [class.missing]="pinMissing()">
+          <mat-icon aria-hidden="true">add_location_alt</mat-icon>
+          <div class="pin-text">
+            <strong>Pin where we should deliver</strong>
+            <span>Search, use your current location, or tap the map.</span>
+          </div>
+        </div>
+      }
+
+      <button type="button" class="bb-link-button manual-toggle" (click)="showCoordinates.set(!showCoordinates())" [attr.aria-expanded]="showCoordinates()">
+        {{ showCoordinates() ? 'Hide coordinates' : 'Enter coordinates manually' }}
+      </button>
+      @if (showCoordinates()) {
+        <div class="bb-form-row coords">
+          <div class="bb-field">
+            <np-input-number [formField]="form.latitude" label="Latitude" [maxFractionDigits]="6" [useGrouping]="false" />
+            <bb-field-error [field]="form.latitude" />
+          </div>
+          <div class="bb-field">
+            <np-input-number [formField]="form.longitude" label="Longitude" [maxFractionDigits]="6" [useGrouping]="false" />
+            <bb-field-error [field]="form.longitude" />
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- 2. Address -->
+    <section class="block" aria-labelledby="address-title">
+      <h3 id="address-title">Address</h3>
+      <np-text-input
+        [formField]="form.line1"
+        label="House / flat no. and street"
+        autocomplete="address-line1"
+        [error]="shownError(form.line1)"
+      />
+      <div class="bb-form-row">
+        <np-text-input
+          [formField]="form.line2"
+          label="Building / apartment (optional)"
+          autocomplete="address-line2"
+          [error]="shownError(form.line2)"
+        />
+        <np-text-input
+          [formField]="form.landmark"
+          label="Landmark (optional)"
+          [error]="shownError(form.landmark)"
+        />
+      </div>
+      <div class="bb-form-row">
+        <np-text-input
+          [formField]="form.area"
+          label="Area / locality"
+          [error]="shownError(form.area)"
+        />
+        <np-text-input
+          [formField]="form.city"
+          label="City"
+          autocomplete="address-level2"
+          [error]="shownError(form.city)"
+        />
+      </div>
+      <div class="bb-form-row">
+        <np-text-input
+          [formField]="form.state"
+          label="State"
+          autocomplete="address-level1"
+          [error]="shownError(form.state)"
+        />
+        <np-text-input
+          [formField]="form.postalCode"
+          label="PIN code"
+          autocomplete="postal-code"
+          inputmode="numeric"
+          [error]="shownError(form.postalCode)"
+        />
+      </div>
+    </section>
+
+    <!-- 3. Contact + label -->
+    <section class="block" aria-labelledby="contact-title">
+      <h3 id="contact-title">Receiver</h3>
+      <div class="bb-form-row">
+        <np-text-input
+          [formField]="form.recipientName"
+          label="Name"
+          autocomplete="name"
+          [error]="shownError(form.recipientName)"
+        />
+        <np-text-input
+          [formField]="form.phone"
+          label="Phone"
+          type="tel"
+          autocomplete="tel"
+          inputmode="tel"
+          [error]="shownError(form.phone)"
+        />
+      </div>
+
+      <span class="label-title" id="label-title">Save as</span>
+      <mat-button-toggle-group [formField]="form.label" aria-labelledby="label-title" class="labels">
+        <mat-button-toggle value="home"><mat-icon>home</mat-icon> Home</mat-button-toggle>
+        <mat-button-toggle value="work"><mat-icon>work</mat-icon> Work</mat-button-toggle>
+        <mat-button-toggle value="other"><mat-icon>place</mat-icon> Other</mat-button-toggle>
+      </mat-button-toggle-group>
+      <np-checkbox [formField]="form.isDefault" label="Make this my default address" />
+    </section>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="form().submitting() || locating()"
+      (click)="onSaveClick()">
+      @if (form().submitting()) {
+        <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Saving" />
+      } @else {
+        Save address
+      }
+    </button>
+  </mat-dialog-actions>
+</form>

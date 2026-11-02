@@ -1,0 +1,77 @@
+<header class="bb-form-heading">
+  @if (role() !== 'customer') {
+    <span class="bb-eyebrow">{{ meta().label }}</span>
+  }
+  <h1>{{ heading() }}</h1>
+  <p>{{ intro() }}</p>
+</header>
+
+@if (error()) {
+  <div class="bb-alert error" role="alert">
+    <mat-icon aria-hidden="true">error</mat-icon>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<form class="bb-form" [formRoot]="form">
+  <np-text-input
+    [formField]="form.name"
+    label="Full name"
+    icon="user"
+    autocomplete="name"
+    [error]="shownError(form.name)"
+  />
+  <np-text-input
+    [formField]="form.email"
+    label="Email"
+    type="email"
+    icon="mail"
+    placeholder="you@example.com"
+    autocomplete="email"
+    inputmode="email"
+    [error]="shownError(form.email)"
+  />
+  <np-text-input
+    [formField]="form.phone"
+    label="Mobile number (optional)"
+    type="tel"
+    icon="phone"
+    autocomplete="tel"
+    inputmode="tel"
+    hint="10-15 digits, e.g. +919876543210"
+    [error]="shownError(form.phone)"
+  />
+  <np-text-input
+    [formField]="form.password"
+    label="Password"
+    type="password"
+    icon="lock"
+    placeholder="••••••••"
+    autocomplete="new-password"
+    hint="At least 8 characters, with a letter and a number"
+    [error]="shownError(form.password)"
+  />
+  <np-text-input
+    [formField]="form.confirmPassword"
+    label="Confirm password"
+    type="password"
+    icon="lock"
+    placeholder="••••••••"
+    autocomplete="new-password"
+    [error]="shownError(form.confirmPassword)"
+  />
+
+  <div class="bb-form-actions">
+    <button mat-flat-button type="submit" [disabled]="form().submitting()">
+      @if (form().submitting()) {
+        <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Creating account" />
+      } @else {
+        Create account
+      }
+    </button>
+  </div>
+</form>
+
+<footer class="bb-form-footer">
+  <span>Already have an account? <a [routerLink]="meta().login">Sign in</a></span>
+</footer>

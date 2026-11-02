@@ -1,0 +1,112 @@
+@use 'breakpoints' as bp;
+
+.auth-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1fr;
+  background: var(--bb-bg);
+
+  @include bp.desktop-up {
+    grid-template-columns: minmax(380px, 5fr) 7fr;
+  }
+}
+
+.brand-panel {
+  position: relative;
+  overflow: hidden;
+  color: #fff6e5;
+  background:
+    radial-gradient(circle at 85% 10%, rgb(255 181 46 / 35%) 0, transparent 40%),
+    radial-gradient(circle at 10% 90%, rgb(255 181 46 / 18%) 0, transparent 45%),
+    var(--bb-plum);
+  padding: var(--bb-space-4) var(--bb-page-gutter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .pitch,
+  .copyright {
+    display: none;
+  }
+
+  @include bp.desktop-up {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: var(--bb-space-7);
+
+    .pitch {
+      display: block;
+      max-width: 420px;
+    }
+    .copyright {
+      display: block;
+      opacity: 0.6;
+      font-size: 0.85rem;
+      margin: 0;
+    }
+  }
+
+  h2 {
+    color: #fff6e5;
+    font-size: 2.2rem;
+    margin-bottom: var(--bb-space-3);
+  }
+
+  p {
+    opacity: 0.85;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: var(--bb-space-6) 0 0;
+    display: grid;
+    gap: var(--bb-space-4);
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: var(--bb-space-3);
+  }
+
+  mat-icon {
+    color: var(--bb-plum);
+    background: var(--bb-amber);
+    border-radius: 12px;
+    padding: 8px;
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+}
+
+.logo-link {
+  display: inline-flex;
+}
+
+.form-panel {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: var(--bb-space-5) var(--bb-page-gutter) var(--bb-space-7);
+
+  @include bp.tablet-up {
+    align-items: center;
+    padding-block: var(--bb-space-7);
+  }
+}
+
+.form-card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--bb-surface);
+  border-radius: var(--bb-radius-lg);
+  box-shadow: var(--bb-shadow);
+  padding: var(--bb-space-5) var(--bb-space-4);
+
+  @include bp.tablet-up {
+    padding: var(--bb-space-6);
+  }
+}

@@ -1,0 +1,42 @@
+@let p = pricing();
+<dl>
+  <div>
+    <dt>Item total</dt>
+    <dd>{{ p.subtotalPaise | inr }}</dd>
+  </div>
+  @if (p.discountPaise > 0) {
+    <div class="discount">
+      <dt>Coupon discount{{ couponCode() ? ' (' + couponCode() + ')' : '' }}</dt>
+      <dd>−{{ p.discountPaise | inr }}</dd>
+    </div>
+  }
+  <div>
+    <dt>
+      Delivery fee
+      @if (distanceMeters() !== null && distanceMeters() !== undefined) {
+        <small>{{ distanceMeters() | distance }} (straight-line)</small>
+      }
+    </dt>
+    <dd>
+      @if (distanceMeters() === null || distanceMeters() === undefined) {
+        <span class="muted">Select address</span>
+      } @else if (p.deliveryFeePaise === 0) {
+        <span class="free">FREE</span>
+      } @else {
+        {{ p.deliveryFeePaise | inr }}
+      }
+    </dd>
+  </div>
+  <div>
+    <dt>Platform fee</dt>
+    <dd>{{ p.platformFeePaise | inr }}</dd>
+  </div>
+  <div>
+    <dt>GST (5% on food)</dt>
+    <dd>{{ p.taxPaise | inr }}</dd>
+  </div>
+  <div class="total">
+    <dt>To pay</dt>
+    <dd>{{ p.totalPaise | inr }}</dd>
+  </div>
+</dl>

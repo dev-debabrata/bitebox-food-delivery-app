@@ -1,0 +1,196 @@
+<section class="bb-container page">
+  <h1>Checkout</h1>
+
+  @if (loading()) {
+    <div class="layout" aria-busy="true">
+      <span class="bb-skeleton" style="height: 320px"></span>
+      <span class="bb-skeleton" style="height: 320px"></span>
+    </div>
+  } @else if (loadError()) {
+    <bb-empty-state icon="cloud_off" title="Something went wrong" [message]="loadError()!" />
+  } @else if (!quote()?.cart) {
+    <bb-empty-state icon="shopping_bag" title="Your cart is empty" message="Add dishes from a restaurant to get started.">
+      <a mat-flat-button routerLink="/restaurants">Browse restaurants</a>
+    </bb-empty-state>
+  } @else {
+    @let q = quote()!;
+    @let c = q.cart!;
+    <div class="layout">
+      <div class="main">
+        <!-- Items -->
+        <section class="bb-card" aria-labelledby="items-title">
+          <div class="section-head">
+            @if (c.restaurant; as r) {
+              <div class="restaurant">
+                <h2 id="items-title"><a [routerLink]="['/restaurants', r.slug]">{{ r.name }}</a></h2>
+                <span class="bb-muted">~{{ r.avgPrepTimeMinutes }} min prep</span>
+              </div>
+            }
+            <button mat-button type="button" (click)="clearCart()" [disabled]="cart.busy()">Clear</button>
+          </div>
+          <ul class="items">
+            @for (line of c.items; track line.foodItemId) {
+              <li [class.unavailable]="!line.isAvailable">
+                <bb-veg-badge [veg]="line.isVeg" />
+                <div class="item-text">
+                  <span class="item-name">{{ line.name }}</span>
+                  @if (!line.isAvailable) {
+                    <span class="sold-out">No longer available</span>
+                  } @else {
+                    <span class="bb-muted">{{ line.unitPricePaise | inr }} each</span>
+                  }
+                </div>
+                @if (line.isAvailable) {
+                  <bb-qty-stepper
+                    [quantity]="line.quantity"
+                    [label]="line.name"
+                    [disabled]="cart.busy()"
+                    (changed)="cartActions.setQuantity(line.foodItemId, $event)"
+                  />
+                  <span class="line-total">{{ line.lineTotalPaise | inr }}</span>
+                } @else {
+                  <button mat-button type="button" (click)="cartActions.setQuantity(line.foodItemId, 0)">Remove</button>
+                }
+              </li>
+            }
+          </ul>
+          <np-textarea
+            class="note"
+            [formField]="noteForm.note"
+            label="Note for the restaurant (optional)"
+            placeholder="e.g. less spicy, no onions"
+            rows="2"
+            autoResize
+          />
+          <bb-field-error [field]="noteForm.note" />
+        </section>
+
+        <!-- Address -->
+        <section class="bb-card" aria-labelledby="address-title">
+          <div class="section-head">
+            <h2 id="address-title">Delivery address</h2>
+            <button mat-stroked-button type="button" (click)="addAddress()"><mat-icon>add</mat-icon>Add new</button>
+          </div>
+          @if (savedAddresses().length === 0) {
+            <p class="bb-muted">Add an address so we know where to deliver.</p>
+          } @else {
+            <mat-radio-group class="addresses" [value]="selectedAddressId()" (change)="selectAddress($event.value)" aria-labelledby="address-title">
+              @for (a of savedAddresses(); track a.id) {
+                <mat-radio-button [value]="a.id" class="address-option" [class.selected]="a.id === selectedAddressId()">
+                  <span class="address-body">
+                    <span class="address-label">
+                      <mat-icon aria-hidden="true">{{ a.label === 'home' ? 'home' : a.label === 'work' ? 'work' : 'place' }}</mat-icon>
+                      {{ a.label | titlecase }}
+                      @if (a.isDefault) {
+                        <span class="default">Default</span>
+                      }
+                    </span>
+                    <span class="address-text">{{ addressLine(a) }}</span>
+                    <span class="bb-muted small">{{ a.recipientName }} · {{ a.phone }}</span>
+                  </span>
+                </mat-radio-button>
+              }
+            </mat-radio-group>
+          }
+        </section>
+
+        <!-- Payment -->
+        <section class="bb-card" aria-labelledby="payment-title">
+          <h2 id="payment-title">Payment</h2>
+          <mat-radio-group value="cod" aria-labelledby="payment-title">
+            <mat-radio-button value="cod">
+              <span class="pay-option"><mat-icon aria-hidden="true">payments</mat-icon> Cash on delivery</span>
+            </mat-radio-button>
+          </mat-radio-group>
+          <p class="bb-muted small">Pay the rider in cash or by UPI at your door. Online payment is coming soon.</p>
+        </section>
+      </div>
+
+      <aside class="side">
+        <!-- Coupon -->
+        <section class="bb-card" aria-labelledby="coupon-title">
+          <h2 id="coupon-title">Offers</h2>
+          @if (q.coupon; as applied) {
+            <div class="applied">
+              <mat-icon aria-hidden="true">local_offer</mat-icon>
+              <div>
+                <strong>{{ applied.code }}</strong> applied
+                <span class="bb-muted small">You save {{ applied.discountPaise | inr }}</span>
+              </div>
+              <button mat-button type="button" (click)="removeCoupon()">Remove</button>
+            </div>
+          } @else {
+            @if (q.couponError; as ce) {
+              <div class="bb-alert info" role="status">
+                <mat-icon aria-hidden="true">info</mat-icon>
+                <span>{{ ce.code }}: {{ ce.message }} <button class="bb-link-button" (click)="removeCoupon()">Remove</button></span>
+              </div>
+            }
+            <form class="coupon-form" [formRoot]="couponForm">
+              <np-text-input
+                [formField]="couponForm.code"
+                ariaLabel="Coupon code"
+                placeholder="Enter coupon code"
+                icon="tag"
+                autocapitalize="characters"
+                [error]="shownError(couponForm.code)"
+              />
+              <button mat-stroked-button type="submit" [disabled]="applyingCoupon() || !couponForm.code().value().trim()">Apply</button>
+            </form>
+            @if (couponError()) {
+              <p class="field-error" role="alert">{{ couponError() }}</p>
+            }
+            @if (offers().length) {
+              <ul class="offers">
+                @for (o of offers(); track o.code) {
+                  <li>
+                    <div>
+                      <strong>{{ offerTitle(o) }}</strong>
+                      <span class="bb-muted small">{{ o.description }}</span>
+                    </div>
+                    <button mat-button type="button" (click)="applyCoupon(o.code)" [disabled]="applyingCoupon()">{{ o.code }}</button>
+                  </li>
+                }
+              </ul>
+            }
+          }
+        </section>
+
+        <!-- Bill -->
+        <section class="bb-card" aria-labelledby="bill-title">
+          <h2 id="bill-title">Bill details</h2>
+          <bb-bill-summary [pricing]="q.pricing" [couponCode]="q.coupon?.code" [distanceMeters]="q.delivery?.distanceMeters ?? null" />
+          @if (q.delivery && !q.delivery.freeDelivery && q.pricing.subtotalPaise - q.pricing.discountPaise < q.delivery.freeDeliveryThresholdPaise) {
+            <p class="hint small">
+              Add {{ q.delivery.freeDeliveryThresholdPaise - (q.pricing.subtotalPaise - q.pricing.discountPaise) | inr }} more for free delivery
+            </p>
+          }
+        </section>
+
+        @for (issue of blockingIssues(); track issue.code) {
+          <div class="bb-alert error" role="alert">
+            <mat-icon aria-hidden="true">error</mat-icon>
+            <span>{{ issue.message }}</span>
+          </div>
+        }
+        @if (placeError()) {
+          <div class="bb-alert error" role="alert">
+            <mat-icon aria-hidden="true">error</mat-icon>
+            <span>{{ placeError() }}</span>
+          </div>
+        }
+
+        <button mat-flat-button class="place bb-btn-accent" type="button" (click)="placeOrder()" [disabled]="!q.canCheckout || placing() || cart.busy()">
+          @if (placing()) {
+            <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Placing order" />
+          } @else {
+            Place order · {{ q.pricing.totalPaise | inr }}
+          }
+        </button>
+        @if (!selectedAddressId()) {
+          <p class="bb-muted small center">Add a delivery address to place your order.</p>
+        }
+      </aside>
+    </div>
+  }
+</section>

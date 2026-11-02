@@ -1,0 +1,92 @@
+@use 'breakpoints' as bp;
+
+.filters {
+  display: grid;
+  gap: var(--bb-space-3);
+  margin-bottom: var(--bb-space-4);
+
+  @include bp.tablet-up {
+    grid-template-columns: 1fr 220px;
+  }
+}
+
+.list-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.row-skeleton {
+  height: 48px;
+  margin: var(--bb-space-3) var(--bb-space-4);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 640px;
+}
+
+.dim {
+  opacity: 0.55;
+  transition: opacity 0.2s;
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+.status {
+  text-transform: capitalize;
+  font-weight: 600;
+  font-size: 0.85rem;
+
+  &.status-active {
+    color: var(--bb-success);
+  }
+  &.status-suspended {
+    color: var(--bb-danger);
+  }
+}
+
+.empty {
+  text-align: center;
+  padding: var(--bb-space-7) var(--bb-space-4);
+  color: var(--bb-ink-muted);
+
+  mat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 48px;
+    color: var(--bb-plum-500);
+  }
+}
+
+.card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: var(--bb-space-4);
+    border-bottom: 1px solid var(--bb-border);
+  }
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--bb-space-2);
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bb-space-1) var(--bb-space-3);
+}
