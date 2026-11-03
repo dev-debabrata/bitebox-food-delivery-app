@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { environment } from '../../../environments/environment';
 import { DeliveryAddress } from '../../shared/models/checkout.models';
-import { DeliveryLocationService } from './delivery-location.service';
+import { DeliveryLocationService, extractAddressFromPlace } from './delivery-location.service';
 import { GeolocationService } from './geolocation.service';
 
 describe('DeliveryLocationService', () => {
@@ -66,5 +66,24 @@ describe('DeliveryLocationService', () => {
     setup();
     render();
     expect(service.location()).toBeNull();
+  });
+
+  it('extracts structured address fields from a reverse-geocoded place', () => {
+    const extracted = extractAddressFromPlace({
+      label: 'Topsia, Kolkata',
+      displayName: 'Haute Street Building, 86A, Topsia Rd S, Seal Lane, Topsia, Kolkata, West Bengal, 700046, India',
+      latitude: 22.54,
+      longitude: 88.39,
+      area: 'Topsia',
+      city: 'Kolkata',
+      state: 'West Bengal',
+      postalCode: '700046',
+    });
+    expect(extracted.line1).toBe('Haute Street Building, 86A, Topsia Rd S, Seal Lane, Topsia');
+    expect(extracted.line2).toBe('86A');
+    expect(extracted.area).toBe('Topsia');
+    expect(extracted.city).toBe('Kolkata');
+    expect(extracted.state).toBe('West Bengal');
+    expect(extracted.postalCode).toBe('700046');
   });
 });

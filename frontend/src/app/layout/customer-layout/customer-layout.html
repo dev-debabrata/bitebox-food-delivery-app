@@ -10,6 +10,7 @@
       type="button"
       class="location-button"
       (click)="chooseLocation()"
+      [title]="deliveryLocation()?.detail || deliveryLocation()?.label || 'Set location'"
       [attr.aria-label]="
         deliveryLocation()
           ? deliveryLocation()!.label + ': delivery location, change'

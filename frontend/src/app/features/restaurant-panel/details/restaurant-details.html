@@ -145,6 +145,12 @@
             [longitude]="model().location.longitude"
             (moved)="setPin($event)"
           />
+          @if (pinLabel()) {
+            <div class="bb-alert info pinned-badge" role="status">
+              <np-icon name="map-pin-check" class="mat-icon" matButtonIcon />
+              <span><strong>Selected location:</strong> {{ pinLabel() }}</span>
+            </div>
+          }
           @if (form.location().invalid() && form.location().touched()) {
             <p class="field-error" role="alert">Pin your restaurant on the map.</p>
           }

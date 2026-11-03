@@ -24,7 +24,11 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { errorMessage, fieldErrors } from '../../../core/services/api-error';
 import { AddressService } from '../../../core/services/checkout-api.service';
-import { DeliveryLocationService, Place } from '../../../core/services/delivery-location.service';
+import {
+  DeliveryLocationService,
+  Place,
+  extractAddressFromPlace,
+} from '../../../core/services/delivery-location.service';
 import { PlaceSearch } from '../place-search/place-search';
 import {
   GeolocationService,
@@ -37,7 +41,7 @@ import { POSTAL_CODE_PATTERN, numberRange, phoneRules, requiredText } from '../.
 import { NP_FORM_FIELDS } from '../../forms/np-form-fields';
 import { PhoneInput } from '../phone-input/phone-input';
 
-type AutoField = 'area' | 'city' | 'state' | 'postalCode';
+type AutoField = 'line1' | 'line2' | 'area' | 'city' | 'state' | 'postalCode';
 
 /**
  * Add or edit a delivery address. The location can be set by place search,
@@ -156,7 +160,7 @@ export class AddressFormDialog {
   }
 
   protected async pickPlace(place: Place): Promise<void> {
-    await this.setPin({ latitude: place.latitude, longitude: place.longitude });
+    await this.setPin({ latitude: place.latitude, longitude: place.longitude }, place);
   }
 
   /** The user dragged the pin or tapped the map: that is the exact spot. */
@@ -164,34 +168,30 @@ export class AddressFormDialog {
     await this.setPin(point);
   }
 
-  private async setPin({ latitude, longitude }: LatLng): Promise<void> {
+  private async setPin({ latitude, longitude }: LatLng, knownPlace?: Place): Promise<void> {
     this.model.update((v) => ({
       ...v,
       latitude: +latitude.toFixed(6),
       longitude: +longitude.toFixed(6),
     }));
-    await this.fillFromCoordinates(latitude, longitude);
+    await this.fillFromCoordinates(latitude, longitude, knownPlace);
   }
 
   /**
    * Fills area / city / state / PIN from the pinned point. Fields the user typed
    * are never overwritten; fields we filled earlier are updated when the pin moves.
    */
-  private async fillFromCoordinates(latitude: number, longitude: number): Promise<void> {
+  private async fillFromCoordinates(latitude: number, longitude: number, knownPlace?: Place): Promise<void> {
     try {
-      const place = await firstValueFrom(this.places.reverse(latitude, longitude));
+      const place = knownPlace ?? (await firstValueFrom(this.places.reverse(latitude, longitude)));
       this.pinLabel.set(place.displayName ?? place.label);
-      const fill = (name: AutoField, value?: string | null) => {
-        const current = this.model()[name].trim();
-        const ours = this.autoFilled.get(name);
-        if (!value || (current && current !== ours)) return;
-        this.form[name]().value.set(value);
-        this.autoFilled.set(name, value);
-      };
-      fill('area', place.area);
-      fill('city', place.city);
-      fill('state', place.state);
-      fill('postalCode', place.postalCode);
+      for (const [key, val] of Object.entries(extractAddressFromPlace(place)) as [AutoField, string][]) {
+        const current = this.model()[key].trim();
+        if (val && (!current || current === this.autoFilled.get(key))) {
+          this.form[key]().value.set(val);
+          this.autoFilled.set(key, val);
+        }
+      }
     } catch {
       // Naming the place is a convenience; the pin itself is what matters.
       this.pinLabel.set(null);

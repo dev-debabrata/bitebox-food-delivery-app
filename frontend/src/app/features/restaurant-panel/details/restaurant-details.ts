@@ -15,7 +15,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ChipComponent, IconComponent, ToggleComponent } from 'nexprime';
 import { errorMessage, fieldErrors } from '../../../core/services/api-error';
-import { DeliveryLocationService, Place } from '../../../core/services/delivery-location.service';
+import {
+  DeliveryLocationService,
+  Place,
+  extractAddressFromPlace,
+} from '../../../core/services/delivery-location.service';
 import { PlaceSearch } from '../../../shared/components/place-search/place-search';
 import {
   GeolocationService,
@@ -116,6 +120,7 @@ export class RestaurantDetails {
 
   // Map location (search / current location / drag the pin)
   protected readonly locationError = signal<string | null>(null);
+  protected readonly pinLabel = signal<string | null>(null);
   protected readonly showCoordinates = signal(false);
   private readonly placeSearch = viewChild(PlaceSearch);
 
@@ -191,6 +196,7 @@ export class RestaurantDetails {
       openingTime: timeToDate(r.openingTime),
       closingTime: timeToDate(r.closingTime),
     });
+    this.pinLabel.set([r.address.line1, r.address.area, r.address.city, r.address.state].filter(Boolean).join(', ') || null);
     this.saved.set(this.snapshot());
   }
 
@@ -244,26 +250,27 @@ export class RestaurantDetails {
   }
 
   protected async pickPlace(place: Place): Promise<void> {
-    await this.setPin(place);
+    await this.setPin(place, place);
   }
 
   /** Sets the pin and fills empty address fields from it (never overwrites typed values). */
-  protected async setPin({ latitude, longitude }: LatLng): Promise<void> {
+  protected async setPin({ latitude, longitude }: LatLng, knownPlace?: Place): Promise<void> {
     this.form
       .location()
       .value.set({ latitude: +latitude.toFixed(6), longitude: +longitude.toFixed(6) });
     this.form.location().markAsTouched();
     try {
-      const place = await firstValueFrom(this.places.reverse(latitude, longitude));
-      const fill = (name: 'area' | 'city' | 'state' | 'postalCode', value?: string | null) => {
-        if (value && !this.model().address[name].trim()) this.form.address[name]().value.set(value);
-      };
-      fill('area', place.area);
-      fill('city', place.city);
-      fill('state', place.state);
-      fill('postalCode', place.postalCode);
+      const place = knownPlace ?? (await firstValueFrom(this.places.reverse(latitude, longitude)));
+      this.pinLabel.set(place.displayName || place.label || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+      type AddressKey = 'line1' | 'line2' | 'area' | 'city' | 'state' | 'postalCode';
+      const extracted = extractAddressFromPlace(place);
+      for (const key of Object.keys(extracted) as AddressKey[]) {
+        const val = extracted[key];
+        if (val && !this.model().address[key]?.trim()) this.form.address[key]().value.set(val);
+      }
     } catch {
       // Naming the place is a convenience; the pin is what matters.
+      this.pinLabel.set(`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
     }
   }
 

@@ -1,7 +1,15 @@
 import dotenv from "dotenv";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Tests must never pick up real credentials from .env.
-if (process.env.NODE_ENV !== "test") dotenv.config({ quiet: true });
+if (process.env.NODE_ENV !== "test") {
+  dotenv.config({ quiet: true });
+  // Also check backend/.env when running from the repo root
+  dotenv.config({ path: path.resolve(__dirname, "../../.env"), quiet: true });
+}
 
 /**
  * Centralised, validated environment configuration.
@@ -91,7 +99,14 @@ export const env = Object.freeze({
   geocoder: {
     url: process.env.GEOCODER_URL || "https://nominatim.openstreetmap.org",
     // Nominatim's policy requires an identifying User-Agent with contact details.
-    userAgent: process.env.GEOCODER_USER_AGENT || "BiteBox/1.0 (development)",
+    // Replace placeholder emails like you@example.com which Nominatim blocks with HTTP 403.
+    userAgent: (() => {
+      const raw = (process.env.GEOCODER_USER_AGENT || "").replace(/^"|"$/g, "").trim();
+      if (!raw || raw.toLowerCase().includes("example.com")) {
+        return "BiteBoxApp/1.0 (BiteBox Food Delivery Platform; contact: support@bitebox.local)";
+      }
+      return raw;
+    })(),
     // Comma-separated ISO country codes to limit search results (empty = worldwide).
     countryCodes: process.env.GEOCODER_COUNTRY_CODES ?? "in",
   },

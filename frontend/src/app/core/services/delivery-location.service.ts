@@ -13,10 +13,49 @@ export interface Place {
   displayName?: string;
   latitude: number;
   longitude: number;
+  street?: string | null;
+  building?: string | null;
   area?: string | null;
   city?: string | null;
   state?: string | null;
   postalCode?: string | null;
+}
+
+export interface ExtractedAddress {
+  line1: string;
+  line2: string;
+  area: string;
+  city: string;
+  state: string;
+  postalCode: string;
+}
+
+/**
+ * Extracts structured address parts (line1, line2, area, city, state, postal code)
+ * from a Place object, separating street/building details from city/state/country.
+ */
+export function extractAddressFromPlace(place: Place): ExtractedAddress {
+  const parts = (place.displayName || place.label || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const tail = new Set(['india', place.postalCode?.toLowerCase(), place.state?.toLowerCase(), place.city?.toLowerCase()].filter(Boolean));
+
+  const streetParts: string[] = [];
+  for (const p of parts) {
+    if (tail.has(p.toLowerCase())) break;
+    streetParts.push(p);
+  }
+
+  const line1 = streetParts.length ? streetParts.join(', ') : place.label || '';
+  const candidate = streetParts.length > 1 && streetParts[0] !== place.area ? streetParts[0] : '';
+  const line2 = place.building || (/^\d+[A-Za-z]?$/.test(streetParts[1] ?? '') ? streetParts[1] : candidate);
+
+  return {
+    line1: line1.slice(0, 120),
+    line2: (line2 !== line1 ? line2 : '').slice(0, 120),
+    area: (place.area || streetParts.at(-1) || '').slice(0, 80),
+    city: (place.city || '').slice(0, 80),
+    state: (place.state || '').slice(0, 80),
+    postalCode: (place.postalCode || '').slice(0, 10),
+  };
 }
 
 export interface DeliveryLocation {
