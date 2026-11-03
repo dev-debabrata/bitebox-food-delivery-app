@@ -1,24 +1,41 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { FormRoot, TreeValidationResult, form, maxLength, pattern, required } from '@angular/forms/signals';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
+import {
+  FormRoot,
+  TreeValidationResult,
+  form,
+  maxLength,
+  pattern,
+  required,
+} from '@angular/forms/signals';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { CheckboxComponent, SearchInputComponent } from 'nexprime';
-import { catchError, debounceTime, distinctUntilChanged, filter, firstValueFrom, of, switchMap, tap } from 'rxjs';
+import { CheckboxComponent, IconComponent } from 'nexprime';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { errorMessage, fieldErrors } from '../../../core/services/api-error';
 import { AddressService } from '../../../core/services/checkout-api.service';
 import { DeliveryLocationService, Place } from '../../../core/services/delivery-location.service';
-import { GeolocationService, ImpreciseLocationError } from '../../../core/services/geolocation.service';
+import { PlaceSearch } from '../place-search/place-search';
+import {
+  GeolocationService,
+  ImpreciseLocationError,
+} from '../../../core/services/geolocation.service';
 import { LatLng, MapPicker } from '../map-picker/map-picker';
 import { AddressInput, AddressLabel, DeliveryAddress } from '../../models/checkout.models';
 import { serverErrors, shownError } from '../../forms/form-errors';
 import { POSTAL_CODE_PATTERN, numberRange, phoneRules, requiredText } from '../../forms/form-rules';
 import { NP_FORM_FIELDS } from '../../forms/np-form-fields';
+import { PhoneInput } from '../phone-input/phone-input';
 
 type AutoField = 'area' | 'city' | 'state' | 'postalCode';
 
@@ -31,13 +48,15 @@ type AutoField = 'area' | 'city' | 'state' | 'postalCode';
 @Component({
   selector: 'bb-address-form-dialog',
   imports: [
+    PhoneInput,
+    PlaceSearch,
     CheckboxComponent,
     FormRoot,
     NP_FORM_FIELDS,
     MatDialogModule,
     MatButtonModule,
     MatButtonToggleModule,
-    MatIconModule,
+    IconComponent,
     MatProgressBarModule,
     MatProgressSpinnerModule,
     MapPicker,
@@ -65,10 +84,7 @@ export class AddressFormDialog {
   protected readonly triedSave = signal(false);
 
   /** Text in the place search box (follows typing; set to '' to clear it). */
-  protected readonly placeQuery = signal('');
-  private readonly placeSearch = viewChild(SearchInputComponent, { read: ElementRef });
-  protected readonly placeResults = signal<Place[]>([]);
-  protected readonly searching = signal(false);
+  private readonly placeSearch = viewChild(PlaceSearch);
 
   /** Values this dialog filled in automatically; only these may be replaced when the pin moves. */
   private readonly autoFilled = new Map<AutoField, string>();
@@ -110,56 +126,36 @@ export class AddressFormDialog {
 
   protected readonly pinned = computed(() => {
     const { latitude, longitude } = this.model();
-    return latitude !== null && longitude !== null && this.form.latitude().valid() && this.form.longitude().valid();
+    return (
+      latitude !== null &&
+      longitude !== null &&
+      this.form.latitude().valid() &&
+      this.form.longitude().valid()
+    );
   });
   /** Shown after a save attempt without a pin (the save itself is blocked by validation). */
   protected readonly pinMissing = computed(() => this.triedSave() && !this.pinned());
 
-  constructor() {
-    toObservable(this.placeQuery)
-      .pipe(
-        debounceTime(500),
-        distinctUntilChanged(),
-        tap((q) => {
-          if (q.trim().length < 3) this.placeResults.set([]);
-        }),
-        filter((q) => q.trim().length >= 3),
-        tap(() => this.searching.set(true)),
-        switchMap((q) =>
-          this.places.search(q.trim()).pipe(
-            catchError((err: unknown) => {
-              this.locationError.set(errorMessage(err, 'Place search failed.'));
-              return of([] as Place[]);
-            }),
-          ),
-        ),
-        takeUntilDestroyed(),
-      )
-      .subscribe((results) => {
-        this.placeResults.set(results);
-        this.searching.set(false);
-      });
-  }
-
   protected async useCurrentLocation(): Promise<void> {
     this.locating.set(true);
     this.locationError.set(null);
-    this.placeResults.set([]);
     try {
       const { latitude, longitude } = await this.geo.currentPrecise();
       await this.setPin({ latitude, longitude });
     } catch (err) {
       // Never pin a vague reading: it would show a place the customer is not at.
-      this.locationError.set(err instanceof ImpreciseLocationError ? err.message : `${(err as Error).message} Search for your area or tap the map instead.`);
-      this.placeSearch()?.nativeElement.querySelector('input')?.focus();
+      this.locationError.set(
+        err instanceof ImpreciseLocationError
+          ? err.message
+          : `${(err as Error).message} Search for your area or tap the map instead.`,
+      );
+      this.placeSearch()?.focus();
     } finally {
       this.locating.set(false);
     }
   }
 
   protected async pickPlace(place: Place): Promise<void> {
-    this.placeResults.set([]);
-    this.placeQuery.set('');
     await this.setPin({ latitude: place.latitude, longitude: place.longitude });
   }
 
@@ -169,7 +165,11 @@ export class AddressFormDialog {
   }
 
   private async setPin({ latitude, longitude }: LatLng): Promise<void> {
-    this.model.update((v) => ({ ...v, latitude: +latitude.toFixed(6), longitude: +longitude.toFixed(6) }));
+    this.model.update((v) => ({
+      ...v,
+      latitude: +latitude.toFixed(6),
+      longitude: +longitude.toFixed(6),
+    }));
     await this.fillFromCoordinates(latitude, longitude);
   }
 
@@ -224,12 +224,19 @@ export class AddressFormDialog {
     };
     this.error.set(null);
     try {
-      this.ref.close(await firstValueFrom(this.data ? this.service.update(this.data.id, input) : this.service.create(input)));
+      this.ref.close(
+        await firstValueFrom(
+          this.data ? this.service.update(this.data.id, input) : this.service.create(input),
+        ),
+      );
       return undefined;
     } catch (err) {
       this.error.set(errorMessage(err));
       // The API reports coordinates as location.latitude / location.longitude.
-      return serverErrors(this.form, fieldErrors(err).map((e) => ({ ...e, field: e.field.replace('location.', '') })));
+      return serverErrors(
+        this.form,
+        fieldErrors(err).map((e) => ({ ...e, field: e.field.replace('location.', '') })),
+      );
     }
   }
 }

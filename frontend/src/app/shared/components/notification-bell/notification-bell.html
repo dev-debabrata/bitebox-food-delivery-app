@@ -1,0 +1,62 @@
+<button
+  mat-icon-button
+  class="bell bb-icon-circle bb-badge-anchor"
+  [class.open]="opened()"
+  [matMenuTriggerFor]="menu"
+  (menuOpened)="opened.set(true)"
+  (menuClosed)="opened.set(false)"
+  [attr.aria-label]="inbox.unread() ? 'Notifications, ' + inbox.unread() + ' unread' : 'Notifications'"
+>
+  <np-icon name="bell" class="mat-icon" matButtonIcon />
+  @if (inbox.unread()) {
+    <span class="bb-count-badge" aria-hidden="true">{{ badge() }}</span>
+  }
+</button>
+
+<mat-menu #menu="matMenu" xPosition="before" class="bb-inbox-menu">
+  <div class="head" (click)="$event.stopPropagation()" role="presentation">
+    <h2>
+      Notifications
+      @if (inbox.unread()) {
+        <span class="new">({{ inbox.unread() }} new)</span>
+      }
+    </h2>
+    @if (inbox.unread()) {
+      <button type="button" class="text-action" (click)="inbox.markAllRead()">
+        <np-icon name="check-check" class="mat-icon" matButtonIcon />Mark all read
+      </button>
+    }
+  </div>
+
+  <div class="list">
+    @for (n of inbox.items(); track n.id) {
+      <button mat-menu-item class="item" [class.unread]="!n.readAt" (click)="inbox.open(n)">
+        <span class="icon" aria-hidden="true"><np-icon [name]="(icon(n.type)) | npIcon" class="mat-icon" matButtonIcon /></span>
+        <span class="text">
+          <span class="title">{{ n.title }}</span>
+          @if (n.body) {
+            <span class="body">{{ n.body }}</span>
+          }
+          <span class="time">{{ n.createdAt | date: 'd MMM y, h:mm a' }}</span>
+        </span>
+        @if (!n.readAt) {
+          <span class="dot" aria-label="Unread"></span>
+        }
+      </button>
+    } @empty {
+      <p class="empty">
+        <np-icon name="bell" class="mat-icon" matButtonIcon />
+        {{ inbox.loaded() ? "You're all caught up." : 'Loading…' }}
+      </p>
+    }
+  </div>
+
+  <div class="foot">
+    <a class="text-action" [routerLink]="allLink()">See all notifications</a>
+    @if (inbox.items().length) {
+      <button type="button" class="text-action danger" (click)="clearAll()">
+        <np-icon name="trash-2" class="mat-icon" matButtonIcon />Clear all
+      </button>
+    }
+  </div>
+</mat-menu>

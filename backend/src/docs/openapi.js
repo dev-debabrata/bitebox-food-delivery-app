@@ -1,6 +1,7 @@
 import { catalogPaths, catalogSchemas, catalogTags } from "./openapi.catalog.js";
 import { checkoutPaths, checkoutSchemas, checkoutTags } from "./openapi.checkout.js";
 import { ordersPaths, ordersSchemas, ordersTags } from "./openapi.orders.js";
+import { paymentsPaths, paymentsSchemas, paymentsTags } from "./openapi.payments.js";
 
 /**
  * OpenAPI 3.1 contract for the implemented API. Keep this in sync with
@@ -36,16 +37,17 @@ export const openApiDocument = {
     title: "BiteBox API",
     version: "1.0.0",
     description:
-      "BiteBox food delivery REST API. Authenticate with `POST /auth/login`, then send the returned access token as `Authorization: Bearer <token>`. The refresh token is set as an HttpOnly cookie scoped to `/api/v1/auth`.",
+      "BiteBox food delivery REST API. Authenticate with `POST /auth/login`, then send the returned access token as `Authorization: Bearer <token>`. The refresh token is set as an HttpOnly cookie scoped to `/api/v1/auth`. Every response uses the envelope `{ success, message, data }`; errors add `error.code` and, for validation, `error.details[{ field, message }]`. Money is always in integer paise. Live updates are pushed over Socket.IO (`order:updated`, `notification:new`, `order:location`).",
   },
   servers: [{ url: "/api/v1" }],
-  tags: [{ name: "Health" }, { name: "Auth" }, { name: "Admin - Users" }, ...catalogTags, ...checkoutTags, ...ordersTags],
+  tags: [{ name: "Health" }, { name: "Auth" }, { name: "Admin - Users" }, ...catalogTags, ...checkoutTags, ...ordersTags, ...paymentsTags],
   components: {
     securitySchemes: { bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" } },
     schemas: {
       ...catalogSchemas,
       ...checkoutSchemas,
       ...ordersSchemas,
+      ...paymentsSchemas,
       Role: { type: "string", enum: ["customer", "admin", "restaurant", "delivery"] },
       User: {
         type: "object",
@@ -126,6 +128,7 @@ export const openApiDocument = {
     ...catalogPaths,
     ...checkoutPaths,
     ...ordersPaths,
+    ...paymentsPaths,
     "/health": {
       get: {
         tags: ["Health"],

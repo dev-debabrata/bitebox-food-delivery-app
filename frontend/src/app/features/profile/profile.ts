@@ -1,9 +1,9 @@
+import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormRoot, TreeValidationResult, form, required } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../core/auth/auth.service';
 import { errorMessage, fieldErrors } from '../../core/services/api-error';
@@ -13,16 +13,18 @@ import { ROLE_META } from '../../shared/models/user.models';
 import { serverErrors, shownError } from '../../shared/forms/form-errors';
 import { NP_FORM_FIELDS } from '../../shared/forms/np-form-fields';
 import { matchesField, passwordRules, phoneRules, requiredText } from '../../shared/forms/form-rules';
+import { PhoneInput } from '../../shared/components/phone-input/phone-input';
 
 /** Profile details + change password. Shared by every panel. */
 @Component({
   selector: 'bb-profile',
   imports: [
+    PhoneInput,
     NP_FORM_FIELDS,
     DatePipe,
     FormRoot,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatProgressSpinnerModule,
     PageHeader,
     ],

@@ -70,14 +70,12 @@
     gap: var(--bb-space-3);
   }
 
-  mat-icon {
+  np-icon {
+    --bb-icon-size: 40px;
     color: var(--bb-plum);
     background: var(--bb-amber);
     border-radius: 12px;
     padding: 8px;
-    width: 40px;
-    height: 40px;
-    font-size: 24px;
     flex-shrink: 0;
   }
 }

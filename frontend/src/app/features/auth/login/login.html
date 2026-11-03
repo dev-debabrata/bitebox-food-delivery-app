@@ -5,19 +5,19 @@
 
 @if (reason() === 'expired') {
   <div class="bb-alert info" role="status">
-    <mat-icon aria-hidden="true">schedule</mat-icon>
+    <np-icon name="clock" class="mat-icon" matButtonIcon />
     <span>Your session expired. Please sign in again.</span>
   </div>
 }
 @if (reason() === 'reset') {
   <div class="bb-alert success" role="status">
-    <mat-icon aria-hidden="true">check_circle</mat-icon>
+    <np-icon name="circle-check" class="mat-icon" matButtonIcon />
     <span>Password updated. Sign in with your new password.</span>
   </div>
 }
 @if (error()) {
   <div class="bb-alert error" role="alert">
-    <mat-icon aria-hidden="true">error</mat-icon>
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
     <span>{{ error() }}</span>
   </div>
 }
@@ -28,7 +28,7 @@
     label="Email"
     type="email"
     icon="mail"
-    placeholder="you@example.com"
+    placeholder="Enter your email address"
     autocomplete="email"
     inputmode="email"
     [error]="shownError(form.email)"

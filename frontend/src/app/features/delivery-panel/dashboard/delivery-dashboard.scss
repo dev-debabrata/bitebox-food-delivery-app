@@ -113,7 +113,7 @@ h2 {
     display: flex;
     gap: var(--bb-space-3);
 
-    > mat-icon {
+    > np-icon {
       flex-shrink: 0;
       color: var(--bb-amber-600);
     }
@@ -146,10 +146,8 @@ h2 {
   margin-top: 4px;
   font-weight: 600;
 
-  mat-icon {
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
+  np-icon {
+    --bb-icon-size: 18px;
   }
 }
 
@@ -213,10 +211,8 @@ h2 {
   gap: var(--bb-space-2);
   padding-block: var(--bb-space-6);
 
-  mat-icon {
-    width: 48px;
-    height: 48px;
-    font-size: 48px;
+  np-icon {
+    --bb-icon-size: 48px;
     color: var(--bb-amber-600);
   }
 
@@ -234,10 +230,8 @@ h2 {
   margin: 0;
   font-size: 0.9rem;
 
-  mat-icon {
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
+  np-icon {
+    --bb-icon-size: 18px;
     color: var(--bb-plum-500);
   }
 }

@@ -1,0 +1,53 @@
+<header class="gateway-head">
+  <span class="logo" aria-hidden="true">B</span>
+  <div class="merchant">
+    <strong>BiteBox</strong>
+    <span>Order {{ session.orderNumber }}</span>
+  </div>
+  <button mat-icon-button type="button" mat-dialog-close aria-label="Close payment" [disabled]="processing()">
+    <np-icon name="x" class="mat-icon" matButtonIcon />
+  </button>
+  <span class="amount-label">Amount to pay</span>
+  <strong class="amount">{{ session.amountPaise | inr }}</strong>
+</header>
+
+<p class="test-mode" role="note">
+  <np-icon name="flask-conical" class="mat-icon" matButtonIcon />
+  <span><strong>Test mode.</strong> No real money moves. Available in development only.</span>
+</p>
+
+<mat-dialog-content class="body">
+  <h2 class="bb-muted">Payment method</h2>
+  <div class="methods" role="radiogroup" aria-label="Payment method">
+    @for (m of methods; track m.id) {
+      <button
+        type="button"
+        class="method"
+        role="radio"
+        [attr.aria-checked]="method() === m.id"
+        [class.active]="method() === m.id"
+        [disabled]="processing()"
+        (click)="method.set(m.id)"
+      >
+        <np-icon [name]="(m.icon) | npIcon" class="mat-icon" matButtonIcon />
+        <span class="text">
+          {{ m.label }}
+          <span class="bb-muted hint">{{ m.hint }}</span>
+        </span>
+        <span class="check" aria-hidden="true"></span>
+      </button>
+    }
+  </div>
+  <p class="detail">{{ selected().detail }}</p>
+</mat-dialog-content>
+
+<footer class="gateway-foot">
+  <button mat-flat-button type="button" class="pay bb-btn-accent" [disabled]="processing()" (click)="finish('success')" cdkFocusInitial>
+    <np-icon name="lock" class="mat-icon" matButtonIcon />
+    {{ processing() ? 'Processing…' : 'Pay ' + (session.amountPaise | inr) }}
+  </button>
+  <button type="button" class="bb-link-button fail" [disabled]="processing()" (click)="finish('failure')">
+    Simulate a failed payment
+  </button>
+  <p class="bb-muted secured"><np-icon name="shield-check" class="mat-icon" matButtonIcon /> Simulated gateway · BiteBox test environment</p>
+</footer>

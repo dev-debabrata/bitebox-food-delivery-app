@@ -1,14 +1,16 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { ToggleComponent } from 'nexprime';
+import { IconComponent, ToggleComponent } from 'nexprime';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { filter } from 'rxjs';
 import { errorMessage } from '../../../core/services/api-error';
 import { AdminCouponService } from '../../../core/services/checkout-api.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import {
+  ConfirmDialog,
+  ConfirmDialogData,
+} from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { AdminCoupon } from '../../../shared/models/checkout.models';
@@ -17,7 +19,16 @@ import { CouponFormDialog } from './coupon-form-dialog';
 
 @Component({
   selector: 'bb-admin-coupons',
-  imports: [ToggleComponent, DatePipe, MatButtonModule, MatIconModule, MatDialogModule, EmptyState, PageHeader, InrPipe],
+  imports: [
+    ToggleComponent,
+    DatePipe,
+    MatButtonModule,
+    IconComponent,
+    MatDialogModule,
+    EmptyState,
+    PageHeader,
+    InrPipe,
+  ],
   templateUrl: './admin-coupons.html',
   styleUrl: './admin-coupons.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,7 +65,11 @@ export class AdminCoupons {
 
   protected open(coupon?: AdminCoupon): void {
     this.dialog
-      .open<CouponFormDialog, AdminCoupon | null, AdminCoupon>(CouponFormDialog, { data: coupon ?? null, width: '560px', maxWidth: '95vw' })
+      .open<CouponFormDialog, AdminCoupon | null, AdminCoupon>(CouponFormDialog, {
+        data: coupon ?? null,
+        width: '560px',
+        maxWidth: '95vw',
+      })
       .afterClosed()
       .pipe(filter(Boolean))
       .subscribe(() => {
@@ -63,11 +78,14 @@ export class AdminCoupons {
       });
   }
 
-  protected toggle(coupon: AdminCoupon, checked: boolean, toggle: ToggleComponent): void {
+  /** Optimistic: the switch follows the list; on failure the list (and so the switch) goes back. */
+  protected toggle(coupon: AdminCoupon, checked: boolean): void {
+    const set = (isActive: boolean) =>
+      this.coupons.update((list) => list.map((c) => (c.id === coupon.id ? { ...c, isActive } : c)));
+    set(checked);
     this.service.update(coupon.id, { isActive: checked }).subscribe({
-      next: () => this.coupons.update((list) => list.map((c) => (c.id === coupon.id ? { ...c, isActive: checked } : c))),
       error: (err: unknown) => {
-        toggle.checked.set(!checked); // back to what the server has
+        set(!checked);
         this.notify.error(errorMessage(err));
       },
     });
@@ -76,7 +94,12 @@ export class AdminCoupons {
   protected remove(coupon: AdminCoupon): void {
     this.dialog
       .open<ConfirmDialog, ConfirmDialogData, true>(ConfirmDialog, {
-        data: { title: `Delete ${coupon.code}?`, message: 'Customers will no longer be able to use it.', confirmLabel: 'Delete', danger: true },
+        data: {
+          title: `Delete ${coupon.code}?`,
+          message: 'Customers will no longer be able to use it.',
+          confirmLabel: 'Delete',
+          danger: true,
+        },
         width: '420px',
       })
       .afterClosed()

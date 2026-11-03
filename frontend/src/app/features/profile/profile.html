@@ -29,7 +29,7 @@
         <h3 id="details-title">Personal details</h3>
         @if (profileError()) {
           <div class="bb-alert error" role="alert">
-            <mat-icon aria-hidden="true">error</mat-icon><span>{{ profileError() }}</span>
+            <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ profileError() }}</span>
           </div>
         }
         <form class="bb-form" [formRoot]="profileForm">
@@ -40,13 +40,10 @@
               autocomplete="name"
               [error]="shownError(profileForm.name)"
             />
-            <np-text-input
+            <bb-phone-input
               [formField]="profileForm.phone"
               label="Mobile number"
-              type="tel"
               hint="Leave empty to remove"
-              autocomplete="tel"
-              inputmode="tel"
               [error]="shownError(profileForm.phone)"
             />
           </div>
@@ -71,10 +68,10 @@
         <p class="bb-muted">You'll be signed out on all devices after changing your password.</p>
         @if (passwordError()) {
           <div class="bb-alert error" role="alert">
-            <mat-icon aria-hidden="true">error</mat-icon><span>{{ passwordError() }}</span>
+            <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ passwordError() }}</span>
           </div>
         }
-        <form class="bb-form" [formRoot]="passwordForm">
+        <form class="bb-form narrow" [formRoot]="passwordForm">
           <np-text-input
             [formField]="passwordForm.currentPassword"
             label="Current password"
@@ -83,25 +80,23 @@
             autocomplete="current-password"
             [error]="shownError(passwordForm.currentPassword)"
           />
-          <div class="bb-form-row">
-            <np-text-input
-              [formField]="passwordForm.newPassword"
-              label="New password"
-              type="password"
-              placeholder="••••••••"
-              hint="At least 8 characters, with a letter and a number"
-              autocomplete="new-password"
-              [error]="shownError(passwordForm.newPassword)"
-            />
-            <np-text-input
-              [formField]="passwordForm.confirmPassword"
-              label="Confirm new password"
-              type="password"
-              placeholder="••••••••"
-              autocomplete="new-password"
-              [error]="shownError(passwordForm.confirmPassword)"
-            />
-          </div>
+          <np-text-input
+            [formField]="passwordForm.newPassword"
+            label="New password"
+            type="password"
+            placeholder="••••••••"
+            hint="At least 8 characters, with a letter and a number"
+            autocomplete="new-password"
+            [error]="shownError(passwordForm.newPassword)"
+          />
+          <np-text-input
+            [formField]="passwordForm.confirmPassword"
+            label="Confirm new password"
+            type="password"
+            placeholder="••••••••"
+            autocomplete="new-password"
+            [error]="shownError(passwordForm.confirmPassword)"
+          />
           <div class="actions">
             <button mat-stroked-button type="submit" [disabled]="passwordForm().submitting()">
               @if (passwordForm().submitting()) {

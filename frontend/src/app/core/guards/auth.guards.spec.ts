@@ -10,16 +10,16 @@ import {
 import { firstValueFrom, isObservable, Observable } from 'rxjs';
 import { Role } from '../../shared/models/user.models';
 import { AuthService } from '../auth/auth.service';
-import { guestGuard, roleGuard } from './auth.guards';
+import { customerSiteGuard, guestGuard, roleGuard } from './auth.guards';
 
 class FakeAuth {
   readonly initialised = signal(true);
   readonly role = signal<Role | null>(null);
 }
 
-async function run(guard: typeof guestGuard, url = '/admin/users'): Promise<boolean | UrlTree> {
+async function run(guard: typeof guestGuard, url = '/admin/users', path = ''): Promise<boolean | UrlTree> {
   const result = TestBed.runInInjectionContext(() =>
-    guard({} as ActivatedRouteSnapshot, { url } as RouterStateSnapshot),
+    guard({ routeConfig: { path } } as ActivatedRouteSnapshot, { url } as RouterStateSnapshot),
   );
   return isObservable(result)
     ? firstValueFrom(result as Observable<boolean | UrlTree>)
@@ -72,6 +72,27 @@ describe('auth guards', () => {
     it('redirects signed-in users to their own home', async () => {
       auth.role.set('delivery');
       expect(serialize(await run(guestGuard, '/login'))).toBe('/delivery');
+    });
+  });
+
+  describe('customerSiteGuard', () => {
+    it.each<Role | null>([null, 'customer'])('lets %s browse the customer site', async (role) => {
+      auth.role.set(role);
+      expect(await run(customerSiteGuard, '/')).toBe(true);
+    });
+
+    it.each<[Role, string]>([
+      ['admin', '/admin'],
+      ['restaurant', '/restaurant'],
+      ['delivery', '/delivery'],
+    ])('sends %s to their own panel', async (role, home) => {
+      auth.role.set(role);
+      expect(serialize(await run(customerSiteGuard, '/restaurants', 'restaurants'))).toBe(home);
+    });
+
+    it('still shows staff the error pages', async () => {
+      auth.role.set('admin');
+      expect(await run(customerSiteGuard, '/forbidden', 'forbidden')).toBe(true);
     });
   });
 });

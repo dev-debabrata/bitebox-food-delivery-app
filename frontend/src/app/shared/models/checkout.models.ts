@@ -1,3 +1,5 @@
+import type { PaymentInfo } from './payment.models';
+
 /** All money values are integer paise (₹1 = 100). */
 
 export interface Pricing {
@@ -152,8 +154,12 @@ export interface Order {
   note?: string;
   status: OrderStatus;
   statusHistory: { status: OrderStatus; at: string; note?: string }[];
-  paymentMethod: 'cod';
+  paymentMethod: 'cod' | 'online';
   paymentStatus: PaymentStatus;
+  /** When the restaurant received it (online orders: once paid). */
+  submittedAt?: string | null;
+  /** Payment record state (customer and admin views). */
+  payment?: PaymentInfo | null;
   /** Why it was rejected or cancelled, and by whom. */
   cancellation?: { by: 'customer' | 'restaurant' | 'admin' | 'system'; reason?: string; at: string };
   /** The rider, once one has accepted the delivery (customer and admin views). */
@@ -191,3 +197,11 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   delivered: 'Delivered',
   cancelled: 'Cancelled',
 };
+
+/** Online orders wait for payment before the restaurant sees them. */
+export const awaitingPayment = (o: Pick<Order, 'status' | 'paymentMethod' | 'paymentStatus'>) =>
+  o.status === 'pending' && o.paymentMethod === 'online' && o.paymentStatus !== 'paid';
+
+/** The customer-facing status, with "Awaiting payment" for unpaid online orders. */
+export const customerStatusLabel = (o: Pick<Order, 'status' | 'paymentMethod' | 'paymentStatus'>) =>
+  awaitingPayment(o) ? 'Awaiting payment' : ORDER_STATUS_LABEL[o.status];

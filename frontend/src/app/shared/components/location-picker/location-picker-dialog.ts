@@ -1,18 +1,31 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { SearchInputComponent } from 'nexprime';
+import { NpIconPipe } from '../../../shared/icons/np-icon-name';
+import { IconComponent } from 'nexprime';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { Subscription, catchError, debounceTime, distinctUntilChanged, filter, firstValueFrom, of, switchMap, tap } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
-import { errorMessage } from '../../../core/services/api-error';
 import { AddressService } from '../../../core/services/checkout-api.service';
-import { DeliveryLocation, DeliveryLocationService, Place } from '../../../core/services/delivery-location.service';
-import { GeolocationService, ImpreciseLocationError } from '../../../core/services/geolocation.service';
+import {
+  DeliveryLocation,
+  DeliveryLocationService,
+  Place,
+} from '../../../core/services/delivery-location.service';
+import {
+  GeolocationService,
+  ImpreciseLocationError,
+} from '../../../core/services/geolocation.service';
 import { DeliveryAddress } from '../../models/checkout.models';
 import { LatLng, MapPicker } from '../map-picker/map-picker';
+import { PlaceSearch } from '../place-search/place-search';
 
 /** A point waiting for the user to confirm it on the map. */
 interface Candidate {
@@ -31,7 +44,14 @@ interface Candidate {
  */
 @Component({
   selector: 'bb-location-picker-dialog',
-  imports: [SearchInputComponent, MatDialogModule, MatButtonModule, MatIconModule, MatProgressBarModule, MapPicker],
+  imports: [
+    PlaceSearch,
+    MatDialogModule,
+    MatButtonModule,
+    IconComponent, NpIconPipe,
+    MatProgressBarModule,
+    MapPicker,
+  ],
   templateUrl: './location-picker-dialog.html',
   styleUrl: './location-picker-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,13 +62,7 @@ export class LocationPickerDialog {
   private readonly ref = inject(MatDialogRef<LocationPickerDialog>);
   private readonly auth = inject(AuthService);
 
-  /** Text in the search box (follows typing). */
-  protected readonly query = signal('');
-  private readonly searchInput = viewChild(SearchInputComponent, { read: ElementRef });
-  protected readonly results = signal<Place[]>([]);
-  protected readonly searching = signal(false);
-  protected readonly searched = signal(false);
-  protected readonly searchError = signal<string | null>(null);
+  private readonly placeSearch = viewChild(PlaceSearch);
   protected readonly locating = signal(false);
   protected readonly gpsError = signal<string | null>(null);
   protected readonly addresses = signal<DeliveryAddress[]>([]);
@@ -65,34 +79,6 @@ export class LocationPickerDialog {
         .list()
         .subscribe({ next: (list) => this.addresses.set(list), error: () => undefined });
     }
-
-    toObservable(this.query)
-      .pipe(
-        debounceTime(500),
-        distinctUntilChanged(),
-        tap(() => this.searchError.set(null)),
-        filter((q) => {
-          if (q.trim().length >= 3) return true;
-          this.results.set([]);
-          this.searched.set(false);
-          return false;
-        }),
-        tap(() => this.searching.set(true)),
-        switchMap((q) =>
-          this.location.search(q.trim()).pipe(
-            catchError((err: unknown) => {
-              this.searchError.set(errorMessage(err, 'Location search failed.'));
-              return of([] as Place[]);
-            }),
-          ),
-        ),
-        takeUntilDestroyed(),
-      )
-      .subscribe((places) => {
-        this.results.set(places);
-        this.searched.set(true);
-        this.searching.set(false);
-      });
   }
 
   /** Detects, names and saves the current location in one step. */
@@ -114,8 +100,12 @@ export class LocationPickerDialog {
       this.ref.close(true);
     } catch (err) {
       // Never use a vague reading: it would show a place the customer is not at.
-      this.gpsError.set(err instanceof ImpreciseLocationError ? err.message : `${(err as Error).message} Search for your area instead.`);
-      this.searchInput()?.nativeElement.querySelector('input')?.focus();
+      this.gpsError.set(
+        err instanceof ImpreciseLocationError
+          ? err.message
+          : `${(err as Error).message} Search for your area instead.`,
+      );
+      this.placeSearch()?.focus();
     } finally {
       this.locating.set(false);
     }
@@ -144,7 +134,13 @@ export class LocationPickerDialog {
   protected confirm(): void {
     const c = this.candidate();
     if (!c) return;
-    this.location.choosePoint({ latitude: c.latitude, longitude: c.longitude, label: c.label, detail: c.detail, source: c.source });
+    this.location.choosePoint({
+      latitude: c.latitude,
+      longitude: c.longitude,
+      label: c.label,
+      detail: c.detail,
+      source: c.source,
+    });
     this.ref.close(true);
   }
 
@@ -164,11 +160,15 @@ export class LocationPickerDialog {
     this.naming.set(true);
     this.naming$ = this.location.reverse(point.latitude, point.longitude).subscribe({
       next: (place) => {
-        this.candidate.update((c) => (c ? { ...c, label: place.label || c.label, detail: place.displayName } : c));
+        this.candidate.update((c) =>
+          c ? { ...c, label: place.label || c.label, detail: place.displayName } : c,
+        );
         this.naming.set(false);
       },
       error: () => {
-        this.candidate.update((c) => (c ? { ...c, detail: `${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)}` } : c));
+        this.candidate.update((c) =>
+          c ? { ...c, detail: `${point.latitude.toFixed(5)}, ${point.longitude.toFixed(5)}` } : c,
+        );
         this.naming.set(false);
       },
     });

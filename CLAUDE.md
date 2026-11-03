@@ -40,6 +40,8 @@ npm test -- --watch=false --include src/app/core/services/rider-gps.service.spec
 npx ng build --configuration development   # fast type/template check (prefix NG_BUILD_SASS_EMBEDDED=0 if it hangs)
 ```
 
+Production: `docker compose --env-file deploy/.env up -d --build` (see README §6). CI is `.github/workflows/ci.yml`. Problems and fixes: `docs/TROUBLESHOOTING.md`.
+
 ## Backend architecture (`backend/src`)
 
 - **Layering:** routes → `validate(...)` (express-validator) → controllers → services → Mongoose models.
@@ -63,6 +65,12 @@ npx ng build --configuration development   # fast type/template check (prefix NG
   - **Locks:** `DeliveryPartner.currentOffer` and `activeOrder` are compare-and-set locks.
   - **Sweep:** `sweep()` runs on an interval started in `server.js`. It expires offers, re-dispatches waiting orders and auto-rejects unanswered ones. Tests call `sweep(now)` directly.
   - **Tunables:** in `config/dispatch.js`.
+- **Payments:** `services/payments/`. `payment.service.js` owns every payment state change (start, confirm, webhook, mark paid/failed, refunds).
+  - **Providers:** COD, Razorpay (`razorpay.provider.js`, only when both keys are set) or the simulated `mock.provider.js` (never in production). Swap in tests with `useOnlineProvider`.
+  - **Visibility:** online orders have `submittedAt: null` until paid. Restaurant queries require `submittedAt`, and the response timer starts from it. The sweep cancels unpaid orders after `paymentWindowMinutes`.
+  - **Settlement:** on delivery the workflow stores `order.settlement` from `earnings.service.js#settlementFor` (`config/earnings.js`). Earnings and admin reports (`reports.service.js`) aggregate it, grouping days in `env.reportTimezone`.
+  - **Webhook:** mounted in `app.js` *before* `express.json`, because the signature covers the raw body.
+- **Notifications:** `notification.service.js#notify(userIds, {...})` stores the notification and emits `notification:new`; it is best-effort and never throws. Status-change messages live in `order-notifications.js`, called from the workflow.
 - **What each role sees:** `services/order-management.service.js` defines `presentForRestaurant` (no customer phone or exact address), `presentForRider` (full address only once carrying the order) and `presentWithRider` (customer and admin).
 - **Realtime (Socket.IO):** `sockets/`, attached to the HTTP server in `server.js`.
   - **Handshake:** the client sends `auth.token` (the access token).
@@ -71,8 +79,10 @@ npx ng build --configuration development   # fast type/template check (prefix NG
   - **Rider positions:** `rider:location` is validated, rate-limited and checked for implausible speed, then broadcast to the active order's room.
   - **Tests:** when no server is attached, emits are no-ops.
 - **External geo services:**
-  - `services/geocoding.service.js` (Nominatim) and `services/routing.service.js` (OSRM, swappable via `useProvider`) both cache, serialise about 1 request per second, and fail with a 503 that the UI degrades on.
+  - `services/geocoding.service.js` (Nominatim) and `services/routing.service.js` (OSRM, swappable via `useProvider`) share `utils/upstream.js#createUpstream`. It caches, merges identical in-flight requests and serialises about 1 request per second. Both fail with a 503 that the UI degrades on.
+  - GeoJSON helpers (`toPoint`, `fromPoint`, `haversineMeters`) are in `utils/geo.js`. Order status groups (`ACTIVE_STATUSES`, `FINAL_STATUSES`, `TRACKED_STATUSES`) live next to `ORDER_STATUS` in `models/order.model.js`.
   - Distances are labelled as straight-line (fees and dispatch), road estimate (routing) or live GPS. Keep those distinctions.
+- **Images:** `services/upload.service.js#saveImage` checks the real file type from its bytes, then stores it in Cloudinary (`config/cloudinary.js`, when the `CLOUDINARY_*` keys are set) or on local disk. Tests always use local disk; swap storage with `useImageStorage`.
 - **API docs:** OpenAPI fragments in `docs/openapi.*.js`, merged in `docs/openapi.js`. Update them when routes change.
 
 ## Frontend architecture (`frontend/src/app`)
@@ -91,8 +101,14 @@ npx ng build --configuration development   # fast type/template check (prefix NG
   - Pass `context: publicRequest()` on public catalogue calls so the SSR HTTP transfer cache can reuse them.
 - **Live data:**
   - `core/services/realtime.service.ts` owns the socket: it connects while signed in, refreshes the token on handshake failure, and exposes `orderUpdates$`, `track(orderId)` and `sendRiderLocation()`.
-  - Screens react to events, with a slow fallback poll from `core/services/poll.ts#pollWhileVisible` that pauses on hidden tabs. A request passed to it must catch its own errors.
+  - Screens react to events with a slow fallback poll that pauses on hidden tabs. Use `core/services/poll.ts#liveRefresh(request, { pollMs, when })`, which wraps `pollWhileVisible`. A request passed to either must catch its own errors.
+  - Paginated admin-style lists use `shared/list/paged-list.ts#pagedList(fetch, opts)`, which gives data, loading and error state, live refresh, and a reset to page 1 when the filters change.
+  - Confirm-then-act flows use `confirmed(dialog, data)` from `shared/components/confirm-dialog/confirm-dialog.ts`.
+  - **Toggles:** bind `np-toggle [checked]` to the source state and update that state optimistically, restoring it on failure. Never call `toggle.checked.set()`: it re-emits `checkedChange`.
   - `core/services/restaurant-order-board.ts` is a shared ref-counted store for the restaurant panel.
+  - `core/services/inbox.service.ts` backs the header bell (`shared/components/notification-bell`). `NotificationService` is the snackbar helper, not this.
+  - **Payments:** `core/services/payment.service.ts#pay(orderId, session)` opens Razorpay checkout.js or the `MockPaymentDialog` and reports the result. Use `awaitingPayment()` / `customerStatusLabel()` from `checkout.models.ts` for unpaid online orders.
+  - **Charts:** `shared/components/daily-chart` (np-chart plus a "Show as table" view, palette in `SERIES_COLORS`) and `shared/components/stat-tile`.
 - **Forms:**
   - Use `form(model, schema, { submission: { action } })` with `<form [formRoot]>` and `[formField]`.
   - Reusable rules are in `shared/forms/form-rules.ts`. `shownError()` shows an error once the field is touched, and `serverErrors()` maps the API's 422 `{ field: 'a.b' }` errors onto fields.
@@ -101,6 +117,7 @@ npx ng build --configuration development   # fast type/template check (prefix NG
 - **UI:**
   - Angular Material (M3) plus NexPrime (`nexprime` package; npm `overrides` pin its Angular peers).
   - Brand tokens (`--bb-*`, NexPrime `--ui-*` mapped onto them) and global form and field rules live in `src/styles.scss`. NexPrime host widths are overridden there with `!important`, because their emulated host styles outrank element selectors.
+  - **Icons:** NexPrime `<np-icon name="…" class="mat-icon" matButtonIcon />` only, no `mat-icon`. Names are NexPrime/Lucide file names (`chef-hat`). Material names still in data (category icons in the database, nav items) go through `| npIcon` (`shared/icons/np-icon-name.ts`). Size with `--bb-icon-size` (global default 24px, 18px in text buttons), not width/height.
   - Breakpoint mixins are in `breakpoints`: `tablet-up`, `desktop-up`, `phone-only` and `below-desktop`, at 600 and 1024 px.
 - **Maps:**
   - `shared/components/map-picker` is the pin picker.

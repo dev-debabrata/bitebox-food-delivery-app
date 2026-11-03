@@ -1,15 +1,13 @@
 import mongoose from "mongoose";
 import { logger } from "../config/logger.js";
 import { DeliveryPartner } from "../models/delivery-partner.model.js";
-import { ORDER_STATUS, Order } from "../models/order.model.js";
+import { ORDER_STATUS, Order, TRACKED_STATUSES } from "../models/order.model.js";
 import { Restaurant } from "../models/restaurant.model.js";
 import { ROLES } from "../models/user.model.js";
-import { haversineMeters } from "../utils/geo.js";
+import { fromPoint, haversineMeters, toPoint } from "../utils/geo.js";
 import { rooms } from "./events.js";
 
 const S = ORDER_STATUS;
-/** Statuses during which the rider's position is shared with the order's viewers. */
-export const TRACKED_STATUSES = [S.ASSIGNED, S.PICKED_UP, S.ON_THE_WAY];
 
 export const LIMITS = Object.freeze({
   // Positions vaguer than this are not shared (they would show the rider in the wrong street).
@@ -21,6 +19,8 @@ export const LIMITS = Object.freeze({
   refillPerSecond: 1,
   // Persist to MongoDB at most this often (broadcasts are not throttled beyond the bucket).
   persistEveryMs: 5000,
+  // Re-check the rider's online state and current order at most this often (not on every fix).
+  recheckEveryMs: 5000,
 });
 
 const ack = (callback, value) => typeof callback === "function" && callback(value);
@@ -37,8 +37,7 @@ async function canTrack(user, order) {
 
 const locationPayload = (orderId, profile) => ({
   orderId: String(orderId),
-  latitude: profile.location.coordinates[1],
-  longitude: profile.location.coordinates[0],
+  ...fromPoint(profile.location),
   accuracy: profile.locationAccuracy ?? null,
   at: profile.locationUpdatedAt,
 });
@@ -87,6 +86,19 @@ export function registerTracking(io, socket) {
   let refilledAt = Date.now();
   let last = null; // { latitude, longitude, at }
   let persistedAt = 0;
+  // Cached for LIMITS.recheckEveryMs: { online, trackedOrderId } (finished orders' rooms are emptied anyway).
+  let state = null;
+  let checkedAt = 0;
+  async function riderState(now) {
+    if (state && now - checkedAt < LIMITS.recheckEveryMs) return state;
+    const [profile, order] = await Promise.all([
+      DeliveryPartner.findOne({ user: user.id }).select("isOnline"),
+      Order.findOne({ deliveryPartner: user.id, status: { $in: TRACKED_STATUSES } }).select("_id"),
+    ]);
+    checkedAt = now;
+    state = { online: Boolean(profile?.isOnline), trackedOrderId: order ? String(order._id) : null };
+    return state;
+  }
 
   /**
    * rider:location { latitude, longitude, accuracy? } -> ack { ok, error? }
@@ -116,23 +128,20 @@ export function registerTracking(io, socket) {
       }
       last = { latitude, longitude, at: now };
 
-      const profile = await DeliveryPartner.findOne({ user: user.id }).select("isOnline activeOrder");
-      if (!profile?.isOnline) return ack(callback, { ok: false, error: "OFFLINE" });
+      const { online, trackedOrderId } = await riderState(now);
+      if (!online) return ack(callback, { ok: false, error: "OFFLINE" });
 
       const at = new Date(now);
       if (now - persistedAt >= LIMITS.persistEveryMs) {
         persistedAt = now;
         await DeliveryPartner.updateOne(
           { user: user.id },
-          { $set: { location: { type: "Point", coordinates: [longitude, latitude] }, locationUpdatedAt: at, locationAccuracy: accuracy ?? undefined } },
+          { $set: { location: toPoint({ latitude, longitude }), locationUpdatedAt: at, locationAccuracy: accuracy ?? undefined } },
         );
       }
 
-      if (profile.activeOrder) {
-        const order = await Order.findOne({ _id: profile.activeOrder, deliveryPartner: user.id, status: { $in: TRACKED_STATUSES } }).select("_id");
-        if (order) {
-          io.to(rooms.order(order._id)).emit("order:location", { orderId: String(order._id), latitude, longitude, accuracy, at });
-        }
+      if (trackedOrderId) {
+        io.to(rooms.order(trackedOrderId)).emit("order:location", { orderId: trackedOrderId, latitude, longitude, accuracy, at });
       }
       ack(callback, { ok: true });
     } catch (error) {

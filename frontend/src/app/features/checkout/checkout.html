@@ -69,7 +69,7 @@
         <section class="bb-card" aria-labelledby="address-title">
           <div class="section-head">
             <h2 id="address-title">Delivery address</h2>
-            <button mat-stroked-button type="button" (click)="addAddress()"><mat-icon>add</mat-icon>Add new</button>
+            <button mat-stroked-button type="button" (click)="addAddress()"><np-icon name="plus" class="mat-icon" matButtonIcon />Add new</button>
           </div>
           @if (savedAddresses().length === 0) {
             <p class="bb-muted">Add an address so we know where to deliver.</p>
@@ -79,7 +79,7 @@
                 <mat-radio-button [value]="a.id" class="address-option" [class.selected]="a.id === selectedAddressId()">
                   <span class="address-body">
                     <span class="address-label">
-                      <mat-icon aria-hidden="true">{{ a.label === 'home' ? 'home' : a.label === 'work' ? 'work' : 'place' }}</mat-icon>
+                      <np-icon [name]="(a.label === 'home' ? 'home' : a.label === 'work' ? 'work' : 'place') | npIcon" class="mat-icon" matButtonIcon />
                       {{ a.label | titlecase }}
                       @if (a.isDefault) {
                         <span class="default">Default</span>
@@ -97,12 +97,27 @@
         <!-- Payment -->
         <section class="bb-card" aria-labelledby="payment-title">
           <h2 id="payment-title">Payment</h2>
-          <mat-radio-group value="cod" aria-labelledby="payment-title">
+          <mat-radio-group class="pay-methods" [value]="paymentMethod()" (change)="paymentMethod.set($event.value)" aria-labelledby="payment-title">
             <mat-radio-button value="cod">
-              <span class="pay-option"><mat-icon aria-hidden="true">payments</mat-icon> Cash on delivery</span>
+              <span class="pay-option"><np-icon name="banknote" class="mat-icon" matButtonIcon /> Cash on delivery</span>
             </mat-radio-button>
+            @if (onlineAvailable()) {
+              <mat-radio-button value="online">
+                <span class="pay-option">
+                  <np-icon name="credit-card" class="mat-icon" matButtonIcon />
+                  <span class="pay-text">
+                    <span>Pay online</span>
+                    <span class="pay-hint">UPI, cards, netbanking & wallets</span>
+                  </span>
+                </span>
+              </mat-radio-button>
+            }
           </mat-radio-group>
-          <p class="bb-muted small">Pay the rider in cash or by UPI at your door. Online payment is coming soon.</p>
+          @if (paymentMethod() === 'online') {
+            <p class="bb-muted small">You'll pay securely on the next screen. The restaurant receives your order once payment succeeds.</p>
+          } @else {
+            <p class="bb-muted small">Pay the rider in cash or by UPI at your door.</p>
+          }
         </section>
       </div>
 
@@ -112,7 +127,7 @@
           <h2 id="coupon-title">Offers</h2>
           @if (q.coupon; as applied) {
             <div class="applied">
-              <mat-icon aria-hidden="true">local_offer</mat-icon>
+              <np-icon name="tag" class="mat-icon" matButtonIcon />
               <div>
                 <strong>{{ applied.code }}</strong> applied
                 <span class="bb-muted small">You save {{ applied.discountPaise | inr }}</span>
@@ -122,7 +137,7 @@
           } @else {
             @if (q.couponError; as ce) {
               <div class="bb-alert info" role="status">
-                <mat-icon aria-hidden="true">info</mat-icon>
+                <np-icon name="info" class="mat-icon" matButtonIcon />
                 <span>{{ ce.code }}: {{ ce.message }} <button class="bb-link-button" (click)="removeCoupon()">Remove</button></span>
               </div>
             }
@@ -169,13 +184,13 @@
 
         @for (issue of blockingIssues(); track issue.code) {
           <div class="bb-alert error" role="alert">
-            <mat-icon aria-hidden="true">error</mat-icon>
+            <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
             <span>{{ issue.message }}</span>
           </div>
         }
         @if (placeError()) {
           <div class="bb-alert error" role="alert">
-            <mat-icon aria-hidden="true">error</mat-icon>
+            <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
             <span>{{ placeError() }}</span>
           </div>
         }
@@ -184,7 +199,7 @@
           @if (placing()) {
             <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Placing order" />
           } @else {
-            Place order · {{ q.pricing.totalPaise | inr }}
+            {{ paymentMethod() === 'online' ? 'Place order & pay' : 'Place order' }} · {{ q.pricing.totalPaise | inr }}
           }
         </button>
         @if (!selectedAddressId()) {

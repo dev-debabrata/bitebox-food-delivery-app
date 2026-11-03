@@ -24,7 +24,7 @@
 
 @if (error()) {
   <div class="bb-alert error" role="alert">
-    <mat-icon aria-hidden="true">error</mat-icon>
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
     <span>{{ error() }} <button class="bb-link-button" (click)="load(1)">Retry</button></span>
   </div>
 }
@@ -56,7 +56,7 @@
               <span class="bb-muted small">Owner: {{ r.owner.name }} ({{ r.owner.email }})</span>
             </span>
             <span class="when bb-muted small">Submitted {{ r.createdAt | date: 'mediumDate' }}</span>
-            <mat-icon class="chev" aria-hidden="true">chevron_right</mat-icon>
+            <np-icon name="chevron-right" class="mat-icon chev" matButtonIcon />
           </a>
         </li>
       }

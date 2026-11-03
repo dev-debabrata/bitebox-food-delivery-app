@@ -2,6 +2,7 @@ import { env } from "../config/env.js";
 import { logger } from "../config/logger.js";
 import { ApiError } from "../utils/api-error.js";
 import { haversineMeters } from "../utils/geo.js";
+import { createUpstream } from "../utils/upstream.js";
 
 /**
  * Road routes between two points: distance, estimated travel time and the
@@ -16,13 +17,9 @@ import { haversineMeters } from "../utils/geo.js";
  * Results are estimates. They are not live traffic and not the rider's actual progress.
  */
 
-const CACHE_TTL_MS = 10 * 60 * 1000;
-const CACHE_MAX = 2000;
-const MIN_GAP_MS = 1100;
 const MAX_ROUTE_KM = 100; // deliveries are local; anything longer is a bad request
-const cache = new Map();
-let queue = Promise.resolve();
-let lastRequestAt = 0;
+// The public OSRM demo server: light use only, so cache and space out requests.
+const upstream = createUpstream({ ttlMs: 10 * 60 * 1000, maxEntries: 2000, minGapMs: 1100 });
 
 /** OSRM: GET /route/v1/{profile}/{lng,lat};{lng,lat}?overview=simplified&geometries=geojson */
 const osrm = {
@@ -49,33 +46,21 @@ const osrm = {
   },
 };
 
-export const providers = { osrm };
 let provider = osrm;
 
 /** For tests: swap the provider (e.g. a fake). Returns a function that restores the previous one. */
 export function useProvider(next) {
   const previous = provider;
   provider = next;
-  cache.clear();
+  upstream.clear();
   return () => {
     provider = previous;
-    cache.clear();
+    upstream.clear();
   };
 }
 
 // ~11 m: points closer than this share a cached route.
 const keyOf = (p) => `${p.latitude.toFixed(4)},${p.longitude.toFixed(4)}`;
-
-function throttled(task) {
-  const run = queue.then(async () => {
-    const wait = lastRequestAt + MIN_GAP_MS - Date.now();
-    if (wait > 0 && !env.isTest) await new Promise((r) => setTimeout(r, wait));
-    lastRequestAt = Date.now();
-    return task();
-  });
-  queue = run.catch(() => undefined);
-  return run;
-}
 
 /**
  * Road route from `from` to `to` ({ latitude, longitude }).
@@ -85,19 +70,17 @@ export async function route(from, to) {
   const straightLineMeters = haversineMeters([from.longitude, from.latitude], [to.longitude, to.latitude]);
   if (straightLineMeters > MAX_ROUTE_KM * 1000) throw ApiError.badRequest(`Routes are limited to ${MAX_ROUTE_KM} km`);
 
-  const key = `${provider.name}|${keyOf(from)}|${keyOf(to)}`;
-  const hit = cache.get(key);
-  if (hit && hit.expires > Date.now()) return hit.value;
-
-  let result;
+  const { name, attribution } = provider;
   try {
-    result = await throttled(() => provider.route(from, to));
+    return await upstream.get(`${name}|${keyOf(from)}|${keyOf(to)}`, async () => ({
+      ...(await provider.route(from, to)),
+      straightLineMeters,
+      provider: name,
+      attribution,
+      estimate: true,
+    }));
   } catch (error) {
     logger.warn({ err: error }, "Routing request failed");
     throw new ApiError(503, "Road routing is unavailable right now", { code: "ROUTING_UNAVAILABLE" });
   }
-  const value = { ...result, straightLineMeters, provider: provider.name, attribution: provider.attribution, estimate: true };
-  if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
-  cache.set(key, { value, expires: Date.now() + CACHE_TTL_MS });
-  return value;
 }

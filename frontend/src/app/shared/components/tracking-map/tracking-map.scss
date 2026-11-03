@@ -28,8 +28,11 @@
   box-shadow: 0 2px 8px rgb(0 0 0 / 30%);
   color: #fff;
 
-  .material-symbols-outlined {
-    font-size: 20px;
+  .bb-track-icon,
+  .bb-track-icon svg {
+    display: block;
+    width: 20px;
+    height: 20px;
   }
 
   &.bb-track-restaurant {

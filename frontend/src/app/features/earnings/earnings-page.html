@@ -1,0 +1,52 @@
+<bb-page-header
+  title="Earnings"
+  [subtitle]="
+    rider()
+      ? 'Your pay for completed deliveries: a base amount plus a per-kilometre rate.'
+      : 'What you receive for delivered orders: the food value after discounts, minus the BiteBox commission.'
+  "
+>
+  <np-select class="bb-period" [formField]="report.filters.days" ariaLabel="Period" [options]="report.periods" />
+</bb-page-header>
+
+@if (report.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="report.resource.reload()">Retry</button></span>
+  </div>
+}
+
+@if (report.data(); as d) {
+  <section class="bb-grid cols-3" aria-label="Totals" [class.bb-dim]="report.resource.isLoading()">
+    <bb-stat-tile icon="account_balance_wallet" label="Earned" [value]="formatPaise(d.totals.earningsPaise) || '₹0'" />
+    <bb-stat-tile [icon]="rider() ? 'two_wheeler' : 'receipt_long'" [label]="rider() ? 'Deliveries' : 'Delivered orders'" [value]="d.totals.orders" />
+    @if (rider()) {
+      <bb-stat-tile icon="route" label="Distance" [value]="distance(d.totals.distanceMeters) || '0 km'" hint="Straight line, restaurant to customer" />
+    } @else {
+      <bb-stat-tile icon="trending_up" label="Average per order" [value]="perOrder()" />
+    }
+  </section>
+
+  <bb-daily-chart title="Earnings by day" [dates]="dates()" [series]="series()" [format]="formatPaise" />
+
+  <section class="bb-card" aria-labelledby="recent-title">
+    <h3 id="recent-title">Recent {{ rider() ? 'deliveries' : 'orders' }}</h3>
+    @for (r of d.recent; track r.id) {
+      <div class="row">
+        <div class="main">
+          <strong>{{ r.orderNumber }}</strong>
+          <span class="bb-muted">
+            {{ rider() ? r.restaurantName + ' → ' + r.area + ' · ' + distance(r.distanceMeters) : 'Order total ' + (r.totalPaise | inr) }}
+            · {{ r.deliveredAt | date: 'd MMM, h:mm a' }}
+          </span>
+        </div>
+        <strong>{{ r.earningsPaise | inr }}</strong>
+      </div>
+    } @empty {
+      <bb-empty-state icon="savings" title="No earnings yet" message="Delivered orders in this period appear here." />
+    }
+  </section>
+} @else if (!report.error()) {
+  <span class="bb-skeleton" style="height: 92px" aria-busy="true"></span>
+  <span class="bb-skeleton" style="height: 300px"></span>
+}

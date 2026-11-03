@@ -4,10 +4,9 @@ import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-i
 import { DatePipe } from '@angular/common';
 import { form } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
-import { SelectOption } from 'nexprime';
+import { IconComponent, SelectOption } from 'nexprime';
 import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs';
 import { AdminUsersService } from '../../../core/services/admin/admin-users.service';
 import { errorMessage } from '../../../core/services/api-error';
@@ -22,7 +21,7 @@ import { ROLE_META, Role, User } from '../../../shared/models/user.models';
     DatePipe,
     NP_FORM_FIELDS,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatPaginatorModule,
     MatTableModule,
     PageHeader,

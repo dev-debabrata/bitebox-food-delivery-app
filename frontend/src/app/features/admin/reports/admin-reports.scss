@@ -1,0 +1,68 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-4);
+}
+
+h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.note {
+  margin: 2px 0 var(--bb-space-3);
+  font-size: 0.82rem;
+}
+
+// Label and value on one line, the bar underneath.
+.share-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px var(--bb-space-2);
+  margin-bottom: var(--bb-space-3);
+  font-size: 0.9rem;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.track {
+  grid-column: 1 / -1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bb-surface-alt);
+  overflow: hidden;
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  border-radius: 4px;
+}
+
+.top {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 6px 4px;
+    text-align: right;
+    border-bottom: 1px solid var(--bb-border);
+  }
+
+  th:first-child {
+    text-align: left;
+    font-weight: 500;
+  }
+
+  thead th {
+    color: var(--bb-ink-muted);
+    font-size: 0.8rem;
+  }
+}

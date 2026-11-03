@@ -4,6 +4,7 @@ import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse, Paginated } from '../../shared/models/api.models';
 import { AddressInput, AdminCoupon, AdminCouponInput, CouponOffer, DeliveryAddress, Order } from '../../shared/models/checkout.models';
+import { CheckoutSession, PaymentMethod } from '../../shared/models/payment.models';
 import { toParams } from './http-params';
 
 /** Saved delivery addresses (customers). */
@@ -35,7 +36,7 @@ export class AddressService {
 
 export interface PlaceOrderRequest {
   addressId: string;
-  paymentMethod: 'cod';
+  paymentMethod: PaymentMethod;
   note?: string;
   expectedTotalPaise: number;
 }
@@ -47,10 +48,13 @@ export class OrderService {
   private readonly api = environment.apiUrl;
 
   /** `idempotencyKey` must stay the same across retries of one checkout attempt. */
-  place(request: PlaceOrderRequest, idempotencyKey: string): Observable<Order> {
+  /** `checkout` is set for an unpaid online order: open the gateway with it. */
+  place(request: PlaceOrderRequest, idempotencyKey: string): Observable<{ order: Order; checkout: CheckoutSession | null }> {
     return this.http
-      .post<ApiResponse<{ order: Order }>>(`${this.api}/orders`, request, { headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }) })
-      .pipe(map((r) => r.data.order));
+      .post<ApiResponse<{ order: Order; checkout?: CheckoutSession | null }>>(`${this.api}/orders`, request, {
+        headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }),
+      })
+      .pipe(map((r) => ({ order: r.data.order, checkout: r.data.checkout ?? null })));
   }
 
   mine(page = 1, limit = 10): Observable<Paginated<Order>> {

@@ -7,6 +7,7 @@ import { ROLES, SELF_REGISTER_ROLES, User, USER_STATUS } from "../models/user.mo
 import { ApiError } from "../utils/api-error.js";
 import { hashToken, randomToken, signAccessToken } from "../utils/tokens.js";
 import { sendMail } from "./mail.service.js";
+import { notifyAdmins } from "./notification.service.js";
 
 // A rotated token presented again within this window is treated as a benign
 // race (two tabs refreshing at once) rather than token theft.
@@ -39,6 +40,12 @@ async function revokeAllSessions(userId, reason) {
   await Session.updateMany({ user: userId, revokedAt: null }, { revokedAt: new Date(), revokedReason: reason });
 }
 
+/** Partner sign-ups admins are told about (customers sign up too often to notify). */
+const PARTNER_SIGNUP = {
+  [ROLES.RESTAURANT]: { what: "restaurant partner", link: "/admin/users" },
+  [ROLES.DELIVERY]: { what: "delivery partner", link: "/admin/delivery-partners" },
+};
+
 export async function register({ name, email, phone, password, role = ROLES.CUSTOMER }, meta) {
   if (!SELF_REGISTER_ROLES.includes(role)) {
     throw ApiError.forbidden("This role cannot be self-registered");
@@ -52,6 +59,8 @@ export async function register({ name, email, phone, password, role = ROLES.CUST
 
   const user = await User.create({ name, email, phone, role, passwordHash: await hashPassword(password) });
   logger.info({ userId: user.id, role }, "User registered");
+  const signup = PARTNER_SIGNUP[role];
+  if (signup) await notifyAdmins({ type: `user.${role}`, title: `New ${signup.what}: ${name}`, body: email, link: signup.link });
   return issueTokens(user, meta);
 }
 

@@ -2,7 +2,9 @@ import mongoose from "mongoose";
 import { FoodItem } from "../models/food-item.model.js";
 import { ADMIN_STATUS_TRANSITIONS, RESTAURANT_STATUS, Restaurant } from "../models/restaurant.model.js";
 import { ApiError } from "../utils/api-error.js";
+import { notify, notifyAdmins } from "./notification.service.js";
 import { escapeRegex, paginationMeta } from "../utils/pagination.js";
+import { toPoint } from "../utils/geo.js";
 import { uniqueSlug } from "../utils/slug.js";
 
 /** Fields a restaurant owner may set. Status, rating and owner are never client-controlled. */
@@ -24,7 +26,6 @@ const OWNER_FIELDS = [
 
 const pick = (source, keys) => Object.fromEntries(keys.filter((k) => source[k] !== undefined).map((k) => [k, source[k]]));
 
-const toPoint = ({ latitude, longitude }) => ({ type: "Point", coordinates: [longitude, latitude] });
 
 // ---------------------------------------------------------------------------
 // Owner (restaurant partner)
@@ -41,17 +42,34 @@ export async function requireOwnRestaurant(ownerId) {
   return restaurant;
 }
 
+/** An admin notification asking for a review of this restaurant. */
+const reviewRequest = (restaurant, title, body) => ({
+  type: "restaurant.review",
+  title: `${title}: ${restaurant.name}`,
+  body,
+  link: `/admin/restaurants/${restaurant._id}`,
+});
+
+/** What the owner is told when an admin changes their restaurant's status. */
+const STATUS_NOTICE = {
+  [RESTAURANT_STATUS.APPROVED]: { title: "Your restaurant is live", body: "Customers can now find you and place orders." },
+  [RESTAURANT_STATUS.REJECTED]: { title: "Your application needs changes", body: "Update your details to send it for review again." },
+  [RESTAURANT_STATUS.SUSPENDED]: { title: "Your restaurant is suspended", body: "Customers cannot order until BiteBox reinstates it." },
+};
+
 export async function createOwnRestaurant(ownerId, input) {
   if (await Restaurant.exists({ owner: ownerId })) {
     throw ApiError.conflict("You already have a restaurant. Edit it instead.");
   }
-  return Restaurant.create({
+  const restaurant = await Restaurant.create({
     ...pick(input, OWNER_FIELDS),
     location: toPoint(input.location),
     owner: ownerId,
     slug: await uniqueSlug(Restaurant, input.name),
     status: RESTAURANT_STATUS.PENDING,
   });
+  await notifyAdmins(reviewRequest(restaurant, "New restaurant application", "Review it to put it live on BiteBox."));
+  return restaurant;
 }
 
 export async function updateOwnRestaurant(ownerId, input) {
@@ -62,11 +80,14 @@ export async function updateOwnRestaurant(ownerId, input) {
     restaurant.slug = await uniqueSlug(Restaurant, input.name, restaurant._id);
   }
   // Fixing a rejected application sends it back for review.
-  if (restaurant.status === RESTAURANT_STATUS.REJECTED) {
+  const resubmitted = restaurant.status === RESTAURANT_STATUS.REJECTED;
+  if (resubmitted) {
     restaurant.status = RESTAURANT_STATUS.PENDING;
     restaurant.statusReason = undefined;
   }
-  return restaurant.save();
+  const saved = await restaurant.save();
+  if (resubmitted) await notifyAdmins(reviewRequest(saved, "Restaurant resubmitted", "The owner updated a rejected application."));
+  return saved;
 }
 
 export async function setAcceptingOrders(ownerId, isAcceptingOrders) {
@@ -152,6 +173,15 @@ export async function adminSetStatus(id, nextStatus, reason, adminId) {
   ).populate("owner", "name email phone status");
 
   if (!updated) throw ApiError.conflict("This restaurant was updated by someone else. Refresh and try again.");
+  const notice = STATUS_NOTICE[nextStatus];
+  if (notice) {
+    await notify(updated.owner._id, {
+      type: `restaurant.${nextStatus}`,
+      title: notice.title,
+      body: reason ? `${notice.body} Reason: ${reason}` : notice.body,
+      link: "/restaurant",
+    });
+  }
   return updated;
 }
 

@@ -1,12 +1,12 @@
 <section class="bb-container page">
   <bb-page-header title="Saved addresses" subtitle="Where should we deliver?">
     <button mat-flat-button (click)="open()" [disabled]="addresses().length >= 10">
-      <mat-icon>add</mat-icon>Add address
+      <np-icon name="plus" class="mat-icon" matButtonIcon />Add address
     </button>
   </bb-page-header>
   @if (error()) {
     <div class="bb-alert error" role="alert">
-      <mat-icon aria-hidden="true">error</mat-icon><span>{{ error() }}</span>
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ error() }}</span>
     </div>
   }
   @if (loading()) {
@@ -29,9 +29,7 @@
         <article class="bb-card address" [class.default]="a.isDefault">
           <header>
             <span class="label">
-              <mat-icon aria-hidden="true">{{
-                a.label === 'home' ? 'home' : a.label === 'work' ? 'work' : 'place'
-              }}</mat-icon>
+              <np-icon [name]="(a.label === 'home' ? 'home' : a.label === 'work' ? 'work' : 'place') | npIcon" class="mat-icon" matButtonIcon />
               {{ a.label | titlecase }}
             </span>
             @if (a.isDefault) {
@@ -42,19 +40,19 @@
               [matMenuTriggerFor]="menu"
               [attr.aria-label]="'Actions for ' + a.label + ' address'"
             >
-              <mat-icon>more_vert</mat-icon>
+              <np-icon name="ellipsis-vertical" class="mat-icon" matButtonIcon />
             </button>
             <mat-menu #menu="matMenu" xPosition="before">
               <button mat-menu-item (click)="open(a)">
-                <mat-icon>edit</mat-icon><span>Edit</span>
+                <np-icon name="pencil" class="mat-icon" matButtonIcon /><span>Edit</span>
               </button>
               @if (!a.isDefault) {
                 <button mat-menu-item (click)="makeDefault(a)">
-                  <mat-icon>star</mat-icon><span>Make default</span>
+                  <np-icon name="star" class="mat-icon" matButtonIcon /><span>Make default</span>
                 </button>
               }
               <button mat-menu-item (click)="remove(a)">
-                <mat-icon>delete</mat-icon><span>Delete</span>
+                <np-icon name="trash-2" class="mat-icon" matButtonIcon /><span>Delete</span>
               </button>
             </mat-menu>
           </header>

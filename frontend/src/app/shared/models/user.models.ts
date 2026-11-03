@@ -61,3 +61,11 @@ export const ROLE_META: Record<Role, { label: string; home: string; login: strin
     register: '/delivery/register',
   },
 };
+
+/** "Asha Customer" -> "AC" (first two words), for round avatars. */
+export const initialsOf = (name = ''): string =>
+  name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');

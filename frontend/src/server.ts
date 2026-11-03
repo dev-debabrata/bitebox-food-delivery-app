@@ -4,6 +4,7 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
+import compression from 'compression';
 import express from 'express';
 import { join } from 'node:path';
 
@@ -12,26 +13,40 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
-/**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
- */
+app.disable('x-powered-by');
+// Behind a load balancer / reverse proxy (TRUST_PROXY=1), use the client's real protocol and IP.
+if (process.env['TRUST_PROXY']) app.set('trust proxy', Number(process.env['TRUST_PROXY']) || process.env['TRUST_PROXY']);
 
 /**
- * Serve static files from /browser
+ * Security headers for every page and asset. (A Content-Security-Policy is best set at the
+ * proxy/CDN, where the API, Cloudinary, map tiles and payment gateway origins are known.)
+ */
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(self), camera=(), microphone=()');
+  next();
+});
+app.use(compression());
+
+/** Liveness check for containers and load balancers. */
+app.get('/healthz', (_req, res) => {
+  res.json({ status: 'ok' });
+});
+
+/**
+ * Static files from /browser. Build output is fingerprinted (main-ABC123.js), so it is
+ * cached for a year; the index.html shell is never cached, so a deploy is picked up at once.
  */
 app.use(
   express.static(browserDistFolder, {
     maxAge: '1y',
     index: false,
     redirect: false,
+    setHeaders: (res, path) => {
+      if (path.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache');
+    },
   }),
 );
 
@@ -41,9 +56,7 @@ app.use(
 app.use((req, res, next) => {
   angularApp
     .handle(req)
-    .then((response) =>
-      response ? writeResponseToNodeResponse(response, res) : next(),
-    )
+    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
     .catch(next);
 });
 

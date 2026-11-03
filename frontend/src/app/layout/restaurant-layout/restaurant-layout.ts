@@ -16,6 +16,7 @@ export class RestaurantLayout {
     { label: 'Orders', icon: 'receipt_long', link: '/restaurant/orders', badge: this.board.pendingCount },
     { label: 'Restaurant details', icon: 'storefront', link: '/restaurant/details' },
     { label: 'Menu', icon: 'menu_book', link: '/restaurant/menu' },
+    { label: 'Earnings', icon: 'account_balance_wallet', link: '/restaurant/earnings' },
     { label: 'Profile', icon: 'manage_accounts', link: '/restaurant/profile' },
   ];
 

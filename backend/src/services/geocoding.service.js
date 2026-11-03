@@ -1,6 +1,7 @@
 import { env } from "../config/env.js";
 import { logger } from "../config/logger.js";
 import { ApiError } from "../utils/api-error.js";
+import { createUpstream } from "../utils/upstream.js";
 
 /**
  * Place search ("Topsia, Kolkata" -> coordinates) and reverse geocoding
@@ -14,37 +15,8 @@ import { ApiError } from "../utils/api-error.js";
  * commercial provider and swap `provider` below.
  */
 
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
-const CACHE_MAX = 1000;
-const MIN_GAP_MS = 1100;
-const cache = new Map();
-let queue = Promise.resolve();
-let lastRequestAt = 0;
-
-function cached(key) {
-  const hit = cache.get(key);
-  if (hit && hit.expires > Date.now()) return hit.value;
-  cache.delete(key);
-  return undefined;
-}
-
-function remember(key, value) {
-  if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
-  cache.set(key, { value, expires: Date.now() + CACHE_TTL_MS });
-  return value;
-}
-
-/** Serialises upstream calls so we never exceed the provider's rate limit. */
-function throttled(task) {
-  const run = queue.then(async () => {
-    const wait = lastRequestAt + MIN_GAP_MS - Date.now();
-    if (wait > 0 && !env.isTest) await new Promise((r) => setTimeout(r, wait));
-    lastRequestAt = Date.now();
-    return task();
-  });
-  queue = run.catch(() => undefined);
-  return run;
-}
+// Nominatim's public policy: at most 1 request/second, and cache what you can.
+const upstream = createUpstream({ ttlMs: 24 * 60 * 60 * 1000, maxEntries: 1000, minGapMs: 1100 });
 
 async function fetchJson(path, params) {
   const url = new URL(path, env.geocoder.url);
@@ -93,23 +65,21 @@ const provider = {
     fetchJson("/reverse", { format: "jsonv2", lat: latitude, lon: longitude, zoom: 16, addressdetails: 1 }),
 };
 
-export async function search(query) {
-  const key = `s:${query.trim().toLowerCase()}`;
-  const hit = cached(key);
-  if (hit) return hit;
-  const results = await throttled(() => provider.search(query.trim()));
-  return remember(key, (Array.isArray(results) ? results : []).map(toPlace));
+export function search(query) {
+  return upstream.get(`s:${query.trim().toLowerCase()}`, async () => {
+    const results = await provider.search(query.trim());
+    return (Array.isArray(results) ? results : []).map(toPlace);
+  });
 }
 
-export async function reverse(latitude, longitude) {
+export function reverse(latitude, longitude) {
   // ~110 m grid so nearby lookups share a cache entry.
-  const key = `r:${latitude.toFixed(3)},${longitude.toFixed(3)}`;
-  const hit = cached(key);
-  if (hit) return hit;
-  const result = await throttled(() => provider.reverse(latitude, longitude));
-  if (!result || result.error) throw ApiError.notFound("No address found for this location");
-  return remember(key, { ...toPlace(result), latitude, longitude });
+  return upstream.get(`r:${latitude.toFixed(3)},${longitude.toFixed(3)}`, async () => {
+    const result = await provider.reverse(latitude, longitude);
+    if (!result || result.error) throw ApiError.notFound("No address found for this location");
+    return { ...toPlace(result), latitude, longitude };
+  });
 }
 
 /** Test helper. */
-export const clearGeocodingCache = () => cache.clear();
+export const clearGeocodingCache = () => upstream.clear();

@@ -14,7 +14,7 @@
 
 @if (error()) {
   <div class="bb-alert error" role="alert">
-    <mat-icon aria-hidden="true">error</mat-icon>
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
     <span>{{ error() }} <button class="bb-link-button" (click)="load(pagination().page)">Retry</button></span>
   </div>
 }
@@ -26,7 +26,7 @@
     }
   } @else if (users().length === 0) {
     <div class="empty">
-      <mat-icon aria-hidden="true">person_search</mat-icon>
+      <np-icon name="user-search" class="mat-icon" matButtonIcon />
       <p>No users match these filters.</p>
     </div>
   } @else if (isDesktop()) {

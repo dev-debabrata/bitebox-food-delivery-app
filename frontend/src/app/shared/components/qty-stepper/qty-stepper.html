@@ -16,7 +16,7 @@
       [disabled]="disabled()"
       [attr.aria-label]="'Remove one ' + label()"
     >
-      <mat-icon>remove</mat-icon>
+      <np-icon name="minus" class="mat-icon" matButtonIcon />
     </button>
     <span aria-live="polite">{{ quantity() }}</span>
     <button
@@ -25,7 +25,7 @@
       [disabled]="disabled() || quantity() >= max()"
       [attr.aria-label]="'Add one more ' + label()"
     >
-      <mat-icon>add</mat-icon>
+      <np-icon name="plus" class="mat-icon" matButtonIcon />
     </button>
   </div>
 }

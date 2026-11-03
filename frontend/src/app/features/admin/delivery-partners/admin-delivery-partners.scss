@@ -116,16 +116,3 @@
 .danger {
   --mat-button-outlined-label-text-color: var(--bb-danger);
 }
-
-.empty {
-  text-align: center;
-  padding: var(--bb-space-7) var(--bb-space-4);
-  color: var(--bb-ink-muted);
-
-  mat-icon {
-    width: 48px;
-    height: 48px;
-    font-size: 48px;
-    color: var(--bb-plum-500);
-  }
-}

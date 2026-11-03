@@ -1,12 +1,13 @@
+import { NpIconPipe } from '../../shared/icons/np-icon-name';
+import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
 import { BrandLogo } from '../../shared/components/brand-logo/brand-logo';
 
 /** Split-screen layout for sign-in/registration. Brand panel collapses to a header on phones. */
 @Component({
   selector: 'bb-auth-layout',
-  imports: [RouterOutlet, RouterLink, MatIconModule, BrandLogo],
+  imports: [RouterOutlet, RouterLink, IconComponent, NpIconPipe, BrandLogo],
   templateUrl: './auth-layout.html',
   styleUrl: './auth-layout.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

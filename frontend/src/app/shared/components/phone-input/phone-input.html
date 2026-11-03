@@ -1,0 +1,31 @@
+<span class="label">
+  {{ label() }}
+  @if (required()) {
+    <span class="req" aria-hidden="true">*</span>
+  }
+</span>
+<div class="row">
+  <np-select
+    class="code"
+    [options]="countries"
+    [value]="country()"
+    (valueChange)="setCountry($event)"
+    [disabled]="disabled()"
+    filter
+    placeholder="Code"
+    [ariaLabel]="label() + ': country code'"
+  />
+  <np-text-input
+    class="number"
+    type="tel"
+    inputmode="numeric"
+    autocomplete="tel-national"
+    [value]="national()"
+    (valueChange)="setNational($event)"
+    [placeholder]="placeholder()"
+    [hint]="hint()"
+    [error]="error()"
+    [disabled]="disabled()"
+    [ariaLabel]="label()"
+  />
+</div>

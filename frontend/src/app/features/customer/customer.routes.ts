@@ -26,6 +26,12 @@ export const CUSTOMER_ROUTES: Routes = [
     loadComponent: () => import('./account/account').then((m) => m.Account),
   },
   {
+    path: 'notifications',
+    title: 'Notifications | BiteBox',
+    canActivate: [roleGuard('customer')],
+    loadComponent: () => import('../notifications/notifications-page').then((m) => m.NotificationsPage),
+  },
+  {
     path: 'checkout',
     title: 'Checkout | BiteBox',
     canActivate: [roleGuard('customer')],

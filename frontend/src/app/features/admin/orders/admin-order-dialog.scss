@@ -1,9 +1,50 @@
 @use 'breakpoints' as bp;
 
-.title {
+.head {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title-row {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--bb-space-3);
+
+  h2 {
+    margin: 0;
+    font-size: 1.35rem;
+  }
+}
+
+.meta {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: var(--bb-ink-muted);
+}
+
+.pay {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--bb-amber-100);
+  color: #7a4b00;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.pay-paid,
+  &.pay-refunded {
+    background: #e6f5ec;
+    color: var(--bb-success);
+  }
+
+  &.pay-failed,
+  &.pay-cancelled {
+    background: #fdecee;
+    color: var(--bb-danger);
+  }
 }
 
 .content {
@@ -13,12 +54,19 @@
 }
 
 h3 {
-  margin: 0 0 var(--bb-space-1);
-  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--bb-space-2);
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--bb-ink-muted);
+
+  np-icon {
+    --bb-icon-size: 18px;
+  }
 }
 
 p {
@@ -27,26 +75,67 @@ p {
   line-height: 1.5;
 }
 
-.cols {
+// Restaurant, customer and rider side by side as small cards.
+.parties {
   display: grid;
-  gap: var(--bb-space-4);
+  gap: var(--bb-space-3);
 
   @include bp.tablet-up {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-
-    &.two {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
   }
+}
+
+.party {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--bb-space-3);
+  border-radius: var(--bb-radius-sm);
+  background: var(--bb-surface-alt);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  min-width: 0;
+}
+
+// Long addresses: two lines, the full text on hover.
+.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.phone {
+  color: var(--bb-plum);
+  font-weight: 600;
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
+// Order + bill, with the history beside it on wide screens.
+.details {
+  display: grid;
+  gap: var(--bb-space-3);
+
+  @include bp.tablet-up {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+.panel {
+  padding: var(--bb-space-3) var(--bb-space-4);
+  border: 1px solid var(--bb-border);
+  border-radius: var(--bb-radius-sm);
 }
 
 .items {
   list-style: none;
-  margin: 0;
+  margin: 0 0 var(--bb-space-3);
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 
   li {
     display: flex;
@@ -54,26 +143,63 @@ p {
     gap: 6px;
     font-size: 0.9rem;
   }
+
+  .name {
+    flex: 1;
+  }
+
+  .price {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 .note {
-  margin-top: var(--bb-space-2);
+  margin-bottom: var(--bb-space-3);
 }
 
+.bill {
+  display: block;
+  padding-top: var(--bb-space-3);
+  border-top: 1px dashed var(--bb-border);
+}
+
+// A dotted timeline, newest at the bottom.
 .history {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--bb-space-2);
 
   li {
+    position: relative;
     display: flex;
     flex-direction: column;
-    padding-left: var(--bb-space-3);
-    border-left: 2px solid var(--bb-plum-100);
+    padding: 0 0 var(--bb-space-3) var(--bb-space-4);
     font-size: 0.88rem;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 6px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--bb-plum);
+    }
+
+    &:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 3px;
+      top: 16px;
+      bottom: 0;
+      width: 2px;
+      background: var(--bb-plum-100);
+    }
+
+    &:last-child {
+      padding-bottom: 0;
+    }
   }
 }
 

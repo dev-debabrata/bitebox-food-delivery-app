@@ -1,4 +1,4 @@
-<a mat-button routerLink="/admin/restaurants" class="back"><mat-icon>arrow_back</mat-icon>All restaurants</a>
+<a mat-button routerLink="/admin/restaurants" class="back"><np-icon name="arrow-left" class="mat-icon" matButtonIcon />All restaurants</a>
 
 @if (loading()) {
   <span class="bb-skeleton" style="height: 360px"></span>
@@ -8,7 +8,7 @@
   </bb-empty-state>
 } @else if (error()) {
   <div class="bb-alert error" role="alert">
-    <mat-icon aria-hidden="true">error</mat-icon>
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
     <span>{{ error() }} <button class="bb-link-button" (click)="load()">Retry</button></span>
   </div>
 } @else if (restaurant(); as r) {
@@ -27,12 +27,12 @@
     <div class="actions">
       @for (a of actions(); track a.status) {
         <button mat-flat-button [class.danger]="a.danger" [disabled]="acting()" (click)="act(a)">
-          <mat-icon>{{ a.icon }}</mat-icon>{{ a.label }}
+          <np-icon [name]="(a.icon) | npIcon" class="mat-icon" matButtonIcon />{{ a.label }}
         </button>
       }
       @if (r.status === 'approved') {
         <a mat-stroked-button [routerLink]="['/restaurants', r.slug]" target="_blank" rel="noopener">
-          <mat-icon>open_in_new</mat-icon>Public page
+          <np-icon name="external-link" class="mat-icon" matButtonIcon />Public page
         </a>
       }
     </div>
@@ -40,7 +40,7 @@
 
   @if (r.statusReason) {
     <div class="bb-alert info" role="note">
-      <mat-icon aria-hidden="true">sticky_note_2</mat-icon>
+      <np-icon name="sticky-note" class="mat-icon" matButtonIcon />
       <span><strong>Reason on record:</strong> {{ r.statusReason }}</span>
     </div>
   }
@@ -103,7 +103,7 @@
         <div><dt>Submitted</dt><dd>{{ r.createdAt | date: 'medium' }}</dd></div>
         <div><dt>Last reviewed</dt><dd>{{ r.reviewedAt ? (r.reviewedAt | date: 'medium') : 'Not yet' }}</dd></div>
       </dl>
-      <a mat-button routerLink="/admin/foods" [queryParams]="{ restaurant: r.id }"><mat-icon>menu_book</mat-icon>View menu items</a>
+      <a mat-button routerLink="/admin/foods" [queryParams]="{ restaurant: r.id }"><np-icon name="book-open" class="mat-icon" matButtonIcon />View menu items</a>
     </section>
   </div>
 }

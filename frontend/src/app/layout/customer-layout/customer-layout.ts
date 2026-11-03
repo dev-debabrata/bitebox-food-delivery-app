@@ -2,15 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatIconModule } from '@angular/material/icon';
-import { MatBadgeModule } from '@angular/material/badge';
 import { MatDialog } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
-import { ScrollTopComponent } from 'nexprime';
+import { IconComponent, ScrollTopComponent } from 'nexprime';
 import { AuthService } from '../../core/auth/auth.service';
 import { CartService } from '../../core/services/cart.service';
 import { DeliveryLocationService } from '../../core/services/delivery-location.service';
 import { LocationPickerDialog } from '../../shared/components/location-picker/location-picker-dialog';
+import { NotificationBell } from '../../shared/components/notification-bell/notification-bell';
 import { BrandLogo } from '../../shared/components/brand-logo/brand-logo';
 import { ROLE_META } from '../../shared/models/user.models';
 
@@ -18,19 +17,21 @@ import { ROLE_META } from '../../shared/models/user.models';
  * Public / customer site chrome: sticky header, footer, and a bottom tab bar
  * on phones for thumb-friendly navigation.
  */
+import { initialsOf } from '../../shared/models/user.models';
+
 @Component({
   selector: 'bb-customer-layout',
   imports: [
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
-    MatBadgeModule,
     MatButtonModule,
     MatDividerModule,
-    MatIconModule,
+    IconComponent,
     MatMenuModule,
     BrandLogo,
     ScrollTopComponent,
+    NotificationBell,
   ],
   templateUrl: './customer-layout.html',
   styleUrl: './customer-layout.scss',
@@ -52,12 +53,20 @@ export class CustomerLayout {
     return role && role !== 'customer' ? ROLE_META[role].home : null;
   });
   /** Customers see the cart (also while their session is being restored). */
-  protected readonly showCart = computed(() => this.cart.enabled() || this.shown()?.role === 'customer');
+  protected readonly showCart = computed(
+    () => this.cart.enabled() || this.shown()?.role === 'customer',
+  );
   protected readonly firstName = computed(() => this.shown()?.name.split(' ')[0] ?? '');
+  /** "Asha Customer" -> "AC", shown in the round account button. */
+  protected readonly initials = computed(() => initialsOf(this.shown()?.name));
   protected readonly year = new Date().getFullYear();
 
   protected chooseLocation(): void {
-    this.dialog.open(LocationPickerDialog, { width: '520px', maxWidth: '95vw', autoFocus: 'first-tabbable' });
+    this.dialog.open(LocationPickerDialog, {
+      width: '520px',
+      maxWidth: '95vw',
+      autoFocus: 'first-tabbable',
+    });
   }
 
   protected logout(): void {

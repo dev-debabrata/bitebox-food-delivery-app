@@ -1,9 +1,9 @@
+import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
 import { FormRoot, TreeValidationResult, form, required } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/auth/auth.service';
 import { errorMessage, fieldErrors } from '../../../core/services/api-error';
@@ -42,7 +42,7 @@ export function landingFor(role: Role, returnUrl: string | undefined): string {
     NP_FORM_FIELDS,
     RouterLink,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatProgressSpinnerModule,
   ],
   templateUrl: './login.html',

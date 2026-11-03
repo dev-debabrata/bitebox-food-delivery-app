@@ -1,0 +1,79 @@
+:host {
+  display: block;
+  margin-bottom: var(--bb-space-3);
+}
+
+// Search box plus projected buttons; buttons and NexPrime fields share the global 44px height.
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bb-space-2);
+
+  .box {
+    flex: 1 1 240px;
+  }
+}
+
+// Projected controls (outside this component's style scope) keep their natural width.
+:host ::ng-deep .row > :not(.box) {
+  flex-shrink: 0;
+}
+
+.results {
+  list-style: none;
+  margin: var(--bb-space-2) 0 0;
+  padding: 0;
+  border: 1px solid var(--bb-border);
+  border-radius: var(--bb-radius-sm);
+  max-height: 220px;
+  overflow-y: auto;
+
+  button {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--bb-space-2);
+    padding: var(--bb-space-2) var(--bb-space-3);
+    border: 0;
+    border-bottom: 1px solid var(--bb-border);
+    background: none;
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--bb-surface-alt);
+    }
+  }
+
+  np-icon {
+    color: var(--bb-ink-muted);
+    flex-shrink: 0;
+  }
+
+  span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  small {
+    color: var(--bb-ink-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.error,
+.hint {
+  margin: var(--bb-space-2) 0 0;
+  font-size: 0.85rem;
+}
+
+.error {
+  color: var(--bb-danger);
+}

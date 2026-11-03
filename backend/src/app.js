@@ -1,4 +1,5 @@
 import path from "node:path";
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
@@ -15,7 +16,9 @@ import adminUsersRoutes from "./routes/admin-users.routes.js";
 import { createAuthRouter } from "./routes/auth.routes.js";
 import { categoriesRouter, foodsRouter, restaurantsRouter } from "./routes/catalog.routes.js";
 import { addressesRouter, adminCouponsRouter, cartRouter, couponsRouter, ordersRouter } from "./routes/checkout.routes.js";
-import { adminDeliveryPartnersRouter, adminOrdersRouter } from "./routes/admin-orders.routes.js";
+import { adminDeliveryPartnersRouter, adminOrdersRouter, adminPaymentsRouter, adminReportsRouter } from "./routes/admin-orders.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
+import { paymentsRouter, razorpayWebhookRouter } from "./routes/payment.routes.js";
 import deliveryRoutes from "./routes/delivery.routes.js";
 import geoRoutes from "./routes/geo.routes.js";
 import healthRoutes from "./routes/health.routes.js";
@@ -35,6 +38,8 @@ export function createApp(options = {}) {
 
   app.use(pinoHttp({ logger, autoLogging: !env.isTest }));
   app.use(helmet());
+  // gzip/brotli for JSON and docs (a reverse proxy may also do this; doing both is harmless).
+  app.use(compression());
   app.use(
     cors({
       origin: (origin, callback) => callback(null, !origin || env.clientUrls.includes(origin)),
@@ -43,6 +48,8 @@ export function createApp(options = {}) {
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     }),
   );
+  // Signed gateway webhooks need the raw body, so they are mounted before the JSON parser.
+  app.use("/api/v1/payments/webhooks/razorpay", razorpayWebhookRouter);
   app.use(express.json({ limit: "100kb" }));
   app.use(express.urlencoded({ extended: false, limit: "100kb" }));
   app.use(cookieParser());
@@ -76,6 +83,8 @@ export function createApp(options = {}) {
   app.use("/api/v1/admin/coupons", adminCouponsRouter);
   app.use("/api/v1/admin/orders", adminOrdersRouter);
   app.use("/api/v1/admin/delivery-partners", adminDeliveryPartnersRouter);
+  app.use("/api/v1/admin/payments", adminPaymentsRouter);
+  app.use("/api/v1/admin/reports", adminReportsRouter);
   app.use("/api/v1/admin", adminCatalogRoutes);
   app.use("/api/v1/restaurants", restaurantsRouter);
   app.use("/api/v1/categories", categoriesRouter);
@@ -87,6 +96,8 @@ export function createApp(options = {}) {
   app.use("/api/v1/orders", ordersRouter);
   app.use("/api/v1/coupons", couponsRouter);
   app.use("/api/v1/delivery", deliveryRoutes);
+  app.use("/api/v1/payments", paymentsRouter);
+  app.use("/api/v1/notifications", notificationRoutes);
   app.use("/api/v1/geo", geoRoutes);
 
   app.use(notFound);

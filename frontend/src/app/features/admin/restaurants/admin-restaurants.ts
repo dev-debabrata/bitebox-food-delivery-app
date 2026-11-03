@@ -1,10 +1,10 @@
+import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal, computed } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTabsModule } from '@angular/material/tabs';
 import { Subscription, debounceTime, distinctUntilChanged, skip } from 'rxjs';
@@ -31,7 +31,7 @@ const TABS: { status: RestaurantStatus; label: string }[] = [
     NP_FORM_FIELDS,
     RouterLink,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatPaginatorModule,
     MatTabsModule,
     EmptyState,

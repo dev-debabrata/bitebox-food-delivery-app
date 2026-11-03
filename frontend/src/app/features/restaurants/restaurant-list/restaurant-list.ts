@@ -1,10 +1,10 @@
+import { NpIconPipe } from '../../../shared/icons/np-icon-name';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatIconModule } from '@angular/material/icon';
 import { Subscription, catchError, debounceTime, distinctUntilChanged, of } from 'rxjs';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { errorMessage } from '../../../core/services/api-error';
@@ -29,7 +29,7 @@ const SORT_LABELS: Record<RestaurantSort, string> = {
  * Restaurant discovery. All filters live in the URL query string, so results
  * are shareable and survive refresh / back navigation.
  */
-import { SelectOption, ToggleComponent } from 'nexprime';
+import { IconComponent, SelectOption, ToggleComponent } from 'nexprime';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 
 @Component({
@@ -40,7 +40,7 @@ import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
     RouterLink,
     MatButtonModule,
     MatChipsModule,
-    MatIconModule,
+    IconComponent, NpIconPipe,
     EmptyState,
     RestaurantCard,
   ],

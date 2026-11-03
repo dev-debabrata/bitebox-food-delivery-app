@@ -1,0 +1,23 @@
+:host {
+  display: block;
+}
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--bb-ink);
+}
+
+.req {
+  color: var(--bb-danger);
+}
+
+// Code picker sized to "+91" plus its flag; the number takes the rest.
+.row {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: var(--bb-space-2);
+  align-items: start;
+}

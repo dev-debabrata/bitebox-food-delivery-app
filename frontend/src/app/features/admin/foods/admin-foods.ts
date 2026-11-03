@@ -1,17 +1,30 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  input,
+  signal,
+  computed,
+} from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { ToggleComponent } from 'nexprime';
+import { IconComponent, ToggleComponent } from 'nexprime';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { Subscription, debounceTime, distinctUntilChanged, filter, skip } from 'rxjs';
-import { AdminCatalogService, AdminFoodItem } from '../../../core/services/admin/admin-catalog.service';
+import {
+  AdminCatalogService,
+  AdminFoodItem,
+} from '../../../core/services/admin/admin-catalog.service';
 import { errorMessage } from '../../../core/services/api-error';
 import { NotificationService } from '../../../core/services/notification.service';
-import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import {
+  ConfirmDialog,
+  ConfirmDialogData,
+} from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
@@ -27,7 +40,7 @@ import { InrPipe } from '../../../shared/pipes/money.pipes';
     NP_FORM_FIELDS,
     RouterLink,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatPaginatorModule,
     EmptyState,
     PageHeader,
@@ -49,7 +62,12 @@ export class AdminFoods implements OnInit {
 
   protected readonly filters = form(signal({ search: '' }));
   protected readonly items = signal<AdminFoodItem[]>([]);
-  protected readonly pagination = signal<Pagination>({ page: 1, limit: 20, total: 0, totalPages: 0 });
+  protected readonly pagination = signal<Pagination>({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0,
+  });
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   private inFlight?: Subscription;
@@ -79,7 +97,12 @@ export class AdminFoods implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     this.inFlight = this.service
-      .foods({ search: this.filters.search().value().trim() || undefined, restaurant: this.restaurant() || undefined, page, limit: this.pagination().limit })
+      .foods({
+        search: this.filters.search().value().trim() || undefined,
+        restaurant: this.restaurant() || undefined,
+        page,
+        limit: this.pagination().limit,
+      })
       .subscribe({
         next: (res) => {
           this.items.set(res.items);
@@ -93,11 +116,14 @@ export class AdminFoods implements OnInit {
       });
   }
 
-  protected toggle(item: AdminFoodItem, checked: boolean, toggle: ToggleComponent): void {
+  /** Optimistic: the switch follows the list; on failure the list (and so the switch) goes back. */
+  protected toggle(item: AdminFoodItem, checked: boolean): void {
+    const set = (isAvailable: boolean) =>
+      this.items.update((list) => list.map((i) => (i.id === item.id ? { ...i, isAvailable } : i)));
+    set(checked);
     this.service.setFoodAvailability(item.id, checked).subscribe({
-      next: (updated) => this.items.update((list) => list.map((i) => (i.id === updated.id ? updated : i))),
       error: (err: unknown) => {
-        toggle.checked.set(!checked); // back to what the server has
+        set(!checked);
         this.notify.error(errorMessage(err));
       },
     });
@@ -106,7 +132,12 @@ export class AdminFoods implements OnInit {
   protected remove(item: AdminFoodItem): void {
     this.dialog
       .open<ConfirmDialog, ConfirmDialogData, true>(ConfirmDialog, {
-        data: { title: `Delete “${item.name}”?`, message: `This removes it from ${item.restaurant.name}'s menu.`, confirmLabel: 'Delete', danger: true },
+        data: {
+          title: `Delete “${item.name}”?`,
+          message: `This removes it from ${item.restaurant.name}'s menu.`,
+          confirmLabel: 'Delete',
+          danger: true,
+        },
         width: '420px',
       })
       .afterClosed()

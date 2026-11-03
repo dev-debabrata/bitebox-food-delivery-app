@@ -2,16 +2,16 @@ import { DeliveryPartner } from "../models/delivery-partner.model.js";
 import { ORDER_STATUS, Order } from "../models/order.model.js";
 import { ROLES, User, USER_STATUS } from "../models/user.model.js";
 import { ApiError } from "../utils/api-error.js";
+import { toPoint } from "../utils/geo.js";
 import { escapeRegex, paginationMeta } from "../utils/pagination.js";
-import { declineOffer, dispatchSafely } from "./dispatch.service.js";
+import { declineOffer, dispatchSafely, findWaitingOrders } from "./dispatch.service.js";
 import { presentForRider } from "./order-management.service.js";
 
-/** The rider's profile, created on first use. */
+/** The rider's profile, created on first use (a plain read on every later call). */
 export async function getOrCreateProfile(userId) {
-  return DeliveryPartner.findOneAndUpdate(
-    { user: userId },
-    { $setOnInsert: { user: userId } },
-    { upsert: true, returnDocument: "after" },
+  return (
+    (await DeliveryPartner.findOne({ user: userId })) ??
+    DeliveryPartner.findOneAndUpdate({ user: userId }, { $setOnInsert: { user: userId } }, { upsert: true, returnDocument: "after" })
   );
 }
 
@@ -30,15 +30,12 @@ export async function dashboard(userId) {
 }
 
 export async function updateVehicle(userId, { vehicleType, vehicleNumber }) {
-  await getOrCreateProfile(userId);
   return DeliveryPartner.findOneAndUpdate(
     { user: userId },
     { $set: { vehicleType, vehicleNumber } },
-    { returnDocument: "after", runValidators: true },
+    { upsert: true, returnDocument: "after", runValidators: true },
   );
 }
-
-const point = ({ latitude, longitude }) => ({ type: "Point", coordinates: [longitude, latitude] });
 
 /**
  * Going online needs a vehicle and a current location (dispatch is by distance).
@@ -51,23 +48,28 @@ export async function setAvailability(userId, { isOnline, latitude, longitude })
     if (latitude === undefined || longitude === undefined) throw ApiError.badRequest("Share your location to go online");
     await DeliveryPartner.updateOne(
       { user: userId },
-      { $set: { isOnline: true, location: point({ latitude, longitude }), locationUpdatedAt: new Date() } },
+      { $set: { isOnline: true, location: toPoint({ latitude, longitude }), locationUpdatedAt: new Date() } },
     );
     await offerWaitingOrders();
     return dashboard(userId);
   }
 
-  if (profile.activeOrder) throw new ApiError(409, "Finish your current delivery before going offline", { code: "DELIVERY_IN_PROGRESS" });
-  if (profile.currentOffer) await declineOffer(userId, profile.currentOffer).catch(() => undefined);
-  await DeliveryPartner.updateOne({ user: userId }, { $set: { isOnline: false } });
+  await takeOffline(userId, profile, "Finish your current delivery before going offline");
   return dashboard(userId);
+}
+
+/** Offline rules shared by the rider and admins: never mid-delivery; a pending offer is passed on. */
+async function takeOffline(userId, profile, busyMessage) {
+  if (profile?.activeOrder) throw new ApiError(409, busyMessage, { code: "DELIVERY_IN_PROGRESS" });
+  if (profile?.currentOffer) await declineOffer(userId, profile.currentOffer).catch(() => undefined);
+  await DeliveryPartner.updateOne({ user: userId }, { $set: { isOnline: false } });
 }
 
 /** Position report from the rider's device (rate limited at the route). */
 export async function updateLocation(userId, { latitude, longitude }) {
   const updated = await DeliveryPartner.findOneAndUpdate(
     { user: userId, isOnline: true },
-    { $set: { location: point({ latitude, longitude }), locationUpdatedAt: new Date() } },
+    { $set: { location: toPoint({ latitude, longitude }), locationUpdatedAt: new Date() } },
     { returnDocument: "after" },
   );
   if (!updated) throw new ApiError(409, "Go online to share your location", { code: "OFFLINE" });
@@ -76,8 +78,7 @@ export async function updateLocation(userId, { latitude, longitude }) {
 
 /** A rider just became available: give waiting orders a chance straight away. */
 async function offerWaitingOrders() {
-  const waiting = await Order.find({ status: ORDER_STATUS.READY_FOR_PICKUP, "offer.partner": null }).sort({ updatedAt: 1 }).select("_id").limit(5);
-  for (const order of waiting) {
+  for (const order of await findWaitingOrders(5)) {
     if (await dispatchSafely(order._id)) break; // one offer per rider at a time
   }
 }
@@ -128,11 +129,7 @@ export async function adminSetStatus(userId, status) {
   if (!user) throw ApiError.notFound("Delivery partner not found");
   if (status === USER_STATUS.SUSPENDED) {
     const profile = await DeliveryPartner.findOne({ user: userId });
-    if (profile?.activeOrder) {
-      throw new ApiError(409, "This rider is carrying an order. Unassign or finish it first.", { code: "DELIVERY_IN_PROGRESS" });
-    }
-    if (profile?.currentOffer) await declineOffer(userId, profile.currentOffer).catch(() => undefined);
-    await DeliveryPartner.updateOne({ user: userId }, { $set: { isOnline: false } });
+    await takeOffline(userId, profile, "This rider is carrying an order. Unassign or finish it first.");
   }
   user.status = status;
   await user.save();

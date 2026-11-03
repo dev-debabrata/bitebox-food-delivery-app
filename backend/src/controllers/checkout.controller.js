@@ -2,116 +2,55 @@ import * as addressService from "../services/address.service.js";
 import * as cartService from "../services/cart.service.js";
 import * as couponService from "../services/coupon.service.js";
 import * as orderService from "../services/order.service.js";
-import { sendSuccess } from "../utils/api-response.js";
+import * as payments from "../services/payments/payment.service.js";
+import { respond, sendSuccess } from "../utils/api-response.js";
 import { parsePagination } from "../utils/pagination.js";
 
 const quoteFor = (req) => cartService.buildQuote(req.user._id, { addressId: req.validatedQuery?.addressId });
+/** Cart mutations answer with the freshly priced cart. */
+const thenQuote = (change, message) =>
+  respond(async (req) => {
+    await change(req);
+    return quoteFor(req);
+  }, message);
 
-// ---------------------------------------------------------------------------
-// Cart: every mutation responds with the freshly priced cart.
-// ---------------------------------------------------------------------------
-export async function getCart(req, res) {
-  sendSuccess(res, { data: await quoteFor(req) });
-}
+// Cart
+export const getCart = respond(quoteFor);
+export const addItem = thenQuote((req) => cartService.addItem(req.user._id, req.body), "Added to cart");
+export const setQuantity = thenQuote((req) => cartService.setQuantity(req.user._id, req.params.foodItemId, req.body.quantity), "Cart updated");
+export const removeItem = thenQuote((req) => cartService.removeItem(req.user._id, req.params.foodItemId), "Removed from cart");
+export const clearCart = thenQuote((req) => cartService.clear(req.user._id), "Cart cleared");
+export const applyCoupon = thenQuote((req) => cartService.applyCoupon(req.user._id, req.body.code), "Coupon applied");
+export const removeCoupon = thenQuote((req) => cartService.removeCoupon(req.user._id), "Coupon removed");
 
-export async function addItem(req, res) {
-  await cartService.addItem(req.user._id, req.body);
-  sendSuccess(res, { message: "Added to cart", data: await quoteFor(req) });
-}
-
-export async function setQuantity(req, res) {
-  await cartService.setQuantity(req.user._id, req.params.foodItemId, req.body.quantity);
-  sendSuccess(res, { message: "Cart updated", data: await quoteFor(req) });
-}
-
-export async function removeItem(req, res) {
-  await cartService.removeItem(req.user._id, req.params.foodItemId);
-  sendSuccess(res, { message: "Removed from cart", data: await quoteFor(req) });
-}
-
-export async function clearCart(req, res) {
-  await cartService.clear(req.user._id);
-  sendSuccess(res, { message: "Cart cleared", data: await quoteFor(req) });
-}
-
-export async function applyCoupon(req, res) {
-  await cartService.applyCoupon(req.user._id, req.body.code);
-  sendSuccess(res, { message: "Coupon applied", data: await quoteFor(req) });
-}
-
-export async function removeCoupon(req, res) {
-  await cartService.removeCoupon(req.user._id);
-  sendSuccess(res, { message: "Coupon removed", data: await quoteFor(req) });
-}
-
-// ---------------------------------------------------------------------------
 // Addresses
-// ---------------------------------------------------------------------------
-export async function listAddresses(req, res) {
-  const addresses = await addressService.list(req.user._id);
-  sendSuccess(res, { data: { addresses: addresses.map((a) => a.toJSON()) } });
-}
-
-export async function createAddress(req, res) {
-  const address = await addressService.create(req.user._id, req.body);
-  sendSuccess(res, { statusCode: 201, message: "Address saved", data: { address: address.toJSON() } });
-}
-
-export async function updateAddress(req, res) {
-  const address = await addressService.update(req.user._id, req.params.id, req.body);
-  sendSuccess(res, { message: "Address updated", data: { address: address.toJSON() } });
-}
-
-export async function setDefaultAddress(req, res) {
-  const address = await addressService.setDefault(req.user._id, req.params.id);
-  sendSuccess(res, { message: "Default address updated", data: { address: address.toJSON() } });
-}
-
-export async function deleteAddress(req, res) {
+export const listAddresses = respond(async (req) => ({ addresses: await addressService.list(req.user._id) }));
+export const createAddress = respond(async (req) => ({ address: await addressService.create(req.user._id, req.body) }), "Address saved", 201);
+export const updateAddress = respond(async (req) => ({ address: await addressService.update(req.user._id, req.params.id, req.body) }), "Address updated");
+export const setDefaultAddress = respond(async (req) => ({ address: await addressService.setDefault(req.user._id, req.params.id) }), "Default address updated");
+export const deleteAddress = respond(async (req) => {
   await addressService.remove(req.user._id, req.params.id);
-  sendSuccess(res, { message: "Address deleted" });
-}
+  return null;
+}, "Address deleted");
 
-// ---------------------------------------------------------------------------
 // Orders
-// ---------------------------------------------------------------------------
 export async function placeOrder(req, res) {
   const { order, created } = await orderService.placeOrder(req.user._id, req.body, req.get("idempotency-key"));
-  sendSuccess(res, {
-    statusCode: created ? 201 : 200,
-    message: created ? "Order placed" : "Order already placed",
-    data: { order: order.toJSON() },
-  });
+  // Online: hand back the gateway checkout details right away (the order page can retry with "Pay now").
+  const checkout =
+    order.paymentMethod === "online" && order.paymentStatus !== "paid"
+      ? await payments.startPayment(req.user._id, order._id).catch(() => null)
+      : null;
+  sendSuccess(res, { statusCode: created ? 201 : 200, message: created ? "Order placed" : "Order already placed", data: { order, checkout } });
 }
+export const listMyOrders = respond((req) => orderService.listMine(req.user._id, parsePagination(req.validatedQuery, { defaultLimit: 10 })));
 
-export async function listMyOrders(req, res) {
-  const data = await orderService.listMine(req.user._id, parsePagination(req.validatedQuery, { defaultLimit: 10 }));
-  sendSuccess(res, { data: { ...data, items: data.items.map((o) => o.toJSON()) } });
-}
-
-// ---------------------------------------------------------------------------
 // Coupons
-// ---------------------------------------------------------------------------
-export async function availableCoupons(req, res) {
-  sendSuccess(res, { data: { coupons: await couponService.listAvailable({ restaurantId: req.validatedQuery.restaurantId }) } });
-}
-
-export async function adminListCoupons(req, res) {
-  const data = await couponService.adminList(req.validatedQuery, parsePagination(req.validatedQuery));
-  sendSuccess(res, { data: { ...data, items: data.items.map((c) => c.toJSON()) } });
-}
-
-export async function adminCreateCoupon(req, res) {
-  const coupon = await couponService.create(req.body);
-  sendSuccess(res, { statusCode: 201, message: "Coupon created", data: { coupon: coupon.toJSON() } });
-}
-
-export async function adminUpdateCoupon(req, res) {
-  const coupon = await couponService.update(req.params.id, req.body);
-  sendSuccess(res, { message: "Coupon saved", data: { coupon: coupon.toJSON() } });
-}
-
-export async function adminDeleteCoupon(req, res) {
+export const availableCoupons = respond(async (req) => ({ coupons: await couponService.listAvailable({ restaurantId: req.validatedQuery.restaurantId }) }));
+export const adminListCoupons = respond((req) => couponService.adminList(req.validatedQuery, parsePagination(req.validatedQuery)));
+export const adminCreateCoupon = respond(async (req) => ({ coupon: await couponService.create(req.body) }), "Coupon created", 201);
+export const adminUpdateCoupon = respond(async (req) => ({ coupon: await couponService.update(req.params.id, req.body) }), "Coupon saved");
+export const adminDeleteCoupon = respond(async (req) => {
   await couponService.remove(req.params.id);
-  sendSuccess(res, { message: "Coupon deleted" });
-}
+  return null;
+}, "Coupon deleted");

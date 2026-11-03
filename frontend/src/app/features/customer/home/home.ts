@@ -1,11 +1,11 @@
+import { NpIconPipe } from '../../../shared/icons/np-icon-name';
 import { ChangeDetectionStrategy, Component, PLATFORM_ID, effect, inject, signal, untracked } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { FormRoot, form, validate } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
-import { AnimateOnScrollComponent } from 'nexprime';
+import { AnimateOnScrollComponent, IconComponent } from 'nexprime';
 import { Subscription, timeout } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { CatalogService } from '../../../core/services/catalog.service';
@@ -17,7 +17,7 @@ import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 
 @Component({
   selector: 'bb-home',
-  imports: [FormRoot, NP_FORM_FIELDS, RouterLink, MatButtonModule, MatIconModule, RestaurantCard, AnimateOnScrollComponent],
+  imports: [FormRoot, NP_FORM_FIELDS, RouterLink, MatButtonModule, IconComponent, NpIconPipe, RestaurantCard, AnimateOnScrollComponent],
   templateUrl: './home.html',
   styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -3,7 +3,7 @@
   <mat-dialog-content class="bb-form">
     @if (error()) {
       <div class="bb-alert error" role="alert">
-        <mat-icon aria-hidden="true">error</mat-icon><span>{{ error() }}</span>
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ error() }}</span>
       </div>
     }
     <np-text-input
@@ -40,7 +40,7 @@
           (click)="form.icon().value.set(icon)"
           [attr.aria-label]="icon"
         >
-          <mat-icon>{{ icon }}</mat-icon>
+          <np-icon [name]="(icon) | npIcon" class="mat-icon" matButtonIcon />
         </button>
       }
     </div>

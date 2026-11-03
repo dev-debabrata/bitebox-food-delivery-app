@@ -1,0 +1,9 @@
+node_modules
+tests
+uploads
+tmp
+coverage
+.env
+.env.*
+!.env.example
+*.log

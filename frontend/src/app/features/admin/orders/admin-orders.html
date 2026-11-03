@@ -1,4 +1,7 @@
-<bb-page-header title="Orders" subtitle="Every order on BiteBox. Open one to see its history or step in." />
+<bb-page-header
+  title="Orders"
+  subtitle="Every order on BiteBox. Open one to see its history or step in."
+/>
 
 <div class="filters">
   <np-text-input
@@ -12,45 +15,49 @@
   <np-select [formField]="filters.status" ariaLabel="Order status" [options]="statusOptions()" />
 </div>
 
-@if (error(); as message) {
+@if (list.error(); as message) {
   <div class="bb-alert error" role="alert">
-    <mat-icon aria-hidden="true">error</mat-icon>
-    <span>{{ message }} <button class="bb-link-button" (click)="load(1)">Retry</button></span>
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
   </div>
 }
 
-<div class="bb-card list-card" [attr.aria-busy]="loading()">
-  @if (!data()) {
+<div class="bb-card list-card" [attr.aria-busy]="list.loading()">
+  @if (!list.data()) {
     @for (i of [1, 2, 3, 4, 5]; track i) {
       <span class="bb-skeleton row-skeleton"></span>
     }
-  } @else if (data()!.items.length === 0) {
-    <div class="empty">
-      <mat-icon aria-hidden="true">receipt_long</mat-icon>
-      <p>No orders match these filters.</p>
-    </div>
+  } @else if (list.data()!.items.length === 0) {
+    <bb-empty-state icon="receipt_long" title="No orders match these filters" />
   } @else {
-    <ul class="rows" [class.dim]="loading()">
-      @for (o of data()!.items; track o.id) {
+    <ul class="rows" [class.dim]="list.loading()">
+      @for (o of list.data()!.items; track o.id) {
         <li>
-          <button type="button" class="row" (click)="open(o)" [attr.aria-label]="'Open order ' + o.orderNumber">
+          <button
+            type="button"
+            class="row"
+            (click)="open(o.id)"
+          >
             <div class="main">
               <strong>{{ o.orderNumber }}</strong>
-              <span class="bb-muted">{{ o.restaurantSnapshot.name }} · {{ itemCount(o) }} {{ itemCount(o) === 1 ? 'item' : 'items' }} · {{ o.createdAt | date: 'd MMM, h:mm a' }}</span>
+              <span class="bb-muted"
+                >{{ o.restaurantSnapshot.name }} · {{ o | itemCount }} ·
+                {{ o.createdAt | date: 'd MMM, h:mm a' }}</span
+              >
             </div>
             <span class="amount">{{ o.pricing.totalPaise | inr }}</span>
-            <bb-order-status-chip [status]="o.status" />
-            <mat-icon class="chev" aria-hidden="true">chevron_right</mat-icon>
+            <bb-order-status-chip [status]="o.status" [label]="statusLabel(o)" />
+            <np-icon name="chevron-right" class="mat-icon chev" matButtonIcon />
           </button>
         </li>
       }
     </ul>
     <mat-paginator
-      [length]="data()!.pagination.total"
-      [pageIndex]="data()!.pagination.page - 1"
-      [pageSize]="data()!.pagination.limit"
+      [length]="list.data()!.pagination.total"
+      [pageIndex]="list.data()!.pagination.page - 1"
+      [pageSize]="list.data()!.pagination.limit"
       [pageSizeOptions]="[20, 50, 100]"
-      (page)="onPage($event)"
+      (page)="list.onPage($event)"
       aria-label="Order pages"
     />
   }

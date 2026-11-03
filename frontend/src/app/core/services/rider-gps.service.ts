@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { MAX_USABLE_ACCURACY_M } from './geolocation.service';
 import { RiderService } from './order-management.service';
 import { LocationAck, RealtimeService } from './realtime.service';
+import { distanceMeters } from './routing.service';
 
 export interface GpsFix {
   latitude: number;
@@ -20,12 +21,6 @@ const DELIVERY_MAX_GAP_MS = 15_000;
 const DELIVERY_MIN_MOVE_M = 15;
 /** Online but idle: keep the position fresh enough for dispatch. */
 const IDLE_GAP_MS = 60_000;
-
-const metres = (a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) => {
-  const r = (d: number) => (d * Math.PI) / 180;
-  const h = Math.sin(r(b.latitude - a.latitude) / 2) ** 2 + Math.cos(r(a.latitude)) * Math.cos(r(b.latitude)) * Math.sin(r(b.longitude - a.longitude) / 2) ** 2;
-  return 2 * 6_371_000 * Math.asin(Math.sqrt(h));
-};
 
 /**
  * The rider's device GPS while they are online. Shares positions with the
@@ -51,20 +46,34 @@ export class RiderGps {
   private lastSent: GpsFix | null = null;
   private sending = false;
 
-  get watching(): boolean {
-    return this.watchId !== null;
+  /**
+   * Watch while online (stop when offline); `delivering` switches to frequent updates.
+   * Starting a delivery shares the current position straight away. Idempotent.
+   */
+  update(online: boolean, delivering: boolean): void {
+    if (!online) return this.stop();
+    const startedDelivering = delivering && !this.delivering;
+    this.delivering = delivering;
+    if (startedDelivering && this.fix()) void this.share(this.fix()!, true);
+    this.start();
   }
 
-  /** Start watching (idempotent). `delivering` switches to frequent updates. */
-  start(delivering: boolean): void {
-    this.delivering = delivering;
+  private start(): void {
     if (!this.browser || this.watchId !== null) return;
     if (!('geolocation' in navigator)) {
-      this.problem.set('This device cannot share its location, so customers cannot see you on the map.');
+      this.problem.set(
+        'This device cannot share its location, so customers cannot see you on the map.',
+      );
       return;
     }
     this.watchId = navigator.geolocation.watchPosition(
-      ({ coords }) => this.onFix({ latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy, at: Date.now() }),
+      ({ coords }) =>
+        this.onFix({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          accuracy: coords.accuracy,
+          at: Date.now(),
+        }),
       (error) =>
         this.problem.set(
           error.code === error.PERMISSION_DENIED
@@ -75,16 +84,10 @@ export class RiderGps {
     );
   }
 
-  setDelivering(delivering: boolean): void {
-    const changed = delivering !== this.delivering;
-    this.delivering = delivering;
-    // Starting a delivery: share the current position straight away.
-    if (changed && delivering && this.fix()) void this.share(this.fix()!, true);
-  }
-
   stop(): void {
     if (this.watchId !== null) navigator.geolocation.clearWatch(this.watchId);
     this.watchId = null;
+    this.delivering = false;
     this.problem.set(null);
     this.lastSent = null;
   }
@@ -92,7 +95,9 @@ export class RiderGps {
   private onFix(fix: GpsFix): void {
     this.fix.set(fix);
     if (fix.accuracy > MAX_USABLE_ACCURACY_M) {
-      this.problem.set("Your GPS signal is weak, so your position isn't being shared. Move into the open or turn on precise location.");
+      this.problem.set(
+        "Your GPS signal is weak, so your position isn't being shared. Move into the open or turn on precise location.",
+      );
       return;
     }
     this.problem.set(null);
@@ -102,15 +107,20 @@ export class RiderGps {
   private async share(fix: GpsFix, force = false): Promise<void> {
     if (this.sending) return;
     const since = this.lastSent ? fix.at - this.lastSent.at : Infinity;
-    const moved = this.lastSent ? metres(this.lastSent, fix) : Infinity;
+    const moved = this.lastSent ? distanceMeters(this.lastSent, fix) : Infinity;
     const due = this.delivering
-      ? since >= DELIVERY_MAX_GAP_MS || (since >= DELIVERY_MIN_GAP_MS && moved >= DELIVERY_MIN_MOVE_M)
+      ? since >= DELIVERY_MAX_GAP_MS ||
+        (since >= DELIVERY_MIN_GAP_MS && moved >= DELIVERY_MIN_MOVE_M)
       : since >= IDLE_GAP_MS;
     if (!force && !due) return;
 
     this.sending = true;
     try {
-      const point = { latitude: fix.latitude, longitude: fix.longitude, accuracy: Math.round(fix.accuracy) };
+      const point = {
+        latitude: fix.latitude,
+        longitude: fix.longitude,
+        accuracy: Math.round(fix.accuracy),
+      };
       let ack: LocationAck = await this.realtime.sendRiderLocation(point);
       if (!ack.ok && ack.error === 'NOT_CONNECTED' && !this.delivering) {
         // Idle and no live connection: the REST endpoint keeps dispatch working.

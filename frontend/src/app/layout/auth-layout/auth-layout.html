@@ -10,7 +10,7 @@
       <ul>
         @for (perk of perks; track perk.icon) {
           <li>
-            <mat-icon aria-hidden="true">{{ perk.icon }}</mat-icon>
+            <np-icon [name]="(perk.icon) | npIcon" class="mat-icon" matButtonIcon />
             <span>{{ perk.text }}</span>
           </li>
         }

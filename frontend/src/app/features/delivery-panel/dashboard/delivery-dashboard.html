@@ -1,5 +1,5 @@
 <bb-page-header title="Deliveries" subtitle="Go online to receive delivery requests near you.">
-  <a mat-stroked-button routerLink="/delivery/history"><mat-icon>history</mat-icon>History</a>
+  <a mat-stroked-button routerLink="/delivery/history"><np-icon name="history" class="mat-icon" matButtonIcon />History</a>
 </bb-page-header>
 
 @if (!data()) {
@@ -15,7 +15,11 @@
   <div class="layout">
     <div class="col">
       <!-- Availability -->
-      <section class="bb-card status-card" [class.is-online]="online()" aria-labelledby="availability-title">
+      <section
+        class="bb-card status-card"
+        [class.is-online]="online()"
+        aria-labelledby="availability-title"
+      >
         <div class="status-row">
           <div>
             <h2 id="availability-title">{{ online() ? 'You are online' : 'You are offline' }}</h2>
@@ -30,22 +34,25 @@
             </p>
           </div>
           <np-toggle
-            #onlineSwitch
             class="bb-toggle-success"
             [label]="online() ? 'Online' : 'Offline'"
-            [checked]="online()"
+            [checked]="onlineSwitch()"
             [disabled]="switching() || !profile()?.vehicleType || (online() && !!active())"
-            (checkedChange)="setOnline($event, onlineSwitch)"
+            (checkedChange)="setOnline($event)"
           />
         </div>
         @if (switching()) {
           <mat-progress-bar mode="indeterminate" aria-label="Updating availability" />
         }
         @if (online() && gps.problem(); as problem) {
-          <div class="bb-alert info" role="status"><mat-icon aria-hidden="true">gps_off</mat-icon><span>{{ problem }}</span></div>
+          <div class="bb-alert info" role="status">
+            <np-icon name="locate-off" class="mat-icon" matButtonIcon /><span>{{ problem }}</span>
+          </div>
         }
         @if (availabilityError(); as message) {
-          <div class="bb-alert error" role="alert"><mat-icon aria-hidden="true">location_off</mat-icon><span>{{ message }}</span></div>
+          <div class="bb-alert error" role="alert">
+            <np-icon name="map-pin-off" class="mat-icon" matButtonIcon /><span>{{ message }}</span>
+          </div>
         }
         <dl class="stats">
           <div>
@@ -56,7 +63,8 @@
             <dt>Vehicle</dt>
             <dd>
               @if (profile()?.vehicleType; as v) {
-                {{ vehicleLabel[v] }}{{ profile()?.vehicleNumber ? ' · ' + profile()?.vehicleNumber : '' }}
+                {{ vehicleLabel[v]
+                }}{{ profile()?.vehicleNumber ? ' · ' + profile()?.vehicleNumber : '' }}
                 <button class="bb-link-button" (click)="editVehicle()">Change</button>
               } @else {
                 Not set
@@ -74,7 +82,12 @@
           <form class="bb-form" [formRoot]="vehicleForm">
             <div class="bb-form-row">
               <div class="bb-field">
-                <np-select [formField]="vehicleForm.vehicleType" label="Vehicle" placeholder="Choose" [options]="vehicleOptions" />
+                <np-select
+                  [formField]="vehicleForm.vehicleType"
+                  label="Vehicle"
+                  placeholder="Choose"
+                  [options]="vehicleOptions"
+                />
                 <bb-field-error [field]="vehicleForm.vehicleType" />
               </div>
               <np-text-input
@@ -89,7 +102,9 @@
               @if (profile()?.vehicleType) {
                 <button mat-button type="button" (click)="editingVehicle.set(false)">Cancel</button>
               }
-              <button mat-flat-button type="submit" [disabled]="vehicleForm().submitting()">Save vehicle</button>
+              <button mat-flat-button type="submit" [disabled]="vehicleForm().submitting()">
+                Save vehicle
+              </button>
             </div>
           </form>
         </section>
@@ -104,41 +119,47 @@
             <h2 id="active-title">Current delivery</h2>
             <bb-order-status-chip [status]="o.status" />
           </header>
-          <p class="order-no">{{ o.orderNumber }} · {{ itemCount(o) }} {{ itemCount(o) === 1 ? 'item' : 'items' }}</p>
+          <p class="order-no">{{ o.orderNumber }} · {{ o | itemCount }}</p>
 
           <ol class="stops">
             <li [class.done]="o.status !== 'assigned'">
-              <mat-icon aria-hidden="true">storefront</mat-icon>
+              <np-icon name="store" class="mat-icon" matButtonIcon />
               <div>
                 <span class="stop-label">Pickup</span>
                 <strong>{{ o.restaurantSnapshot.name }}</strong>
                 <span>{{ o.restaurantSnapshot.address }}</span>
                 @if (o.restaurantSnapshot.phone; as phone) {
-                  <a class="call" [href]="'tel:' + phone"><mat-icon aria-hidden="true">call</mat-icon>Call restaurant</a>
+                  <a class="call" [href]="'tel:' + phone"
+                    ><np-icon name="phone" class="mat-icon" matButtonIcon />Call restaurant</a
+                  >
                 }
               </div>
             </li>
             <li>
-              <mat-icon aria-hidden="true">home_pin</mat-icon>
+              <np-icon name="map-pin-house" class="mat-icon" matButtonIcon />
               <div>
                 <span class="stop-label">Drop</span>
                 <strong>{{ o.deliveryAddress.recipientName }}</strong>
                 <span>
-                  {{ o.deliveryAddress.line1 }}{{ o.deliveryAddress.line2 ? ', ' + o.deliveryAddress.line2 : '' }},
-                  {{ o.deliveryAddress.area ? o.deliveryAddress.area + ', ' : '' }}{{ o.deliveryAddress.city }}
+                  {{ o.deliveryAddress.line1
+                  }}{{ o.deliveryAddress.line2 ? ', ' + o.deliveryAddress.line2 : '' }},
+                  {{ o.deliveryAddress.area ? o.deliveryAddress.area + ', ' : ''
+                  }}{{ o.deliveryAddress.city }}
                 </span>
                 @if (o.deliveryAddress.landmark) {
                   <span class="bb-muted">Landmark: {{ o.deliveryAddress.landmark }}</span>
                 }
                 @if (o.deliveryAddress.phone; as phone) {
-                  <a class="call" [href]="'tel:' + phone"><mat-icon aria-hidden="true">call</mat-icon>Call customer</a>
+                  <a class="call" [href]="'tel:' + phone"
+                    ><np-icon name="phone" class="mat-icon" matButtonIcon />Call customer</a
+                  >
                 }
               </div>
             </li>
           </ol>
 
           @if (o.note) {
-            <p class="note"><mat-icon aria-hidden="true">sticky_note_2</mat-icon>{{ o.note }}</p>
+            <p class="note"><np-icon name="sticky-note" class="mat-icon" matButtonIcon />{{ o.note }}</p>
           }
 
           @if (stops(); as s) {
@@ -152,19 +173,20 @@
             />
             <p class="route-line">
               @if (routeToStop(); as r) {
-                <mat-icon aria-hidden="true">route</mat-icon>
-                {{ r.distanceMeters / 1000 | number: '1.1-1' }} km · about {{ minutes(r.durationSeconds) }} min by road to
+                <np-icon name="route" class="mat-icon" matButtonIcon />
+                {{ r.distanceMeters / 1000 | number: '1.1-1' }} km · about
+                {{ minutes(r.durationSeconds) }} min by road to
                 {{ s.toRestaurant ? 'the restaurant' : 'the customer' }}
                 <span class="bb-muted">(estimate, no live traffic)</span>
               } @else if (!myPosition()) {
-                <mat-icon aria-hidden="true">gps_not_fixed</mat-icon>
+                <np-icon name="locate" class="mat-icon" matButtonIcon />
                 Waiting for your GPS position…
               }
             </p>
           }
 
           <div class="cash">
-            <mat-icon aria-hidden="true">payments</mat-icon>
+            <np-icon name="banknote" class="mat-icon" matButtonIcon />
             <span>Collect in cash</span>
             <strong>{{ o.pricing.totalPaise | inr }}</strong>
           </div>
@@ -172,11 +194,13 @@
           @if (nextStep(); as step) {
             <p class="hint">{{ step.hint }}</p>
             <div class="work-actions">
-              @if (directionsUrl(o); as url) {
-                <a mat-stroked-button [href]="url" target="_blank" rel="noopener"><mat-icon>directions</mat-icon>Directions</a>
+              @if (directionsUrl(); as url) {
+                <a mat-stroked-button [href]="url" target="_blank" rel="noopener"
+                  ><np-icon name="navigation" class="mat-icon" matButtonIcon />Directions</a
+                >
               }
               <button mat-flat-button class="go" [disabled]="acting()" (click)="advance(o)">
-                <mat-icon>{{ step.icon }}</mat-icon>{{ step.label }}
+                <np-icon [name]="(step.icon) | npIcon" class="mat-icon" matButtonIcon />{{ step.label }}
               </button>
             </div>
           }
@@ -186,13 +210,19 @@
         <section class="bb-card work offer" aria-labelledby="offer-title" role="alert">
           <header class="work-head">
             <h2 id="offer-title">New delivery request</h2>
-            <span class="countdown" [class.soon]="offerSecondsLeft() <= 15">{{ offerSecondsLeft() }}s</span>
+            <span class="countdown" [class.soon]="offerSecondsLeft() <= 15"
+              >{{ offerSecondsLeft() }}s</span
+            >
           </header>
-          <mat-progress-bar mode="determinate" [value]="offerProgress()" aria-label="Time left to accept" />
+          <mat-progress-bar
+            mode="determinate"
+            [value]="offerProgress()"
+            aria-label="Time left to accept"
+          />
 
           <ol class="stops">
             <li>
-              <mat-icon aria-hidden="true">storefront</mat-icon>
+              <np-icon name="store" class="mat-icon" matButtonIcon />
               <div>
                 <span class="stop-label">Pickup</span>
                 <strong>{{ o.restaurantSnapshot.name }}</strong>
@@ -200,7 +230,7 @@
               </div>
             </li>
             <li>
-              <mat-icon aria-hidden="true">home_pin</mat-icon>
+              <np-icon name="map-pin-house" class="mat-icon" matButtonIcon />
               <div>
                 <span class="stop-label">Drop</span>
                 <strong>{{ o.deliveryAddress.area || o.deliveryAddress.city }}</strong>
@@ -216,28 +246,46 @@
             </div>
             <div>
               <dt>Items</dt>
-              <dd>{{ itemCount(o) }}</dd>
+              <dd>{{ o | itemCount }}</dd>
             </div>
             <div>
               <dt>Cash to collect</dt>
               <dd>{{ o.pricing.totalPaise | inr }}</dd>
             </div>
           </dl>
-          <p class="bb-muted small">Trip distance is a straight line between restaurant and customer; the road route is longer.</p>
+          <p class="bb-muted small">
+            Trip distance is a straight line between restaurant and customer; the road route is
+            longer.
+          </p>
 
           <div class="work-actions">
-            <button mat-stroked-button [disabled]="acting() || offerSecondsLeft() === 0" (click)="decline(o)">Decline</button>
-            <button mat-flat-button class="go" [disabled]="acting() || offerSecondsLeft() === 0" (click)="accept(o)">
-              <mat-icon>check</mat-icon>Accept
+            <button
+              mat-stroked-button
+              [disabled]="acting() || offerSecondsLeft() === 0"
+              (click)="decline(o)"
+            >
+              Decline
+            </button>
+            <button
+              mat-flat-button
+              class="go"
+              [disabled]="acting() || offerSecondsLeft() === 0"
+              (click)="accept(o)"
+            >
+              <np-icon name="check" class="mat-icon" matButtonIcon />Accept
             </button>
           </div>
         </section>
       } @else {
         <section class="bb-card idle" aria-live="polite">
-          <mat-icon aria-hidden="true">{{ online() ? 'radar' : 'bedtime' }}</mat-icon>
+          <np-icon [name]="(online() ? 'radar' : 'bedtime') | npIcon" class="mat-icon" matButtonIcon />
           <h2>{{ online() ? 'Looking for requests…' : 'No active delivery' }}</h2>
           <p class="bb-muted">
-            {{ online() ? 'Requests from restaurants near you appear here. You have 90 seconds to accept each one.' : 'Go online to start receiving requests.' }}
+            {{
+              online()
+                ? 'Requests from restaurants near you appear here. Accept each one before its timer runs out.'
+                : 'Go online to start receiving requests.'
+            }}
           </p>
         </section>
       }

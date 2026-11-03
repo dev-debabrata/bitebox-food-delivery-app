@@ -1,0 +1,67 @@
+<bb-page-header title="Reports" subtitle="Orders placed in the selected period. Values count delivered orders only.">
+  <np-select class="bb-period" [formField]="report.filters.days" ariaLabel="Period" [options]="report.periods" />
+</bb-page-header>
+
+@if (report.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="report.resource.reload()">Retry</button></span>
+  </div>
+}
+
+@if (report.data(); as d) {
+  <section class="bb-grid cols-4" aria-label="Totals" [class.bb-dim]="report.resource.isLoading()">
+    <bb-stat-tile icon="payments" label="Delivered value (GMV)" [value]="formatPaise(d.totals.gmvPaise) || '₹0'" />
+    <bb-stat-tile icon="account_balance" label="Platform revenue" [value]="formatPaise(d.totals.platformRevenuePaise) || '₹0'" hint="After restaurant and rider payouts" />
+    <bb-stat-tile icon="task_alt" label="Delivered" [value]="d.totals.delivered" [hint]="deliveryRate()" />
+    <bb-stat-tile icon="shopping_basket" label="Average order" [value]="formatPaise(d.totals.averageOrderPaise) || '–'" />
+    <bb-stat-tile icon="cancel" label="Cancelled or rejected" [value]="d.totals.cancelled" />
+    <bb-stat-tile icon="currency_exchange" label="Refunded" [value]="formatPaise(d.totals.refundedPaise) || '₹0'" />
+    <bb-stat-tile icon="person_add" label="New customers" [value]="d.totals.newCustomers" />
+  </section>
+
+  <div class="bb-grid cols-2">
+    <bb-daily-chart title="Delivered value by day" [dates]="dates()" [series]="gmvSeries()" [format]="formatPaise" />
+    <bb-daily-chart title="Orders by day" [dates]="dates()" [series]="orderSeries()" [format]="count" />
+  </div>
+
+  <div class="bb-grid cols-3">
+    @for (b of breakdowns(); track b.title) {
+      <section class="bb-card">
+        <h3>{{ b.title }}</h3>
+        <p class="bb-muted note">{{ b.note }}</p>
+        @for (r of b.rows; track r.label) {
+          <div class="share-row">
+            <span>{{ r.label }}</span>
+            <span class="num">{{ r.value }} · {{ r.share * 100 | number: '1.0-0' }}%</span>
+            <span class="track"><span class="fill" [style.width.%]="r.share * 100" [style.background]="barColor"></span></span>
+          </div>
+        } @empty {
+          <p class="bb-muted">{{ b.empty }}</p>
+        }
+      </section>
+    }
+
+    <section class="bb-card">
+      <h3>Top restaurants</h3>
+      <p class="bb-muted note">By delivered value</p>
+      @if (d.topRestaurants.length) {
+        <table class="top">
+          <thead>
+            <tr><th scope="col">Restaurant</th><th scope="col">Orders</th><th scope="col">Value</th></tr>
+          </thead>
+          <tbody>
+            @for (r of d.topRestaurants; track r.id) {
+              <tr><th scope="row">{{ r.name }}</th><td>{{ r.orders }}</td><td>{{ r.gmvPaise | inr }}</td></tr>
+            }
+          </tbody>
+        </table>
+      } @else {
+        <p class="bb-muted">No delivered orders yet.</p>
+      }
+    </section>
+  </div>
+} @else if (!report.error()) {
+  <span class="bb-skeleton" style="height: 92px" aria-busy="true"></span>
+  <span class="bb-skeleton" style="height: 300px"></span>
+}

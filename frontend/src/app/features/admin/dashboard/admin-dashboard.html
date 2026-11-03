@@ -1,27 +1,27 @@
 <bb-page-header
   [title]="'Hello, ' + (user()?.name?.split(' ')?.[0] ?? 'Admin')"
-  subtitle="Overview of BiteBox accounts."
+  subtitle="Overview of BiteBox business and accounts."
 >
   <a mat-flat-button routerLink="/admin/users">
-    <mat-icon>group</mat-icon>
+    <np-icon name="users" class="mat-icon" matButtonIcon />
     Manage users
   </a>
 </bb-page-header>
 
 @if (error()) {
   <div class="bb-alert error" role="alert">
-    <mat-icon aria-hidden="true">error</mat-icon>
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
     <span>{{ error() }} <button class="bb-link-button" (click)="load()">Retry</button></span>
   </div>
 }
 
 @if (restaurantCounts(); as rc) {
   <section class="approvals bb-card" aria-labelledby="approvals-title">
-    <span class="approvals-icon" aria-hidden="true"><mat-icon>pending_actions</mat-icon></span>
+    <span class="approvals-icon" aria-hidden="true"><np-icon name="clipboard-clock" class="mat-icon" matButtonIcon /></span>
     <div>
-      <h3 id="approvals-title">
+      <h2 class="bb-h3" id="approvals-title">
         {{ rc.pending }} restaurant {{ rc.pending === 1 ? 'application' : 'applications' }} awaiting review
-      </h3>
+      </h2>
       <p class="bb-muted">{{ rc.approved }} live · {{ rc.suspended }} suspended · {{ rc.rejected }} rejected</p>
     </div>
     <a mat-flat-button [class.bb-btn-accent]="rc.pending > 0" routerLink="/admin/restaurants" [queryParams]="{ status: 'pending' }">
@@ -29,6 +29,30 @@
     </a>
   </section>
 }
+
+<section class="business" aria-labelledby="business-title">
+  <div class="business-head">
+    <h2 class="bb-h3" id="business-title">Last 30 days</h2>
+    <a mat-button routerLink="/admin/reports">Full report <np-icon name="arrow-right" class="mat-icon" iconPositionEnd matButtonIcon /></a>
+  </div>
+  @if (report.hasValue()) {
+    @let t = report.value().totals;
+    <div class="bb-grid cols-4">
+      <bb-stat-tile icon="payments" label="Delivered value" [value]="formatPaise(t.gmvPaise) || '₹0'" />
+      <bb-stat-tile icon="account_balance" label="Platform revenue" [value]="formatPaise(t.platformRevenuePaise) || '₹0'" />
+      <bb-stat-tile icon="receipt_long" label="Orders placed" [value]="t.orders" [hint]="t.delivered + ' delivered · ' + t.cancelled + ' cancelled'" />
+      <bb-stat-tile icon="person_add" label="New customers" [value]="t.newCustomers" />
+    </div>
+  } @else if (report.error()) {
+    <p class="bb-muted">Business figures are unavailable right now. <button class="bb-link-button" (click)="report.reload()">Retry</button></p>
+  } @else {
+    <div class="bb-grid cols-4" aria-busy="true">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <span class="bb-skeleton stat-skeleton"></span>
+      }
+    </div>
+  }
+</section>
 
 <section class="bb-grid cols-4" aria-label="Account totals" [attr.aria-busy]="loading()">
   @if (loading()) {
@@ -38,7 +62,7 @@
   } @else {
     @for (card of stats(); track card.role) {
       <a class="bb-card stat" [routerLink]="'/admin/users'" [queryParams]="{ role: card.role }">
-        <span class="stat-icon"><mat-icon aria-hidden="true">{{ card.icon }}</mat-icon></span>
+        <span class="stat-icon"><np-icon [name]="(card.icon) | npIcon" class="mat-icon" matButtonIcon /></span>
         <span class="stat-value">{{ card.value }}</span>
         <span class="stat-label">{{ card.label }}</span>
       </a>
@@ -48,7 +72,7 @@
 
 <section class="bb-card recent" aria-labelledby="recent-title">
   <div class="section-head">
-    <h3 id="recent-title">Newest accounts</h3>
+    <h2 class="bb-h3" id="recent-title">Newest accounts</h2>
     <a mat-button routerLink="/admin/users">View all</a>
   </div>
 

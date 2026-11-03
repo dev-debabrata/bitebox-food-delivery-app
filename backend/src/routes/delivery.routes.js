@@ -5,7 +5,10 @@ import { authenticate, authorize } from "../middleware/auth.middleware.js";
 import { createRateLimiter } from "../middleware/security.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { ROLES } from "../models/user.model.js";
+import * as reports from "../services/reports.service.js";
+import { respond } from "../utils/api-response.js";
 import * as rules from "../validators/order-management.validators.js";
+import { daysRules } from "../validators/payment.validators.js";
 
 /**
  * /api/v1/delivery: the signed-in rider's own work. Every query is scoped to
@@ -26,4 +29,5 @@ export default Router()
   .post("/offers/:id/accept", validate(rules.offerRules), c.riderAcceptOffer)
   .post("/offers/:id/decline", validate(rules.offerRules), c.riderDeclineOffer)
   .patch("/orders/:id/status", validate(rules.riderStatusRules), c.riderSetStatus)
-  .get("/orders/history", validate(rules.riderHistoryRules), c.riderHistory);
+  .get("/orders/history", validate(rules.riderHistoryRules), c.riderHistory)
+  .get("/earnings", validate(daysRules), respond((req) => reports.riderEarnings(req.user._id, req.validatedQuery.days ?? 30)));

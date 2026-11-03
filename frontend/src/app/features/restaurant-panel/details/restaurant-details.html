@@ -1,6 +1,10 @@
 <bb-page-header
   [title]="restaurant() ? 'Restaurant details' : 'Add your restaurant'"
-  [subtitle]="restaurant() ? 'Keep your business information up to date.' : 'Tell customers about your restaurant. We will review it before it goes live.'"
+  [subtitle]="
+    restaurant()
+      ? 'Keep your business information up to date.'
+      : 'Tell customers about your restaurant. We will review it before it goes live.'
+  "
 />
 
 @if (loading()) {
@@ -11,7 +15,7 @@
   }
   @if (error()) {
     <div class="bb-alert error" role="alert">
-      <mat-icon aria-hidden="true">error</mat-icon>
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
       <span>{{ error() }}</span>
     </div>
   }
@@ -19,7 +23,7 @@
   <form class="bb-form layout" [formRoot]="form">
     <div class="main">
       <section class="bb-card" aria-labelledby="basics">
-        <h3 id="basics">Basics</h3>
+        <h2 class="bb-h3" id="basics">Basics</h2>
         <np-text-input
           [formField]="form.name"
           label="Restaurant name"
@@ -51,11 +55,9 @@
         </div>
 
         <div class="bb-form-row">
-          <np-text-input
+          <bb-phone-input
             [formField]="form.phone"
             label="Phone"
-            type="tel"
-            inputmode="tel"
             [error]="shownError(form.phone)"
           />
           <np-text-input
@@ -69,82 +71,72 @@
       </section>
 
       <section class="bb-card" aria-labelledby="address-title">
-        <h3 id="address-title">Address</h3>
+        <h2 class="bb-h3" id="address-title">Address</h2>
         <div class="address-fields">
-        <np-text-input
-          [formField]="form.address.line1"
-          label="Street address"
-          autocomplete="address-line1"
-          [error]="shownError(form.address.line1)"
-        />
-        <div class="bb-form-row">
           <np-text-input
-            [formField]="form.address.line2"
-            label="Building / floor (optional)"
-            autocomplete="address-line2"
-            [error]="shownError(form.address.line2)"
+            [formField]="form.address.line1"
+            label="Street address"
+            autocomplete="address-line1"
+            [error]="shownError(form.address.line1)"
           />
-          <np-text-input
-            [formField]="form.address.area"
-            label="Area / locality"
-            [error]="shownError(form.address.area)"
-          />
-        </div>
-        <div class="row-3">
-          <np-text-input
-            [formField]="form.address.city"
-            label="City"
-            autocomplete="address-level2"
-            [error]="shownError(form.address.city)"
-          />
-          <np-text-input
-            [formField]="form.address.state"
-            label="State"
-            autocomplete="address-level1"
-            [error]="shownError(form.address.state)"
-          />
-          <np-text-input
-            [formField]="form.address.postalCode"
-            label="PIN code"
-            autocomplete="postal-code"
-            inputmode="numeric"
-            [error]="shownError(form.address.postalCode)"
-          />
-        </div>
+          <div class="bb-form-row">
+            <np-text-input
+              [formField]="form.address.line2"
+              label="Building / floor (optional)"
+              autocomplete="address-line2"
+              [error]="shownError(form.address.line2)"
+            />
+            <np-text-input
+              [formField]="form.address.area"
+              label="Area / locality"
+              [error]="shownError(form.address.area)"
+            />
+          </div>
+          <div class="row-3">
+            <np-text-input
+              [formField]="form.address.city"
+              label="City"
+              autocomplete="address-level2"
+              [error]="shownError(form.address.city)"
+            />
+            <np-text-input
+              [formField]="form.address.state"
+              label="State"
+              autocomplete="address-level1"
+              [error]="shownError(form.address.state)"
+            />
+            <np-text-input
+              [formField]="form.address.postalCode"
+              label="PIN code"
+              autocomplete="postal-code"
+              inputmode="numeric"
+              [error]="shownError(form.address.postalCode)"
+            />
+          </div>
         </div>
 
         <div class="location">
-          <h4>Map location</h4>
-          <p class="bb-muted">Customers nearby find you by this pin. Search for your street, then drag the pin onto your entrance.</p>
-          <div class="find">
-            <np-search-input
-              class="place-search"
-              placeholder="Search area, street or landmark"
-              [value]="placeQuery()"
-              (search)="placeQuery.set($event)"
-            />
+          <h3>Map location</h3>
+          <p class="bb-muted">
+            Customers nearby find you by this pin. Search for your street, then drag the pin onto
+            your entrance.
+          </p>
+          <bb-place-search (picked)="pickPlace($event)">
             @if (geo.supported) {
-              <button mat-stroked-button type="button" (click)="useCurrentLocation()" [disabled]="locating()">
-                <mat-icon>my_location</mat-icon>
+              <button
+                mat-stroked-button
+                type="button"
+                (click)="useCurrentLocation()"
+                [disabled]="locating()"
+              >
+                <np-icon name="locate-fixed" class="mat-icon" matButtonIcon />
                 {{ locating() ? 'Locating…' : 'Current location' }}
               </button>
             }
-          </div>
-          @if (placeResults().length) {
-            <ul class="results" aria-label="Matching places">
-              @for (p of placeResults(); track p.latitude + ',' + p.longitude) {
-                <li>
-                  <button type="button" (click)="pickPlace(p)">
-                    <mat-icon aria-hidden="true">place</mat-icon>
-                    <span><strong>{{ p.label }}</strong><small>{{ p.displayName }}</small></span>
-                  </button>
-                </li>
-              }
-            </ul>
-          }
+          </bb-place-search>
           @if (locationError()) {
             <div class="bb-alert info" role="status">
-              <mat-icon aria-hidden="true">location_off</mat-icon>
+              <np-icon name="map-pin-off" class="mat-icon" matButtonIcon />
               <span>{{ locationError() }}</span>
             </div>
           }
@@ -156,17 +148,32 @@
           @if (form.location().invalid() && form.location().touched()) {
             <p class="field-error" role="alert">Pin your restaurant on the map.</p>
           }
-          <button type="button" class="bb-link-button manual-toggle" (click)="showCoordinates.set(!showCoordinates())" [attr.aria-expanded]="showCoordinates()">
+          <button
+            type="button"
+            class="bb-link-button manual-toggle"
+            (click)="showCoordinates.set(!showCoordinates())"
+            [attr.aria-expanded]="showCoordinates()"
+          >
             {{ showCoordinates() ? 'Hide coordinates' : 'Enter coordinates manually' }}
           </button>
           @if (showCoordinates()) {
             <div class="bb-form-row">
               <div class="bb-field">
-                <np-input-number [formField]="form.location.latitude" label="Latitude" [maxFractionDigits]="6" [useGrouping]="false" />
+                <np-input-number
+                  [formField]="form.location.latitude"
+                  label="Latitude"
+                  [maxFractionDigits]="6"
+                  [useGrouping]="false"
+                />
                 <bb-field-error [field]="form.location.latitude" />
               </div>
               <div class="bb-field">
-                <np-input-number [formField]="form.location.longitude" label="Longitude" [maxFractionDigits]="6" [useGrouping]="false" />
+                <np-input-number
+                  [formField]="form.location.longitude"
+                  label="Longitude"
+                  [maxFractionDigits]="6"
+                  [useGrouping]="false"
+                />
                 <bb-field-error [field]="form.location.longitude" />
               </div>
             </div>
@@ -177,28 +184,48 @@
 
     <aside class="side">
       <section class="bb-card" aria-labelledby="photo-title">
-        <h3 id="photo-title">Cover photo</h3>
+        <h2 class="bb-h3" id="photo-title">Cover photo</h2>
         <bb-image-upload [(url)]="imageUrl" label="Add a cover photo" />
       </section>
 
       <section class="bb-card" aria-labelledby="hours-title">
-        <h3 id="hours-title">Hours & pricing</h3>
+        <h2 class="bb-h3" id="hours-title">Hours & pricing</h2>
         <div class="bb-form-row">
           <div class="bb-field">
-            <np-time-picker [formField]="form.openingTime" label="Opens" mode="list" [interval]="30" />
+            <np-time-picker
+              [formField]="form.openingTime"
+              label="Opens"
+              mode="list"
+              [interval]="30"
+            />
             <bb-field-error [field]="form.openingTime" />
           </div>
           <div class="bb-field">
-            <np-time-picker [formField]="form.closingTime" label="Closes" mode="list" [interval]="30" />
+            <np-time-picker
+              [formField]="form.closingTime"
+              label="Closes"
+              mode="list"
+              [interval]="30"
+            />
             <bb-field-error [field]="form.closingTime" />
           </div>
         </div>
         <div class="bb-field">
-          <np-input-number [formField]="form.costForTwo" label="Average cost for two" prefix="₹ " [maxFractionDigits]="0" />
+          <np-input-number
+            [formField]="form.costForTwo"
+            label="Average cost for two"
+            prefix="₹ "
+            [maxFractionDigits]="0"
+          />
           <bb-field-error [field]="form.costForTwo" />
         </div>
         <div class="bb-field">
-          <np-input-number [formField]="form.minOrder" label="Minimum order value" prefix="₹ " [maxFractionDigits]="0" />
+          <np-input-number
+            [formField]="form.minOrder"
+            label="Minimum order value"
+            prefix="₹ "
+            [maxFractionDigits]="0"
+          />
           <bb-field-error [field]="form.minOrder" />
         </div>
         <div class="bb-field">
@@ -212,7 +239,7 @@
         </div>
       </section>
 
-      <button mat-flat-button type="submit" class="save" [disabled]="form().submitting()">
+      <button mat-flat-button type="submit" class="save" [disabled]="form().submitting() || !changed()">
         @if (form().submitting()) {
           <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Saving" />
         } @else {

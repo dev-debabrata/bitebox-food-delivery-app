@@ -1,42 +1,65 @@
 @if (order(); as o) {
-  <h2 mat-dialog-title class="title">
-    <span>{{ o.orderNumber }}</span>
-    <bb-order-status-chip [status]="o.status" />
-  </h2>
+  <header mat-dialog-title class="head">
+    <div class="title-row">
+      <h2>{{ o.orderNumber }}</h2>
+      <bb-order-status-chip [status]="o.status" [label]="customerLabel(o)" />
+    </div>
+    <p class="meta">
+      Placed {{ o.createdAt | date: 'd MMM, h:mm a' }} · <strong>{{ o.pricing.totalPaise | inr }}</strong> ·
+      @if (o.payment; as p) {
+        <span class="pay pay-{{ p.status }}">{{ providerLabel[p.provider] }} · {{ paymentLabel[p.status] }}</span>
+      } @else {
+        <span class="pay pay-{{ o.paymentStatus }}">Cash on delivery · {{ o.paymentStatus }}</span>
+      }
+    </p>
+  </header>
+
   <mat-dialog-content class="content">
     @if (o.cancellation; as c) {
       <div class="bb-alert error" role="status">
-        <mat-icon aria-hidden="true">cancel</mat-icon>
+        <np-icon name="circle-x" class="mat-icon" matButtonIcon />
         <span>{{ o.status === 'rejected' ? 'Rejected' : 'Cancelled' }} by {{ c.by }}{{ c.reason ? ': ' + c.reason : '' }}</span>
       </div>
     }
+    @if (o.payment?.failureReason; as reason) {
+      <div class="bb-alert info" role="status">
+        <np-icon name="info" class="mat-icon" matButtonIcon /><span>{{ reason }}</span>
+      </div>
+    }
 
-    <div class="cols">
-      <section>
-        <h3>Restaurant</h3>
-        <p><strong>{{ o.restaurantSnapshot.name }}</strong><br />{{ o.restaurantSnapshot.address }}<br />{{ o.restaurantSnapshot.phone }}</p>
+    <div class="parties">
+      <section class="party">
+        <h3><np-icon name="store" class="mat-icon" matButtonIcon />Restaurant</h3>
+        <strong>{{ o.restaurantSnapshot.name }}</strong>
+        @if (o.restaurantSnapshot.address; as address) {
+          <span class="clamp" [title]="address">{{ address }}</span>
+        }
+        @if (o.restaurantSnapshot.phone; as phone) {
+          <a class="phone" [href]="'tel:' + phone">{{ phone }}</a>
+        }
       </section>
-      <section>
-        <h3>Deliver to</h3>
+      <section class="party">
+        <h3><np-icon name="user" class="mat-icon" matButtonIcon />Customer</h3>
         @let a = o.deliveryAddress;
-        <p>
-          <strong>{{ a.recipientName }}</strong> · {{ a.phone }}<br />
-          {{ a.line1 }}{{ a.line2 ? ', ' + a.line2 : '' }}, {{ a.area ? a.area + ', ' : '' }}{{ a.city }} {{ a.postalCode }}
-        </p>
+        <strong>{{ a.recipientName }}</strong>
+        @let line = a.line1 + (a.line2 ? ', ' + a.line2 : '') + ', ' + (a.area ? a.area + ', ' : '') + a.city + ' ' + a.postalCode;
+        <span class="clamp" [title]="line">{{ line }}</span>
+        <a class="phone" [href]="'tel:' + a.phone">{{ a.phone }}</a>
       </section>
-      <section>
-        <h3>Rider</h3>
+      <section class="party">
+        <h3><np-icon name="bike" class="mat-icon" matButtonIcon />Rider</h3>
         @if (o.rider; as r) {
-          <p>
-            <strong>{{ r.name }}</strong> · {{ r.phone }}<br />
-            {{ r.vehicleType ? vehicleLabel[r.vehicleType] : '' }}{{ r.vehicleNumber ? ' · ' + r.vehicleNumber : '' }}
-          </p>
+          <strong>{{ r.name }}</strong>
+          <span>{{ r.vehicleType ? vehicleLabel[r.vehicleType] : '' }}{{ r.vehicleNumber ? ' · ' + r.vehicleNumber : '' }}</span>
+          @if (r.phone) {
+            <a class="phone" [href]="'tel:' + r.phone">{{ r.phone }}</a>
+          }
         } @else if (o.offer; as offer) {
-          <p class="bb-muted">Offered to {{ offer.rider?.name }} until {{ offer.expiresAt | date: 'h:mm:ss a' }}</p>
+          <span class="bb-muted">Offered to {{ offer.rider?.name }} until {{ offer.expiresAt | date: 'h:mm:ss a' }}</span>
         } @else if (o.status === 'ready_for_pickup') {
-          <p class="bb-muted">No rider available yet. Retrying automatically.</p>
+          <span class="bb-muted">No rider available yet. Retrying automatically.</span>
         } @else {
-          <p class="bb-muted">Not assigned</p>
+          <span class="bb-muted">Not assigned</span>
         }
       </section>
     </div>
@@ -62,33 +85,30 @@
       </section>
     }
 
-    <section>
-      <h3>Items</h3>
-      <ul class="items">
-        @for (item of o.items; track item.foodItem) {
-          <li>
-            <bb-veg-badge [veg]="item.isVeg" />
-            <span class="name">{{ item.quantity }} × {{ item.name }}</span>
-          </li>
+    <div class="details">
+      <section class="panel">
+        <h3>Order</h3>
+        <ul class="items">
+          @for (item of o.items; track item.foodItem) {
+            <li>
+              <bb-veg-badge [veg]="item.isVeg" />
+              <span class="name">{{ item.quantity }} × {{ item.name }}</span>
+              <span class="price">{{ item.lineTotalPaise | inr }}</span>
+            </li>
+          }
+        </ul>
+        @if (o.note) {
+          <p class="note"><strong>Note:</strong> {{ o.note }}</p>
         }
-      </ul>
-      @if (o.note) {
-        <p class="note"><strong>Note:</strong> {{ o.note }}</p>
-      }
-    </section>
-
-    <div class="cols two">
-      <section>
-        <h3>Bill · Cash on delivery ({{ o.paymentStatus }})</h3>
-        <bb-bill-summary [pricing]="o.pricing" [couponCode]="o.coupon?.code" [distanceMeters]="o.distanceMeters" />
+        <bb-bill-summary class="bill" [pricing]="o.pricing" [couponCode]="o.coupon?.code" [distanceMeters]="o.distanceMeters" />
       </section>
-      <section>
+      <section class="panel">
         <h3>History</h3>
         <ol class="history">
           @for (h of o.statusHistory; track $index) {
             <li>
-              <span class="when">{{ h.at | date: 'd MMM, h:mm:ss a' }}</span>
               <span>{{ statusLabel[h.status] }}</span>
+              <span class="when">{{ h.at | date: 'd MMM, h:mm a' }}</span>
               @if (h.note) {
                 <span class="bb-muted note-line">{{ h.note }}</span>
               }
@@ -110,7 +130,7 @@
 } @else if (error(); as message) {
   <mat-dialog-content>
     <div class="bb-alert error" role="alert">
-      <mat-icon aria-hidden="true">error</mat-icon><span>{{ message }} <button class="bb-link-button" (click)="load()">Retry</button></span>
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ message }} <button class="bb-link-button" (click)="load()">Retry</button></span>
     </div>
   </mat-dialog-content>
   <mat-dialog-actions align="end"><button mat-button mat-dialog-close>Close</button></mat-dialog-actions>

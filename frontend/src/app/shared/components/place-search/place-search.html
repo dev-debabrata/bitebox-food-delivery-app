@@ -1,0 +1,30 @@
+<div class="row">
+  <np-search-input
+    class="box"
+    placeholder="Search area, street or landmark"
+    [value]="query()"
+    [loading]="searching()"
+    (search)="query.set($event)"
+  />
+  <ng-content />
+</div>
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+@if (results().length) {
+  <ul class="results" aria-label="Matching places">
+    @for (p of results(); track p.latitude + ',' + p.longitude) {
+      <li>
+        <button type="button" (click)="pick(p)">
+          <np-icon name="map-pin" class="mat-icon" matButtonIcon />
+          <span
+            ><strong>{{ p.label }}</strong
+            ><small>{{ p.displayName }}</small></span
+          >
+        </button>
+      </li>
+    }
+  </ul>
+} @else if (showEmpty() && searched() && !searching() && !error()) {
+  <p class="bb-muted hint">No places found. Try a nearby area or landmark.</p>
+}

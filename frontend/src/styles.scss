@@ -24,7 +24,7 @@
   --bb-bg: #f6f3f9;
 
   // Feedback
-  --bb-success: #1f8a4c;
+  --bb-success: #1a7a43; // 5.4:1 on white, 4.8:1 on the pale success tint (WCAG AA)
   --bb-warning: #b26a00;
   --bb-danger: #c62839;
   --bb-info: #2563eb;
@@ -148,6 +148,17 @@ h3 {
   font-weight: 700;
 }
 
+// The look of a heading level on another level, so headings can follow the page outline
+// (h1 → h2 → h3, for screen readers) without changing how they look.
+.bb-h2 {
+  font-size: clamp(1.3rem, 1.1rem + 0.9vw, 1.75rem);
+  font-weight: 750;
+}
+.bb-h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
 p {
   margin: 0 0 var(--bb-space-3);
   line-height: 1.6;
@@ -215,6 +226,133 @@ img {
   }
 }
 
+// Icons are NexPrime <np-icon>s. They are sized from CSS, like Material icons were:
+// 24px by default, 18px in text buttons, and per place with --bb-icon-size. The
+// !important beats NexPrime's inline 20px size.
+// Only the app's own icons (class "mat-icon"): NexPrime's built-in ones (chip remove,
+// input and select icons) keep the sizes NexPrime gives them.
+np-icon.np-icon.mat-icon {
+  width: var(--bb-icon-size, 24px) !important;
+  height: var(--bb-icon-size, 24px) !important;
+}
+
+// The drawing always fills its icon box (Material forces 24px SVGs inside icon buttons,
+// which would overflow a smaller icon and push it off centre).
+np-icon.np-icon.mat-icon svg {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+// Chip icons (category filters): small and light, like Material's chip avatars.
+np-icon[matChipAvatar] {
+  --bb-icon-size: 18px;
+
+  svg {
+    stroke-width: 1.75;
+  }
+}
+
+// Icon-only buttons centre their icon (so the hover circle sits around it).
+.mat-mdc-icon-button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+// Round icon-only buttons (more options, close, …). The header bell and cart keep 24px.
+.mat-mdc-icon-button:not(.bb-icon-circle) > np-icon {
+  --bb-icon-size: 20px;
+}
+
+// matButtonIcon puts it in the button's icon slot, where Material spaces it from the label.
+.mat-mdc-button-base:not(.mat-mdc-icon-button) > np-icon {
+  --bb-icon-size: 18px;
+}
+
+// Menu items: icon, then a gap, then the text (as with Material icons).
+.mat-mdc-menu-item np-icon {
+  --bb-icon-size: 20px;
+  margin-right: 12px;
+}
+
+// Round header icon (bell, cart) with a red count badge on its top-right edge.
+// Use .bb-icon-circle on the icon button; put .bb-count-badge inside any .bb-badge-anchor.
+.bb-badge-anchor {
+  position: relative;
+}
+
+.mat-mdc-icon-button.bb-icon-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bb-surface-alt);
+  border: 1px solid var(--bb-border);
+  color: var(--bb-ink);
+}
+
+// Round initials avatar in the account buttons, the size of the icon circles beside it.
+.bb-avatar {
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--bb-border);
+  background: var(--bb-plum);
+  color: var(--bb-amber);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.bb-count-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--bb-danger);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  // White ring, so the badge stands out from the circle behind it.
+  box-shadow: 0 0 0 2px var(--bb-surface);
+  pointer-events: none;
+}
+
+// Report pages: the period picker beside the title, and dimmed numbers while a new period loads.
+.bb-period {
+  width: 180px !important; // beats the 100% NexPrime field rule below
+}
+
+.bb-dim {
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+// "Skip to content": first thing a keyboard user reaches, shown only when focused.
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--bb-amber);
+  color: var(--bb-plum);
+  padding: var(--bb-space-2) var(--bb-space-4);
+  font-weight: 700;
+
+  &:focus {
+    left: var(--bb-space-2);
+    top: var(--bb-space-2);
+  }
+}
+
 .bb-full-width {
   width: 100%;
 }
@@ -245,13 +383,44 @@ img {
   --mat-button-outlined-container-height: 44px;
 }
 
+// The simulated payment page: edge-to-edge header, clipped to the dialog's rounded corners.
+.bb-gateway-dialog .mat-mdc-dialog-surface {
+  overflow: hidden;
+}
+
+// Dialog actions: "Cancel" (a text button) is outlined and as tall as the primary action beside it.
+.mat-mdc-dialog-actions .mat-mdc-button-base {
+  --mat-button-text-container-height: 44px;
+  --mat-button-text-horizontal-padding: 18px;
+
+  &.mat-mdc-button {
+    border: 1px solid var(--bb-border);
+  }
+}
+
+// A textarea with a character counter: its error shares the counter's line (error left, "0 / 500" right).
+np-textarea:has(.count) + bb-field-error {
+  display: block;
+  margin-top: -20px;
+  padding-right: 72px;
+  min-height: 20px;
+}
+
 .mat-mdc-form-field {
   --mat-form-field-outlined-container-shape: 12px;
 }
 
 // NexPrime inputs fill their container. Their own (emulated) host styles size
 // them to 200-400px or max-content and outrank a plain element selector.
-:is(np-text-input, np-textarea, np-input-number, np-select, np-search-input, np-calendar, np-time-picker) {
+:is(
+  np-text-input,
+  np-textarea,
+  np-input-number,
+  np-select,
+  np-search-input,
+  np-calendar,
+  np-time-picker
+) {
   display: block !important;
   width: 100% !important;
   min-width: 0 !important;
@@ -261,6 +430,17 @@ img {
 // Availability switches are green when on (NexPrime fills the track with --ui-gradient).
 np-toggle.bb-toggle-success {
   --ui-gradient: var(--bb-success);
+}
+
+// A switch whose label changes with its state ("Off" / "Available"): fixed label width so the
+// switch does not jump sideways, and the "on" label in the success colour.
+np-toggle.bb-toggle-stable .toggle-label {
+  display: inline-block;
+  min-width: 9ch;
+}
+np-toggle.bb-toggle-stable:has(input:checked) .toggle-label {
+  color: var(--bb-success);
+  font-weight: 600;
 }
 
 // np-toggle whose label only names it for screen readers (lists of switches).
@@ -282,7 +462,8 @@ np-toggle.bb-label-hidden-phone .toggle-label {
 }
 
 // Same height as the app's 44px buttons, so a field and a button side by side line up.
-:is(np-text-input, np-search-input, np-input-number, np-select, np-calendar, np-time-picker) .ui-control {
+:is(np-text-input, np-search-input, np-input-number, np-select, np-calendar, np-time-picker)
+  .ui-control {
   min-height: 44px;
 }
 
@@ -356,10 +537,19 @@ np-time-picker .time-picker-field {
   }
 
   // NexPrime fields (and .bb-field wrappers: a control plus its <bb-field-error>).
-  :is(np-text-input, np-textarea, np-input-number, np-select, np-calendar, np-time-picker, .bb-field) {
+  :is(
+    np-text-input,
+    np-textarea,
+    np-input-number,
+    np-select,
+    np-calendar,
+    np-time-picker,
+    .bb-field
+  ) {
     margin-bottom: var(--bb-space-4);
   }
-  .bb-field > :is(np-text-input, np-textarea, np-input-number, np-select, np-calendar, np-time-picker) {
+  .bb-field
+    > :is(np-text-input, np-textarea, np-input-number, np-select, np-calendar, np-time-picker) {
     margin-bottom: 0;
   }
 
@@ -440,7 +630,7 @@ np-time-picker .time-picker-field {
   font-size: 0.95rem;
   line-height: 1.45;
 
-  mat-icon {
+  np-icon {
     flex-shrink: 0;
   }
 

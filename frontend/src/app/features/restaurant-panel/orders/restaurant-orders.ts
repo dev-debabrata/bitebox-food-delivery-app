@@ -1,24 +1,34 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { NpIconPipe } from '../../../shared/icons/np-icon-name';
+import { IconComponent } from 'nexprime';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { filter, interval } from 'rxjs';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { interval } from 'rxjs';
 import { errorMessage } from '../../../core/services/api-error';
 import { NotificationService } from '../../../core/services/notification.service';
 import { RestaurantOrdersService } from '../../../core/services/order-management.service';
 import { RestaurantOrderBoard } from '../../../core/services/restaurant-order-board';
-import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { confirmed } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { OrderStatusChip } from '../../../shared/components/order-status-chip/order-status-chip';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { pagedList } from '../../../shared/list/paged-list';
 import { VegBadge } from '../../../shared/components/veg-badge/veg-badge';
 import { OrderStatus } from '../../../shared/models/checkout.models';
-import { RestaurantAction, RestaurantOrder, RestaurantOrderHistory } from '../../../shared/models/order-management.models';
+import { RestaurantAction, RestaurantOrder } from '../../../shared/models/order-management.models';
+import { ItemCountPipe } from '../../../shared/pipes/item-count.pipe';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
 
 type Tab = 'new' | 'preparing' | 'ready' | 'out' | 'history';
@@ -31,11 +41,10 @@ const TABS: { id: Tab; label: string; statuses: OrderStatus[] }[] = [
   { id: 'history', label: 'History', statuses: [] },
 ];
 
-/** Must match the backend's DISPATCH.restaurantResponseMinutes (unanswered orders auto-reject). */
-const RESPONSE_MINUTES = 10;
-
 /** The next step a restaurant can take for each status (rejecting is offered separately on new orders). */
-const NEXT: Partial<Record<OrderStatus, { action: RestaurantAction; label: string; icon: string }>> = {
+const NEXT: Partial<
+  Record<OrderStatus, { action: RestaurantAction; label: string; icon: string }>
+> = {
   pending: { action: 'confirmed', label: 'Accept', icon: 'check' },
   confirmed: { action: 'preparing', label: 'Start preparing', icon: 'skillet' },
   preparing: { action: 'ready_for_pickup', label: 'Ready for pickup', icon: 'takeout_dining' },
@@ -49,13 +58,14 @@ const NEXT: Partial<Record<OrderStatus, { action: RestaurantAction; label: strin
     RouterLink,
     MatButtonModule,
     MatButtonToggleModule,
-    MatIconModule,
+    IconComponent, NpIconPipe,
     MatPaginatorModule,
     EmptyState,
     OrderStatusChip,
     PageHeader,
     VegBadge,
     InrPipe,
+    ItemCountPipe,
   ],
   templateUrl: './restaurant-orders.html',
   styleUrl: './restaurant-orders.scss',
@@ -75,9 +85,12 @@ export class RestaurantOrders {
   /** Ticks every 30 s so "5 min ago" and the auto-reject countdown stay current. */
   protected readonly now = signal(Date.now());
 
-  protected readonly history = signal<RestaurantOrderHistory | null>(null);
-  protected readonly historyLoading = signal(false);
-  protected readonly historyError = signal<string | null>(null);
+  /** Finished orders; loaded the first time the History tab is opened. */
+  protected readonly history = pagedList((page, limit) => this.api.history(page, limit), {
+    limit: 15,
+    lazy: true,
+    errorText: 'Could not load order history.',
+  });
 
   protected readonly countFor = (tab: (typeof TABS)[number]) =>
     tab.statuses.reduce((sum, s) => sum + (this.board.board()?.counts[s] ?? 0), 0);
@@ -96,20 +109,18 @@ export class RestaurantOrders {
 
   protected selectTab(tab: Tab): void {
     this.tab.set(tab);
-    if (tab === 'history' && !this.history()) this.loadHistory(1);
+    if (tab === 'history' && !this.history.data()) this.history.load(1);
   }
 
   protected minutesAgo(order: RestaurantOrder): number {
     return Math.max(0, Math.floor((this.now() - new Date(order.createdAt).getTime()) / 60_000));
   }
 
-  /** Minutes left before an unanswered order auto-rejects. */
+  /** Minutes left before an unanswered order auto-rejects (deadline set by the server). */
   protected minutesLeft(order: RestaurantOrder): number {
-    return Math.max(0, RESPONSE_MINUTES - this.minutesAgo(order));
-  }
-
-  protected itemCount(order: RestaurantOrder): number {
-    return order.items.reduce((sum, i) => sum + i.quantity, 0);
+    return order.respondBy
+      ? Math.max(0, Math.ceil((new Date(order.respondBy).getTime() - this.now()) / 60_000))
+      : 0;
   }
 
   protected advance(order: RestaurantOrder): void {
@@ -118,20 +129,17 @@ export class RestaurantOrders {
   }
 
   protected reject(order: RestaurantOrder): void {
-    this.dialog
-      .open<ConfirmDialog, ConfirmDialogData, true | string>(ConfirmDialog, {
-        data: {
-          title: `Reject order ${order.orderNumber}?`,
-          message: 'The customer is told right away, with your reason.',
-          reasonLabel: 'Reason (shown to the customer)',
-          confirmLabel: 'Reject order',
-          danger: true,
-        },
-        width: '460px',
-      })
-      .afterClosed()
-      .pipe(filter((reason): reason is string => typeof reason === 'string'))
-      .subscribe((reason) => this.setStatus(order, 'rejected', reason));
+    confirmed(
+      this.dialog,
+      {
+        title: `Reject order ${order.orderNumber}?`,
+        message: 'The customer is told right away, with your reason.',
+        reasonLabel: 'Reason (shown to the customer)',
+        confirmLabel: 'Reject order',
+        danger: true,
+      },
+      '460px',
+    ).subscribe((reason) => this.setStatus(order, 'rejected', reason as string));
   }
 
   private setStatus(order: RestaurantOrder, status: RestaurantAction, reason?: string): void {
@@ -145,8 +153,7 @@ export class RestaurantOrders {
     this.api.setStatus(order.id, status, reason).subscribe({
       next: (updated) => {
         done();
-        this.board.replace(updated);
-        this.board.refresh();
+        this.board.applyChange(updated);
         this.notify.success(MESSAGE[status]);
       },
       error: (err: unknown) => {
@@ -155,26 +162,6 @@ export class RestaurantOrders {
         this.board.refresh(); // show what actually happened (e.g. the customer cancelled)
       },
     });
-  }
-
-  protected loadHistory(page: number): void {
-    this.historyLoading.set(true);
-    this.historyError.set(null);
-    this.api.history(page, this.history()?.pagination.limit ?? 15).subscribe({
-      next: (data) => {
-        this.history.set(data);
-        this.historyLoading.set(false);
-      },
-      error: (err: unknown) => {
-        this.historyError.set(errorMessage(err, 'Could not load order history.'));
-        this.historyLoading.set(false);
-      },
-    });
-  }
-
-  protected onHistoryPage(event: PageEvent): void {
-    this.history.update((h) => (h ? { ...h, pagination: { ...h.pagination, limit: event.pageSize } } : h));
-    this.loadHistory(event.pageIndex + 1);
   }
 }
 

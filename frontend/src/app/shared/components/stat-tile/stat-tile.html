@@ -1,0 +1,8 @@
+@if (icon(); as i) {
+  <np-icon [name]="(i) | npIcon" class="mat-icon icon" matButtonIcon />
+}
+<span class="label">{{ label() }}</span>
+<strong class="value">{{ value() }}</strong>
+@if (hint()) {
+  <span class="hint">{{ hint() }}</span>
+}

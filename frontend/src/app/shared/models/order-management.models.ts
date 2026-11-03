@@ -2,7 +2,18 @@ import { Pagination } from './api.models';
 import { Order, OrderStatus, RiderCard, VehicleType } from './checkout.models';
 
 /** Orders still in progress (the restaurant's board, the admin's "active" filter). */
-export const ACTIVE_STATUSES: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'assigned', 'picked_up', 'on_the_way'];
+export const ACTIVE_STATUSES: OrderStatus[] = [
+  'pending',
+  'confirmed',
+  'preparing',
+  'ready_for_pickup',
+  'assigned',
+  'picked_up',
+  'on_the_way',
+];
+
+/** A rider carries the order (their live position is shared). */
+export const TRACKED_STATUSES: OrderStatus[] = ['assigned', 'picked_up', 'on_the_way'];
 
 export type OrderCounts = Partial<Record<OrderStatus, number>>;
 
@@ -13,6 +24,10 @@ export type OrderCounts = Partial<Record<OrderStatus, number>>;
 export interface RestaurantOrder extends Omit<Order, 'deliveryAddress' | 'rider'> {
   deliveryAddress: { recipientName: string; area?: string; city: string };
   riderAssigned: boolean;
+  /** New orders only: when it will be auto-rejected if not accepted. */
+  respondBy?: string;
+  /** Ready orders only: when it will be cancelled if no rider has picked it up. */
+  pickupBy?: string;
 }
 
 export interface RestaurantActiveOrders {
@@ -46,8 +61,12 @@ export interface RiderProfile {
  * area (no phone, no exact address); `offerExpiresAt` is set on offers.
  */
 export interface RiderOrder extends Omit<Order, 'deliveryAddress' | 'rider' | 'cancellation'> {
-  deliveryAddress: Partial<Order['deliveryAddress']> & { location: { type: 'Point'; coordinates: [number, number] } };
+  deliveryAddress: Partial<Order['deliveryAddress']> & {
+    location: { type: 'Point'; coordinates: [number, number] };
+  };
   offerExpiresAt: string | null;
+  /** How long riders get to accept an offer (server setting), for the countdown bar. */
+  offerWindowSeconds: number;
 }
 
 export interface RiderDashboard {

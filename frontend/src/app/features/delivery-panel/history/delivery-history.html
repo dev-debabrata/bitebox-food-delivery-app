@@ -1,22 +1,31 @@
 <bb-page-header title="Delivery history" subtitle="Orders you have delivered." />
 
-@if (loading() && !page()) {
+@if (list.loading() && !list.data()) {
   <span class="bb-skeleton" style="height: 240px"></span>
-} @else if (error(); as message) {
+} @else if (list.error(); as message) {
   <div class="bb-alert error" role="alert">
-    <mat-icon aria-hidden="true">error</mat-icon>
-    <span>{{ message }} <button class="bb-link-button" (click)="load(1)">Retry</button></span>
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
   </div>
-} @else if (page(); as p) {
+} @else if (list.data(); as p) {
   @if (p.items.length === 0) {
-    <bb-empty-state icon="two_wheeler" title="No deliveries yet" message="Go online from your dashboard to start delivering." />
+    <bb-empty-state
+      icon="two_wheeler"
+      title="No deliveries yet"
+      message="Go online from your dashboard to start delivering."
+    />
   } @else {
     <ul class="list bb-card">
       @for (o of p.items; track o.id) {
         <li>
           <div class="main">
-            <strong>{{ o.restaurantSnapshot.name }} → {{ o.deliveryAddress.area || o.deliveryAddress.city }}</strong>
-            <span class="bb-muted">{{ o.orderNumber }} · {{ o.updatedAt | date: 'd MMM, h:mm a' }}</span>
+            <strong
+              >{{ o.restaurantSnapshot.name }} →
+              {{ o.deliveryAddress.area || o.deliveryAddress.city }}</strong
+            >
+            <span class="bb-muted"
+              >{{ o.orderNumber }} · {{ o.updatedAt | date: 'd MMM, h:mm a' }}</span
+            >
           </div>
           <span class="amount">{{ o.pricing.totalPaise | inr }}</span>
           <bb-order-status-chip [status]="o.status" />
@@ -28,7 +37,7 @@
       [pageIndex]="p.pagination.page - 1"
       [pageSize]="p.pagination.limit"
       [pageSizeOptions]="[15, 30, 50]"
-      (page)="onPage($event)"
+      (page)="list.onPage($event)"
       aria-label="Delivery history pages"
     />
   }

@@ -1,9 +1,16 @@
-<bb-page-header title="Orders" subtitle="Accept new orders within 10 minutes, or they are rejected automatically.">
-  <button mat-stroked-button (click)="board.refresh()"><mat-icon>refresh</mat-icon>Refresh</button>
+<bb-page-header
+  title="Orders"
+  subtitle="Accept new orders quickly: unanswered ones are rejected automatically."
+>
+  <button mat-stroked-button (click)="board.refresh()"><np-icon name="refresh-cw" class="mat-icon" matButtonIcon />Refresh</button>
 </bb-page-header>
 
 @if (board.noRestaurant()) {
-  <bb-empty-state icon="storefront" title="Add your restaurant first" message="Once your restaurant is approved, orders arrive here.">
+  <bb-empty-state
+    icon="storefront"
+    title="Add your restaurant first"
+    message="Once your restaurant is approved, orders arrive here."
+  >
     <a mat-flat-button routerLink="/restaurant/details">Add restaurant details</a>
   </bb-empty-state>
 } @else {
@@ -28,29 +35,41 @@
 
   @if (board.error(); as message) {
     <div class="bb-alert error" role="alert">
-      <mat-icon aria-hidden="true">cloud_off</mat-icon>
-      <span>{{ message }} <button class="bb-link-button" (click)="board.refresh()">Retry</button></span>
+      <np-icon name="cloud-off" class="mat-icon" matButtonIcon />
+      <span
+        >{{ message }} <button class="bb-link-button" (click)="board.refresh()">Retry</button></span
+      >
     </div>
   }
 
   @if (tab() === 'history') {
-    @if (historyLoading() && !history()) {
+    @if (history.loading() && !history.data()) {
       <span class="bb-skeleton" style="height: 240px"></span>
-    } @else if (historyError(); as message) {
+    } @else if (history.error(); as message) {
       <div class="bb-alert error" role="alert">
-        <mat-icon aria-hidden="true">error</mat-icon>
-        <span>{{ message }} <button class="bb-link-button" (click)="loadHistory(1)">Retry</button></span>
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+        <span
+          >{{ message }}
+          <button class="bb-link-button" (click)="history.load(1)">Retry</button></span
+        >
       </div>
-    } @else if (history(); as h) {
+    } @else if (history.data(); as h) {
       @if (h.items.length === 0) {
-        <bb-empty-state icon="history" title="No finished orders yet" message="Delivered, rejected and cancelled orders appear here." />
+        <bb-empty-state
+          icon="history"
+          title="No finished orders yet"
+          message="Delivered, rejected and cancelled orders appear here."
+        />
       } @else {
         <ul class="history bb-card">
           @for (o of h.items; track o.id) {
             <li>
               <div class="h-main">
                 <strong>{{ o.orderNumber }}</strong>
-                <span class="bb-muted">{{ o.createdAt | date: 'd MMM, h:mm a' }} · {{ itemCount(o) }} {{ itemCount(o) === 1 ? 'item' : 'items' }} · {{ o.deliveryAddress.recipientName }}</span>
+                <span class="bb-muted"
+                  >{{ o.createdAt | date: 'd MMM, h:mm a' }} · {{ o | itemCount }} ·
+                  {{ o.deliveryAddress.recipientName }}</span
+                >
                 @if (o.cancellation?.reason) {
                   <span class="reason">{{ o.cancellation!.reason }}</span>
                 }
@@ -65,7 +84,7 @@
           [pageIndex]="h.pagination.page - 1"
           [pageSize]="h.pagination.limit"
           [pageSizeOptions]="[15, 30, 50]"
-          (page)="onHistoryPage($event)"
+          (page)="history.onPage($event)"
           aria-label="Order history pages"
         />
       }
@@ -79,10 +98,18 @@
   } @else if (shown().length === 0) {
     @switch (tab()) {
       @case ('new') {
-        <bb-empty-state icon="notifications_active" title="No new orders" message="New orders appear here with a sound alert. Keep this tab open." />
+        <bb-empty-state
+          icon="notifications_active"
+          title="No new orders"
+          message="New orders appear here with a sound alert. Keep this tab open."
+        />
       }
       @case ('preparing') {
-        <bb-empty-state icon="skillet" title="Nothing cooking" message="Accepted orders you are preparing show up here." />
+        <bb-empty-state
+          icon="skillet"
+          title="Nothing cooking"
+          message="Accepted orders you are preparing show up here."
+        />
       }
       @case ('ready') {
         <bb-empty-state icon="takeout_dining" title="Nothing waiting for pickup" />
@@ -94,21 +121,35 @@
   } @else {
     <div class="grid">
       @for (o of shown(); track o.id) {
-        <article class="bb-card order" [class.urgent]="o.status === 'pending' && minutesLeft(o) <= 3" [attr.aria-labelledby]="'order-' + o.id">
+        <article
+          class="bb-card order"
+          [class.urgent]="o.status === 'pending' && minutesLeft(o) <= 3"
+          [attr.aria-labelledby]="'order-' + o.id"
+        >
           <header>
             <div>
               <h3 [id]="'order-' + o.id">{{ o.orderNumber }}</h3>
-              <span class="bb-muted when">{{ o.createdAt | date: 'h:mm a' }} · {{ minutesAgo(o) === 0 ? 'just now' : minutesAgo(o) + ' min ago' }}</span>
+              <span class="bb-muted when"
+                >{{ o.createdAt | date: 'h:mm a' }} ·
+                {{ minutesAgo(o) === 0 ? 'just now' : minutesAgo(o) + ' min ago' }}</span
+              >
             </div>
             <bb-order-status-chip
               [status]="o.status"
-              [label]="o.status === 'ready_for_pickup' ? 'Finding a rider' : o.status === 'assigned' ? 'Rider on the way' : undefined"
+              [label]="
+                o.status === 'ready_for_pickup'
+                  ? 'Finding a rider'
+                  : o.status === 'assigned'
+                    ? 'Rider on the way'
+                    : undefined
+              "
             />
           </header>
 
           <p class="customer">
-            <mat-icon aria-hidden="true">person</mat-icon>
-            {{ o.deliveryAddress.recipientName }}{{ o.deliveryAddress.area ? ' · ' + o.deliveryAddress.area : '' }}
+            <np-icon name="user" class="mat-icon" matButtonIcon />
+            {{ o.deliveryAddress.recipientName
+            }}{{ o.deliveryAddress.area ? ' · ' + o.deliveryAddress.area : '' }}
           </p>
 
           <ul class="items">
@@ -122,39 +163,59 @@
           </ul>
 
           @if (o.note) {
-            <p class="note"><mat-icon aria-hidden="true">sticky_note_2</mat-icon>{{ o.note }}</p>
+            <p class="note"><np-icon name="sticky-note" class="mat-icon" matButtonIcon />{{ o.note }}</p>
           }
 
           <div class="total">
-            <span>{{ itemCount(o) }} {{ itemCount(o) === 1 ? 'item' : 'items' }} · Cash on delivery</span>
+            <span>{{ o | itemCount }} · Cash on delivery</span>
             <strong>{{ o.pricing.totalPaise | inr }}</strong>
           </div>
 
           @if (o.status === 'pending') {
             <p class="deadline" [class.soon]="minutesLeft(o) <= 3">
-              <mat-icon aria-hidden="true">timer</mat-icon>
-              {{ minutesLeft(o) > 0 ? 'Auto-rejects in ' + minutesLeft(o) + ' min' : 'Auto-rejecting now' }}
+              <np-icon name="timer" class="mat-icon" matButtonIcon />
+              {{
+                minutesLeft(o) > 0
+                  ? 'Auto-rejects in ' + minutesLeft(o) + ' min'
+                  : 'Auto-rejecting now'
+              }}
             </p>
           }
 
           @if (next[o.status]; as step) {
             <div class="actions">
               @if (o.status === 'pending') {
-                <button mat-stroked-button class="reject" [disabled]="busy().has(o.id)" (click)="reject(o)">Reject</button>
+                <button
+                  mat-stroked-button
+                  class="reject"
+                  [disabled]="busy().has(o.id)"
+                  (click)="reject(o)"
+                >
+                  Reject
+                </button>
               }
               <button mat-flat-button [disabled]="busy().has(o.id)" (click)="advance(o)">
-                <mat-icon>{{ busy().has(o.id) ? 'hourglass_top' : step.icon }}</mat-icon>{{ step.label }}
+                <np-icon [name]="(busy().has(o.id) ? 'hourglass_top' : step.icon) | npIcon" class="mat-icon" matButtonIcon />{{ step.label }}
               </button>
             </div>
           } @else {
             <p class="waiting">
-              <mat-icon aria-hidden="true">{{ o.riderAssigned ? 'two_wheeler' : 'hourglass_top' }}</mat-icon>
+              <np-icon [name]="(o.riderAssigned ? 'two_wheeler' : 'hourglass_top') | npIcon" class="mat-icon" matButtonIcon />
               @switch (o.status) {
-                @case ('ready_for_pickup') { Looking for a nearby rider… }
-                @case ('assigned') { A rider is coming to collect this order. }
-                @default { With the rider, on its way to the customer. }
+                @case ('ready_for_pickup') {
+                  Looking for a nearby rider…
+                }
+                @case ('assigned') {
+                  A rider is coming to collect this order.
+                }
+                @default {
+                  With the rider, on its way to the customer.
+                }
               }
             </p>
+            @if (o.pickupBy) {
+              <p class="bb-muted pickup-by">Cancelled automatically at {{ o.pickupBy | date: 'h:mm a' }} if no rider picks it up.</p>
+            }
           }
         </article>
       }

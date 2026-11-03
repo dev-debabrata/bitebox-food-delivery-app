@@ -13,10 +13,21 @@
     @if (placed()) {
       <np-confetti trigger="manual" [count]="140" class="placed-confetti">
         <div class="placed" role="status">
-          <mat-icon aria-hidden="true">check_circle</mat-icon>
+          <np-icon name="circle-check" class="mat-icon" matButtonIcon />
           <div>
-            <h1>Order placed!</h1>
-            <p>{{ o.restaurantSnapshot.name }} will confirm it shortly. Pay {{ o.pricing.totalPaise | inr }} on delivery.</p>
+            <h2>Order placed!</h2>
+            <p>
+              @if (awaitingPayment()) {
+                Complete the payment of {{ o.pricing.totalPaise | inr }} to send it to
+                {{ o.restaurantSnapshot.name }}.
+              } @else if (o.paymentMethod === 'online') {
+                Paid {{ o.pricing.totalPaise | inr }} online. {{ o.restaurantSnapshot.name }} will
+                confirm it shortly.
+              } @else {
+                {{ o.restaurantSnapshot.name }} will confirm it shortly. Pay
+                {{ o.pricing.totalPaise | inr }} on delivery.
+              }
+            </p>
           </div>
         </div>
       </np-confetti>
@@ -24,23 +35,26 @@
 
     <header class="head">
       <div>
-        <a routerLink="/orders" class="back"><mat-icon aria-hidden="true">arrow_back</mat-icon>My orders</a>
-        <h2>Order {{ o.orderNumber }}</h2>
+        <a routerLink="/orders" class="back"
+          ><np-icon name="arrow-left" class="mat-icon" matButtonIcon />My orders</a
+        >
+        <h1 class="bb-h2">Order {{ o.orderNumber }}</h1>
         <p class="bb-muted">Placed {{ o.createdAt | date: 'medium' }}</p>
       </div>
-      <span class="status status-{{ o.status }}">{{ statusLabel[o.status] }}</span>
+      <span class="status status-{{ o.status }}">{{ statusLabel(o) }}</span>
     </header>
 
     <div class="layout">
       <div class="main">
-        @if (!ended() && o.status !== 'delivered') {
+        @if (!ended() && o.status !== 'delivered' && !awaitingPayment()) {
           @let t = tracking;
           <section class="bb-card" aria-labelledby="track-title">
-            <h3 id="track-title">Live tracking</h3>
+            <h2 class="bb-h3" id="track-title">Live tracking</h2>
             <p class="track-status" aria-live="polite">
               @if (o.status === 'assigned') {
                 @if (t.remaining(); as r) {
-                  <strong>{{ o.rider?.name ?? 'Your rider' }}</strong> is heading to the restaurant, about {{ minutes(r.durationSeconds) }} min away.
+                  <strong>{{ o.rider?.name ?? 'Your rider' }}</strong> is heading to the restaurant,
+                  about {{ minutes(r.durationSeconds) }} min away.
                 } @else if (t.rider()) {
                   <strong>{{ o.rider?.name ?? 'Your rider' }}</strong> is heading to the restaurant.
                 } @else {
@@ -48,9 +62,11 @@
                 }
               } @else if (o.status === 'picked_up' || o.status === 'on_the_way') {
                 @if (t.remaining(); as r) {
-                  Arriving in about <strong>{{ minutes(r.durationSeconds) }} min</strong> · {{ r.distanceMeters / 1000 | number: '1.1-1' }} km by road
+                  Arriving in about <strong>{{ minutes(r.durationSeconds) }} min</strong> ·
+                  {{ r.distanceMeters / 1000 | number: '1.1-1' }} km by road
                 } @else if (t.straightLineToTarget(); as m) {
-                  Your order is on its way, about {{ m / 1000 | number: '1.1-1' }} km away (straight line).
+                  Your order is on its way, about {{ m / 1000 | number: '1.1-1' }} km away (straight
+                  line).
                 } @else {
                   Your order is on its way. Waiting for the rider's location…
                 }
@@ -60,8 +76,9 @@
             </p>
             @if (t.riderStale()) {
               <p class="stale" role="status">
-                <mat-icon aria-hidden="true">signal_cellular_connected_no_internet_0_bar</mat-icon>
-                Last location update {{ minutes(t.riderSeenSeconds() ?? 0) }} min ago. The rider may have a weak signal.
+                <np-icon name="signal-zero" class="mat-icon" matButtonIcon />
+                Last location update {{ minutes(t.riderSeenSeconds() ?? 0) }} min ago. The rider may
+                have a weak signal.
               </p>
             }
             <bb-tracking-map
@@ -71,13 +88,20 @@
               [riderStale]="t.riderStale()"
               [route]="t.remaining()?.path ?? t.plannedRoute()?.path ?? null"
               [lineFrom]="t.rider() ?? t.restaurant()"
-              [label]="'Map of your delivery from ' + o.restaurantSnapshot.name + ' to ' + (o.deliveryAddress.area || o.deliveryAddress.city)"
+              [label]="
+                'Map of your delivery from ' +
+                o.restaurantSnapshot.name +
+                ' to ' +
+                (o.deliveryAddress.area || o.deliveryAddress.city)
+              "
             />
             <p class="bb-muted small estimate-note">
               Times and distances are estimates from road routes without live traffic.
               @if (t.plannedRoute(); as p) {
-                Restaurant to you: {{ p.distanceMeters / 1000 | number: '1.1-1' }} km by road
-                ({{ p.straightLineMeters / 1000 | number: '1.1-1' }} km straight line).
+                Restaurant to you: {{ p.distanceMeters / 1000 | number: '1.1-1' }} km by road ({{
+                  p.straightLineMeters / 1000 | number: '1.1-1'
+                }}
+                km straight line).
               }
               @if (t.rider() && !t.riderStale() && t.riderSeenSeconds() !== null) {
                 Rider location updated {{ t.riderSeenSeconds() }}s ago.
@@ -87,31 +111,98 @@
         }
 
         <section class="bb-card" aria-labelledby="progress-title">
-          <h3 id="progress-title">Progress</h3>
+          <h2 class="bb-h3" id="progress-title">Progress</h2>
           @if (ended()) {
             <div class="bb-alert error" role="status">
-              <mat-icon aria-hidden="true">cancel</mat-icon>
+              <np-icon name="circle-x" class="mat-icon" matButtonIcon />
               <span>
                 @switch (o.cancellation?.by) {
-                  @case ('customer') { You cancelled this order. }
-                  @case ('system') { The restaurant did not respond in time, so the order was cancelled. }
-                  @case ('admin') { BiteBox support cancelled this order. }
-                  @default { {{ o.restaurantSnapshot.name }} could not take this order. }
+                  @case ('customer') {
+                    You cancelled this order.
+                  }
+                  @case ('system') {
+                    {{ o.cancellation.reason ?? 'The order was cancelled automatically' }}, so it
+                    was cancelled.
+                  }
+                  @case ('admin') {
+                    BiteBox support cancelled this order.
+                  }
+                  @default {
+                    {{ o.restaurantSnapshot.name }} could not take this order.
+                  }
                 }
                 @if (o.cancellation; as c) {
                   @if (c.reason && c.by !== 'customer' && c.by !== 'system') {
                     <br /><strong>Reason:</strong> {{ c.reason }}
                   }
                 }
-                You have not been charged.
+                @switch (o.payment?.status) {
+                  @case ('refunded') {
+                    Your payment of {{ o.pricing.totalPaise | inr }} has been refunded.
+                  }
+                  @case ('paid') {
+                    Your refund of {{ o.pricing.totalPaise | inr }} is being processed.
+                  }
+                  @default {
+                    You have not been charged.
+                  }
+                }
               </span>
             </div>
+          } @else if (awaitingPayment()) {
+            <div class="bb-alert info pay-due" role="status">
+              <np-icon [name]="(o.paymentStatus === 'failed' ? 'error' : 'schedule') | npIcon" class="mat-icon" matButtonIcon />
+              <span>
+                @if (o.paymentStatus === 'failed') {
+                  The payment did not go through{{
+                    o.payment?.failureReason ? ': ' + o.payment.failureReason : ''
+                  }}. Try again to place the order.
+                } @else {
+                  Waiting for your payment. {{ o.restaurantSnapshot.name }} receives the order once
+                  it succeeds.
+                }
+                Unpaid orders are cancelled after 15 minutes.
+              </span>
+            </div>
+            <div class="pending-row">
+              <button
+                mat-flat-button
+                class="bb-btn-accent"
+                [disabled]="paying() || cancelling()"
+                (click)="payNow(o)"
+              >
+                <np-icon [name]="(o.payment?.simulated ? 'science' : 'lock') | npIcon" class="mat-icon" matButtonIcon />
+                {{ paying() ? 'Opening payment…' : 'Pay ' + (o.pricing.totalPaise | inr) }}
+              </button>
+              <button
+                mat-stroked-button
+                class="cancel"
+                [disabled]="paying() || cancelling()"
+                (click)="cancel(o)"
+              >
+                Cancel order
+              </button>
+            </div>
           } @else {
-            <np-timeline [value]="timeline()" [activeIndex]="activeStep()" variant="default" class="journey" />
+            <np-timeline
+              [value]="timeline()"
+              [activeIndex]="activeStep()"
+              variant="default"
+              class="journey"
+            />
             @if (o.status === 'pending') {
               <div class="pending-row">
-                <p class="bb-muted small">Waiting for {{ o.restaurantSnapshot.name }} to accept. You can cancel until then.</p>
-                <button mat-stroked-button class="cancel" [disabled]="cancelling()" (click)="cancel(o)">Cancel order</button>
+                <p class="bb-muted small">
+                  Waiting for {{ o.restaurantSnapshot.name }} to accept. You can cancel until then.
+                </p>
+                <button
+                  mat-stroked-button
+                  class="cancel"
+                  [disabled]="cancelling()"
+                  (click)="cancel(o)"
+                >
+                  Cancel order
+                </button>
               </div>
             } @else if (o.status !== 'delivered') {
               <p class="bb-muted small">Status updates live.</p>
@@ -120,7 +211,7 @@
         </section>
 
         <section class="bb-card" aria-labelledby="items-title">
-          <h3 id="items-title">{{ o.restaurantSnapshot.name }}</h3>
+          <h2 class="bb-h3" id="items-title">{{ o.restaurantSnapshot.name }}</h2>
           <ul class="items">
             @for (item of o.items; track item.foodItem) {
               <li>
@@ -138,32 +229,48 @@
 
       <aside class="side">
         <section class="bb-card" aria-labelledby="bill-title">
-          <h3 id="bill-title">Bill</h3>
-          <bb-bill-summary [pricing]="o.pricing" [couponCode]="o.coupon?.code" [distanceMeters]="o.distanceMeters" />
+          <h2 class="bb-h3" id="bill-title">Bill</h2>
+          <bb-bill-summary
+            [pricing]="o.pricing"
+            [couponCode]="o.coupon?.code"
+            [distanceMeters]="o.distanceMeters"
+          />
+          @let status = o.payment?.status ?? o.paymentStatus;
           <p class="payment">
-            <mat-icon aria-hidden="true">payments</mat-icon>
-            Cash on delivery · <span class="pay-{{ o.paymentStatus }}">{{ o.paymentStatus | titlecase }}</span>
+            <span class="method">
+              <np-icon [name]="o.paymentMethod === 'cod' ? 'banknote' : 'credit-card'" class="mat-icon" matButtonIcon />
+              {{ o.payment ? providerLabel[o.payment.provider] : 'Cash on delivery' }}
+            </span>
+            <span class="pay-chip pay-{{ status }}">
+              {{ o.paymentMethod === 'cod' && status === 'pending' ? 'Pay on delivery' : paymentLabel[status] }}
+            </span>
           </p>
+          @if (o.payment?.simulated) {
+            <p class="bb-muted small simulated">Test payment: no real money was charged.</p>
+          }
         </section>
         @if (o.rider; as r) {
           <section class="bb-card rider" aria-labelledby="rider-title">
-            <h3 id="rider-title">Your rider</h3>
+            <h2 class="bb-h3" id="rider-title">Your rider</h2>
             <div class="rider-row">
               <span class="rider-avatar" aria-hidden="true">{{ r.name.charAt(0) }}</span>
               <div>
                 <strong>{{ r.name }}</strong>
                 <span class="bb-muted">
-                  {{ r.vehicleType ? vehicleLabel[r.vehicleType] : '' }}{{ r.vehicleNumber ? ' · ' + r.vehicleNumber : '' }}
+                  {{ r.vehicleType ? vehicleLabel[r.vehicleType] : ''
+                  }}{{ r.vehicleNumber ? ' · ' + r.vehicleNumber : '' }}
                 </span>
               </div>
               @if (r.phone && o.status !== 'delivered') {
-                <a mat-icon-button [href]="'tel:' + r.phone" [attr.aria-label]="'Call ' + r.name"><mat-icon>call</mat-icon></a>
+                <a mat-icon-button [href]="'tel:' + r.phone" [attr.aria-label]="'Call ' + r.name"
+                  ><np-icon name="phone" class="mat-icon" matButtonIcon /></a
+                >
               }
             </div>
           </section>
         }
         <section class="bb-card" aria-labelledby="deliver-title">
-          <h3 id="deliver-title">Delivering to</h3>
+          <h2 class="bb-h3" id="deliver-title">Delivering to</h2>
           @let a = o.deliveryAddress;
           <address>
             <strong>{{ a.recipientName }}</strong> · {{ a.phone }}<br />

@@ -1,9 +1,10 @@
+import { NpIconPipe } from '../../../shared/icons/np-icon-name';
+import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
 import { HttpErrorResponse } from '@angular/common/http';
 import { filter } from 'rxjs';
 import { AdminCatalogService } from '../../../core/services/admin/admin-catalog.service';
@@ -35,7 +36,7 @@ const ACTIONS: Record<RestaurantStatus, StatusAction[]> = {
 
 @Component({
   selector: 'bb-admin-restaurant-review',
-  imports: [DatePipe, RouterLink, MatButtonModule, MatIconModule, EmptyState, InrPipe],
+  imports: [DatePipe, RouterLink, MatButtonModule, IconComponent, NpIconPipe, EmptyState, InrPipe],
   templateUrl: './admin-restaurant-review.html',
   styleUrl: './admin-restaurant-review.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

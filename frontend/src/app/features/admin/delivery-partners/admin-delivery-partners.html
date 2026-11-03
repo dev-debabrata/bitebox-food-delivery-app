@@ -1,4 +1,7 @@
-<bb-page-header title="Delivery partners" subtitle="Riders, their availability and current deliveries." />
+<bb-page-header
+  title="Delivery partners"
+  subtitle="Riders, their availability and current deliveries."
+/>
 
 <div class="filters">
   <np-text-input
@@ -12,38 +15,43 @@
   <np-toggle class="bb-toggle-success" [formField]="filters.onlineOnly" label="Online only" />
 </div>
 
-@if (error(); as message) {
+@if (list.error(); as message) {
   <div class="bb-alert error" role="alert">
-    <mat-icon aria-hidden="true">error</mat-icon>
-    <span>{{ message }} <button class="bb-link-button" (click)="load(1)">Retry</button></span>
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
   </div>
 }
 
-<div class="bb-card list-card" [attr.aria-busy]="loading()">
-  @if (!data()) {
+<div class="bb-card list-card" [attr.aria-busy]="list.loading()">
+  @if (!list.data()) {
     @for (i of [1, 2, 3]; track i) {
       <span class="bb-skeleton row-skeleton"></span>
     }
-  } @else if (data()!.items.length === 0) {
-    <div class="empty">
-      <mat-icon aria-hidden="true">two_wheeler</mat-icon>
-      <p>No delivery partners match these filters.</p>
-    </div>
+  } @else if (list.data()!.items.length === 0) {
+    <bb-empty-state icon="two_wheeler" title="No delivery partners match these filters" />
   } @else {
-    <ul class="rows" [class.dim]="loading()">
-      @for (r of data()!.items; track r.id) {
+    <ul class="rows" [class.dim]="list.loading()">
+      @for (r of list.data()!.items; track r.id) {
         <li>
           <div class="who">
-            <span class="dot" [class.on]="r.isOnline" [attr.aria-label]="r.isOnline ? 'Online' : 'Offline'"></span>
+            <span
+              class="dot"
+              [class.on]="r.isOnline"
+              [attr.aria-label]="r.isOnline ? 'Online' : 'Offline'"
+            ></span>
             <div>
               <strong>{{ r.name }}</strong>
               <span class="bb-muted">{{ r.email }}{{ r.phone ? ' · ' + r.phone : '' }}</span>
             </div>
           </div>
           <div class="meta">
-            <span>{{ r.vehicleType ? vehicleLabel[r.vehicleType] : 'No vehicle' }}{{ r.vehicleNumber ? ' · ' + r.vehicleNumber : '' }}</span>
+            <span
+              >{{ r.vehicleType ? vehicleLabel[r.vehicleType] : 'No vehicle'
+              }}{{ r.vehicleNumber ? ' · ' + r.vehicleNumber : '' }}</span
+            >
             <span class="bb-muted">
-              {{ r.completedDeliveries }} {{ r.completedDeliveries === 1 ? 'delivery' : 'deliveries' }}
+              {{ r.completedDeliveries }}
+              {{ r.completedDeliveries === 1 ? 'delivery' : 'deliveries' }}
               @if (r.isOnline && r.locationUpdatedAt) {
                 · location {{ r.locationUpdatedAt | date: 'h:mm a' }}
               }
@@ -51,7 +59,9 @@
           </div>
           <div class="work">
             @if (r.activeOrder; as o) {
-              <button type="button" class="bb-link-button" (click)="openOrder(o.id)">{{ o.orderNumber }}</button>
+              <button type="button" class="bb-link-button" (click)="openOrder(o.id)">
+                {{ o.orderNumber }}
+              </button>
               <bb-order-status-chip [status]="o.status" />
             } @else {
               <span class="bb-muted">{{ r.isOnline ? 'Available' : 'Offline' }}</span>
@@ -59,7 +69,12 @@
           </div>
           <div class="actions">
             <span class="status status-{{ r.status }}">{{ r.status }}</span>
-            <button mat-stroked-button [class.danger]="r.status === 'active'" [disabled]="busyId() === r.id" (click)="toggleStatus(r)">
+            <button
+              mat-stroked-button
+              [class.danger]="r.status === 'active'"
+              [disabled]="busyId() === r.id"
+              (click)="toggleStatus(r)"
+            >
               {{ r.status === 'active' ? 'Suspend' : 'Reactivate' }}
             </button>
           </div>
@@ -67,11 +82,11 @@
       }
     </ul>
     <mat-paginator
-      [length]="data()!.pagination.total"
-      [pageIndex]="data()!.pagination.page - 1"
-      [pageSize]="data()!.pagination.limit"
+      [length]="list.data()!.pagination.total"
+      [pageIndex]="list.data()!.pagination.page - 1"
+      [pageSize]="list.data()!.pagination.limit"
       [pageSizeOptions]="[20, 50, 100]"
-      (page)="onPage($event)"
+      (page)="list.onPage($event)"
       aria-label="Delivery partner pages"
     />
   }

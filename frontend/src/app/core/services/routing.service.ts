@@ -33,6 +33,20 @@ export function isValidPoint(p: Partial<Point> | null | undefined): p is Point {
   );
 }
 
+/** Straight-line ("as the crow flies") metres between two points. Not road distance. */
+export function distanceMeters(a: Point, b: Point): number {
+  const r = (d: number) => (d * Math.PI) / 180;
+  const h =
+    Math.sin(r(b.latitude - a.latitude) / 2) ** 2 +
+    Math.cos(r(a.latitude)) *
+      Math.cos(r(b.latitude)) *
+      Math.sin(r(b.longitude - a.longitude) / 2) ** 2;
+  return 2 * 6_371_000 * Math.asin(Math.sqrt(h));
+}
+
+/** Seconds -> whole minutes for "about N min" (never 0). */
+export const etaMinutes = (seconds: number) => Math.max(1, Math.round(seconds / 60));
+
 /** [longitude, latitude] (GeoJSON, as stored by the API) -> Point. */
 export const fromCoordinates = (c?: [number, number] | null): Point | null =>
   c ? { latitude: c[1], longitude: c[0] } : null;
@@ -48,12 +62,19 @@ export class RoutingService {
    */
   route(from: Point, to: Point): Observable<RoadRoute | null> {
     if (!isValidPoint(from) || !isValidPoint(to)) return of(null);
-    const key = [from.latitude, from.longitude, to.latitude, to.longitude].map((n) => n.toFixed(4)).join(',');
+    const key = [from.latitude, from.longitude, to.latitude, to.longitude]
+      .map((n) => n.toFixed(4))
+      .join(',');
     let request = this.cache.get(key);
     if (!request) {
       request = this.http
         .get<ApiResponse<{ route: RoadRoute }>>(`${environment.apiUrl}/geo/route`, {
-          params: { fromLat: from.latitude, fromLng: from.longitude, toLat: to.latitude, toLng: to.longitude },
+          params: {
+            fromLat: from.latitude,
+            fromLng: from.longitude,
+            toLat: to.latitude,
+            toLng: to.longitude,
+          },
         })
         .pipe(
           map((r) => r.data.route),

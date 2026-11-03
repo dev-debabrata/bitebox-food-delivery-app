@@ -29,3 +29,7 @@ export const paiseBody = (field, { optional = false, min = 0, max = 10_000_000 }
     .withMessage(`${field} must be a whole number of paise between ${min} and ${max}`)
     .toInt();
 };
+
+/** Coordinate checks for any body/query/param chain, e.g. latitudeRule(query("lat")). */
+export const latitudeRule = (chain) => chain.isFloat({ min: -90, max: 90 }).withMessage("Invalid latitude").toFloat();
+export const longitudeRule = (chain) => chain.isFloat({ min: -180, max: 180 }).withMessage("Invalid longitude").toFloat();

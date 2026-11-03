@@ -7,7 +7,10 @@ import { validate } from "../middleware/validate.middleware.js";
 import { ROLES } from "../models/user.model.js";
 import { mongoIdParam } from "../validators/common.validators.js";
 import * as foodRules from "../validators/food.validators.js";
+import * as reports from "../services/reports.service.js";
+import { respond } from "../utils/api-response.js";
 import * as orderRules from "../validators/order-management.validators.js";
+import { daysRules } from "../validators/payment.validators.js";
 import * as restaurantRules from "../validators/restaurant.validators.js";
 
 /**
@@ -30,6 +33,7 @@ router.delete("/foods/:id", validate([mongoIdParam()]), foods.ownerDelete);
 
 // Incoming orders for the partner's own restaurant only.
 router.get("/orders", validate(orderRules.restaurantListRules), orders.restaurantList);
+router.get("/earnings", validate(daysRules), respond((req) => reports.restaurantEarnings(req.user._id, req.validatedQuery.days ?? 30)));
 router.get("/orders/:id", validate([mongoIdParam()]), orders.restaurantGet);
 router.patch("/orders/:id/status", validate(orderRules.restaurantStatusRules), orders.restaurantSetStatus);
 

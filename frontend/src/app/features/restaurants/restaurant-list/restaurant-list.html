@@ -39,13 +39,13 @@
   <div class="quick-filters">
     @if (coords(); as c) {
       <button mat-flat-button class="bb-btn-accent location-chip" (click)="chooseLocation()" [attr.aria-label]="'Delivering to ' + c.label + '. Change location'">
-        <mat-icon>location_on</mat-icon>
+        <np-icon name="map-pin" class="mat-icon" matButtonIcon />
         <span class="chip-label">{{ c.label }}</span>
       </button>
       <button mat-button (click)="showAll()">Show all restaurants</button>
     } @else {
       <button mat-stroked-button (click)="chooseLocation()">
-        <mat-icon>my_location</mat-icon>
+        <np-icon name="locate-fixed" class="mat-icon" matButtonIcon />
         {{ deliveryLocation() ? 'Only near ' + deliveryLocation()!.label : 'Set delivery location' }}
       </button>
     }
@@ -59,7 +59,7 @@
     <mat-chip-listbox class="categories" aria-label="Filter by food category">
       @for (c of categories(); track c.id) {
         <mat-chip-option [selected]="category() === c.id" (click)="toggleCategory(c.id)">
-          <mat-icon matChipAvatar aria-hidden="true">{{ c.icon }}</mat-icon>
+          <np-icon [name]="(c.icon) | npIcon: 'utensils'" class="mat-icon" matChipAvatar matButtonIcon />
           {{ c.name }}
         </mat-chip-option>
       }
@@ -68,7 +68,7 @@
 
   @if (error()) {
     <div class="bb-alert error" role="alert">
-      <mat-icon aria-hidden="true">error</mat-icon>
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
       <span>{{ error() }} <button class="bb-link-button" (click)="retry()">Retry</button></span>
     </div>
   }
@@ -96,6 +96,7 @@
       }
     </bb-empty-state>
   } @else {
+    <h2 class="bb-sr-only">Results</h2>
     <div class="grid">
       @for (r of restaurants(); track r.id) {
         <bb-restaurant-card [restaurant]="r" />

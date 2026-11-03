@@ -22,7 +22,7 @@
     <div class="bb-container hero-inner">
       <nav class="crumbs" aria-label="Breadcrumb">
         <a routerLink="/restaurants">Restaurants</a>
-        <mat-icon aria-hidden="true">chevron_right</mat-icon>
+        <np-icon name="chevron-right" class="mat-icon" matButtonIcon />
         <span aria-current="page">{{ r.name }}</span>
       </nav>
       <h1>{{ r.name }}</h1>
@@ -33,23 +33,23 @@
       <ul class="facts">
         <li>
           @if (rating(); as stars) {
-            <mat-icon aria-hidden="true">star</mat-icon>{{ stars }} <span class="muted">({{ r.rating.count }})</span>
+            <np-icon name="star" class="mat-icon" matButtonIcon />{{ stars }} <span class="muted">({{ r.rating.count }})</span>
           } @else {
-            <mat-icon aria-hidden="true">fiber_new</mat-icon>New on BiteBox
+            <np-icon name="sparkles" class="mat-icon" matButtonIcon />New on BiteBox
           }
         </li>
-        <li><mat-icon aria-hidden="true">schedule</mat-icon>{{ r.avgPrepTimeMinutes }} min prep</li>
-        <li><mat-icon aria-hidden="true">payments</mat-icon>{{ r.costForTwoPaise | inr }} for two</li>
+        <li><np-icon name="clock" class="mat-icon" matButtonIcon />{{ r.avgPrepTimeMinutes }} min prep</li>
+        <li><np-icon name="banknote" class="mat-icon" matButtonIcon />{{ r.costForTwoPaise | inr }} for two</li>
         <li [class.closed]="!r.isOpenNow">
-          <mat-icon aria-hidden="true">{{ r.isOpenNow ? 'storefront' : 'door_front' }}</mat-icon>
+          <np-icon [name]="(r.isOpenNow ? 'storefront' : 'door_front') | npIcon" class="mat-icon" matButtonIcon />
           {{ r.isOpenNow ? 'Open now' : 'Closed now' }} · {{ r.openingTime }}–{{ r.closingTime }}
         </li>
         @if (r.isPureVeg) {
-          <li class="veg"><mat-icon aria-hidden="true">eco</mat-icon>Pure veg</li>
+          <li class="veg"><np-icon name="leaf" class="mat-icon" matButtonIcon />Pure veg</li>
         }
       </ul>
       <p class="address">
-        <mat-icon aria-hidden="true">location_on</mat-icon>
+        <np-icon name="map-pin" class="mat-icon" matButtonIcon />
         {{ r.address.line1 }}{{ r.address.area ? ', ' + r.address.area : '' }}, {{ r.address.city }}
       </p>
     </div>
@@ -68,6 +68,18 @@
     }
 
     <div class="menu">
+      @if (!takingOrders()) {
+        <div class="bb-alert info closed-note" role="status">
+          <np-icon name="clock" class="mat-icon" matButtonIcon />
+          <span>
+            @if (!r.isOpenNow) {
+              {{ r.name }} is closed right now. You can browse the menu; ordering opens at {{ r.openingTime }}.
+            } @else {
+              {{ r.name }} is not taking orders right now. Please check back soon.
+            }
+          </span>
+        </div>
+      }
       <div class="menu-tools">
         <np-text-input
           class="menu-search"
@@ -92,7 +104,7 @@
         <section class="menu-section" [id]="sectionId(s)" [attr.aria-labelledby]="sectionId(s) + '-title'">
           <h2 [id]="sectionId(s) + '-title'">
             @if (s.category) {
-              <mat-icon aria-hidden="true">{{ s.category.icon }}</mat-icon>
+              <np-icon [name]="(s.category.icon) | npIcon: 'utensils'" class="mat-icon" matButtonIcon />
             }
             {{ s.category?.name ?? 'Other' }}
           </h2>
@@ -100,7 +112,7 @@
             @for (item of s.items; track item.id) {
               <li>
                 <div class="dish" [class.unavailable]="!item.isAvailable">
-                  <button type="button" class="dish-text" (click)="openItem(item)" [attr.aria-label]="'Details for ' + item.name">
+                  <button type="button" class="dish-text" (click)="openItem(item)">
                     <span class="dish-name"><bb-veg-badge [veg]="item.isVeg" /> {{ item.name }}</span>
                     <span class="dish-price">{{ item.pricePaise | inr }}</span>
                     @if (item.description) {
@@ -120,7 +132,7 @@
                         [class.over-image]="!!item.imageUrl"
                         [quantity]="quantityOf(item.id)"
                         [label]="item.name"
-                        [disabled]="cart.busy()"
+                        [disabled]="cart.busy() || !takingOrders()"
                         (add)="addToCart(item)"
                         (changed)="cartActions.setQuantity(item.id, $event)"
                       />
@@ -159,11 +171,11 @@
         </div>
         <p class="bb-muted cart-note">Delivery fee and taxes are added at checkout.</p>
         <a mat-flat-button class="bb-btn-accent checkout" routerLink="/checkout">
-          Checkout <mat-icon iconPositionEnd>arrow_forward</mat-icon>
+          Checkout <np-icon name="arrow-right" class="mat-icon" iconPositionEnd matButtonIcon />
         </a>
       } @else {
         <div class="cart-empty">
-          <mat-icon aria-hidden="true">shopping_bag</mat-icon>
+          <np-icon name="shopping-bag" class="mat-icon" matButtonIcon />
           <p>Your cart is empty. Add dishes from the menu to get started.</p>
         </div>
       }
@@ -176,7 +188,7 @@
         <span>
           <strong>{{ c.itemCount }} {{ c.itemCount === 1 ? 'item' : 'items' }}</strong> · {{ cartSubtotal() | inr }}
         </span>
-        <a mat-flat-button class="bb-btn-accent" routerLink="/checkout">View cart <mat-icon iconPositionEnd>arrow_forward</mat-icon></a>
+        <a mat-flat-button class="bb-btn-accent" routerLink="/checkout">View cart <np-icon name="arrow-right" class="mat-icon" iconPositionEnd matButtonIcon /></a>
       </div>
     </div>
   }

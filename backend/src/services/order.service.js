@@ -5,13 +5,14 @@ import { Coupon, CouponRedemption } from "../models/coupon.model.js";
 import { FoodItem } from "../models/food-item.model.js";
 import { ORDER_STATUS, Order, PAYMENT_METHODS, PAYMENT_STATUS, Payment } from "../models/order.model.js";
 import { Restaurant } from "../models/restaurant.model.js";
-import { emitOrderUpdated } from "../sockets/events.js";
 import { ApiError } from "../utils/api-error.js";
 import { paginationMeta } from "../utils/pagination.js";
 import { withTransaction } from "../utils/transaction.js";
 import * as addressService from "./address.service.js";
 import * as cartService from "./cart.service.js";
 import * as couponService from "./coupon.service.js";
+import { notifyNewOrder } from "./order-notifications.js";
+import { providerFor } from "./payments/payment.service.js";
 
 /** e.g. BB-261102-7KQ4XZ (date + 6 random base32 characters). */
 function newOrderNumber() {
@@ -40,7 +41,7 @@ export async function placeOrder(userId, { addressId, paymentMethod, note, expec
     const existing = await Order.findOne({ customer: userId, idempotencyKey });
     if (existing) return { order: existing, created: false };
   }
-  if (paymentMethod !== PAYMENT_METHODS.COD) throw ApiError.badRequest("Only Cash on Delivery is available right now");
+  const provider = providerFor(paymentMethod); // throws when online payment is unavailable
 
   const address = await addressService.getOwn(userId, addressId);
   const quote = await cartService.buildQuote(userId, { addressId });
@@ -101,13 +102,15 @@ export async function placeOrder(userId, { addressId, paymentMethod, note, expec
     statusHistory: [{ status: ORDER_STATUS.PENDING, at: now, by: userId }],
     paymentMethod,
     paymentStatus: PAYMENT_STATUS.PENDING,
+    // Cash orders go to the restaurant now; online ones once paid (see payments/payment.service.js).
+    submittedAt: paymentMethod === PAYMENT_METHODS.COD ? now : null,
     idempotencyKey: idempotencyKey || undefined,
   };
 
   try {
-    const order = await withTransaction((session) => commitOrder({ userId, quote, orderDoc, paymentMethod }, session));
+    const order = await withTransaction((session) => commitOrder({ userId, quote, orderDoc, paymentMethod, provider }, session));
     logger.info({ orderId: order.id, orderNumber, userId: String(userId) }, "Order placed");
-    emitOrderUpdated(order); // the restaurant's board lights up
+    if (order.submittedAt) await notifyNewOrder(order, "cash on delivery");
     return { order, created: true };
   } catch (error) {
     // A concurrent retry with the same idempotency key won the race: return its order.
@@ -120,7 +123,7 @@ export async function placeOrder(userId, { addressId, paymentMethod, note, expec
 }
 
 /** The write phase. `session` is null when transactions are unavailable (compensating fallback). */
-async function commitOrder({ userId, quote, orderDoc, paymentMethod }, session) {
+async function commitOrder({ userId, quote, orderDoc, paymentMethod, provider }, session) {
   const undo = [];
   try {
     // 1. Claim the cart. If it changed after we priced it (another tab, another checkout), stop.
@@ -155,7 +158,7 @@ async function commitOrder({ userId, quote, orderDoc, paymentMethod }, session) 
           order: order._id,
           user: userId,
           method: paymentMethod,
-          provider: "cash_on_delivery",
+          provider,
           amountPaise: order.pricing.totalPaise,
           status: PAYMENT_STATUS.PENDING,
         },
@@ -183,7 +186,8 @@ async function commitOrder({ userId, quote, orderDoc, paymentMethod }, session) 
 }
 
 export async function listMine(userId, pagination) {
-  const filter = { customer: userId };
+  // Checkout attempts abandoned at the payment page never became orders for the customer.
+  const filter = { customer: userId, $nor: [{ paymentMethod: PAYMENT_METHODS.ONLINE, submittedAt: null, status: ORDER_STATUS.CANCELLED }] };
   const [items, total] = await Promise.all([
     Order.find(filter)
       .sort({ createdAt: -1 })

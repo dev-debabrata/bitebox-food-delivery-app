@@ -1,28 +1,60 @@
+import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogConfig,
+  MatDialogModule,
+} from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { Observable, filter } from 'rxjs';
 import { errorMessage } from '../../../core/services/api-error';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AdminOrdersService } from '../../../core/services/order-management.service';
 import { BillSummary } from '../../../shared/components/bill-summary/bill-summary';
-import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import {
+  ConfirmDialogData,
+  confirmed,
+} from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { OrderStatusChip } from '../../../shared/components/order-status-chip/order-status-chip';
 import { deliveryTracking } from '../../../shared/components/tracking-map/delivery-tracking';
 import { TrackingMap } from '../../../shared/components/tracking-map/tracking-map';
 import { VegBadge } from '../../../shared/components/veg-badge/veg-badge';
-import { ORDER_STATUS_LABEL, OrderStatus, VEHICLE_LABEL } from '../../../shared/models/checkout.models';
-import { AdminOrder } from '../../../shared/models/order-management.models';
+import {
+  ORDER_STATUS_LABEL,
+  OrderStatus,
+  VEHICLE_LABEL,
+  customerStatusLabel,
+} from '../../../shared/models/checkout.models';
+import { AdminOrder, TRACKED_STATUSES } from '../../../shared/models/order-management.models';
+import { InrPipe } from '../../../shared/pipes/money.pipes';
+import { PAYMENT_STATUS_LABEL, PROVIDER_LABEL } from '../../../shared/models/payment.models';
 
 /** Statuses from which an admin may cancel (mirrors the backend transition table). */
-const CANCELLABLE: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'assigned'];
+const CANCELLABLE: OrderStatus[] = [
+  'pending',
+  'confirmed',
+  'preparing',
+  'ready_for_pickup',
+  'assigned',
+];
 
 /** One order in full, for admins. Closes with `true` when something was changed. */
 @Component({
   selector: 'bb-admin-order-dialog',
-  imports: [DatePipe, DecimalPipe, MatDialogModule, MatButtonModule, MatIconModule, BillSummary, OrderStatusChip, TrackingMap, VegBadge],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    MatDialogModule,
+    MatButtonModule,
+    IconComponent,
+    BillSummary,
+    OrderStatusChip,
+    TrackingMap,
+    VegBadge,
+    InrPipe,
+  ],
   templateUrl: './admin-order-dialog.html',
   styleUrl: './admin-order-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,9 +71,12 @@ export class AdminOrderDialog {
   protected readonly changed = signal(false);
   protected readonly statusLabel = ORDER_STATUS_LABEL;
   protected readonly vehicleLabel = VEHICLE_LABEL;
+  protected readonly paymentLabel = PAYMENT_STATUS_LABEL;
+  protected readonly customerLabel = customerStatusLabel;
+  protected readonly providerLabel = PROVIDER_LABEL;
   /** Live rider position for orders on the road. */
   protected readonly tracking = deliveryTracking(this.order);
-  protected readonly onTheRoad = (o: AdminOrder) => ['assigned', 'picked_up', 'on_the_way'].includes(o.status);
+  protected readonly onTheRoad = (o: AdminOrder) => TRACKED_STATUSES.includes(o.status);
 
   constructor() {
     this.load();
@@ -63,7 +98,8 @@ export class AdminOrderDialog {
     this.confirm(
       {
         title: `Cancel order ${o.orderNumber}?`,
-        message: 'The customer, restaurant and rider (if any) will see it as cancelled. This cannot be undone.',
+        message:
+          'The customer, restaurant and rider (if any) will see it as cancelled. This cannot be undone.',
         reasonLabel: 'Reason (shown to the customer)',
         confirmLabel: 'Cancel order',
         danger: true,
@@ -86,26 +122,41 @@ export class AdminOrderDialog {
     );
   }
 
-  private confirm(data: ConfirmDialogData, action: (reason?: string) => Observable<AdminOrder>, message: string): void {
-    this.dialog
-      .open<ConfirmDialog, ConfirmDialogData, true | string>(ConfirmDialog, { data, width: '460px' })
-      .afterClosed()
-      .pipe(filter((r): r is string => typeof r === 'string'))
-      .subscribe((reason) => {
-        this.busy.set(true);
-        action(reason).subscribe({
-          next: (o) => {
-            this.order.set(o);
-            this.busy.set(false);
-            this.changed.set(true);
-            this.notify.success(message);
-          },
-          error: (err: unknown) => {
-            this.busy.set(false);
-            this.notify.error(errorMessage(err));
-            this.load();
-          },
-        });
+  private confirm(
+    data: ConfirmDialogData,
+    action: (reason?: string) => Observable<AdminOrder>,
+    message: string,
+  ): void {
+    confirmed(this.dialog, data, '460px').subscribe((result) => {
+      const reason = typeof result === 'string' ? result : undefined;
+      this.busy.set(true);
+      action(reason).subscribe({
+        next: (o) => {
+          this.order.set(o);
+          this.busy.set(false);
+          this.changed.set(true);
+          this.notify.success(message);
+        },
+        error: (err: unknown) => {
+          this.busy.set(false);
+          this.notify.error(errorMessage(err));
+          this.load();
+        },
       });
+    });
   }
+}
+
+/** Opens one order for an admin; emits once if something was changed (so the caller can reload). */
+export function openAdminOrder(dialog: MatDialog, orderId: string): Observable<true> {
+  const config: MatDialogConfig<string> = {
+    data: orderId,
+    width: '820px',
+    maxWidth: '95vw',
+    autoFocus: 'dialog',
+  };
+  return dialog
+    .open<AdminOrderDialog, string, boolean>(AdminOrderDialog, config)
+    .afterClosed()
+    .pipe(filter((changed): changed is true => changed === true));
 }

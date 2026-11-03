@@ -149,6 +149,33 @@ describe("Restaurants, categories and food", () => {
       assert.equal(pub.body.data.restaurant.owner, undefined, "owner id is not exposed publicly");
     });
 
+    it("notifies admins of applications and owners of the decision", async () => {
+      const { Notification } = await import("../src/models/notification.model.js");
+      const admin = await createAndLogin(app, "admin");
+      const owner = await registerUser(app, { role: "restaurant" });
+      const inbox = async (token) => (await request(app).get("/api/v1/notifications").set(auth(token))).body.data.items;
+
+      const created = await request(app).post("/api/v1/my/restaurant").set(auth(owner.token)).send(restaurantPayload());
+      const id = created.body.data.restaurant.id;
+      const [applied] = await inbox(admin.token);
+      assert.match(applied.title, /New restaurant application: Tandoor Tales/);
+      assert.equal(applied.link, `/admin/restaurants/${id}`);
+
+      await request(app).patch(`/api/v1/admin/restaurants/${id}/status`).set(auth(admin.token)).send({ status: "rejected", reason: "Blurry photos" });
+      const [rejected] = await inbox(owner.token);
+      assert.equal(rejected.type, "restaurant.rejected");
+      assert.match(rejected.body, /Reason: Blurry photos/);
+
+      await request(app).patch("/api/v1/my/restaurant").set(auth(owner.token)).send({ description: "New photos uploaded" });
+      assert.match((await inbox(admin.token))[0].title, /Restaurant resubmitted/);
+
+      await request(app).patch(`/api/v1/admin/restaurants/${id}/status`).set(auth(admin.token)).send({ status: "approved" });
+      const [approved] = await inbox(owner.token);
+      assert.equal(approved.title, "Your restaurant is live");
+      assert.equal(approved.link, "/restaurant");
+      assert.equal(await Notification.countDocuments({ type: "restaurant.review" }), 2, "admins: application + resubmission");
+    });
+
     it("requires a reason to reject and enforces the transition table", async () => {
       const id = await pendingRestaurant();
       const { token } = await createAndLogin(app, "admin");
@@ -409,6 +436,38 @@ describe("Restaurants, categories and food", () => {
       assert.equal(served.status, 200);
       assert.equal(served.headers["cross-origin-resource-policy"], "cross-origin");
       assert.equal(served.headers["x-content-type-options"], "nosniff");
+    });
+
+    it("uploads to Cloudinary when it is configured", async () => {
+      const { default: cloudinary } = await import("../src/config/cloudinary.js");
+      const { cloudinaryStorage, useImageStorage } = await import("../src/services/upload.service.js");
+      const sent = [];
+      const realStream = cloudinary.uploader.upload_stream;
+      cloudinary.config({ cloud_name: "demo-cloud" });
+      cloudinary.uploader.upload_stream = (options, done) => ({
+        end: (buffer) => {
+          sent.push({ options, bytes: buffer.length });
+          done(null, { public_id: "bitebox/abc123", version: 1700000000 });
+        },
+      });
+      const restore = useImageStorage(cloudinaryStorage);
+      try {
+        const { token } = await createAndLogin(app, "restaurant");
+        const res = await request(app).post("/api/v1/uploads/images").set(auth(token)).attach("image", PNG, "photo.png");
+        assert.equal(res.status, 201, JSON.stringify(res.body));
+        assert.equal(res.body.data.url, "https://res.cloudinary.com/demo-cloud/image/upload/f_auto,q_auto/v1700000000/bitebox/abc123");
+        assert.equal(sent.length, 1);
+        assert.equal(sent[0].options.folder, env.cloudinary.folder);
+        assert.equal(sent[0].bytes, PNG.length, "the checked bytes are what gets uploaded");
+
+        cloudinary.uploader.upload_stream = (_options, done) => ({ end: () => done(new Error("network down")) });
+        const failed = await request(app).post("/api/v1/uploads/images").set(auth(token)).attach("image", PNG, "photo.png");
+        assert.equal(failed.status, 503);
+        assert.equal(failed.body.error.code, "UPLOAD_FAILED");
+      } finally {
+        restore();
+        cloudinary.uploader.upload_stream = realStream;
+      }
     });
 
     it("rejects files whose bytes are not an image, whatever their name", async () => {

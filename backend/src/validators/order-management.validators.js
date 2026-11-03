@@ -2,7 +2,7 @@ import { body, query } from "express-validator";
 import { VEHICLE_TYPES } from "../models/delivery-partner.model.js";
 import { ORDER_STATUS } from "../models/order.model.js";
 import { USER_STATUS } from "../models/user.model.js";
-import { booleanQuery, mongoIdParam, paginationRules, searchQuery } from "./common.validators.js";
+import { booleanQuery, latitudeRule, longitudeRule, mongoIdParam, paginationRules, searchQuery } from "./common.validators.js";
 
 const S = ORDER_STATUS;
 const reason = (required = false) => {
@@ -13,8 +13,8 @@ const reason = (required = false) => {
     .isLength({ max: 300 })
     .withMessage("Keep the reason under 300 characters");
 };
-const latitude = () => body("latitude").isFloat({ min: -90, max: 90 }).withMessage("Invalid latitude").toFloat();
-const longitude = () => body("longitude").isFloat({ min: -180, max: 180 }).withMessage("Invalid longitude").toFloat();
+const latitude = () => latitudeRule(body("latitude"));
+const longitude = () => longitudeRule(body("longitude"));
 
 // Customer ------------------------------------------------------------------
 export const customerCancelRules = [mongoIdParam(), reason()];
@@ -45,8 +45,8 @@ export const vehicleRules = [
 ];
 export const availabilityRules = [
   body("isOnline").isBoolean().withMessage("isOnline must be true or false").toBoolean(),
-  latitude().optional(),
-  longitude().optional(),
+  latitudeRule(body("latitude").optional()),
+  longitudeRule(body("longitude").optional()),
 ];
 export const locationRules = [latitude(), longitude()];
 export const offerRules = [mongoIdParam()];

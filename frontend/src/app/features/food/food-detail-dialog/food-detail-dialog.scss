@@ -30,9 +30,7 @@ dd {
   align-items: center;
   gap: 4px;
   font-weight: 600;
-  mat-icon {
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
+  np-icon {
+    --bb-icon-size: 18px;
   }
 }

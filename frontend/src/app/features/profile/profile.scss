@@ -83,3 +83,8 @@
     }
   }
 }
+
+// Change password: one column at a readable width, not stretched across the card.
+.narrow {
+  max-width: 480px;
+}

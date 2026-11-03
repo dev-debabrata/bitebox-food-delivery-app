@@ -10,12 +10,12 @@
   <p class="price">{{ item.pricePaise | inr }}</p>
   @if (!item.isAvailable) {
     <div class="bb-alert error" role="status">
-      <mat-icon aria-hidden="true">block</mat-icon>
+      <np-icon name="ban" class="mat-icon" matButtonIcon />
       <span>Currently unavailable</span>
     </div>
   } @else if (data.restaurant.isOpenNow === false) {
     <div class="bb-alert info" role="status">
-      <mat-icon aria-hidden="true">schedule</mat-icon>
+      <np-icon name="clock" class="mat-icon" matButtonIcon />
       <span>{{ data.restaurant.name }} is closed right now.</span>
     </div>
   }
@@ -27,8 +27,7 @@
       <div>
         <dt>Category</dt>
         <dd>
-          <mat-icon aria-hidden="true">{{ item.category.icon }}</mat-icon
-          >{{ item.category.name }}
+          <np-icon [name]="(item.category.icon) | npIcon: 'utensils'" class="mat-icon" matButtonIcon />{{ item.category.name }}
         </dd>
       </div>
     }

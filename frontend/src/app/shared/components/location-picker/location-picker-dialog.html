@@ -4,7 +4,7 @@
   <mat-dialog-content>
     <bb-map-picker [latitude]="c.latitude" [longitude]="c.longitude" (moved)="onPinMoved($event)" />
     <div class="chosen" role="status" aria-live="polite">
-      <mat-icon aria-hidden="true">location_on</mat-icon>
+      <np-icon name="map-pin" class="mat-icon" matButtonIcon />
       <span>
         <strong>{{ naming() ? 'Finding address…' : c.label }}</strong>
         @if (c.detail && !naming()) {
@@ -12,19 +12,33 @@
         }
       </span>
     </div>
-    <p class="attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors</p>
+    <p class="attribution">
+      ©
+      <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer"
+        >OpenStreetMap</a
+      >
+      contributors
+    </p>
   </mat-dialog-content>
   <mat-dialog-actions align="end">
-    <button mat-button type="button" (click)="back()"><mat-icon>arrow_back</mat-icon>Back</button>
-    <button mat-flat-button type="button" (click)="confirm()" [disabled]="naming()">Confirm location</button>
+    <button mat-button type="button" (click)="back()"><np-icon name="arrow-left" class="mat-icon" matButtonIcon />Back</button>
+    <button mat-flat-button type="button" (click)="confirm()" [disabled]="naming()">
+      Confirm location
+    </button>
   </mat-dialog-actions>
 } @else {
   <!-- Step 1: choose -->
   <h2 mat-dialog-title>Choose delivery location</h2>
   <mat-dialog-content>
     @if (geo.supported) {
-      <button mat-stroked-button class="gps" type="button" (click)="useGps()" [disabled]="locating()">
-        <mat-icon>my_location</mat-icon>
+      <button
+        mat-stroked-button
+        class="gps"
+        type="button"
+        (click)="useGps()"
+        [disabled]="locating()"
+      >
+        <np-icon name="locate-fixed" class="mat-icon" matButtonIcon />
         {{ locating() ? 'Finding you…' : 'Use my current location' }}
       </button>
     }
@@ -33,35 +47,11 @@
     }
     @if (gpsError()) {
       <div class="bb-alert info" role="status">
-        <mat-icon aria-hidden="true">location_off</mat-icon><span>{{ gpsError() }}</span>
+        <np-icon name="map-pin-off" class="mat-icon" matButtonIcon /><span>{{ gpsError() }}</span>
       </div>
     }
 
-    <np-search-input
-      class="search"
-      placeholder="Search area, street or landmark"
-      [value]="query()"
-      [loading]="searching()"
-      (search)="query.set($event)"
-      cdkFocusInitial
-    />
-    @if (searchError()) {
-      <p class="error" role="alert">{{ searchError() }}</p>
-    }
-    @if (results().length) {
-      <ul class="list" aria-label="Search results">
-        @for (p of results(); track p.latitude + ',' + p.longitude) {
-          <li>
-            <button type="button" (click)="pick(p)">
-              <mat-icon aria-hidden="true">place</mat-icon>
-              <span><strong>{{ p.label }}</strong><small>{{ p.displayName }}</small></span>
-            </button>
-          </li>
-        }
-      </ul>
-    } @else if (searched() && !searching() && !searchError()) {
-      <p class="bb-muted hint">No places found. Try a nearby area or landmark.</p>
-    }
+    <bb-place-search [showEmpty]="true" (picked)="pick($event)" cdkFocusInitial />
 
     @if (addresses().length) {
       <h3>Saved addresses</h3>
@@ -69,9 +59,11 @@
         @for (a of addresses(); track a.id) {
           <li>
             <button type="button" (click)="pickAddress(a)">
-              <mat-icon aria-hidden="true">{{ a.label === 'home' ? 'home' : a.label === 'work' ? 'work' : 'place' }}</mat-icon>
+              <np-icon [name]="(a.label === 'home' ? 'home' : a.label === 'work' ? 'work' : 'place') | npIcon" class="mat-icon" matButtonIcon />
               <span>
-                <strong>{{ a.label === 'home' ? 'Home' : a.label === 'work' ? 'Work' : 'Other' }}</strong>
+                <strong>{{
+                  a.label === 'home' ? 'Home' : a.label === 'work' ? 'Work' : 'Other'
+                }}</strong>
                 <small>{{ a.line1 }}, {{ a.area ? a.area + ', ' : '' }}{{ a.city }}</small>
               </span>
             </button>
@@ -79,7 +71,13 @@
         }
       </ul>
     }
-    <p class="attribution">Place search © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors</p>
+    <p class="attribution">
+      Place search ©
+      <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer"
+        >OpenStreetMap</a
+      >
+      contributors
+    </p>
   </mat-dialog-content>
   <mat-dialog-actions align="end">
     @if (location.location()) {

@@ -13,7 +13,15 @@ export const ORDER_STATUS = Object.freeze({
   CANCELLED: "cancelled",
 });
 
-export const PAYMENT_METHODS = Object.freeze({ COD: "cod" });
+const S = ORDER_STATUS;
+/** Still in progress (restaurant board, admin "active" filter). */
+export const ACTIVE_STATUSES = Object.freeze([S.PENDING, S.CONFIRMED, S.PREPARING, S.READY_FOR_PICKUP, S.ASSIGNED, S.PICKED_UP, S.ON_THE_WAY]);
+/** Finished: no further changes, nothing to track. */
+export const FINAL_STATUSES = Object.freeze([S.DELIVERED, S.REJECTED, S.CANCELLED]);
+/** A rider carries the order: their position is shared with its viewers. */
+export const TRACKED_STATUSES = Object.freeze([S.ASSIGNED, S.PICKED_UP, S.ON_THE_WAY]);
+
+export const PAYMENT_METHODS = Object.freeze({ COD: "cod", ONLINE: "online" });
 export const PAYMENT_STATUS = Object.freeze({
   PENDING: "pending",
   PAID: "paid",
@@ -99,6 +107,17 @@ const orderSchema = new mongoose.Schema(
     paymentStatus: { type: String, enum: Object.values(PAYMENT_STATUS), default: PAYMENT_STATUS.PENDING },
     payment: { type: mongoose.Schema.Types.ObjectId, ref: "Payment" },
 
+    // When the restaurant received the order: at placement for cash, once paid for online payment.
+    // Unpaid online orders (null) are invisible to the restaurant and expire.
+    submittedAt: { type: Date, default: null },
+    // Who earns what, fixed when the order is delivered (integer paise; see config/earnings.js).
+    settlement: {
+      restaurantPaise: Number,
+      riderPaise: Number,
+      platformPaise: Number,
+      at: Date,
+    },
+
     // Client-supplied key so retries of the same checkout never create two orders.
     idempotencyKey: { type: String, maxlength: 100 },
     // The rider (User) carrying this order, set when they accept an offer.
@@ -137,6 +156,10 @@ orderSchema.index({ customer: 1, createdAt: -1 });
 orderSchema.index({ restaurant: 1, status: 1, createdAt: -1 });
 orderSchema.index({ status: 1, createdAt: -1 });
 orderSchema.index({ deliveryPartner: 1, status: 1, createdAt: -1 });
+// Earnings and reports: delivered orders by time.
+orderSchema.index({ restaurant: 1, status: 1, "settlement.at": -1 });
+orderSchema.index({ deliveryPartner: 1, "settlement.at": -1 });
+orderSchema.index({ status: 1, "settlement.at": -1 });
 // Dispatch sweep: expired offers and ready orders without one.
 orderSchema.index({ status: 1, "offer.expiresAt": 1 });
 orderSchema.index(
@@ -152,13 +175,19 @@ const paymentSchema = new mongoose.Schema(
     order: { type: mongoose.Schema.Types.ObjectId, ref: "Order", required: true },
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     method: { type: String, enum: Object.values(PAYMENT_METHODS), required: true },
-    provider: { type: String, required: true },
+    provider: { type: String, enum: ["cash_on_delivery", "razorpay", "mock"], required: true },
     amountPaise: { type: Number, required: true, min: 0 },
     currency: { type: String, default: "INR" },
     status: { type: String, enum: Object.values(PAYMENT_STATUS), default: PAYMENT_STATUS.PENDING },
-    // Gateway transaction / order references (Phase 6).
+    // Gateway references (online payments).
     providerOrderId: String,
     providerPaymentId: String,
+    failureReason: String,
+    paidAt: Date,
+    refundedAt: Date,
+    providerRefundId: String,
+    // Gateway events already applied (webhook ids), so a replayed or duplicate callback is ignored.
+    processedEvents: { type: [String], default: [], select: false },
   },
   {
     timestamps: true,
@@ -176,5 +205,6 @@ const paymentSchema = new mongoose.Schema(
 paymentSchema.index({ order: 1 }, { unique: true });
 paymentSchema.index({ user: 1, createdAt: -1 });
 paymentSchema.index({ status: 1, createdAt: -1 });
+paymentSchema.index({ provider: 1, providerOrderId: 1 }, { sparse: true });
 
 export const Payment = mongoose.model("Payment", paymentSchema);

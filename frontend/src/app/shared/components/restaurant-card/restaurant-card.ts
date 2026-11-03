@@ -1,13 +1,13 @@
+import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
 import { Restaurant } from '../../models/catalog.models';
 import { DistancePipe, InrPipe } from '../../pipes/money.pipes';
 
 /** Restaurant tile used in listings. Falls back to a branded illustration when there is no photo. */
 @Component({
   selector: 'bb-restaurant-card',
-  imports: [RouterLink, MatIconModule, InrPipe, DistancePipe],
+  imports: [RouterLink, IconComponent, InrPipe, DistancePipe],
   templateUrl: './restaurant-card.html',
   styleUrl: './restaurant-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

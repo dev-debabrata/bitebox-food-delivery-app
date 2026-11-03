@@ -1,6 +1,6 @@
 @let c = copy();
 <div class="bb-alert banner {{ c.tone }}" role="status">
-  <mat-icon aria-hidden="true">{{ c.icon }}</mat-icon>
+  <np-icon [name]="(c.icon) | npIcon" class="mat-icon" matButtonIcon />
   <div>
     <strong>{{ c.title }}</strong>
     <p>{{ c.text }}</p>

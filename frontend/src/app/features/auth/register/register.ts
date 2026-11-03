@@ -1,9 +1,9 @@
+import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormRoot, TreeValidationResult, form } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/auth/auth.service';
 import { errorMessage, fieldErrors } from '../../../core/services/api-error';
@@ -12,6 +12,7 @@ import { ROLE_META, SelfRegisterRole } from '../../../shared/models/user.models'
 import { serverErrors, shownError } from '../../../shared/forms/form-errors';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { emailRules, matchesField, passwordRules, phoneRules, requiredText } from '../../../shared/forms/form-rules';
+import { PhoneInput } from '../../../shared/components/phone-input/phone-input';
 
 const INTRO: Record<SelfRegisterRole, string> = {
   customer: 'Join BiteBox to order from great local restaurants.',
@@ -22,11 +23,12 @@ const INTRO: Record<SelfRegisterRole, string> = {
 @Component({
   selector: 'bb-register',
   imports: [
+    PhoneInput,
     FormRoot,
     NP_FORM_FIELDS,
     RouterLink,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatProgressSpinnerModule,
   ],
   templateUrl: './register.html',

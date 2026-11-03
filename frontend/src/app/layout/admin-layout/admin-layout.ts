@@ -11,6 +11,8 @@ export class AdminLayout {
   protected readonly nav: NavItem[] = [
     { label: 'Dashboard', icon: 'space_dashboard', link: '/admin', exact: true },
     { label: 'Orders', icon: 'receipt_long', link: '/admin/orders' },
+    { label: 'Reports', icon: 'insights', link: '/admin/reports' },
+    { label: 'Payments', icon: 'payments', link: '/admin/payments' },
     { label: 'Restaurants', icon: 'storefront', link: '/admin/restaurants' },
     { label: 'Categories', icon: 'category', link: '/admin/categories' },
     { label: 'Food items', icon: 'ramen_dining', link: '/admin/foods' },

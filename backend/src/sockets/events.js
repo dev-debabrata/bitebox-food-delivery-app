@@ -1,4 +1,5 @@
 import { logger } from "../config/logger.js";
+import { FINAL_STATUSES } from "../models/order.model.js";
 
 /** Room names, always built on the server from verified ids. */
 export const rooms = Object.freeze({
@@ -37,9 +38,16 @@ export function emitOrderUpdated(order, { alsoNotify = [] } = {}) {
     }
     io.to([...targets]).emit("order:updated", payload);
     // A finished order is no longer tracked: stop sharing the rider's location with its viewers.
-    if (["delivered", "cancelled", "rejected"].includes(order.status)) io.in(rooms.order(order._id)).socketsLeave(rooms.order(order._id));
+    if (FINAL_STATUSES.includes(order.status)) io.in(rooms.order(order._id)).socketsLeave(rooms.order(order._id));
   } catch (error) {
     // Live updates are best-effort; clients also refresh on their own.
     logger.error({ err: error }, "Realtime emit failed");
   }
+}
+
+/** Pushes an event to specific users' rooms (e.g. a new in-app notification). */
+export function emitToUsers(userIds, event, payload) {
+  if (!io) return;
+  const targets = [...new Set(userIds.filter(Boolean).map((id) => rooms.user(id)))];
+  if (targets.length) io.to(targets).emit(event, payload);
 }

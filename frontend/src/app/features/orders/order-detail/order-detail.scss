@@ -13,14 +13,14 @@
   border-radius: var(--bb-radius-lg);
   padding: var(--bb-space-4) var(--bb-space-5);
 
-  mat-icon {
-    width: 48px;
-    height: 48px;
-    font-size: 48px;
+  np-icon {
+    --bb-icon-size: 48px;
   }
-  h1 {
+  h2 {
     color: var(--bb-success);
     margin: 0;
+    font-size: clamp(1.6rem, 1.2rem + 1.8vw, 2.5rem);
+    font-weight: 800;
   }
   p {
     margin: 0;
@@ -36,7 +36,7 @@
   gap: var(--bb-space-3);
   margin-bottom: var(--bb-space-4);
 
-  h2 {
+  h1 {
     margin: var(--bb-space-2) 0 0;
   }
   p {
@@ -52,10 +52,8 @@
   text-decoration: none;
   font-weight: 600;
 
-  mat-icon {
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
+  np-icon {
+    --bb-icon-size: 18px;
   }
 }
 
@@ -148,19 +146,58 @@
   font-size: 0.9rem;
 }
 
+// Payment method on the left, its status as a pill on the right.
 .payment {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 6px var(--bb-space-2);
   margin: var(--bb-space-3) 0 0;
   font-weight: 600;
+}
 
-  .pay-pending {
-    color: #7a4b00;
+.method {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  np-icon {
+    --bb-icon-size: 20px;
   }
-  .pay-paid {
+}
+
+.pay-chip {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--bb-amber-100);
+  color: #7a4b00;
+  font-size: 0.8rem;
+  white-space: nowrap;
+
+  &.pay-paid,
+  &.pay-refunded {
+    background: #e6f5ec;
     color: var(--bb-success);
   }
+
+  &.pay-failed {
+    background: #fdecee;
+    color: var(--bb-danger);
+  }
+
+  &.pay-cancelled {
+    background: var(--bb-surface-alt);
+    color: var(--bb-ink-muted);
+  }
+}
+
+.simulated {
+  margin: 4px 0 0;
+}
+
+.pay-due {
+  margin-bottom: var(--bb-space-3);
 }
 
 address {
@@ -226,10 +263,8 @@ address {
   background: var(--bb-amber-100);
   font-size: 0.85rem;
 
-  mat-icon {
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
+  np-icon {
+    --bb-icon-size: 18px;
   }
 }
 

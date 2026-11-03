@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { RedirectFunction, Route, Router, Routes } from '@angular/router';
-import { guestGuard, roleGuard } from './core/guards/auth.guards';
+import { customerSiteGuard, guestGuard, roleGuard } from './core/guards/auth.guards';
 import { SelfRegisterRole } from './shared/models/user.models';
 
 /** Login/register style page: only reachable while signed out. */
@@ -35,6 +35,7 @@ export const routes: Routes = [
     children: [
       {
         path: '',
+        canActivate: [customerSiteGuard],
         title: 'BiteBox | Food delivery from local restaurants',
         loadComponent: () => import('./features/customer/home/home').then((m) => m.Home),
       },
@@ -101,6 +102,7 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: customerLayout,
+    canActivateChild: [customerSiteGuard],
     loadChildren: () => import('./features/customer/customer.routes').then((m) => m.CUSTOMER_ROUTES),
   },
 ];

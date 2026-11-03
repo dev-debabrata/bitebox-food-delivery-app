@@ -1,11 +1,11 @@
+import { NpIconPipe } from '../../../shared/icons/np-icon-name';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { ToggleComponent } from 'nexprime';
+import { IconComponent, ToggleComponent } from 'nexprime';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { CartActions } from '../../../core/services/cart-actions.service';
@@ -29,7 +29,7 @@ import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
     NP_FORM_FIELDS,
     RouterLink,
     MatButtonModule,
-    MatIconModule,
+    IconComponent, NpIconPipe,
     EmptyState,
     QtyStepper,
     VegBadge,
@@ -121,6 +121,12 @@ export class RestaurantDetail {
   protected canOrder(): boolean {
     return this.cartActions.canOrder();
   }
+
+  /** Open and accepting orders right now (the server re-checks at checkout). */
+  protected readonly takingOrders = computed(() => {
+    const r = this.restaurant();
+    return !!r && r.isOpenNow && r.isAcceptingOrders;
+  });
 
   protected quantityOf(foodItemId: string): number {
     return this.cartHere() ? this.cart.quantityOf(foodItemId) : 0;

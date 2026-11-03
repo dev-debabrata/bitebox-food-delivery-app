@@ -1,21 +1,34 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
+import { NpIconPipe } from '../../../shared/icons/np-icon-name';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  linkedSignal,
+  signal,
+  untracked,
+} from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { FormRoot, form, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { SelectOption, ToggleComponent } from 'nexprime';
-import { EMPTY, catchError, debounceTime, firstValueFrom, interval, merge, of, switchMap } from 'rxjs';
+import { IconComponent, SelectOption, ToggleComponent } from 'nexprime';
+import { EMPTY, catchError, firstValueFrom, interval, of, switchMap } from 'rxjs';
 import { errorMessage } from '../../../core/services/api-error';
-import { GeolocationService, ImpreciseLocationError } from '../../../core/services/geolocation.service';
+import {
+  GeolocationService,
+  ImpreciseLocationError,
+} from '../../../core/services/geolocation.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { RiderService } from '../../../core/services/order-management.service';
-import { pollWhileVisible } from '../../../core/services/poll';
-import { RealtimeService } from '../../../core/services/realtime.service';
+import { liveRefresh } from '../../../core/services/poll';
 import { RiderGps } from '../../../core/services/rider-gps.service';
-import { Point, RoadRoute, RoutingService, fromCoordinates } from '../../../core/services/routing.service';
+import { Point, etaMinutes, fromCoordinates } from '../../../core/services/routing.service';
+import { rerouteWhileMoving } from '../../../shared/components/tracking-map/delivery-tracking';
 import { TrackingMap } from '../../../shared/components/tracking-map/tracking-map';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { OrderStatusChip } from '../../../shared/components/order-status-chip/order-status-chip';
@@ -23,17 +36,39 @@ import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { shownError } from '../../../shared/forms/form-errors';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { VEHICLE_LABEL, VehicleType } from '../../../shared/models/checkout.models';
-import { RiderAction, RiderDashboard, RiderOrder } from '../../../shared/models/order-management.models';
-import { InrPipe } from '../../../shared/pipes/money.pipes';
+import {
+  RiderAction,
+  RiderDashboard,
+  RiderOrder,
+} from '../../../shared/models/order-management.models';
+import { ItemCountPipe } from '../../../shared/pipes/item-count.pipe';
+import { InrPipe, formatDistance } from '../../../shared/pipes/money.pipes';
 
 /** Fallback refresh; offers and status changes normally arrive live over Socket.IO. */
 const POLL_MS = 30_000;
 
 /** The next step on an active delivery, and what the rider should do before pressing it. */
-const NEXT_STEP: Partial<Record<RiderOrder['status'], { action: RiderAction; label: string; hint: string; icon: string }>> = {
-  assigned: { action: 'picked_up', label: 'Picked up', hint: 'Go to the restaurant and collect the order.', icon: 'inventory_2' },
-  picked_up: { action: 'on_the_way', label: 'Start delivery', hint: 'Order collected. Head to the customer.', icon: 'two_wheeler' },
-  on_the_way: { action: 'delivered', label: 'Delivered', hint: 'Hand over the order and collect the cash.', icon: 'task_alt' },
+const NEXT_STEP: Partial<
+  Record<RiderOrder['status'], { action: RiderAction; label: string; hint: string; icon: string }>
+> = {
+  assigned: {
+    action: 'picked_up',
+    label: 'Picked up',
+    hint: 'Go to the restaurant and collect the order.',
+    icon: 'inventory_2',
+  },
+  picked_up: {
+    action: 'on_the_way',
+    label: 'Start delivery',
+    hint: 'Order collected. Head to the customer.',
+    icon: 'two_wheeler',
+  },
+  on_the_way: {
+    action: 'delivered',
+    label: 'Delivered',
+    hint: 'Hand over the order and collect the cash.',
+    icon: 'task_alt',
+  },
 };
 
 /** The rider's home: availability, the request on offer, and the delivery in progress. */
@@ -45,13 +80,14 @@ const NEXT_STEP: Partial<Record<RiderOrder['status'], { action: RiderAction; lab
     NP_FORM_FIELDS,
     RouterLink,
     MatButtonModule,
-    MatIconModule,
+    IconComponent, NpIconPipe,
     MatProgressBarModule,
     ToggleComponent,
     EmptyState,
     OrderStatusChip,
     PageHeader,
     InrPipe,
+    ItemCountPipe,
     TrackingMap,
   ],
   templateUrl: './delivery-dashboard.html',
@@ -62,7 +98,6 @@ export class DeliveryDashboard {
   private readonly rider = inject(RiderService);
   private readonly geo = inject(GeolocationService);
   private readonly notify = inject(NotificationService);
-  private readonly routing = inject(RoutingService);
   /** Device GPS, shared with the server while online (frequently during a delivery). */
   protected readonly gps = inject(RiderGps);
 
@@ -71,11 +106,13 @@ export class DeliveryDashboard {
   protected readonly switching = signal(false);
   protected readonly acting = signal(false);
   protected readonly availabilityError = signal<string | null>(null);
-  /** Ticks every second for the offer countdown. */
+  /** Ticks every second while a request is on offer (for the countdown). */
   protected readonly now = signal(Date.now());
 
   protected readonly profile = computed(() => this.data()?.profile ?? null);
   protected readonly online = computed(() => this.profile()?.isOnline ?? false);
+  /** What the switch shows: follows `online`, set optimistically on tap and put back on failure. */
+  protected readonly onlineSwitch = linkedSignal(() => this.online());
   protected readonly offer = computed(() => this.data()?.offer ?? null);
   protected readonly active = computed(() => this.data()?.activeOrder ?? null);
   protected readonly nextStep = computed(() => {
@@ -90,26 +127,46 @@ export class DeliveryDashboard {
     if (!o) return null;
     const restaurant = fromCoordinates(o.restaurantSnapshot.location?.coordinates);
     const destination = fromCoordinates(o.deliveryAddress.location?.coordinates);
-    return { restaurant, destination, target: o.status === 'assigned' ? restaurant : destination, toRestaurant: o.status === 'assigned' };
+    return {
+      restaurant,
+      destination,
+      target: o.status === 'assigned' ? restaurant : destination,
+      toRestaurant: o.status === 'assigned',
+    };
+  });
+  /** Turn-by-turn directions to the next stop on OpenStreetMap. */
+  protected readonly directionsUrl = computed(() => {
+    const t = this.stops()?.target;
+    return t
+      ? `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=;${t.latitude},${t.longitude}`
+      : null;
   });
   protected readonly myPosition = computed<Point | null>(() => {
     const fix = this.gps.fix();
-    return fix && fix.accuracy <= 1000 ? { latitude: fix.latitude, longitude: fix.longitude } : null;
+    return fix && fix.accuracy <= 1000
+      ? { latitude: fix.latitude, longitude: fix.longitude }
+      : null;
   });
-  protected readonly routeToStop = signal<RoadRoute | null>(null);
-  private routedFrom: { point: Point; at: number; target: string } | null = null;
-  protected readonly minutes = (seconds: number) => Math.max(1, Math.round(seconds / 60));
+  /** Road route from our position to the next stop (re-estimated as we move). */
+  protected readonly routeToStop = rerouteWhileMoving(
+    this.myPosition,
+    computed(() => this.stops()?.target ?? null),
+  );
+  protected readonly minutes = etaMinutes;
 
   /** Seconds left on the offer, and as a share of the full window (for the bar). */
   protected readonly offerSecondsLeft = computed(() => {
     const expires = this.offer()?.offerExpiresAt;
     return expires ? Math.max(0, Math.ceil((new Date(expires).getTime() - this.now()) / 1000)) : 0;
   });
-  private offerWindow = 90;
-  protected readonly offerProgress = computed(() => (this.offerSecondsLeft() / this.offerWindow) * 100);
+  protected readonly offerProgress = computed(
+    () => (this.offerSecondsLeft() / (this.offer()?.offerWindowSeconds ?? 90)) * 100,
+  );
 
   // Vehicle (first-time setup and edits) -------------------------------------
-  protected readonly vehicleOptions: SelectOption[] = (Object.keys(VEHICLE_LABEL) as VehicleType[]).map((v) => ({
+  protected readonly vehicleOptions: SelectOption[] = (
+    Object.keys(VEHICLE_LABEL) as VehicleType[]
+  ).map((v) => ({
     value: v,
     label: VEHICLE_LABEL[v],
   }));
@@ -123,6 +180,7 @@ export class DeliveryDashboard {
   protected readonly shownError = shownError;
 
   constructor() {
+    // A new offer, a withdrawn one, or a change to the order we carry (slow poll as a fallback).
     const reload = () =>
       this.rider.dashboard().pipe(
         catchError((err: unknown) => {
@@ -130,50 +188,23 @@ export class DeliveryDashboard {
           return of(null);
         }),
       );
-    merge(
-      // A new offer, a withdrawn one, or a change to the order we carry.
-      inject(RealtimeService).orderUpdates$.pipe(debounceTime(200), switchMap(reload)),
-      pollWhileVisible(reload, POLL_MS),
-    )
+    liveRefresh(reload, { pollMs: POLL_MS, debounceMs: 200 })
       .pipe(takeUntilDestroyed())
       .subscribe((d) => d && this.apply(d));
 
-    interval(1000)
-      .pipe(takeUntilDestroyed())
+    toObservable(computed(() => this.offer() !== null))
+      .pipe(
+        switchMap((offered) => (offered ? interval(1000) : EMPTY)),
+        takeUntilDestroyed(),
+      )
       .subscribe(() => this.now.set(Date.now()));
 
     // GPS: watch while online; share often during a delivery, rarely when idle.
     effect(() => {
       const online = this.online();
       const delivering = !!this.active();
-      untracked(() => {
-        if (online) {
-          this.gps.start(delivering);
-          this.gps.setDelivering(delivering);
-        } else {
-          this.gps.stop();
-        }
-      });
+      untracked(() => this.gps.update(online, delivering));
     });
-
-    // Re-estimate the road route to the next stop after moving ~250 m, a minute passing, or the stop changing.
-    toObservable(computed(() => ({ from: this.myPosition(), to: this.stops()?.target ?? null })))
-      .pipe(
-        switchMap(({ from, to }) => {
-          if (!from || !to) {
-            this.routeToStop.set(null);
-            this.routedFrom = null;
-            return EMPTY;
-          }
-          const key = `${to.latitude},${to.longitude}`;
-          const r = this.routedFrom;
-          if (r && r.target === key && Date.now() - r.at < 60_000 && distance(r.point, from) < 250) return EMPTY;
-          this.routedFrom = { point: from, at: Date.now(), target: key };
-          return this.routing.route(from, to);
-        }),
-        takeUntilDestroyed(),
-      )
-      .subscribe((route) => this.routeToStop.set(route));
 
     inject(DestroyRef).onDestroy(() => this.gps.stop());
   }
@@ -183,7 +214,7 @@ export class DeliveryDashboard {
     this.loadError.set(null);
     this.data.set(d);
     if (d.offer && d.offer.id !== previousOffer) {
-      this.offerWindow = Math.max(1, Math.round((new Date(d.offer.offerExpiresAt!).getTime() - Date.now()) / 1000));
+      this.now.set(Date.now());
       this.notify.info(`New delivery request from ${d.offer.restaurantSnapshot.name}`);
     }
     if (!d.profile.vehicleType && !this.editingVehicle()) this.editingVehicle.set(true);
@@ -191,14 +222,19 @@ export class DeliveryDashboard {
 
   protected editVehicle(): void {
     const p = this.profile();
-    this.vehicleForm().reset({ vehicleType: p?.vehicleType ?? '', vehicleNumber: p?.vehicleNumber ?? '' });
+    this.vehicleForm().reset({
+      vehicleType: p?.vehicleType ?? '',
+      vehicleNumber: p?.vehicleNumber ?? '',
+    });
     this.editingVehicle.set(true);
   }
 
   private async saveVehicle(): Promise<undefined> {
     const { vehicleType, vehicleNumber } = this.vehicleModel();
     try {
-      const profile = await firstValueFrom(this.rider.saveVehicle(vehicleType as VehicleType, vehicleNumber.trim()));
+      const profile = await firstValueFrom(
+        this.rider.saveVehicle(vehicleType as VehicleType, vehicleNumber.trim()),
+      );
       this.data.update((d) => (d ? { ...d, profile } : d));
       this.editingVehicle.set(false);
       this.notify.success('Vehicle saved');
@@ -209,9 +245,8 @@ export class DeliveryDashboard {
   }
 
   /** Online needs a precise location (requests are offered by distance). */
-  protected async setOnline(online: boolean, toggle: ToggleComponent): Promise<void> {
-    // Putting the switch back after a failure also emits a change; that is not a request.
-    if (online === this.online()) return;
+  protected async setOnline(online: boolean): Promise<void> {
+    this.onlineSwitch.set(online);
     this.switching.set(true);
     this.availabilityError.set(null);
     try {
@@ -226,13 +261,13 @@ export class DeliveryDashboard {
       this.availabilityError.set(
         err instanceof ImpreciseLocationError
           ? `This device only knows your location to within about ${formatDistance(err.accuracyMeters)}, ` +
-            'which is too vague to offer you nearby orders. Turn on GPS / precise location, or use your phone.'
+              'which is too vague to offer you nearby orders. Turn on GPS / precise location, or use your phone.'
           : err instanceof Error // browser location errors carry a readable message
             ? err.message
             : errorMessage(err),
       );
-      // The switch flipped itself when tapped; put it back to the real state.
-      toggle.checked.set(this.online());
+      // Put the switch back (an input change, so it does not fire checkedChange again).
+      this.onlineSwitch.set(this.online());
       this.rider.dashboard().subscribe({ next: (d) => this.data.set(d), error: () => undefined });
     } finally {
       this.switching.set(false);
@@ -249,7 +284,11 @@ export class DeliveryDashboard {
 
   protected advance(order: RiderOrder): void {
     const step = NEXT_STEP[order.status];
-    if (step) this.act(this.rider.setStatus(order.id, step.action), step.action === 'delivered' ? 'Delivered. Nice work!' : step.label);
+    if (step)
+      this.act(
+        this.rider.setStatus(order.id, step.action),
+        step.action === 'delivered' ? 'Delivered. Nice work!' : step.label,
+      );
   }
 
   private act(request: ReturnType<RiderService['accept']>, message: string): void {
@@ -267,29 +306,4 @@ export class DeliveryDashboard {
       },
     });
   }
-
-  protected itemCount(order: RiderOrder): number {
-    return order.items.reduce((sum, i) => sum + i.quantity, 0);
-  }
-
-  /** Turn-by-turn directions on OpenStreetMap (in-app maps arrive with live tracking). */
-  protected directionsUrl(order: RiderOrder): string | null {
-    const from = order.restaurantSnapshot.location?.coordinates;
-    const to = order.deliveryAddress.location?.coordinates;
-    if (!from || !to) return null;
-    const target = order.status === 'assigned' ? from : to;
-    return `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=;${target[1]},${target[0]}`;
-  }
-}
-
-/** Straight-line metres between two points (only used to decide when to re-route). */
-function distance(a: Point, b: Point): number {
-  const r = (d: number) => (d * Math.PI) / 180;
-  const h = Math.sin(r(b.latitude - a.latitude) / 2) ** 2 + Math.cos(r(a.latitude)) * Math.cos(r(b.latitude)) * Math.sin(r(b.longitude - a.longitude) / 2) ** 2;
-  return 2 * 6_371_000 * Math.asin(Math.sqrt(h));
-}
-
-/** "800 m" / "12 km", for the imprecise-location message. */
-function formatDistance(meters: number): string {
-  return meters < 1000 ? `${Math.round(meters)} m` : `${Math.round(meters / 1000)} km`;
 }

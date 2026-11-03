@@ -5,6 +5,7 @@ import { Socket, io } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth/auth.service';
 import { OrderStatus } from '../../shared/models/checkout.models';
+import { AppNotification } from '../../shared/models/payment.models';
 
 /** What the server pushes when an order changes. Details are re-read over the REST API. */
 export interface OrderEvent {
@@ -26,7 +27,14 @@ export interface RiderLocation {
 /** Server's answer to a rider position update. */
 export interface LocationAck {
   ok: boolean;
-  error?: 'RATE_LIMITED' | 'INVALID_LOCATION' | 'IMPRECISE' | 'IMPLAUSIBLE' | 'OFFLINE' | 'SERVER_ERROR' | 'NOT_CONNECTED';
+  error?:
+    | 'RATE_LIMITED'
+    | 'INVALID_LOCATION'
+    | 'IMPRECISE'
+    | 'IMPLAUSIBLE'
+    | 'OFFLINE'
+    | 'SERVER_ERROR'
+    | 'NOT_CONNECTED';
 }
 
 /**
@@ -41,15 +49,17 @@ export interface LocationAck {
 export class RealtimeService {
   private readonly auth = inject(AuthService);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
-  private socket?: Socket;
   /** The current socket (null while signed out), so listeners can attach whenever it appears. */
   private readonly socket$ = new BehaviorSubject<Socket | null>(null);
   private readonly orders = new Subject<OrderEvent>();
+  private readonly inbox = new Subject<AppNotification>();
   private retries = 0;
 
   /** True while the live connection is up. */
   readonly connected = signal(false);
   readonly orderUpdates$: Observable<OrderEvent> = this.orders.asObservable();
+  /** New in-app notifications for this account. */
+  readonly notifications$: Observable<AppNotification> = this.inbox.asObservable();
 
   constructor() {
     if (!this.browser) return;
@@ -60,7 +70,7 @@ export class RealtimeService {
   }
 
   private connect(): void {
-    if (this.socket) return;
+    if (this.socket$.value) return;
     // Same host as the API (in development the API runs on its own port).
     const origin = new URL(environment.apiUrl, window.location.origin).origin;
     const socket = io(origin, {
@@ -69,7 +79,6 @@ export class RealtimeService {
       auth: (cb) => cb({ token: this.auth.accessToken }),
       transports: ['websocket', 'polling'],
     });
-    this.socket = socket;
     this.socket$.next(socket);
 
     socket.on('connect', () => {
@@ -77,6 +86,7 @@ export class RealtimeService {
       this.connected.set(true);
     });
     socket.on('order:updated', (event: OrderEvent) => this.orders.next(event));
+    socket.on('notification:new', (n: AppNotification) => this.inbox.next(n));
     // The server closes the connection when the access token expires: get a new one and come back.
     socket.on('disconnect', (reason) => {
       this.connected.set(false);
@@ -90,18 +100,17 @@ export class RealtimeService {
   }
 
   private reconnectWithFreshToken(): void {
-    const socket = this.socket;
+    const socket = this.socket$.value;
     if (!socket || this.retries >= 5) return;
     const delay = Math.min(30_000, 1000 * 2 ** this.retries++);
     setTimeout(() => {
-      if (this.socket !== socket || !this.auth.user()) return;
+      if (this.socket$.value !== socket || !this.auth.user()) return;
       this.auth.refresh().subscribe({ next: () => socket.connect(), error: () => undefined });
     }, delay);
   }
 
   private disconnect(): void {
-    this.socket?.disconnect();
-    this.socket = undefined;
+    this.socket$.value?.disconnect();
     this.socket$.next(null);
     this.connected.set(false);
   }
@@ -142,8 +151,12 @@ export class RealtimeService {
   }
 
   /** Riders: report the device position (the server shares it only with their active order's viewers). */
-  async sendRiderLocation(point: { latitude: number; longitude: number; accuracy?: number }): Promise<LocationAck> {
-    const socket = this.socket;
+  async sendRiderLocation(point: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+  }): Promise<LocationAck> {
+    const socket = this.socket$.value;
     if (!socket?.connected) return { ok: false, error: 'NOT_CONNECTED' };
     try {
       return (await socket.timeout(5000).emitWithAck('rider:location', point)) as LocationAck;

@@ -1,4 +1,4 @@
-<mat-icon aria-hidden="true">{{ icon() }}</mat-icon>
+<np-icon [name]="(icon()) | npIcon" class="mat-icon" matButtonIcon />
 <h3>{{ title() }}</h3>
 @if (message()) {
   <p>{{ message() }}</p>

@@ -1,0 +1,34 @@
+:host {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--bb-space-2);
+  align-content: start;
+  padding: var(--bb-space-4);
+  border-radius: var(--bb-radius);
+  background: var(--bb-surface);
+  border: 1px solid var(--bb-border);
+  min-width: 0;
+}
+
+.icon {
+  grid-row: span 2;
+  color: var(--bb-ink-muted);
+}
+
+.label {
+  font-size: 0.85rem;
+  color: var(--bb-ink-muted);
+}
+
+.value {
+  grid-column: 2;
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.hint {
+  grid-column: 2;
+  font-size: 0.8rem;
+  color: var(--bb-ink-muted);
+}

@@ -11,6 +11,7 @@ export class DeliveryLayout {
   protected readonly nav: NavItem[] = [
     { label: 'Dashboard', icon: 'space_dashboard', link: '/delivery', exact: true },
     { label: 'History', icon: 'history', link: '/delivery/history' },
+    { label: 'Earnings', icon: 'account_balance_wallet', link: '/delivery/earnings' },
     { label: 'Profile', icon: 'manage_accounts', link: '/delivery/profile' },
   ];
 }

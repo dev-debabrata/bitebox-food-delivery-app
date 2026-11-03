@@ -2,7 +2,7 @@
   <bb-page-header title="My orders" />
   @if (error()) {
     <div class="bb-alert error" role="alert">
-      <mat-icon aria-hidden="true">error</mat-icon>
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
       <span>{{ error() }} <button class="bb-link-button" (click)="load(1)">Retry</button></span>
     </div>
   }
@@ -25,7 +25,7 @@
           <a class="bb-card order" [routerLink]="['/orders', o.id]">
             <div class="top">
               <strong>{{ o.restaurantSnapshot.name }}</strong>
-              <span class="status status-{{ o.status }}">{{ statusLabel[o.status] }}</span>
+              <span class="status status-{{ o.status }}">{{ statusLabel(o) }}</span>
             </div>
             <span class="bb-muted items">{{ summary(o) }}</span>
             <div class="bottom bb-muted">

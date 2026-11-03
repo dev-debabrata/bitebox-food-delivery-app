@@ -11,14 +11,14 @@
   />
   @if (restaurant()) {
     <button mat-stroked-button (click)="clearRestaurant()">
-      <mat-icon>close</mat-icon>One restaurant only
+      <np-icon name="x" class="mat-icon" matButtonIcon />One restaurant only
     </button>
   }
 </div>
 
 @if (error()) {
   <div class="bb-alert error" role="alert">
-    <mat-icon aria-hidden="true">error</mat-icon>
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
     <span>{{ error() }} <button class="bb-link-button" (click)="load(1)">Retry</button></span>
   </div>
 }
@@ -44,14 +44,13 @@
             </span>
           </div>
           <np-toggle
-            #availability
             [checked]="item.isAvailable"
-            (checkedChange)="toggle(item, $event, availability)"
+            (checkedChange)="toggle(item, $event)"
             class="bb-toggle-success bb-label-hidden"
             [label]="'Available: ' + item.name"
           />
           <button mat-icon-button (click)="remove(item)" [attr.aria-label]="'Delete ' + item.name">
-            <mat-icon>delete</mat-icon>
+            <np-icon name="trash-2" class="mat-icon" matButtonIcon />
           </button>
         </li>
       }

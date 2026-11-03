@@ -6,6 +6,7 @@ import { validate } from "../middleware/validate.middleware.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import * as geocoding from "../services/geocoding.service.js";
 import * as routing from "../services/routing.service.js";
+import { latitudeRule, longitudeRule } from "../validators/common.validators.js";
 import { sendSuccess } from "../utils/api-response.js";
 
 /** /api/v1/geo: place search, reverse geocoding and road routes (proxied, cached, throttled). */
@@ -19,18 +20,15 @@ router.get("/search", validate([query("q").isString().trim().isLength({ min: 3, 
 router.get(
   "/reverse",
   validate([
-    query("lat").isFloat({ min: -90, max: 90 }).withMessage("Invalid latitude").toFloat(),
-    query("lng").isFloat({ min: -180, max: 180 }).withMessage("Invalid longitude").toFloat(),
+    latitudeRule(query("lat")),
+    longitudeRule(query("lng")),
   ]),
   async (req, res) => {
     sendSuccess(res, { data: { place: await geocoding.reverse(req.validatedQuery.lat, req.validatedQuery.lng) } });
   },
 );
 
-const point = (prefix) => [
-  query(`${prefix}Lat`).isFloat({ min: -90, max: 90 }).withMessage(`Invalid ${prefix} latitude`).toFloat(),
-  query(`${prefix}Lng`).isFloat({ min: -180, max: 180 }).withMessage(`Invalid ${prefix} longitude`).toFloat(),
-];
+const point = (prefix) => [latitudeRule(query(`${prefix}Lat`)), longitudeRule(query(`${prefix}Lng`))];
 
 /**
  * GET /geo/route?fromLat=&fromLng=&toLat=&toLng=  (signed-in users only, so the

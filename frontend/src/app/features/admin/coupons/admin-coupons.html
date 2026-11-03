@@ -1,9 +1,9 @@
 <bb-page-header title="Coupons" subtitle="Discount codes customers can apply at checkout.">
-  <button mat-flat-button (click)="open()"><mat-icon>add</mat-icon>New coupon</button>
+  <button mat-flat-button (click)="open()"><np-icon name="plus" class="mat-icon" matButtonIcon />New coupon</button>
 </bb-page-header>
 @if (error()) {
   <div class="bb-alert error" role="alert">
-    <mat-icon aria-hidden="true">error</mat-icon><span>{{ error() }}</span>
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ error() }}</span>
   </div>
 }
 @if (loading()) {
@@ -19,9 +19,8 @@
         <header>
           <strong class="code">{{ c.code }}</strong>
           <np-toggle
-            #active
             [checked]="c.isActive"
-            (checkedChange)="toggle(c, $event, active)"
+            (checkedChange)="toggle(c, $event)"
             class="bb-label-hidden"
             [label]="'Active: ' + c.code"
           />
@@ -49,9 +48,9 @@
           {{ c.perUserLimit }} per customer
         </p>
         <footer>
-          <button mat-button (click)="open(c)"><mat-icon>edit</mat-icon>Edit</button>
+          <button mat-button (click)="open(c)"><np-icon name="pencil" class="mat-icon" matButtonIcon />Edit</button>
           <button mat-button (click)="remove(c)" [disabled]="c.usedCount > 0">
-            <mat-icon>delete</mat-icon>Delete
+            <np-icon name="trash-2" class="mat-icon" matButtonIcon />Delete
           </button>
         </footer>
       </article>

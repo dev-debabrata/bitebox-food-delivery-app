@@ -1,14 +1,19 @@
+import { NpIconPipe } from '../../../shared/icons/np-icon-name';
+import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AdminCatalogService } from '../../../core/services/admin/admin-catalog.service';
 import { AdminUsersService } from '../../../core/services/admin/admin-users.service';
 import { errorMessage } from '../../../core/services/api-error';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { StatTile } from '../../../shared/components/stat-tile/stat-tile';
+import { ReportsService } from '../../../core/services/reports.service';
+import { formatPaise } from '../../../shared/pipes/money.pipes';
 import { RestaurantStatus } from '../../../shared/models/catalog.models';
 import { ROLE_META, Role, User } from '../../../shared/models/user.models';
 
@@ -21,7 +26,7 @@ interface StatCard {
 
 @Component({
   selector: 'bb-admin-dashboard',
-  imports: [DatePipe, RouterLink, MatButtonModule, MatIconModule, PageHeader],
+  imports: [DatePipe, RouterLink, MatButtonModule, IconComponent, NpIconPipe, PageHeader, StatTile],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,6 +42,10 @@ export class AdminDashboard {
   protected readonly stats = signal<StatCard[]>([]);
   protected readonly recent = signal<User[]>([]);
   protected readonly restaurantCounts = signal<Record<RestaurantStatus, number> | null>(null);
+  /** Business headline for the last 30 days (independent of the account totals). */
+  private readonly reports = inject(ReportsService);
+  protected readonly report = rxResource({ stream: () => this.reports.adminReport(30) });
+  protected readonly formatPaise = formatPaise;
 
   constructor() {
     this.load();

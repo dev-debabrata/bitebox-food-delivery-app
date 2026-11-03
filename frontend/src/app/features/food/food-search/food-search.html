@@ -20,7 +20,7 @@
     <mat-chip-listbox class="categories" aria-label="Filter by food category">
       @for (c of categories(); track c.id) {
         <mat-chip-option [selected]="category() === c.id" (click)="setParams({ category: category() === c.id ? null : c.id })">
-          <mat-icon matChipAvatar aria-hidden="true">{{ c.icon }}</mat-icon>
+          <np-icon [name]="(c.icon) | npIcon: 'utensils'" class="mat-icon" matChipAvatar matButtonIcon />
           {{ c.name }}
         </mat-chip-option>
       }
@@ -29,7 +29,7 @@
 
   @if (error()) {
     <div class="bb-alert error" role="alert">
-      <mat-icon aria-hidden="true">error</mat-icon>
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
       <span>{{ error() }} <button class="bb-link-button" (click)="load(1)">Retry</button></span>
     </div>
   }
@@ -53,7 +53,7 @@
             @if (d.imageUrl) {
               <img [src]="d.imageUrl" alt="" loading="lazy" />
             } @else {
-              <span class="thumb" aria-hidden="true"><mat-icon>{{ d.category?.icon ?? 'restaurant' }}</mat-icon></span>
+              <span class="thumb" aria-hidden="true"><np-icon [name]="(d.category?.icon ?? 'restaurant') | npIcon: 'utensils'" class="mat-icon" matButtonIcon /></span>
             }
             <span class="text">
               <span class="name"><bb-veg-badge [veg]="d.isVeg" /> {{ d.name }}</span>
@@ -62,7 +62,7 @@
                 from <strong>{{ d.restaurant.name }}</strong>{{ d.restaurant.city ? ' · ' + d.restaurant.city : '' }}
               </span>
             </span>
-            <mat-icon class="chev" aria-hidden="true">chevron_right</mat-icon>
+            <np-icon name="chevron-right" class="mat-icon chev" matButtonIcon />
           </button>
         </li>
       }

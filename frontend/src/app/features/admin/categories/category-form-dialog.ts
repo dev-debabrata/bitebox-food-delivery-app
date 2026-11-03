@@ -1,10 +1,10 @@
+import { NpIconPipe } from '../../../shared/icons/np-icon-name';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormRoot, TreeValidationResult, form, maxLength, pattern } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { ToggleComponent } from 'nexprime';
+import { IconComponent, ToggleComponent } from 'nexprime';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { AdminCatalogService } from '../../../core/services/admin/admin-catalog.service';
 import { errorMessage, fieldErrors } from '../../../core/services/api-error';
 import { FoodCategory } from '../../../shared/models/catalog.models';
@@ -17,7 +17,7 @@ const ICON_SUGGESTIONS = ['restaurant', 'rice_bowl', 'local_pizza', 'lunch_dinin
 
 @Component({
   selector: 'bb-category-form-dialog',
-  imports: [ToggleComponent, NP_FORM_FIELDS, FormRoot, MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [ToggleComponent, NP_FORM_FIELDS, FormRoot, MatDialogModule, MatButtonModule, IconComponent, NpIconPipe],
   templateUrl: './category-form-dialog.html',
   styleUrl: './category-form-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -13,6 +13,17 @@ export const DELIVERY_ROUTES: Routes = [
     loadComponent: () => import('./history/delivery-history').then((m) => m.DeliveryHistory),
   },
   {
+    path: 'earnings',
+    title: 'Earnings | BiteBox Delivery',
+    data: { scope: 'rider' },
+    loadComponent: () => import('../earnings/earnings-page').then((m) => m.EarningsPage),
+  },
+  {
+    path: 'notifications',
+    title: 'Notifications | BiteBox Delivery',
+    loadComponent: () => import('../notifications/notifications-page').then((m) => m.NotificationsPage),
+  },
+  {
     path: 'profile',
     title: 'Profile | BiteBox Delivery',
     loadComponent: () => import('../profile/profile').then((m) => m.Profile),

@@ -1,12 +1,12 @@
+import { NpIconPipe } from '../../../shared/icons/np-icon-name';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { ToggleComponent } from 'nexprime';
+import { IconComponent, ToggleComponent } from 'nexprime';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
 import { Subscription, catchError, debounceTime, distinctUntilChanged, of } from 'rxjs';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { errorMessage } from '../../../core/services/api-error';
@@ -28,7 +28,7 @@ import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
     RouterLink,
     MatButtonModule,
     MatChipsModule,
-    MatIconModule,
+    IconComponent, NpIconPipe,
     EmptyState,
     VegBadge,
     InrPipe,

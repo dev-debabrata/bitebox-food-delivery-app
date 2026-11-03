@@ -1,16 +1,18 @@
+import { NpIconPipe } from '../../shared/icons/np-icon-name';
+import { IconComponent } from 'nexprime';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { filter, map } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
+import { NotificationBell } from '../../shared/components/notification-bell/notification-bell';
 import { BrandLogo } from '../../shared/components/brand-logo/brand-logo';
 
 export interface NavItem {
@@ -28,6 +30,8 @@ export interface NavItem {
  * Desktop (>= 1024px): persistent sidebar. Tablet/phone: overlay drawer
  * opened from the toolbar and closed automatically after navigation.
  */
+import { initialsOf } from '../../shared/models/user.models';
+
 @Component({
   selector: 'bb-panel-shell',
   imports: [
@@ -36,12 +40,13 @@ export interface NavItem {
     RouterLinkActive,
     MatButtonModule,
     MatDividerModule,
-    MatIconModule,
+    IconComponent, NpIconPipe,
     MatListModule,
     MatMenuModule,
     MatSidenavModule,
     MatToolbarModule,
     BrandLogo,
+    NotificationBell,
   ],
   templateUrl: './panel-shell.html',
   styleUrl: './panel-shell.scss',
@@ -58,13 +63,7 @@ export class PanelShell {
   private readonly sidenav = viewChild.required(MatSidenav);
 
   protected readonly user = this.auth.user;
-  protected readonly initials = computed(() =>
-    (this.user()?.name ?? '?')
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? '')
-      .join(''),
-  );
+  protected readonly initials = computed(() => initialsOf(this.user()?.name) || '?');
 
   protected readonly isDesktop = toSignal(
     inject(BreakpointObserver)

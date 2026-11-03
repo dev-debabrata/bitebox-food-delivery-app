@@ -1,0 +1,54 @@
+<figure class="bb-card chart-card">
+  <figcaption>
+    <h2 class="bb-h3">{{ title() }}</h2>
+    @if (series().length > 1) {
+      <ul class="legend" aria-label="Legend">
+        @for (d of datasets(); track d.label) {
+          <li><span class="swatch" [style.background]="d.color" aria-hidden="true"></span>{{ d.label }}</li>
+        }
+      </ul>
+    }
+  </figcaption>
+
+  @if (empty()) {
+    <p class="bb-muted empty">Nothing in this period yet.</p>
+  } @else {
+    <np-chart
+      [type]="type()"
+      [labels]="labels()"
+      [datasets]="datasets()"
+      [height]="height()"
+      [format]="format()"
+      [showLegend]="false"
+      [smooth]="false"
+      [gradient]="false"
+      [ariaLabel]="title() + ', by day'"
+    />
+  }
+
+  <details class="table-view">
+    <summary>Show as table</summary>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Day</th>
+            @for (s of series(); track s.label) {
+              <th scope="col">{{ s.label }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.date) {
+            <tr>
+              <th scope="row">{{ row.date }}</th>
+              @for (v of row.values; track $index) {
+                <td>{{ format()(v) }}</td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </details>
+</figure>

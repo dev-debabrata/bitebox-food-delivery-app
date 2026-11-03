@@ -37,10 +37,8 @@
   a {
     color: inherit;
   }
-  mat-icon {
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
+  np-icon {
+    --bb-icon-size: 18px;
   }
 }
 
@@ -80,10 +78,8 @@
     }
   }
 
-  mat-icon {
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
+  np-icon {
+    --bb-icon-size: 18px;
     color: var(--bb-amber);
   }
 
@@ -192,7 +188,7 @@
     padding-bottom: var(--bb-space-2);
     border-bottom: 2px solid var(--bb-amber);
 
-    mat-icon {
+    np-icon {
       color: var(--bb-amber-600);
     }
   }
@@ -396,10 +392,8 @@
   text-align: center;
   color: var(--bb-ink-muted);
 
-  mat-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 40px;
+  np-icon {
+    --bb-icon-size: 40px;
     color: var(--bb-amber-600);
   }
 

@@ -1,11 +1,11 @@
 @let r = restaurant();
-<a class="card" [routerLink]="['/restaurants', r.slug]" [attr.aria-label]="r.name + ', ' + r.cuisines.join(', ')">
+<a class="card" [routerLink]="['/restaurants', r.slug]">
   <div class="media">
     @if (r.imageUrl) {
       <img [src]="r.imageUrl" [alt]="''" loading="lazy" />
     } @else {
       <div class="placeholder" aria-hidden="true">
-        <mat-icon>restaurant</mat-icon>
+        <np-icon name="utensils" class="mat-icon" matButtonIcon />
         <span>{{ r.name.charAt(0) }}</span>
       </div>
     }
@@ -13,7 +13,7 @@
       <span class="closed">Closed now</span>
     }
     @if (r.isPureVeg) {
-      <span class="veg-tag"><mat-icon aria-hidden="true">eco</mat-icon>Pure veg</span>
+      <span class="veg-tag"><np-icon name="leaf" class="mat-icon" matButtonIcon />Pure veg</span>
     }
   </div>
 
@@ -22,7 +22,7 @@
       <h3>{{ r.name }}</h3>
       @if (rating(); as stars) {
         <span class="rating" [attr.aria-label]="'Rated ' + stars + ' out of 5'">
-          <mat-icon aria-hidden="true">star</mat-icon>{{ stars }}
+          <np-icon name="star" class="mat-icon" matButtonIcon />{{ stars }}
         </span>
       } @else {
         <span class="rating new">New</span>
@@ -30,7 +30,7 @@
     </div>
     <p class="cuisines">{{ r.cuisines.join(' · ') }}</p>
     <p class="meta">
-      <span><mat-icon aria-hidden="true">schedule</mat-icon>{{ r.avgPrepTimeMinutes }} min prep</span>
+      <span><np-icon name="clock" class="mat-icon" matButtonIcon />{{ r.avgPrepTimeMinutes }} min prep</span>
       <span>{{ r.costForTwoPaise | inr }} for two</span>
     </p>
     <p class="locality">

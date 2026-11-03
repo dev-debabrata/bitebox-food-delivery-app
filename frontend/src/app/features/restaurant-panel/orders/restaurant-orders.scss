@@ -87,10 +87,8 @@
   margin: 0;
   font-size: 0.88rem;
 
-  mat-icon {
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
+  np-icon {
+    --bb-icon-size: 18px;
     flex-shrink: 0;
   }
 }
@@ -209,4 +207,9 @@
 .h-total {
   font-weight: 700;
   text-align: right;
+}
+
+.pickup-by {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
 }

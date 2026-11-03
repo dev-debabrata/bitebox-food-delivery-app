@@ -2,7 +2,10 @@ import { DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { Subscription, catchError, debounceTime, of, tap } from 'rxjs';
-import { RestaurantActiveOrders, RestaurantOrder } from '../../shared/models/order-management.models';
+import {
+  RestaurantActiveOrders,
+  RestaurantOrder,
+} from '../../shared/models/order-management.models';
 import { errorMessage } from './api-error';
 import { NotificationService } from './notification.service';
 import { RestaurantOrdersService } from './order-management.service';
@@ -42,7 +45,9 @@ export class RestaurantOrderBoard {
     if (this.connections++ === 0) {
       this.polling = pollWhileVisible(() => this.fetch(), POLL_MS, this.document).subscribe();
       // Any change to one of our orders (new, cancelled, rider assigned...) reloads the board.
-      this.polling.add(this.realtime.orderUpdates$.pipe(debounceTime(250)).subscribe(() => this.refresh()));
+      this.polling.add(
+        this.realtime.orderUpdates$.pipe(debounceTime(250)).subscribe(() => this.refresh()),
+      );
     }
     destroyRef.onDestroy(() => {
       if (--this.connections === 0) {
@@ -57,9 +62,15 @@ export class RestaurantOrderBoard {
     this.fetch().subscribe();
   }
 
-  /** Swap in the updated order straight away, before the next poll. */
-  replace(order: RestaurantOrder): void {
-    this.board.update((b) => (b ? { ...b, items: b.items.map((o) => (o.id === order.id ? { ...o, ...order } : o)) } : b));
+  /**
+   * After our own action: show the updated order at once. The resulting live
+   * event reloads the board (counts, tabs); without a live connection, reload now.
+   */
+  applyChange(order: RestaurantOrder): void {
+    this.board.update((b) =>
+      b ? { ...b, items: b.items.map((o) => (o.id === order.id ? { ...o, ...order } : o)) } : b,
+    );
+    if (!this.realtime.connected()) this.refresh();
   }
 
   private fetch() {
@@ -81,7 +92,9 @@ export class RestaurantOrderBoard {
     fresh.forEach((o) => this.seen.add(o.id));
     // The first load just learns what is already there; only later arrivals are announced.
     if (this.primed && fresh.length) {
-      this.notify.info(fresh.length === 1 ? `New order ${fresh[0].orderNumber}` : `${fresh.length} new orders`);
+      this.notify.info(
+        fresh.length === 1 ? `New order ${fresh[0].orderNumber}` : `${fresh.length} new orders`,
+      );
       this.chime();
     }
     this.primed = true;

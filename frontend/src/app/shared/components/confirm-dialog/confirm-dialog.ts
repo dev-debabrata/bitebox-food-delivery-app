@@ -1,6 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormRoot, form, maxLength, validate } from '@angular/forms/signals';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
+import { Observable, filter } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { NP_FORM_FIELDS } from '../../forms/np-form-fields';
 
@@ -34,10 +40,35 @@ export class ConfirmDialog {
     (path) => {
       // Only asked for when the caller wants a reason; whitespace does not count.
       validate(path.reason, ({ value }) =>
-        this.data.reasonLabel && !value().trim() ? { kind: 'required', message: 'A reason is required' } : undefined,
+        this.data.reasonLabel && !value().trim()
+          ? { kind: 'required', message: 'A reason is required' }
+          : undefined,
       );
       maxLength(path.reason, 500, { message: 'Keep it under 500 characters' });
     },
-    { submission: { action: async () => this.ref.close(this.data.reasonLabel ? this.model().reason.trim() : true) } },
+    {
+      submission: {
+        action: async () =>
+          this.ref.close(this.data.reasonLabel ? this.model().reason.trim() : true),
+      },
+    },
   );
+}
+
+/**
+ * Opens the confirmation and emits only if the user confirms: `true`, or the
+ * typed reason when `reasonLabel` is set. Cancelling emits nothing.
+ */
+export function confirmed(
+  dialog: MatDialog,
+  data: ConfirmDialogData,
+  width = '440px',
+): Observable<true | string> {
+  return dialog
+    .open<ConfirmDialog, ConfirmDialogData, true | string>(ConfirmDialog, { data, width })
+    .afterClosed()
+    .pipe(
+      // Only an explicit confirmation counts: a bare `mat-dialog-close` closes with '' (not undefined).
+      filter((result): result is true | string => result === true || (typeof result === 'string' && result.length > 0)),
+    );
 }

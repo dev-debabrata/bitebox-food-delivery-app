@@ -1,0 +1,73 @@
+<bb-page-header
+  title="Notifications"
+  [subtitle]="inbox.unread() ? inbox.unread() + ' unread' : 'You\'re all caught up.'"
+>
+  <button mat-stroked-button type="button" [disabled]="!inbox.unread()" (click)="markAllRead()">
+    <np-icon name="check-check" class="mat-icon" matButtonIcon />
+    Mark all read
+  </button>
+</bb-page-header>
+
+<mat-button-toggle-group
+  class="tabs"
+  [value]="tab()"
+  (change)="tab.set($event.value)"
+  aria-label="Which notifications"
+  hideSingleSelectionIndicator
+>
+  <mat-button-toggle value="all">All</mat-button-toggle>
+  <mat-button-toggle value="unread">Unread</mat-button-toggle>
+</mat-button-toggle-group>
+
+@if (list.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+  </div>
+}
+
+<div class="bb-card list-card" [attr.aria-busy]="list.loading()">
+  @if (!list.data()) {
+    @for (i of [1, 2, 3, 4]; track i) {
+      <span class="bb-skeleton row-skeleton"></span>
+    }
+  } @else if (list.data()!.items.length === 0) {
+    <bb-empty-state
+      icon="notifications_none"
+      [title]="tab() === 'unread' ? 'No unread notifications' : 'No notifications yet'"
+      message="Updates about your orders and account appear here."
+    />
+  } @else {
+    <ul class="rows" [class.bb-dim]="list.loading()">
+      @for (n of list.data()!.items; track n.id) {
+        @let unread = isUnread(n);
+        <li>
+          <button type="button" class="row" [class.unread]="unread" (click)="open(n)">
+            <span class="icon" aria-hidden="true"><np-icon [name]="(icon(n.type)) | npIcon" class="mat-icon" matButtonIcon /></span>
+            <span class="text">
+              <span class="title">{{ n.title }}</span>
+              @if (n.body) {
+                <span class="body">{{ n.body }}</span>
+              }
+              <span class="time">{{ n.createdAt | date: 'EEE, d MMM y · h:mm a' }}</span>
+            </span>
+            @if (unread) {
+              <span class="dot" aria-label="Unread"></span>
+            }
+            @if (n.link) {
+              <np-icon name="chevron-right" class="mat-icon chev" matButtonIcon />
+            }
+          </button>
+        </li>
+      }
+    </ul>
+    <mat-paginator
+      [length]="list.data()!.pagination.total"
+      [pageIndex]="list.data()!.pagination.page - 1"
+      [pageSize]="list.data()!.pagination.limit"
+      [pageSizeOptions]="[20, 50, 100]"
+      (page)="list.onPage($event)"
+      aria-label="Notification pages"
+    />
+  }
+</div>

@@ -6,10 +6,8 @@
   padding: var(--bb-space-7) var(--bb-space-4);
   color: var(--bb-ink-muted);
 }
-mat-icon {
-  width: 56px;
-  height: 56px;
-  font-size: 56px;
+np-icon {
+  --bb-icon-size: 56px;
   color: var(--bb-amber-600);
   margin-bottom: var(--bb-space-3);
 }

@@ -12,3 +12,9 @@ export function haversineMeters([lng1, lat1], [lng2, lat2]) {
   const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   return Math.round(2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a)));
 }
+
+/** { latitude, longitude } -> GeoJSON Point (MongoDB stores [longitude, latitude]). */
+export const toPoint = ({ latitude, longitude }) => ({ type: "Point", coordinates: [longitude, latitude] });
+
+/** GeoJSON Point -> { latitude, longitude }. */
+export const fromPoint = (point) => ({ latitude: point.coordinates[1], longitude: point.coordinates[0] });

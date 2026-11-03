@@ -4,7 +4,6 @@ import { firstValueFrom } from 'rxjs';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { errorMessage, fieldErrors } from '../../../core/services/api-error';
 import { MyRestaurantService } from '../../../core/services/my-restaurant.service';
@@ -12,7 +11,7 @@ import { ImageUpload } from '../../../shared/components/image-upload/image-uploa
 import { FoodCategory, FoodItem, FoodItemInput, categoryIdOf } from '../../../shared/models/catalog.models';
 import { rupeesToPaise } from '../../../shared/pipes/money.pipes';
 import { serverErrors, shownError } from '../../../shared/forms/form-errors';
-import { SelectOption, ToggleComponent } from 'nexprime';
+import { IconComponent, SelectOption, ToggleComponent } from 'nexprime';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { numberRange, requiredText } from '../../../shared/forms/form-rules';
 
@@ -31,7 +30,7 @@ export interface FoodFormData {
     MatDialogModule,
     MatButtonModule,
     MatButtonToggleModule,
-    MatIconModule,
+    IconComponent,
     MatProgressSpinnerModule,
     ImageUpload,
   ],

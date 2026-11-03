@@ -2,10 +2,9 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormRoot, TreeValidationResult, form, maxLength, pattern, required, validate } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { ToggleComponent } from 'nexprime';
+import { IconComponent, ToggleComponent } from 'nexprime';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatIconModule } from '@angular/material/icon';
 import { errorMessage, fieldErrors } from '../../../core/services/api-error';
 import { AdminCouponService } from '../../../core/services/checkout-api.service';
 import { AdminCoupon, AdminCouponInput } from '../../../shared/models/checkout.models';
@@ -20,7 +19,7 @@ const startOfDay = (date: Date) => new Date(date).setHours(0, 0, 0, 0);
 /** Create / edit a coupon. Money is typed in rupees and sent as paise. */
 @Component({
   selector: 'bb-coupon-form-dialog',
-  imports: [ToggleComponent, NP_FORM_FIELDS, FormRoot, MatDialogModule, MatButtonModule, MatButtonToggleModule, MatIconModule],
+  imports: [ToggleComponent, NP_FORM_FIELDS, FormRoot, MatDialogModule, MatButtonModule, MatButtonToggleModule, IconComponent],
   templateUrl: './coupon-form-dialog.html',
   styleUrl: './coupon-form-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

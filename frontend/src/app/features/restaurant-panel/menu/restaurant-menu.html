@@ -1,6 +1,6 @@
 <bb-page-header title="Menu" subtitle="Add dishes, set prices and switch availability on or off.">
   @if (!noRestaurant() && !loading()) {
-    <button mat-flat-button (click)="openForm()"><mat-icon>add</mat-icon>Add dish</button>
+    <button mat-flat-button (click)="openForm()"><np-icon name="plus" class="mat-icon" matButtonIcon />Add dish</button>
   }
 </bb-page-header>
 
@@ -9,17 +9,27 @@
     <span class="bb-skeleton" style="height: 72px; margin-bottom: 8px"></span>
   }
 } @else if (noRestaurant()) {
-  <bb-empty-state icon="storefront" title="Add your restaurant first" message="Create your restaurant profile, then build your menu here.">
+  <bb-empty-state
+    icon="storefront"
+    title="Add your restaurant first"
+    message="Create your restaurant profile, then build your menu here."
+  >
     <a mat-flat-button routerLink="/restaurant/details">Add restaurant details</a>
   </bb-empty-state>
 } @else if (error()) {
   <div class="bb-alert error" role="alert">
-    <mat-icon aria-hidden="true">error</mat-icon>
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
     <span>{{ error() }} <button class="bb-link-button" (click)="load()">Retry</button></span>
   </div>
 } @else if (items().length === 0) {
-  <bb-empty-state icon="menu_book" title="Your menu is empty" message="Add your first dish so customers can see what you serve.">
-    <button mat-flat-button (click)="openForm()"><mat-icon>add</mat-icon>Add your first dish</button>
+  <bb-empty-state
+    icon="menu_book"
+    title="Your menu is empty"
+    message="Add your first dish so customers can see what you serve."
+  >
+    <button mat-flat-button (click)="openForm()">
+      <np-icon name="plus" class="mat-icon" matButtonIcon />Add your first dish
+    </button>
   </bb-empty-state>
 } @else {
   <div class="filters">
@@ -32,13 +42,17 @@
       clearable
     />
     <np-select [formField]="filters.category" ariaLabel="Category" [options]="categoryOptions()" />
-    <np-select [formField]="filters.availability" ariaLabel="Availability" [options]="availabilityOptions" />
+    <np-select
+      [formField]="filters.availability"
+      ariaLabel="Availability"
+      [options]="availabilityOptions"
+    />
   </div>
 
   <p class="count bb-muted">Showing {{ filtered().length }} of {{ items().length }} dishes</p>
   @if (total() > items().length) {
     <div class="bb-alert info" role="status">
-      <mat-icon aria-hidden="true">info</mat-icon>
+      <np-icon name="info" class="mat-icon" matButtonIcon />
       <span>Showing the first {{ items().length }} of {{ total() }} dishes.</span>
     </div>
   }
@@ -49,28 +63,37 @@
         @if (item.imageUrl) {
           <img [src]="item.imageUrl" alt="" loading="lazy" />
         } @else {
-          <span class="thumb" aria-hidden="true"><mat-icon>{{ item.category.icon }}</mat-icon></span>
+          <span class="thumb" aria-hidden="true"
+            ><np-icon [name]="(item.category.icon) | npIcon: 'utensils'" class="mat-icon" matButtonIcon /></span
+          >
         }
         <div class="info">
           <span class="name"><bb-veg-badge [veg]="item.isVeg" /> {{ item.name }}</span>
           <span class="bb-muted meta">{{ item.category.name }} · {{ item.pricePaise | inr }}</span>
         </div>
         <np-toggle
-          #availability
           [checked]="item.isAvailable"
           [disabled]="busyId() === item.id"
-          class="availability bb-toggle-success bb-label-hidden-phone"
-          [class.on]="item.isAvailable"
-          [label]="(item.isAvailable ? 'Available' : 'Off')"
+          class="bb-toggle-success bb-toggle-stable bb-label-hidden-phone"
+          [label]="item.isAvailable ? 'Available' : 'Off'"
           [attr.title]="'Available: ' + item.name"
-          (checkedChange)="toggleAvailability(item, $event, availability)"
+          (checkedChange)="toggleAvailability(item, $event)"
         />
-        <button mat-icon-button [matMenuTriggerFor]="itemMenu" [attr.aria-label]="'Actions for ' + item.name" [disabled]="busyId() === item.id">
-          <mat-icon>more_vert</mat-icon>
+        <button
+          mat-icon-button
+          [matMenuTriggerFor]="itemMenu"
+          [attr.aria-label]="'Actions for ' + item.name"
+          [disabled]="busyId() === item.id"
+        >
+          <np-icon name="ellipsis-vertical" class="mat-icon" matButtonIcon />
         </button>
         <mat-menu #itemMenu="matMenu" xPosition="before">
-          <button mat-menu-item (click)="openForm(item)"><mat-icon>edit</mat-icon><span>Edit</span></button>
-          <button mat-menu-item (click)="remove(item)"><mat-icon>delete</mat-icon><span>Delete</span></button>
+          <button mat-menu-item (click)="openForm(item)">
+            <np-icon name="pencil" class="mat-icon" matButtonIcon /><span>Edit</span>
+          </button>
+          <button mat-menu-item (click)="remove(item)">
+            <np-icon name="trash-2" class="mat-icon" matButtonIcon /><span>Delete</span>
+          </button>
         </mat-menu>
       </li>
     } @empty {

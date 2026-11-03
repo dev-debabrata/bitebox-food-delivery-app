@@ -133,7 +133,7 @@ export const checkoutSchemas = {
       pricing,
       coupon: { type: "object", properties: { code: { type: "string" }, discountPaise: { type: "integer" } } },
       distanceMeters: { type: "integer", description: "Straight-line distance used for the delivery fee" },
-      paymentMethod: { type: "string", enum: ["cod"] },
+      paymentMethod: { type: "string", enum: ["cod", "online"] },
       paymentStatus: { type: "string", enum: ["pending", "paid", "failed", "refunded", "cancelled"] },
       statusHistory: { type: "array", items: { type: "object", properties: { status: { type: "string" }, at: { type: "string", format: "date-time" } } } },
       cancellation: {
@@ -229,7 +229,7 @@ export const checkoutPaths = {
         required: ["addressId", "paymentMethod"],
         properties: {
           addressId: { type: "string" },
-          paymentMethod: { type: "string", enum: ["cod"] },
+          paymentMethod: { type: "string", enum: ["cod", "online"] },
           note: { type: "string", maxLength: 300 },
           expectedTotalPaise: { type: "integer" },
         },

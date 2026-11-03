@@ -1,3 +1,4 @@
+<a class="skip-link" href="#main">Skip to content</a>
 <mat-sidenav-container class="shell" autosize>
   <mat-sidenav
     #drawer
@@ -24,7 +25,7 @@
           [activated]="rla.isActive"
           [attr.aria-current]="rla.isActive ? 'page' : null"
         >
-          <mat-icon matListItemIcon aria-hidden="true">{{ item.icon }}</mat-icon>
+          <np-icon [name]="(item.icon) | npIcon" class="mat-icon" matListItemIcon />
           <span matListItemTitle>{{ item.label }}</span>
           @if (item.badge?.(); as count) {
             <span matListItemMeta class="nav-badge" [attr.aria-label]="count + ' new'">{{ count }}</span>
@@ -35,7 +36,7 @@
 
     <div class="sidebar-footer">
       <button mat-button class="signout" (click)="logout()">
-        <mat-icon>logout</mat-icon>
+        <np-icon name="log-out" class="mat-icon" matButtonIcon />
         Sign out
       </button>
     </div>
@@ -45,16 +46,18 @@
     <mat-toolbar class="topbar">
       @if (!isDesktop()) {
         <button mat-icon-button (click)="drawer.toggle()" aria-label="Open navigation menu">
-          <mat-icon>menu</mat-icon>
+          <np-icon name="menu" class="mat-icon" matButtonIcon />
         </button>
         <bb-brand-logo [height]="28" />
       }
       <span class="spacer"></span>
+      <bb-notification-bell />
 
-      <button mat-button class="user-button" [matMenuTriggerFor]="userMenu" aria-label="Account menu">
-        <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+      <button mat-button class="user-button" [matMenuTriggerFor]="userMenu">
+        <span class="bb-avatar avatar" aria-hidden="true">{{ initials() }}</span>
         <span class="user-name">{{ user()?.name }}</span>
-        <mat-icon iconPositionEnd>expand_more</mat-icon>
+        <span class="bb-sr-only">account menu</span>
+        <np-icon name="chevron-down" class="mat-icon" iconPositionEnd matButtonIcon />
       </button>
       <mat-menu #userMenu="matMenu" xPosition="before">
         <div class="menu-header" (click)="$event.stopPropagation()" role="presentation">
@@ -63,17 +66,17 @@
         </div>
         <mat-divider />
         <a mat-menu-item [routerLink]="profileLink()">
-          <mat-icon>manage_accounts</mat-icon>
+          <np-icon name="user-cog" class="mat-icon" matButtonIcon />
           <span>Profile</span>
         </a>
         <button mat-menu-item (click)="logout()">
-          <mat-icon>logout</mat-icon>
+          <np-icon name="log-out" class="mat-icon" matButtonIcon />
           <span>Sign out</span>
         </button>
       </mat-menu>
     </mat-toolbar>
 
-    <main class="page">
+    <main id="main" class="page" tabindex="-1">
       <router-outlet />
     </main>
   </mat-sidenav-content>

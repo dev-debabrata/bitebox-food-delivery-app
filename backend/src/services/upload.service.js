@@ -1,7 +1,9 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
+import cloudinary, { cloudinaryEnabled } from "../config/cloudinary.js";
 import { env } from "../config/env.js";
+import { logger } from "../config/logger.js";
 import { ApiError } from "../utils/api-error.js";
 
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
@@ -21,11 +23,7 @@ export function detectImageType(buffer) {
   return null;
 }
 
-/**
- * Local-disk storage. Files get random names (never the client's name) and
- * are served from /uploads. Swap this object for a cloud provider (e.g.
- * Cloudinary or S3) in production deployments with ephemeral disks.
- */
+/** Local disk (development fallback): random file names, served from /uploads. */
 const localStorage = {
   async save(buffer, extension) {
     const dir = path.join(env.uploadDir, "images");
@@ -36,9 +34,42 @@ const localStorage = {
   },
 };
 
+/**
+ * Cloudinary: the image gets a random public id in the configured folder. The URL
+ * asks Cloudinary for the best format and quality per browser (f_auto, q_auto).
+ */
+export const cloudinaryStorage = {
+  async save(buffer) {
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream({ folder: env.cloudinary.folder, resource_type: "image", unique_filename: true, overwrite: false }, (error, uploaded) =>
+          error ? reject(error) : resolve(uploaded),
+        )
+        .end(buffer);
+    });
+    return cloudinary.url(result.public_id, { version: result.version, fetch_format: "auto", quality: "auto", urlAnalytics: false });
+  },
+};
+
+let storage = cloudinaryEnabled ? cloudinaryStorage : localStorage;
+
+/** Tests: swap the storage; returns a function that restores the previous one. */
+export function useImageStorage(replacement) {
+  const previous = storage;
+  storage = replacement;
+  return () => {
+    storage = previous;
+  };
+}
+
 export async function saveImage(file) {
   if (!file) throw ApiError.badRequest("Choose an image to upload");
   const type = detectImageType(file.buffer);
   if (!type) throw new ApiError(415, "Only JPEG, PNG or WebP images are allowed", { code: "UNSUPPORTED_MEDIA_TYPE" });
-  return { url: await localStorage.save(file.buffer, type), bytes: file.size, type };
+  try {
+    return { url: await storage.save(file.buffer, type), bytes: file.size, type };
+  } catch (error) {
+    logger.error({ err: error }, "Image upload failed");
+    throw new ApiError(503, "Could not upload the image right now. Please try again.", { code: "UPLOAD_FAILED" });
+  }
 }

@@ -1,10 +1,10 @@
+import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
 
 /** "– 2 +" control. Shows an ADD button when the quantity is 0. */
 @Component({
   selector: 'bb-qty-stepper',
-  imports: [MatIconModule],
+  imports: [IconComponent],
   templateUrl: './qty-stepper.html',
   styleUrl: './qty-stepper.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

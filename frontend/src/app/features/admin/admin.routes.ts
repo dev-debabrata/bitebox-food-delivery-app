@@ -13,6 +13,16 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./orders/admin-orders').then((m) => m.AdminOrders),
   },
   {
+    path: 'reports',
+    title: 'Reports | BiteBox Admin',
+    loadComponent: () => import('./reports/admin-reports').then((m) => m.AdminReports),
+  },
+  {
+    path: 'payments',
+    title: 'Payments | BiteBox Admin',
+    loadComponent: () => import('./payments/admin-payments').then((m) => m.AdminPayments),
+  },
+  {
     path: 'delivery-partners',
     title: 'Delivery partners | BiteBox Admin',
     loadComponent: () => import('./delivery-partners/admin-delivery-partners').then((m) => m.AdminDeliveryPartners),
@@ -47,6 +57,11 @@ export const ADMIN_ROUTES: Routes = [
     path: 'coupons',
     title: 'Coupons | BiteBox Admin',
     loadComponent: () => import('./coupons/admin-coupons').then((m) => m.AdminCoupons),
+  },
+  {
+    path: 'notifications',
+    title: 'Notifications | BiteBox Admin',
+    loadComponent: () => import('../notifications/notifications-page').then((m) => m.NotificationsPage),
   },
   {
     path: 'profile',

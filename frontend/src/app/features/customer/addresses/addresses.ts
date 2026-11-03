@@ -1,8 +1,9 @@
+import { NpIconPipe } from '../../../shared/icons/np-icon-name';
+import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { filter } from 'rxjs';
 import { errorMessage } from '../../../core/services/api-error';
@@ -16,7 +17,7 @@ import { DeliveryAddress } from '../../../shared/models/checkout.models';
 
 @Component({
   selector: 'bb-addresses',
-  imports: [TitleCasePipe, MatButtonModule, MatIconModule, MatMenuModule, EmptyState, PageHeader],
+  imports: [TitleCasePipe, MatButtonModule, IconComponent, NpIconPipe, MatMenuModule, EmptyState, PageHeader],
   templateUrl: './addresses.html',
   styleUrl: './addresses.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

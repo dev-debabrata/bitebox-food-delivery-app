@@ -1,14 +1,17 @@
+import { NpIconPipe } from '../../../shared/icons/np-icon-name';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { ToggleComponent } from 'nexprime';
+import { IconComponent, ToggleComponent } from 'nexprime';
 import { MatDialog } from '@angular/material/dialog';
-import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { filter } from 'rxjs';
 import { AdminCatalogService } from '../../../core/services/admin/admin-catalog.service';
 import { errorMessage } from '../../../core/services/api-error';
 import { NotificationService } from '../../../core/services/notification.service';
-import { ConfirmDialog, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import {
+  ConfirmDialog,
+  ConfirmDialogData,
+} from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { FoodCategory } from '../../../shared/models/catalog.models';
@@ -16,7 +19,14 @@ import { CategoryFormDialog } from './category-form-dialog';
 
 @Component({
   selector: 'bb-admin-categories',
-  imports: [ToggleComponent, MatButtonModule, MatIconModule, MatTooltipModule, EmptyState, PageHeader],
+  imports: [
+    ToggleComponent,
+    MatButtonModule,
+    IconComponent, NpIconPipe,
+    MatTooltipModule,
+    EmptyState,
+    PageHeader,
+  ],
   templateUrl: './admin-categories.html',
   styleUrl: './admin-categories.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,7 +61,11 @@ export class AdminCategories {
 
   protected open(category?: FoodCategory): void {
     this.dialog
-      .open<CategoryFormDialog, FoodCategory | null, FoodCategory>(CategoryFormDialog, { data: category ?? null, width: '520px', maxWidth: '95vw' })
+      .open<CategoryFormDialog, FoodCategory | null, FoodCategory>(CategoryFormDialog, {
+        data: category ?? null,
+        width: '520px',
+        maxWidth: '95vw',
+      })
       .afterClosed()
       .pipe(filter(Boolean))
       .subscribe(() => {
@@ -60,11 +74,16 @@ export class AdminCategories {
       });
   }
 
-  protected toggle(category: FoodCategory, checked: boolean, toggle: ToggleComponent): void {
+  /** Optimistic: the switch follows the list; on failure the list (and so the switch) goes back. */
+  protected toggle(category: FoodCategory, checked: boolean): void {
+    const set = (isActive: boolean) =>
+      this.categories.update((list) =>
+        list.map((c) => (c.id === category.id ? { ...c, isActive } : c)),
+      );
+    set(checked);
     this.service.updateCategory(category.id, { isActive: checked }).subscribe({
-      next: (updated) => this.categories.update((list) => list.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))),
       error: (err: unknown) => {
-        toggle.checked.set(!checked); // back to what the server has
+        set(!checked);
         this.notify.error(errorMessage(err));
       },
     });
@@ -73,7 +92,12 @@ export class AdminCategories {
   protected remove(category: FoodCategory): void {
     this.dialog
       .open<ConfirmDialog, ConfirmDialogData, true>(ConfirmDialog, {
-        data: { title: `Delete “${category.name}”?`, message: 'This cannot be undone.', confirmLabel: 'Delete', danger: true },
+        data: {
+          title: `Delete “${category.name}”?`,
+          message: 'This cannot be undone.',
+          confirmLabel: 'Delete',
+          danger: true,
+        },
         width: '420px',
       })
       .afterClosed()

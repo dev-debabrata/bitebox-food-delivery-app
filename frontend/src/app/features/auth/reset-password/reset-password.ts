@@ -1,9 +1,9 @@
+import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
 import { FormRoot, TreeValidationResult, form } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AuthService } from '../../../core/auth/auth.service';
 import { errorMessage } from '../../../core/services/api-error';
@@ -18,7 +18,7 @@ import { matchesField, passwordRules } from '../../../shared/forms/form-rules';
     NP_FORM_FIELDS,
     RouterLink,
     MatButtonModule,
-    MatIconModule,
+    IconComponent,
     MatProgressSpinnerModule,
   ],
   templateUrl: './reset-password.html',

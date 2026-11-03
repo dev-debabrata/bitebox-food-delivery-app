@@ -101,20 +101,27 @@
   flex: 1;
 }
 
+// Account: a rounded pill that follows the round avatar inside it (as in the customer header).
 .user-button {
   --mat-button-text-container-height: 44px;
+  --mat-button-text-container-shape: 22px;
+  // The avatar sits 2px inside the pill on every side; the arrow keeps a little room on the right.
+  --mat-button-text-horizontal-padding: 2px;
+  --mat-button-text-with-icon-horizontal-padding: 2px;
+
+  np-icon[iconPositionEnd] {
+    margin-right: 8px;
+  }
+
+  // Phones show the avatar alone.
+  @include bp.phone-only {
+    np-icon {
+      display: none;
+    }
+  }
 }
 
 .avatar {
-  display: inline-grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--bb-plum);
-  color: var(--bb-amber);
-  font-weight: 700;
-  font-size: 0.8rem;
   margin-right: var(--bb-space-2);
 }
 

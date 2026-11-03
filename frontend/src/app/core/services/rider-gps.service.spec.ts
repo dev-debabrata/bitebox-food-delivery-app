@@ -56,7 +56,7 @@ describe('RiderGps', () => {
   });
 
   it('shares often during a delivery, but not faster than every few seconds', async () => {
-    gps.start(true);
+    gps.update(true, true);
     fix(12.97);
     await flush();
     expect(send).toHaveBeenCalledTimes(1); // first fix goes out at once
@@ -83,7 +83,7 @@ describe('RiderGps', () => {
   });
 
   it('shares rarely when idle', async () => {
-    gps.start(false);
+    gps.update(true, false);
     fix(12.97);
     await flush();
     now += 30_000;
@@ -97,7 +97,7 @@ describe('RiderGps', () => {
   });
 
   it('never shares imprecise readings and explains problems', async () => {
-    gps.start(true);
+    gps.update(true, true);
     fix(12.97, 5000);
     await flush();
     expect(send).not.toHaveBeenCalled();

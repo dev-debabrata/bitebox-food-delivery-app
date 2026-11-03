@@ -2,7 +2,7 @@
   <div class="bb-container hero-inner">
     <div class="hero-copy">
       <span class="eyebrow">
-        <mat-icon aria-hidden="true">bolt</mat-icon>
+        <np-icon name="zap" class="mat-icon" matButtonIcon />
         Hot food, fast
       </span>
       <h1>Your favourite food, <span class="highlight">boxed</span> and on its way.</h1>
@@ -40,7 +40,7 @@
         </div>
       </div>
       @for (icon of heroIcons; track icon; let i = $index) {
-        <span class="float float-{{ i }}"><mat-icon>{{ icon }}</mat-icon></span>
+        <span class="float float-{{ i }}"><np-icon [name]="(icon) | npIcon" class="mat-icon" matButtonIcon /></span>
       }
     </div>
   </div>
@@ -59,7 +59,7 @@
       @for (c of categories(); track c.id) {
         <li>
           <a [routerLink]="['/restaurants']" [queryParams]="{ category: c.id }">
-            <span class="craving-icon"><mat-icon aria-hidden="true">{{ c.icon }}</mat-icon></span>
+            <span class="craving-icon"><np-icon [name]="(c.icon) | npIcon: 'utensils'" class="mat-icon" matButtonIcon /></span>
             <span>{{ c.name }}</span>
           </a>
         </li>
@@ -84,7 +84,7 @@
         <button type="button" class="bb-link-button" (click)="chooseLocation()">Set your location to see restaurants that deliver to you</button>
       }
     </div>
-    <a mat-button routerLink="/restaurants">See all <mat-icon iconPositionEnd>arrow_forward</mat-icon></a>
+    <a mat-button routerLink="/restaurants">See all <np-icon name="arrow-right" class="mat-icon" iconPositionEnd matButtonIcon /></a>
   </div>
   @if (loaded() === null) {
     <div class="popular" aria-busy="true">
@@ -102,7 +102,7 @@
     <p class="bb-muted">Restaurants could not be loaded right now. <a routerLink="/restaurants">Try the restaurants page</a>.</p>
   } @else if (deliveryLocation(); as loc) {
     <div class="no-nearby bb-card">
-      <mat-icon aria-hidden="true">wrong_location</mat-icon>
+      <np-icon name="map-pin-x" class="mat-icon" matButtonIcon />
       <div>
         <h3>No restaurants deliver to {{ loc.label }} yet</h3>
         <p class="bb-muted">We're growing fast. Try another location, or browse every restaurant on BiteBox.</p>
@@ -124,7 +124,7 @@
     @for (step of steps; track step.icon; let i = $index) {
       <li class="bb-card">
         <span class="step-num">{{ i + 1 }}</span>
-        <mat-icon aria-hidden="true">{{ step.icon }}</mat-icon>
+        <np-icon [name]="(step.icon) | npIcon" class="mat-icon" matButtonIcon />
         <h3>{{ step.title }}</h3>
         <p class="bb-muted">{{ step.text }}</p>
       </li>
@@ -138,7 +138,7 @@
   <h2 id="partners-title">Grow with BiteBox</h2>
   <div class="partners">
     <article class="partner restaurant">
-      <mat-icon aria-hidden="true">storefront</mat-icon>
+      <np-icon name="store" class="mat-icon" matButtonIcon />
       <h3>Add your restaurant</h3>
       <p>Reach more hungry customers, manage your menu and orders from one simple dashboard.</p>
       <div class="partner-actions">
@@ -147,7 +147,7 @@
       </div>
     </article>
     <article class="partner rider">
-      <mat-icon aria-hidden="true">two_wheeler</mat-icon>
+      <np-icon name="bike" class="mat-icon" matButtonIcon />
       <h3>Ride with us</h3>
       <p>Choose when you go online, accept deliveries near you and track your earnings.</p>
       <div class="partner-actions">

@@ -1,9 +1,9 @@
 import { Address, MAX_ADDRESSES_PER_USER } from "../models/address.model.js";
+import { toPoint } from "../utils/geo.js";
 import { ApiError } from "../utils/api-error.js";
 
 const FIELDS = ["label", "recipientName", "phone", "line1", "line2", "area", "landmark", "city", "state", "postalCode"];
 const pick = (source) => Object.fromEntries(FIELDS.filter((k) => source[k] !== undefined).map((k) => [k, source[k]]));
-const toPoint = ({ latitude, longitude }) => ({ type: "Point", coordinates: [longitude, latitude] });
 
 export const list = (userId) => Address.find({ user: userId }).sort({ isDefault: -1, updatedAt: -1 });
 

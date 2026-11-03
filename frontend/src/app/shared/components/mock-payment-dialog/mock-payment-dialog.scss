@@ -1,0 +1,177 @@
+@mixin small-icon($size) {
+  flex: none;
+  width: $size;
+  height: $size;
+  font-size: $size;
+}
+
+// Merchant row, then the amount, on the brand colour.
+.gateway-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--bb-space-3);
+  padding: var(--bb-space-4) var(--bb-space-3) var(--bb-space-3) var(--bb-space-5);
+  background: var(--bb-plum);
+  color: #fff;
+
+  button {
+    justify-self: end;
+    color: #fff;
+  }
+}
+
+.logo {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--bb-amber);
+  color: var(--bb-plum);
+  font-weight: 800;
+}
+
+.merchant {
+  display: flex;
+  flex-direction: column;
+}
+
+.merchant span,
+.amount-label {
+  font-size: 0.82rem;
+  opacity: 0.8;
+}
+
+.amount-label {
+  grid-column: 1 / 3;
+}
+
+.amount {
+  padding-right: var(--bb-space-2);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.test-mode {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px var(--bb-space-5);
+  background: var(--bb-amber-100);
+  color: #7a4b00;
+  font-size: 0.82rem;
+
+  np-icon {
+    @include small-icon(18px);
+  }
+}
+
+.body.mat-mdc-dialog-content {
+  padding: var(--bb-space-4) var(--bb-space-5) var(--bb-space-2);
+}
+
+h2 {
+  margin: 0 0 var(--bb-space-2);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.methods {
+  display: grid;
+  gap: var(--bb-space-2);
+}
+
+.method {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-3);
+  min-height: 56px;
+  padding: 8px var(--bb-space-3);
+  border: 1px solid var(--bb-border);
+  border-radius: var(--bb-radius-sm);
+  background: var(--bb-surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--bb-surface-alt);
+  }
+
+  &.active {
+    border-color: var(--bb-plum);
+    box-shadow: inset 0 0 0 1px var(--bb-plum);
+  }
+
+  > np-icon {
+    flex: none;
+    color: var(--bb-plum);
+  }
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  font-weight: 600;
+}
+
+.hint {
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+// A radio dot drawn with borders: thick plum ring when chosen.
+.check {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--bb-border);
+  border-radius: 50%;
+
+  .active & {
+    border: 5px solid var(--bb-plum);
+  }
+}
+
+.detail {
+  margin: var(--bb-space-3) 0 0;
+  padding: 8px var(--bb-space-3);
+  border-radius: var(--bb-radius-sm);
+  background: var(--bb-surface-alt);
+  font: 0.82rem ui-monospace, monospace;
+}
+
+.gateway-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--bb-space-2);
+  padding: var(--bb-space-3) var(--bb-space-5) var(--bb-space-4);
+}
+
+.pay {
+  width: 100%;
+  font-size: 1rem;
+  --mat-button-filled-container-height: 48px;
+}
+
+.fail {
+  color: var(--bb-danger);
+  font-size: 0.85rem;
+}
+
+.secured {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  font-size: 0.75rem;
+
+  np-icon {
+    @include small-icon(14px);
+  }
+}

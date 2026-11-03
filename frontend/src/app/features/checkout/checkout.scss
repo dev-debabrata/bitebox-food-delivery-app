@@ -161,10 +161,8 @@ h2 {
   gap: 6px;
   font-weight: 700;
 
-  mat-icon {
-    width: 18px;
-    height: 18px;
-    font-size: 18px;
+  np-icon {
+    --bb-icon-size: 18px;
     color: var(--bb-plum-500);
   }
 }
@@ -205,7 +203,6 @@ h2 {
 
   button {
     flex-shrink: 0;
-    height: 44px;
   }
 }
 
@@ -268,4 +265,21 @@ h2 {
 
 .center {
   text-align: center;
+}
+
+.pay-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pay-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.pay-hint {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--bb-ink-muted);
 }

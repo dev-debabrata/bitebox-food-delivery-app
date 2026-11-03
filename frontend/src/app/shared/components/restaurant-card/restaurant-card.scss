@@ -51,7 +51,7 @@
     linear-gradient(135deg, var(--bb-plum) 0%, var(--bb-plum-500) 100%);
   color: #fff6e5;
 
-  mat-icon {
+  np-icon {
     position: absolute;
     top: 12px;
     left: 12px;
@@ -89,10 +89,8 @@
   background: #e6f5ec;
   color: var(--bb-success);
 
-  mat-icon {
-    width: 14px;
-    height: 14px;
-    font-size: 14px;
+  np-icon {
+    --bb-icon-size: 14px;
   }
 }
 
@@ -132,10 +130,8 @@
   padding: 2px 8px 2px 6px;
   border-radius: 8px;
 
-  mat-icon {
-    width: 14px;
-    height: 14px;
-    font-size: 14px;
+  np-icon {
+    --bb-icon-size: 14px;
   }
 
   &.new {
@@ -164,10 +160,8 @@
     gap: 2px;
   }
 
-  mat-icon {
-    width: 16px;
-    height: 16px;
-    font-size: 16px;
+  np-icon {
+    --bb-icon-size: 16px;
   }
 }
 
