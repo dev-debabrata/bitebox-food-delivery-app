@@ -116,8 +116,20 @@ export class DeliveryDashboard {
   protected readonly offer = computed(() => this.data()?.offer ?? null);
   protected readonly active = computed(() => this.data()?.activeOrder ?? null);
   protected readonly nextStep = computed(() => {
-    const status = this.active()?.status;
-    return status ? (NEXT_STEP[status] ?? null) : null;
+    const o = this.active();
+    if (!o?.status) return null;
+    const step = NEXT_STEP[o.status];
+    if (!step) return null;
+    if (o.status === 'on_the_way') {
+      const isPaid = o.paymentMethod === 'online' || o.paymentStatus === 'paid';
+      return {
+        ...step,
+        hint: isPaid
+          ? 'Hand over the order to the customer (already paid online).'
+          : 'Hand over the order and collect the cash.',
+      };
+    }
+    return step;
   });
   protected readonly vehicleLabel = VEHICLE_LABEL;
 

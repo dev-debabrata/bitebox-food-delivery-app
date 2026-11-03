@@ -131,6 +131,11 @@
     color: var(--bb-ink);
     font-size: 1rem;
   }
+
+  .pay-paid {
+    color: var(--bb-success);
+    font-weight: 600;
+  }
 }
 
 .deadline {

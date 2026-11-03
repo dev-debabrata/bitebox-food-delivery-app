@@ -185,9 +185,10 @@
             </p>
           }
 
-          <div class="cash">
-            <np-icon name="banknote" class="mat-icon" matButtonIcon />
-            <span>Collect in cash</span>
+          @let isCod = o.paymentMethod === 'cod' && o.paymentStatus !== 'paid';
+          <div [class]="isCod ? 'cash' : 'paid-online'">
+            <np-icon [name]="isCod ? 'banknote' : 'circle-check'" class="mat-icon" matButtonIcon />
+            <span>{{ isCod ? 'Collect in cash' : 'Paid online · Do not collect cash' }}</span>
             <strong>{{ o.pricing.totalPaise | inr }}</strong>
           </div>
 
@@ -249,8 +250,9 @@
               <dd>{{ o | itemCount }}</dd>
             </div>
             <div>
-              <dt>Cash to collect</dt>
-              <dd>{{ o.pricing.totalPaise | inr }}</dd>
+              @let offerCod = o.paymentMethod === 'cod' && o.paymentStatus !== 'paid';
+              <dt>{{ offerCod ? 'Cash to collect' : 'Payment' }}</dt>
+              <dd [class.paid-tag]="!offerCod">{{ offerCod ? (o.pricing.totalPaise | inr) : 'Paid online' }}</dd>
             </div>
           </dl>
           <p class="bb-muted small">

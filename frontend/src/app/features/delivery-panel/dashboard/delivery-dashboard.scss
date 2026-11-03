@@ -161,14 +161,13 @@ h2 {
   font-size: 0.9rem;
 }
 
-.cash {
+.cash,
+.paid-online {
   display: flex;
   align-items: center;
   gap: var(--bb-space-2);
   padding: var(--bb-space-3);
   border-radius: var(--bb-radius-sm);
-  background: #e6f5ec;
-  color: var(--bb-success);
 
   span {
     flex: 1;
@@ -178,6 +177,22 @@ h2 {
   strong {
     font-size: 1.15rem;
   }
+}
+
+.cash {
+  background: var(--bb-amber-100);
+  color: #854d0e;
+  np-icon { color: #854d0e; }
+}
+
+.paid-online {
+  background: #e6f5ec;
+  color: var(--bb-success);
+  np-icon { color: var(--bb-success); }
+}
+
+.paid-tag {
+  color: var(--bb-success);
 }
 
 .hint {

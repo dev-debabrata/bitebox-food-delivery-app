@@ -9,7 +9,10 @@
       @if (o.payment; as p) {
         <span class="pay pay-{{ p.status }}">{{ providerLabel[p.provider] }} · {{ paymentLabel[p.status] }}</span>
       } @else {
-        <span class="pay pay-{{ o.paymentStatus }}">Cash on delivery · {{ o.paymentStatus }}</span>
+        @let isOnline = o.paymentMethod === 'online' || o.paymentStatus === 'paid';
+        <span class="pay pay-{{ o.paymentStatus }}">
+          {{ isOnline ? 'Paid online' : 'Cash on delivery' }} · {{ paymentLabel[o.paymentStatus] ?? o.paymentStatus }}
+        </span>
       }
     </p>
   </header>

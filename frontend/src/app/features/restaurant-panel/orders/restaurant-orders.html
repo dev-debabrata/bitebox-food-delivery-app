@@ -167,7 +167,11 @@
           }
 
           <div class="total">
-            <span>{{ o | itemCount }} · Cash on delivery</span>
+            @let isPaid = o.paymentMethod === 'online' || o.paymentStatus === 'paid';
+            <span>
+              {{ o | itemCount }} ·
+              <span [class.pay-paid]="isPaid">{{ isPaid ? 'Paid online' : 'Cash on delivery' }}</span>
+            </span>
             <strong>{{ o.pricing.totalPaise | inr }}</strong>
           </div>
 

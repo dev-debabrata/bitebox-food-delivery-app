@@ -42,7 +42,7 @@ export class AdminOrders {
   /** "Awaiting payment" for unpaid online orders. */
   protected readonly statusLabel = customerStatusLabel;
 
-  protected readonly filterModel = signal({ status: 'active', search: '' });
+  protected readonly filterModel = signal({ status: '', search: '' });
   protected readonly filters = form(this.filterModel);
 
   /** Live list: any order change reloads the current page; slow poll as a fallback. */
@@ -67,8 +67,8 @@ export class AdminOrders {
     const counts = this.list.data()?.counts ?? {};
     const active = ACTIVE_STATUSES.reduce((sum, s) => sum + (counts[s] ?? 0), 0);
     return [
-      { value: 'active', label: `In progress (${active})` },
       { value: '', label: 'All orders' },
+      { value: 'active', label: `In progress (${active})` },
       ...(Object.keys(ORDER_STATUS_LABEL) as OrderStatus[]).map((s) => ({
         value: s,
         label: `${ORDER_STATUS_LABEL[s]} (${counts[s] ?? 0})`,
