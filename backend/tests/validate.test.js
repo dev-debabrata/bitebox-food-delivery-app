@@ -3,8 +3,8 @@ import { describe, it } from "node:test";
 import express from "express";
 import { body, query } from "express-validator";
 import supertest from "supertest";
-import { errorHandler } from "../src/middleware/error.middleware.js";
-import { validate } from "../src/middleware/validate.middleware.js";
+import { errorHandler } from "../middleware/error.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
 
 /** Tiny app echoing what reaches the controller after validation. */
 function echo(rules) {

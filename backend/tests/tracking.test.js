@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import http from "node:http";
 import { after, before, beforeEach, describe, it } from "node:test";
 import { io as connect } from "socket.io-client";
-import { Address } from "../src/models/address.model.js";
-import { DeliveryPartner } from "../src/models/delivery-partner.model.js";
-import { FoodItem } from "../src/models/food-item.model.js";
-import { Restaurant } from "../src/models/restaurant.model.js";
-import { useProvider } from "../src/services/routing.service.js";
-import { setRealtimeServer } from "../src/sockets/events.js";
-import { attachRealtime } from "../src/sockets/index.js";
+import { Address } from "../models/address.model.js";
+import { DeliveryPartner } from "../models/delivery-partner.model.js";
+import { FoodItem } from "../models/food-item.model.js";
+import { Restaurant } from "../models/restaurant.model.js";
+import { useProvider } from "../services/routing.service.js";
+import { setRealtimeServer } from "../sockets/events.js";
+import { attachRealtime } from "../sockets/index.js";
 import { buildApp, createAndLogin, registerUser, request, resetDb, seedCatalogFor, setupTestDb, teardownTestDb } from "./helpers.js";
 
 const auth = (token) => ({ Authorization: `Bearer ${token}` });
@@ -43,7 +43,7 @@ describe("live tracking and routing", () => {
   beforeEach(async () => {
     await resetDb();
     owner = await seedCatalogFor(app);
-    const { seedCheckoutData, seedDeliveryData } = await import("../src/scripts/seed.js");
+    const { seedCheckoutData, seedDeliveryData } = await import("../scripts/seed.js");
     await seedCheckoutData();
     await seedDeliveryData();
     await Restaurant.updateOne({ slug: "spice-route-kitchen" }, { openingTime: "00:00", closingTime: "00:00" });

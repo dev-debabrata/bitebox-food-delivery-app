@@ -2,11 +2,11 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "BiteBox food delivery REST API (Express + MongoDB)",
-  "main": "src/server.js",
+  "main": "server.js",
   "scripts": {
-    "dev": "nodemon --watch src src/server.js",
-    "start": "node src/server.js",
-    "seed": "node src/scripts/seed.js",
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "seed": "node scripts/seed.js",
     "test": "NODE_ENV=test node --test --test-concurrency=1 \"tests/**/*.test.js\"",
     "lint": "eslint ."
   },

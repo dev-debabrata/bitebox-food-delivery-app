@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import http from "node:http";
 import { after, before, beforeEach, describe, it } from "node:test";
 import { io as connect } from "socket.io-client";
-import { Address } from "../src/models/address.model.js";
-import { FoodItem } from "../src/models/food-item.model.js";
-import { Restaurant } from "../src/models/restaurant.model.js";
-import { attachRealtime } from "../src/sockets/index.js";
-import { setRealtimeServer } from "../src/sockets/events.js";
+import { Address } from "../models/address.model.js";
+import { FoodItem } from "../models/food-item.model.js";
+import { Restaurant } from "../models/restaurant.model.js";
+import { attachRealtime } from "../sockets/index.js";
+import { setRealtimeServer } from "../sockets/events.js";
 import { buildApp, createAndLogin, registerUser, request, resetDb, seedCatalogFor, setupTestDb, teardownTestDb } from "./helpers.js";
 
 const auth = (token) => ({ Authorization: `Bearer ${token}` });
@@ -38,7 +38,7 @@ describe("realtime order events (Socket.IO)", () => {
   beforeEach(async () => {
     await resetDb();
     owner = await seedCatalogFor(app);
-    const { seedCheckoutData } = await import("../src/scripts/seed.js");
+    const { seedCheckoutData } = await import("../scripts/seed.js");
     await seedCheckoutData();
     await Restaurant.updateOne({ slug: "spice-route-kitchen" }, { openingTime: "00:00", closingTime: "00:00" });
     customer = await createAndLogin(app, "customer");

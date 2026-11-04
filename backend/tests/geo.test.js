@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, beforeEach, describe, it } from "node:test";
-import { clearGeocodingCache } from "../src/services/geocoding.service.js";
+import { clearGeocodingCache } from "../services/geocoding.service.js";
 import { buildApp, request, setupTestDb, teardownTestDb } from "./helpers.js";
 
 // The real provider is never called in tests: fetch is replaced with a stub.

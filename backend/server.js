@@ -11,11 +11,12 @@ import { attachRealtime } from "./sockets/index.js";
 const app = createApp();
 // A plain http.Server shared by Express and Socket.IO.
 const server = http.createServer(app);
-const io = attachRealtime(server);
+let io;
 
 async function start() {
   try {
     await connectDB(env.mongoUri);
+    io = attachRealtime(server);
   } catch (error) {
     logger.fatal({ err: error }, "Could not connect to MongoDB");
     process.exit(1);
@@ -26,8 +27,8 @@ async function start() {
   } catch (err) {
     logger.error({ err }, "Could not backfill order submittedAt");
   }
-  server.listen(env.port, () => logger.info(`BiteBox API listening on http://localhost:${env.port} (docs: /api/docs)`));
-  logger.info(`Images are stored ${cloudinaryEnabled ? "in Cloudinary" : "on local disk (set CLOUDINARY_* to use Cloudinary)"}`);
+  server.listen(env.port, () => logger.info(`Server is running on port ${env.port}`));
+  logger.debug(`Images are stored ${cloudinaryEnabled ? "in Cloudinary" : "on local disk (set CLOUDINARY_* to use Cloudinary)"}`);
   // Offer timeouts, re-dispatch of waiting orders, auto-reject of unanswered orders.
   stopDispatch = startDispatchLoop();
 }
@@ -40,7 +41,7 @@ async function shutdown(signal) {
   shuttingDown = true;
   logger.info(`${signal} received, shutting down gracefully`);
   stopDispatch();
-  io.close();
+  if (io) io.close();
 
   // Force exit if open connections do not drain in time.
   const forceExit = setTimeout(() => {

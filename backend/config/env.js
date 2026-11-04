@@ -7,7 +7,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Tests must never pick up real credentials from .env.
 if (process.env.NODE_ENV !== "test") {
   dotenv.config({ quiet: true });
-  // Also check backend/.env when running from the repo root
+  // Also check backend/.env when running from repo root
+  dotenv.config({ path: path.resolve(__dirname, "../.env"), quiet: true });
   dotenv.config({ path: path.resolve(__dirname, "../../.env"), quiet: true });
 }
 

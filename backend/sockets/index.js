@@ -64,7 +64,7 @@ export function attachRealtime(httpServer) {
   });
 
   setRealtimeServer(io);
-  logger.info("Realtime (Socket.IO) ready");
+  logger.info("Socket.IO connected");
   return io;
 }
 

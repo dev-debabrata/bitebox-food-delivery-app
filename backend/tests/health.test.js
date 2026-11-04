@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
-import { openApiDocument } from "../src/docs/openapi.js";
+import { openApiDocument } from "../docs/openapi.js";
 import { buildApp, request, setupTestDb, teardownTestDb } from "./helpers.js";
 
 describe("Health & app basics", () => {

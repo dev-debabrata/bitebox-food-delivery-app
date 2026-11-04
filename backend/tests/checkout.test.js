@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import { after, before, beforeEach, describe, it } from "node:test";
-import { PRICING } from "../src/config/pricing.js";
-import { Address } from "../src/models/address.model.js";
-import { Cart } from "../src/models/cart.model.js";
-import { Coupon, CouponRedemption } from "../src/models/coupon.model.js";
-import { FoodItem } from "../src/models/food-item.model.js";
-import { Order, Payment } from "../src/models/order.model.js";
-import { Restaurant } from "../src/models/restaurant.model.js";
-import { computePricing, couponDiscount, deliveryFee } from "../src/services/pricing.service.js";
-import { resetTransactionSupportCache } from "../src/utils/transaction.js";
+import { PRICING } from "../config/pricing.js";
+import { Address } from "../models/address.model.js";
+import { Cart } from "../models/cart.model.js";
+import { Coupon, CouponRedemption } from "../models/coupon.model.js";
+import { FoodItem } from "../models/food-item.model.js";
+import { Order, Payment } from "../models/order.model.js";
+import { Restaurant } from "../models/restaurant.model.js";
+import { computePricing, couponDiscount, deliveryFee } from "../services/pricing.service.js";
+import { resetTransactionSupportCache } from "../utils/transaction.js";
 import { buildApp, createAndLogin, registerUser, request, resetDb, seedCatalogFor, setupTestDb, teardownTestDb } from "./helpers.js";
 
 const auth = (token) => ({ Authorization: `Bearer ${token}` });
@@ -70,7 +70,7 @@ for (const mode of ["transactions", "fallback"]) {
     beforeEach(async () => {
       await resetDb();
       await seedCatalogFor(app);
-      const { seedCheckoutData } = await import("../src/scripts/seed.js");
+      const { seedCheckoutData } = await import("../scripts/seed.js");
       await seedCheckoutData();
       // Open 24 hours so tests do not depend on the time of day.
       await Restaurant.updateOne({ slug: "spice-route-kitchen" }, { openingTime: "00:00", closingTime: "00:00" });

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { after, before, beforeEach, describe, it } from "node:test";
-import { Session } from "../src/models/session.model.js";
-import { User } from "../src/models/user.model.js";
-import { testOutbox } from "../src/services/mail.service.js";
+import { Session } from "../models/session.model.js";
+import { User } from "../models/user.model.js";
+import { testOutbox } from "../services/mail.service.js";
 import {
   ORIGIN,
   PASSWORD,
@@ -307,7 +307,7 @@ describe("Authentication", () => {
 
   describe("seed", () => {
     it("is idempotent", async () => {
-      const { seedUsers } = await import("../src/scripts/seed.js");
+      const { seedUsers } = await import("../scripts/seed.js");
       const first = await seedUsers(PASSWORD);
       const second = await seedUsers(PASSWORD);
       assert.ok(first.every((r) => r.created));

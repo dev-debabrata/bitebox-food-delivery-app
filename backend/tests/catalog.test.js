@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { after, before, beforeEach, describe, it } from "node:test";
-import { env } from "../src/config/env.js";
-import { FoodCategory } from "../src/models/food-category.model.js";
-import { FoodItem } from "../src/models/food-item.model.js";
-import { Restaurant } from "../src/models/restaurant.model.js";
+import { env } from "../config/env.js";
+import { FoodCategory } from "../models/food-category.model.js";
+import { FoodItem } from "../models/food-item.model.js";
+import { Restaurant } from "../models/restaurant.model.js";
 import {
   buildApp,
   createAndLogin,
@@ -150,7 +150,7 @@ describe("Restaurants, categories and food", () => {
     });
 
     it("notifies admins of applications and owners of the decision", async () => {
-      const { Notification } = await import("../src/models/notification.model.js");
+      const { Notification } = await import("../models/notification.model.js");
       const admin = await createAndLogin(app, "admin");
       const owner = await registerUser(app, { role: "restaurant" });
       const inbox = async (token) => (await request(app).get("/api/v1/notifications").set(auth(token))).body.data.items;
@@ -439,8 +439,8 @@ describe("Restaurants, categories and food", () => {
     });
 
     it("uploads to Cloudinary when it is configured", async () => {
-      const { default: cloudinary } = await import("../src/config/cloudinary.js");
-      const { cloudinaryStorage, useImageStorage } = await import("../src/services/upload.service.js");
+      const { default: cloudinary } = await import("../config/cloudinary.js");
+      const { cloudinaryStorage, useImageStorage } = await import("../services/upload.service.js");
       const sent = [];
       const realStream = cloudinary.uploader.upload_stream;
       cloudinary.config({ cloud_name: "demo-cloud" });

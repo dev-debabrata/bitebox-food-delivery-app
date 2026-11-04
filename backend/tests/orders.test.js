@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import { after, before, beforeEach, describe, it } from "node:test";
-import { DISPATCH } from "../src/config/dispatch.js";
-import { Address } from "../src/models/address.model.js";
-import { Coupon, CouponRedemption } from "../src/models/coupon.model.js";
-import { DeliveryPartner } from "../src/models/delivery-partner.model.js";
-import { FoodItem } from "../src/models/food-item.model.js";
-import { Order, Payment } from "../src/models/order.model.js";
-import { Restaurant } from "../src/models/restaurant.model.js";
-import { sweep } from "../src/services/dispatch.service.js";
-import { TRANSITIONS, canTransition } from "../src/services/order-workflow.service.js";
+import { DISPATCH } from "../config/dispatch.js";
+import { Address } from "../models/address.model.js";
+import { Coupon, CouponRedemption } from "../models/coupon.model.js";
+import { DeliveryPartner } from "../models/delivery-partner.model.js";
+import { FoodItem } from "../models/food-item.model.js";
+import { Order, Payment } from "../models/order.model.js";
+import { Restaurant } from "../models/restaurant.model.js";
+import { sweep } from "../services/dispatch.service.js";
+import { TRANSITIONS, canTransition } from "../services/order-workflow.service.js";
 import { buildApp, createAndLogin, registerUser, request, resetDb, seedCatalogFor, setupTestDb, teardownTestDb } from "./helpers.js";
 
 const auth = (token) => ({ Authorization: `Bearer ${token}` });
@@ -47,7 +47,7 @@ describe("order management and delivery", () => {
   beforeEach(async () => {
     await resetDb();
     owner = await seedCatalogFor(app);
-    const { seedCheckoutData, seedDeliveryData } = await import("../src/scripts/seed.js");
+    const { seedCheckoutData, seedDeliveryData } = await import("../scripts/seed.js");
     await seedCheckoutData();
     await seedDeliveryData();
     await Restaurant.updateOne({ slug: "spice-route-kitchen" }, { openingTime: "00:00", closingTime: "00:00" });

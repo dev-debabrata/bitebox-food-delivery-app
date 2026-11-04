@@ -8,8 +8,8 @@ express.application.use = function (path, ...handlers) {
   if (typeof path === "string") for (const h of handlers.flat()) if (h?.stack) h.mountPath = path;
   return use.call(this, path, ...handlers);
 };
-const { createApp } = await import("../src/app.js");
-const { openApiDocument } = await import("../src/docs/openapi.js");
+const { createApp } = await import("../app.js");
+const { openApiDocument } = await import("../docs/openapi.js");
 const app = createApp();
 express.application.use = use;
 

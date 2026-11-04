@@ -1,8 +1,8 @@
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 import supertest from "supertest";
-import { createApp } from "../src/app.js";
-import { testOutbox } from "../src/services/mail.service.js";
+import { createApp } from "../app.js";
+import { testOutbox } from "../services/mail.service.js";
 
 export const ORIGIN = "http://localhost:4200";
 export const PASSWORD = "Sup3rSecret!";
@@ -56,7 +56,7 @@ export async function registerUser(app, overrides = {}) {
 
 /** Creates a user directly in the DB (e.g. an admin, which cannot self-register) and signs in. */
 export async function createAndLogin(app, role) {
-  const { seedUsers, SEED_USERS } = await import("../src/scripts/seed.js");
+  const { seedUsers, SEED_USERS } = await import("../scripts/seed.js");
   await seedUsers(PASSWORD);
   const email = SEED_USERS.find((u) => u.role === role).email;
   const res = await supertest(app).post("/api/v1/auth/login").send({ email, password: PASSWORD });
@@ -66,7 +66,7 @@ export async function createAndLogin(app, role) {
 /** Creates an approved restaurant (with categories and menu) via the seed helpers. */
 export async function seedCatalogFor(app) {
   const owner = await createAndLogin(app, "restaurant");
-  const { seedCatalog } = await import("../src/scripts/seed.js");
+  const { seedCatalog } = await import("../scripts/seed.js");
   await seedCatalog();
   return owner;
 }

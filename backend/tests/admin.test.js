@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { after, before, beforeEach, describe, it } from "node:test";
-import { Address } from "../src/models/address.model.js";
-import { CouponRedemption } from "../src/models/coupon.model.js";
-import { FoodItem } from "../src/models/food-item.model.js";
-import { Order, Payment } from "../src/models/order.model.js";
-import { Restaurant } from "../src/models/restaurant.model.js";
+import { Address } from "../models/address.model.js";
+import { CouponRedemption } from "../models/coupon.model.js";
+import { FoodItem } from "../models/food-item.model.js";
+import { Order, Payment } from "../models/order.model.js";
+import { Restaurant } from "../models/restaurant.model.js";
 import { buildApp, createAndLogin, registerUser, request, resetDb, seedCatalogFor, setupTestDb, teardownTestDb } from "./helpers.js";
 
 const auth = (token) => ({ Authorization: `Bearer ${token}` });
@@ -130,7 +130,7 @@ describe("admin coupons, saved addresses and payment administration", () => {
 
     beforeEach(async () => {
       owner = await seedCatalogFor(app);
-      const { seedCheckoutData } = await import("../src/scripts/seed.js");
+      const { seedCheckoutData } = await import("../scripts/seed.js");
       await seedCheckoutData();
       await Restaurant.updateOne({ slug: "spice-route-kitchen" }, { openingTime: "00:00", closingTime: "00:00" });
     });

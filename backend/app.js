@@ -36,7 +36,7 @@ export function createApp(options = {}) {
   if (process.env.TRUST_PROXY) app.set("trust proxy", Number(process.env.TRUST_PROXY) || process.env.TRUST_PROXY);
   app.disable("x-powered-by");
 
-  app.use(pinoHttp({ logger, autoLogging: !env.isTest }));
+  app.use(pinoHttp({ logger, autoLogging: process.env.LOG_HTTP === "true" }));
   app.use(helmet());
   // gzip/brotli for JSON and docs (a reverse proxy may also do this; doing both is harmless).
   app.use(compression());
