@@ -14,37 +14,63 @@ import { mongoSanitize } from "./middleware/security.middleware.js";
 import adminCatalogRoutes from "./routes/admin-catalog.routes.js";
 import adminUsersRoutes from "./routes/admin-users.routes.js";
 import { createAuthRouter } from "./routes/auth.routes.js";
-import { categoriesRouter, foodsRouter, restaurantsRouter } from "./routes/catalog.routes.js";
-import { addressesRouter, adminCouponsRouter, cartRouter, couponsRouter, ordersRouter } from "./routes/checkout.routes.js";
-import { adminDeliveryPartnersRouter, adminOrdersRouter, adminPaymentsRouter, adminReportsRouter } from "./routes/admin-orders.routes.js";
+import {
+  categoriesRouter,
+  foodsRouter,
+  restaurantsRouter,
+} from "./routes/catalog.routes.js";
+import {
+  addressesRouter,
+  adminCouponsRouter,
+  cartRouter,
+  couponsRouter,
+  ordersRouter,
+} from "./routes/checkout.routes.js";
+import {
+  adminDeliveryPartnersRouter,
+  adminOrdersRouter,
+  adminPaymentsRouter,
+  adminReportsRouter,
+} from "./routes/admin-orders.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
-import { paymentsRouter, razorpayWebhookRouter } from "./routes/payment.routes.js";
+import {
+  paymentsRouter,
+  razorpayWebhookRouter,
+} from "./routes/payment.routes.js";
 import deliveryRoutes from "./routes/delivery.routes.js";
 import geoRoutes from "./routes/geo.routes.js";
 import healthRoutes from "./routes/health.routes.js";
 import myRestaurantRoutes from "./routes/my-restaurant.routes.js";
+import {
+  adminReviewsRouter,
+  reviewsRouter,
+} from "./routes/review.routes.js";
 import uploadsRoutes from "./routes/uploads.routes.js";
 
-/**
- * Builds the Express application without starting a server, so tests can
- * exercise it directly with supertest.
- */
 export function createApp(options = {}) {
   const app = express();
 
-  // Needed for correct client IPs (rate limiting) behind a reverse proxy.
-  if (process.env.TRUST_PROXY) app.set("trust proxy", Number(process.env.TRUST_PROXY) || process.env.TRUST_PROXY);
+  if (process.env.TRUST_PROXY)
+    app.set(
+      "trust proxy",
+      Number(process.env.TRUST_PROXY) || process.env.TRUST_PROXY,
+    );
   app.disable("x-powered-by");
 
   app.use(pinoHttp({ logger, autoLogging: process.env.LOG_HTTP === "true" }));
   app.use(helmet());
-  // gzip/brotli for JSON and docs (a reverse proxy may also do this; doing both is harmless).
   app.use(compression());
   app.use(
     cors({
-      origin: (origin, callback) => callback(null, !origin || env.clientUrls.includes(origin)),
+      origin: (origin, callback) =>
+        callback(null, !origin || env.clientUrls.includes(origin)),
       credentials: true,
-      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Idempotency-Key"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Idempotency-Key",
+      ],
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     }),
   );
@@ -56,10 +82,13 @@ export function createApp(options = {}) {
   app.use(mongoSanitize);
 
   app.get("/", (_req, res) =>
-    res.json({ success: true, message: "BiteBox API", data: { docs: "/api/docs", health: "/api/v1/health" } }),
+    res.json({
+      success: true,
+      message: "BiteBox API",
+      data: { docs: "/api/docs", health: "/api/v1/health" },
+    }),
   );
-  // Uploaded images. CORP is relaxed so the web app (another origin) can display them;
-  // nosniff + fixed extensions mean files are never interpreted as anything but images.
+
   app.use(
     "/uploads",
     express.static(path.resolve(env.uploadDir), {
@@ -75,7 +104,11 @@ export function createApp(options = {}) {
   );
 
   app.get("/api/docs.json", (_req, res) => res.json(openApiDocument));
-  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openApiDocument, { customSiteTitle: "BiteBox API Docs" }));
+  app.use(
+    "/api/docs",
+    swaggerUi.serve,
+    swaggerUi.setup(openApiDocument, { customSiteTitle: "BiteBox API Docs" }),
+  );
 
   app.use("/api/v1/health", healthRoutes);
   app.use("/api/v1/auth", createAuthRouter(options.rateLimits));
@@ -85,6 +118,7 @@ export function createApp(options = {}) {
   app.use("/api/v1/admin/delivery-partners", adminDeliveryPartnersRouter);
   app.use("/api/v1/admin/payments", adminPaymentsRouter);
   app.use("/api/v1/admin/reports", adminReportsRouter);
+  app.use("/api/v1/admin/reviews", adminReviewsRouter);
   app.use("/api/v1/admin", adminCatalogRoutes);
   app.use("/api/v1/restaurants", restaurantsRouter);
   app.use("/api/v1/categories", categoriesRouter);
@@ -98,6 +132,7 @@ export function createApp(options = {}) {
   app.use("/api/v1/delivery", deliveryRoutes);
   app.use("/api/v1/payments", paymentsRouter);
   app.use("/api/v1/notifications", notificationRoutes);
+  app.use("/api/v1/reviews", reviewsRouter);
   app.use("/api/v1/geo", geoRoutes);
 
   app.use(notFound);

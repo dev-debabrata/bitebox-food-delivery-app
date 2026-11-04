@@ -8,27 +8,33 @@ export function couponDiscount(coupon, subtotalPaise) {
     coupon.discountType === DISCOUNT_TYPES.PERCENT
       ? Math.floor((subtotalPaise * coupon.discountValue) / 100)
       : coupon.discountValue;
-  if (coupon.maxDiscountPaise) discount = Math.min(discount, coupon.maxDiscountPaise);
+  if (coupon.maxDiscountPaise)
+    discount = Math.min(discount, coupon.maxDiscountPaise);
   return Math.max(0, Math.min(discount, subtotalPaise));
 }
 
-/** Delivery fee from straight-line distance; free above the threshold. */
 export function deliveryFee(distanceMeters, discountedSubtotalPaise) {
   if (discountedSubtotalPaise >= PRICING.freeDeliveryThresholdPaise) return 0;
   const km = distanceMeters / 1000;
   const extraKm = Math.max(0, Math.ceil(km - PRICING.deliveryBaseKm));
-  return Math.min(PRICING.deliveryBaseFeePaise + extraKm * PRICING.deliveryPerKmPaise, PRICING.deliveryMaxFeePaise);
+  return Math.min(
+    PRICING.deliveryBaseFeePaise + extraKm * PRICING.deliveryPerKmPaise,
+    PRICING.deliveryMaxFeePaise,
+  );
 }
 
-/**
- * Full bill. Pure function so it is easy to test and reuse.
- * `distanceMeters` may be null before an address is chosen (no delivery fee yet).
- */
-export function computePricing({ subtotalPaise, coupon = null, distanceMeters = null }) {
+export function computePricing({
+  subtotalPaise,
+  coupon = null,
+  distanceMeters = null,
+}) {
   const discountPaise = couponDiscount(coupon, subtotalPaise);
   const discounted = subtotalPaise - discountPaise;
-  const deliveryFeePaise = distanceMeters === null ? 0 : deliveryFee(distanceMeters, discounted);
-  const taxPaise = Math.round((discounted * PRICING.foodTaxBasisPoints) / 10_000);
+  const deliveryFeePaise =
+    distanceMeters === null ? 0 : deliveryFee(distanceMeters, discounted);
+  const taxPaise = Math.round(
+    (discounted * PRICING.foodTaxBasisPoints) / 10_000,
+  );
   const platformFeePaise = subtotalPaise > 0 ? PRICING.platformFeePaise : 0;
   return {
     subtotalPaise,

@@ -225,6 +225,10 @@
             <p class="note"><strong>Note:</strong> {{ o.note }}</p>
           }
         </section>
+
+        @if (o.status === 'delivered') {
+          <bb-order-reviews [orderId]="o.id" [orderNumber]="o.orderNumber" [riderName]="o.rider?.name ?? null" [autoOpen]="rate() === '1'" />
+        }
       </div>
 
       <aside class="side">
@@ -260,6 +264,12 @@
                   {{ r.vehicleType ? vehicleLabel[r.vehicleType] : ''
                   }}{{ r.vehicleNumber ? ' · ' + r.vehicleNumber : '' }}
                 </span>
+                @if (r.rating; as rating) {
+                  <span class="rider-rating">
+                    <bb-stars [value]="rating.average" size="sm" />
+                    {{ rating.average | number: '1.1-1' }} ({{ rating.count }})
+                  </span>
+                }
               </div>
               @if (r.phone && o.status !== 'delivered') {
                 <a mat-icon-button [href]="'tel:' + r.phone" [attr.aria-label]="'Call ' + r.name"

@@ -1,0 +1,33 @@
+<h2 mat-dialog-title>Report this review</h2>
+<form [formRoot]="form" novalidate>
+  <mat-dialog-content class="bb-form">
+    <p class="bb-muted">
+      Our team checks every report against the review policy. The author is not told who reported it.
+    </p>
+    @if (error()) {
+      <div class="bb-alert error" role="alert">
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ error() }}</span>
+      </div>
+    }
+    <div class="bb-field">
+      <np-select
+        [formField]="form.reason"
+        label="What's wrong?"
+        placeholder="Choose a reason"
+        [options]="reasons"
+        cdkFocusInitial
+      />
+      <bb-field-error [field]="form.reason" />
+    </div>
+    <div class="bb-field">
+      <np-textarea [formField]="form.note" label="Anything else? (optional)" rows="3" autoResize />
+      <bb-field-error [field]="form.note" />
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button type="submit" class="danger" [disabled]="form().submitting()">
+      {{ form().submitting() ? 'Sending…' : 'Send report' }}
+    </button>
+  </mat-dialog-actions>
+</form>

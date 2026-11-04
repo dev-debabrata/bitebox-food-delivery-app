@@ -27,7 +27,6 @@ import { DeliveryAddress } from '../../models/checkout.models';
 import { LatLng, MapPicker } from '../map-picker/map-picker';
 import { PlaceSearch } from '../place-search/place-search';
 
-/** A point waiting for the user to confirm it on the map. */
 interface Candidate {
   latitude: number;
   longitude: number;
@@ -36,19 +35,14 @@ interface Candidate {
   source: DeliveryLocation['source'];
 }
 
-/**
- * "Where should we deliver?"
- * - "Use my current location" detects, names and saves the location in one click.
- * - Search results open the map step so the pin can be fine-tuned.
- * - Saved addresses are applied directly.
- */
 @Component({
   selector: 'bb-location-picker-dialog',
   imports: [
     PlaceSearch,
     MatDialogModule,
     MatButtonModule,
-    IconComponent, NpIconPipe,
+    IconComponent,
+    NpIconPipe,
     MatProgressBarModule,
     MapPicker,
   ],
@@ -68,7 +62,6 @@ export class LocationPickerDialog {
   protected readonly addresses = signal<DeliveryAddress[]>([]);
   protected readonly isCustomer = computed(() => this.auth.role() === 'customer');
 
-  /** Step 2 state. */
   protected readonly candidate = signal<Candidate | null>(null);
   protected readonly naming = signal(false);
   private naming$?: Subscription;
@@ -81,7 +74,6 @@ export class LocationPickerDialog {
     }
   }
 
-  /** Detects, names and saves the current location in one step. */
   protected async useGps(): Promise<void> {
     this.locating.set(true);
     this.gpsError.set(null);
@@ -99,7 +91,6 @@ export class LocationPickerDialog {
       this.location.choosePoint({ latitude, longitude, label, detail, source: 'gps' });
       this.ref.close(true);
     } catch (err) {
-      // Never use a vague reading: it would show a place the customer is not at.
       this.gpsError.set(
         err instanceof ImpreciseLocationError
           ? err.message
@@ -121,7 +112,6 @@ export class LocationPickerDialog {
     });
   }
 
-  /** Dragging the pin / tapping the map: that exact point, renamed. */
   protected onPinMoved(point: LatLng): void {
     this.candidate.update((c) => (c ? { ...c, ...point } : c));
     this.name(point);
@@ -154,7 +144,6 @@ export class LocationPickerDialog {
     this.ref.close(true);
   }
 
-  /** Reverse-geocodes the candidate point to a readable name. */
   private name(point: LatLng): void {
     this.naming$?.unsubscribe();
     this.naming.set(true);

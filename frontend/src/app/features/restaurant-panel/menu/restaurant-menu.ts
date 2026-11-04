@@ -35,6 +35,7 @@ type AvailabilityFilter = 'all' | 'available' | 'unavailable';
 import { form } from '@angular/forms/signals';
 import { IconComponent, SelectOption, ToggleComponent } from 'nexprime';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
+import { ImageFallback, UsableImagePipe } from '../../../shared/images/broken-images';
 
 @Component({
   selector: 'bb-restaurant-menu',
@@ -43,12 +44,15 @@ import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
     NP_FORM_FIELDS,
     RouterLink,
     MatButtonModule,
-    IconComponent, NpIconPipe,
+    IconComponent,
+    NpIconPipe,
     MatMenuModule,
     EmptyState,
     PageHeader,
     VegBadge,
     InrPipe,
+    ImageFallback,
+    UsableImagePipe,
   ],
   templateUrl: './restaurant-menu.html',
   styleUrl: './restaurant-menu.scss',
@@ -59,7 +63,6 @@ export class RestaurantMenu implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
 
-  /** Optional ?available=true from the dashboard stats link. */
   readonly available = input<string>();
 
   protected readonly categories = toSignal(
@@ -73,10 +76,8 @@ export class RestaurantMenu implements OnInit {
   protected readonly noRestaurant = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly busyId = signal<string | null>(null);
-  /** Total on the server, to warn if the menu is larger than what was loaded. */
   protected readonly total = signal(0);
 
-  /** Search box + dropdowns above the list (filtering happens locally). */
   protected readonly filterModel = signal({
     search: '',
     category: '',
@@ -93,7 +94,6 @@ export class RestaurantMenu implements OnInit {
     { value: 'unavailable', label: 'Unavailable' },
   ];
 
-  /** Filtering happens client-side: a single restaurant's menu is small (loaded up to 100 items). */
   protected readonly filtered = computed(() => {
     const { search, category, availability } = this.filterModel();
     const term = search.trim().toLowerCase();
@@ -150,7 +150,6 @@ export class RestaurantMenu implements OnInit {
       });
   }
 
-  /** Optimistic: the switch follows the list; on failure the list (and so the switch) goes back. */
   protected toggleAvailability(item: FoodItem, checked: boolean): void {
     const set = (isAvailable: boolean) =>
       this.items.update((list) => list.map((i) => (i.id === item.id ? { ...i, isAvailable } : i)));

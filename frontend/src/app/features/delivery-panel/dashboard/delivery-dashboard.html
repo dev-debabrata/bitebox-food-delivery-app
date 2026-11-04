@@ -60,6 +60,16 @@
             <dd>{{ profile()?.completedDeliveries ?? 0 }}</dd>
           </div>
           <div>
+            <dt>Rating</dt>
+            <dd>
+              @if (profile()?.rating?.count) {
+                <a routerLink="/delivery/reviews">★ {{ profile()!.rating!.average.toFixed(1) }} ({{ profile()!.rating!.count }})</a>
+              } @else {
+                <a routerLink="/delivery/reviews">No ratings yet</a>
+              }
+            </dd>
+          </div>
+          <div>
             <dt>Vehicle</dt>
             <dd>
               @if (profile()?.vehicleType; as v) {

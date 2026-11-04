@@ -1,9 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-/**
- * Material Symbols names (still used in data, e.g. food category icons saved in the
- * database, and in nav/menu definitions) mapped to NexPrime icon file names.
- */
 const MATERIAL_TO_NEXPRIME: Record<string, string> = {
   account_balance: 'landmark',
   account_balance_wallet: 'wallet',
@@ -125,16 +121,11 @@ const MATERIAL_TO_NEXPRIME: Record<string, string> = {
   wrong_location: 'map-pin-x',
 };
 
-/**
- * The NexPrime icon to draw for `name`: mapped from a Material name, or used as is when
- * it already is a NexPrime name ("chef-hat"). Unknown Material names show `fallback`.
- */
 export function npIconName(name: string | null | undefined, fallback = 'circle'): string {
   if (!name) return fallback;
   return MATERIAL_TO_NEXPRIME[name] ?? (name.includes('_') ? fallback : name);
 }
 
-/** `<np-icon [name]="category.icon | npIcon: 'utensils'" />` */
 @Pipe({ name: 'npIcon' })
 export class NpIconPipe implements PipeTransform {
   transform(name: string | null | undefined, fallback?: string): string {

@@ -1,0 +1,57 @@
+@if (error(); as message) {
+  <section class="bb-card">
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>{{ message }} <button class="bb-link-button" (click)="load()">Retry</button></span>
+    </div>
+  </section>
+} @else if (!state()) {
+  <span class="bb-skeleton" style="height: 140px"></span>
+} @else {
+  @let s = state()!;
+  @if (rated().length === 0) {
+    <section class="bb-card prompt" aria-labelledby="prompt-title">
+      <np-icon name="star" class="mat-icon prompt-icon" matButtonIcon />
+      <div class="prompt-text">
+        <h2 class="bb-h3" id="prompt-title">How was your order?</h2>
+        <p class="bb-muted small">
+          @if (s.canReview) {
+            Rate the restaurant, the food and the delivery, and add photos. You can review until
+            {{ s.closesAt | date: 'd MMM y' }}.
+          } @else {
+            {{ s.reason }}.
+          }
+        </p>
+      </div>
+      @if (canRate()) {
+        <button mat-flat-button type="button" class="bb-btn-accent" (click)="open()">Rate your experience</button>
+      }
+    </section>
+  } @else {
+    <section class="bb-card" aria-labelledby="rated-title">
+      <div class="title-row">
+        <h2 class="bb-h3" id="rated-title">Your ratings</h2>
+        <a routerLink="/account/reviews" class="bb-muted small">My reviews</a>
+      </div>
+      <div class="summary">
+        <bb-review-order-row
+          [orderNumber]="orderNumber()"
+          author="You"
+          [date]="rated()[0].createdAt"
+          [reviews]="rated()"
+        >
+          @if (moderated().length) {
+            <span badges class="moderated">{{ moderated().length }} hidden by moderators</span>
+          }
+        </bb-review-order-row>
+        <button mat-stroked-button type="button" class="open" (click)="open()">
+          <np-icon [name]="canRate() || canEdit() ? 'pencil' : 'eye'" class="mat-icon" matButtonIcon />
+          {{ canRate() ? 'Rate the rest' : canEdit() ? 'View & edit' : 'View' }}
+        </button>
+      </div>
+      @if (canRate()) {
+        <p class="bb-muted small">{{ unrated() }} still to rate.</p>
+      }
+    </section>
+  }
+}

@@ -50,8 +50,8 @@
       @for (d of dishes(); track d.id) {
         <li>
           <button type="button" class="dish" (click)="open(d)">
-            @if (d.imageUrl) {
-              <img [src]="d.imageUrl" alt="" loading="lazy" />
+            @if (d.imageUrl | usableImage) {
+              <img [bbSrc]="d.imageUrl" alt="" loading="lazy" />
             } @else {
               <span class="thumb" aria-hidden="true"><np-icon [name]="(d.category?.icon ?? 'restaurant') | npIcon: 'utensils'" class="mat-icon" matButtonIcon /></span>
             }

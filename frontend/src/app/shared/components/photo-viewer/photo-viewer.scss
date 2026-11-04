@@ -1,0 +1,152 @@
+@use 'breakpoints' as bp;
+
+.viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  background: #141016;
+  color: #fff;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bb-space-2);
+  padding: var(--bb-space-2) var(--bb-space-2) var(--bb-space-2) var(--bb-space-4);
+}
+
+.count {
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+
+  button,
+  a {
+    color: #fff;
+  }
+
+  button:disabled {
+    color: rgb(255 255 255 / 35%);
+  }
+}
+
+.zoom-level {
+  min-width: 3.2em;
+  text-align: center;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: zoom-in;
+  user-select: none;
+
+  &.zoomed {
+    cursor: grab;
+  }
+
+  &.dragging {
+    cursor: grabbing;
+  }
+
+  // Fill the screen (keeping the photo's proportions), also for small uploads.
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transform-origin: center;
+    transition: transform 0.12s ease-out;
+  }
+
+  &.dragging img {
+    transition: none;
+  }
+}
+
+.nav {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgb(0 0 0 / 45%) !important;
+  color: #fff;
+
+  &.prev {
+    left: var(--bb-space-2);
+  }
+
+  &.next {
+    right: var(--bb-space-2);
+  }
+}
+
+.help {
+  margin: 0;
+  padding: 4px var(--bb-space-4);
+  font-size: 0.78rem;
+  color: rgb(255 255 255 / 65%);
+  text-align: center;
+}
+
+.strip {
+  list-style: none;
+  margin: 0;
+  padding: var(--bb-space-2) var(--bb-space-4) var(--bb-space-3);
+  display: flex;
+  justify-content: center;
+  gap: var(--bb-space-2);
+  overflow-x: auto;
+}
+
+.thumb {
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  opacity: 0.6;
+
+  img {
+    display: block;
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+
+  &.current {
+    border-color: var(--bb-amber);
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage img {
+    transition: none;
+  }
+}
+
+@include bp.phone-only {
+  .strip img {
+    width: 48px;
+    height: 48px;
+  }
+}

@@ -4,7 +4,6 @@ import { dbState } from "../config/db.js";
 
 const router = Router();
 
-/** Liveness + database readiness. Returns 503 when MongoDB is unreachable. */
 router.get("/", async (_req, res) => {
   let database = dbState();
   if (database === "connected") {

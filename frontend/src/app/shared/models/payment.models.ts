@@ -1,19 +1,15 @@
-/** Payments, notifications, earnings and reports (Phase 6). Money is integer paise. */
 import { OrderStatus, PaymentStatus } from './checkout.models';
 
 export type PaymentMethod = 'cod' | 'online';
 export type PaymentProvider = 'cash_on_delivery' | 'razorpay' | 'mock';
 
-/** One choice at checkout, as offered by the server. */
 export interface PaymentMethodOption {
   method: PaymentMethod;
   label: string;
   provider: PaymentProvider;
-  /** The development-only test provider: no real money moves. */
   simulated: boolean;
 }
 
-/** The payment state shown with an order. */
 export interface PaymentInfo {
   status: PaymentStatus;
   method: PaymentMethod;
@@ -25,7 +21,6 @@ export interface PaymentInfo {
   failureReason: string | null;
 }
 
-/** What the browser needs to open the gateway checkout. */
 export interface CheckoutSession {
   provider: PaymentProvider;
   simulated: boolean;
@@ -98,7 +93,6 @@ export interface AdminPayment extends PaymentInfo {
   providerPaymentId: string | null;
   createdAt: string;
   order: { id: string; orderNumber: string; status: OrderStatus } | null;
-  /** Paid online, order closed, not refunded: an earlier refund failed. */
   refundNeeded: boolean;
 }
 
@@ -116,7 +110,6 @@ export const PROVIDER_LABEL: Record<PaymentProvider, string> = {
   mock: 'Test payment',
 };
 
-/** Icon per notification type (most specific first). */
 const ICONS: [prefix: string, icon: string][] = [
   ['order.cancelled', 'cancel'],
   ['order.rejected', 'block'],

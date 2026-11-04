@@ -24,16 +24,42 @@ export const adminOrdersRouter = Router()
 /** /api/v1/admin/payments: every payment; retry a failed refund. */
 export const adminPaymentsRouter = Router()
   .use(...adminOnly)
-  .get("/", validate(paymentRules.adminPaymentListRules), respond((req) => payments.adminList(req.validatedQuery, parsePagination(req.validatedQuery))))
-  .post("/:id/refund", validate(paymentRules.paymentIdRules), respond(async (req) => ({ payment: await payments.adminRetryRefund(req.params.id) }), "Refund issued"));
+  .get(
+    "/",
+    validate(paymentRules.adminPaymentListRules),
+    respond((req) =>
+      payments.adminList(
+        req.validatedQuery,
+        parsePagination(req.validatedQuery),
+      ),
+    ),
+  )
+  .post(
+    "/:id/refund",
+    validate(paymentRules.paymentIdRules),
+    respond(
+      async (req) => ({
+        payment: await payments.adminRetryRefund(req.params.id),
+      }),
+      "Refund issued",
+    ),
+  );
 
 /** /api/v1/admin/reports?days=30: platform analytics. */
 export const adminReportsRouter = Router()
   .use(...adminOnly)
-  .get("/", validate(paymentRules.daysRules), respond((req) => reports.adminReport(req.validatedQuery.days ?? 30)));
+  .get(
+    "/",
+    validate(paymentRules.daysRules),
+    respond((req) => reports.adminReport(req.validatedQuery.days ?? 30)),
+  );
 
 /** /api/v1/admin/delivery-partners: riders, their availability, suspend/reactivate. */
 export const adminDeliveryPartnersRouter = Router()
   .use(...adminOnly)
   .get("/", validate(rules.adminRiderListRules), c.adminRiderList)
-  .patch("/:id/status", validate(rules.adminRiderStatusRules), c.adminRiderSetStatus);
+  .patch(
+    "/:id/status",
+    validate(rules.adminRiderStatusRules),
+    c.adminRiderSetStatus,
+  );

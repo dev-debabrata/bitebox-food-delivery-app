@@ -1,25 +1,39 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormRoot, TreeValidationResult, form, maxLength, pattern, required, validate } from '@angular/forms/signals';
+import {
+  FormRoot,
+  TreeValidationResult,
+  form,
+  maxLength,
+  pattern,
+  required,
+  validate,
+} from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { IconComponent, ToggleComponent } from 'nexprime';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { errorMessage, fieldErrors } from '../../../core/services/api-error';
-import { AdminCouponService } from '../../../core/services/checkout-api.service';
-import { AdminCoupon, AdminCouponInput } from '../../../shared/models/checkout.models';
-import { rupeesToPaise } from '../../../shared/pipes/money.pipes';
-import { serverErrors, shownError } from '../../../shared/forms/form-errors';
-import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
-import { numberRange } from '../../../shared/forms/form-rules';
+import { errorMessage, fieldErrors } from '../../../../core/services/api-error';
+import { AdminCouponService } from '../../../../core/services/checkout-api.service';
+import { AdminCoupon, AdminCouponInput } from '../../../../shared/models/checkout.models';
+import { rupeesToPaise } from '../../../../shared/pipes/money.pipes';
+import { serverErrors, shownError } from '../../../../shared/forms/form-errors';
+import { NP_FORM_FIELDS } from '../../../../shared/forms/np-form-fields';
+import { numberRange } from '../../../../shared/forms/form-rules';
 
-/** Local midnight of `date`, in ms. */
 const startOfDay = (date: Date) => new Date(date).setHours(0, 0, 0, 0);
 
-/** Create / edit a coupon. Money is typed in rupees and sent as paise. */
 @Component({
   selector: 'bb-coupon-form-dialog',
-  imports: [ToggleComponent, NP_FORM_FIELDS, FormRoot, MatDialogModule, MatButtonModule, MatButtonToggleModule, IconComponent],
+  imports: [
+    ToggleComponent,
+    NP_FORM_FIELDS,
+    FormRoot,
+    MatDialogModule,
+    MatButtonModule,
+    MatButtonToggleModule,
+    IconComponent,
+  ],
   templateUrl: './coupon-form-dialog.html',
   styleUrl: './coupon-form-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,7 +46,6 @@ export class CouponFormDialog {
   protected readonly error = signal<string | null>(null);
 
   private readonly today = new Date();
-  /** Money is typed in rupees (sent as paise); percent coupons use whole percentages. */
   protected readonly model = signal({
     code: this.data?.code ?? '',
     description: this.data?.description ?? '',
@@ -42,11 +55,15 @@ export class CouponFormDialog {
         ? this.data.discountValue
         : this.data.discountValue / 100
       : (null as number | null),
-    maxDiscount: this.data?.maxDiscountPaise ? this.data.maxDiscountPaise / 100 : (null as number | null),
+    maxDiscount: this.data?.maxDiscountPaise
+      ? this.data.maxDiscountPaise / 100
+      : (null as number | null),
     minOrder: (this.data ? this.data.minOrderPaise / 100 : 0) as number | null,
     perUserLimit: (this.data?.perUserLimit ?? 1) as number | null,
     validFrom: new Date(this.data?.validFrom ?? this.today) as Date | null,
-    validUntil: new Date(this.data?.validUntil ?? this.today.getTime() + 30 * 86_400_000) as Date | null,
+    validUntil: new Date(
+      this.data?.validUntil ?? this.today.getTime() + 30 * 86_400_000,
+    ) as Date | null,
     usageLimit: this.data?.usageLimit ?? (null as number | null),
     isActive: this.data?.isActive ?? true,
   });
@@ -58,9 +75,10 @@ export class CouponFormDialog {
       pattern(path.code, /^[A-Za-z0-9_-]{3,30}$/, { message: '3-30 letters, digits, - or _' });
       maxLength(path.description, 200, { message: 'Description must be at most 200 characters' });
       numberRange(path.discount, 'Discount', 1, 10_000_000);
-      // A percentage discount cannot exceed 100.
       validate(path.discount, ({ value, valueOf }) =>
-        valueOf(path.discountType) === 'percent' && (value() ?? 0) > 100 ? { kind: 'max', message: 'A percentage cannot exceed 100' } : undefined,
+        valueOf(path.discountType) === 'percent' && (value() ?? 0) > 100
+          ? { kind: 'max', message: 'A percentage cannot exceed 100' }
+          : undefined,
       );
       numberRange(path.maxDiscount, 'Max discount', 0, 10_000_000, { optional: true });
       numberRange(path.minOrder, 'Minimum order', 0, 10_000_000, { optional: true });
@@ -97,7 +115,11 @@ export class CouponFormDialog {
     };
     this.error.set(null);
     try {
-      this.ref.close(await firstValueFrom(this.data ? this.service.update(this.data.id, input) : this.service.create(input)));
+      this.ref.close(
+        await firstValueFrom(
+          this.data ? this.service.update(this.data.id, input) : this.service.create(input),
+        ),
+      );
       return undefined;
     } catch (err) {
       this.error.set(errorMessage(err));

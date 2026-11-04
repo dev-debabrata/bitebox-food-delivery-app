@@ -1,0 +1,36 @@
+<span class="head">
+  <strong class="order">Order {{ orderNumber() }}</strong>
+  <span class="meta">
+    {{ author() }}
+    @if (subtitle()) {
+      · {{ subtitle() }}
+    }
+    @if (date()) {
+      · {{ date() | date: 'd MMM y' }}
+    }
+  </span>
+  <ng-content select="[badges]" />
+</span>
+<span class="chips">
+  @for (c of chips(); track c.id) {
+    <span class="chip" [class.muted]="c.muted">
+      <span class="chip-label">{{ c.label }}</span>
+      <bb-stars [value]="c.rating" size="sm" />
+      <span class="chip-score">{{ c.rating }}</span>
+    </span>
+  }
+</span>
+@if (comment()) {
+  <span class="comment">“{{ comment() }}”</span>
+}
+@if (photos().length) {
+  <span class="thumbs">
+    @for (src of photos().slice(0, 4); track src) {
+      <img [src]="src" alt="" loading="lazy" />
+    }
+    @if (photos().length > 4) {
+      <span class="more">+{{ photos().length - 4 }}</span>
+    }
+    <span class="bb-sr-only">{{ photos().length }} {{ photos().length === 1 ? 'photo' : 'photos' }}</span>
+  </span>
+}

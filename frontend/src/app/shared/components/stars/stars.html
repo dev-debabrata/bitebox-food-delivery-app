@@ -1,0 +1,8 @@
+@for (fill of fills(); track $index) {
+  <span class="star" aria-hidden="true">
+    <svg viewBox="0 0 24 24" class="base"><path [attr.d]="path" /></svg>
+    <span class="fill" [style.width.%]="fill">
+      <svg viewBox="0 0 24 24"><path [attr.d]="path" /></svg>
+    </span>
+  </span>
+}

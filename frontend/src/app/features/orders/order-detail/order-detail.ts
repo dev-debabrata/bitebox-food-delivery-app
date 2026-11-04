@@ -31,6 +31,8 @@ import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { deliveryTracking } from '../../../shared/components/tracking-map/delivery-tracking';
 import { TrackingMap } from '../../../shared/components/tracking-map/tracking-map';
 import { VegBadge } from '../../../shared/components/veg-badge/veg-badge';
+import { Stars } from '../../../shared/components/stars/stars';
+import { OrderReviews } from '../order-reviews/order-reviews';
 import {
   ORDER_STATUS_LABEL,
   Order,
@@ -42,7 +44,6 @@ import {
 import { PAYMENT_STATUS_LABEL, PROVIDER_LABEL } from '../../../shared/models/payment.models';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
 
-/** The happy-path journey shown as a progress tracker, with a NexPrime icon per step. */
 const JOURNEY: { status: OrderStatus; icon: string }[] = [
   { status: 'pending', icon: 'receipt' },
   { status: 'confirmed', icon: 'circle-check' },
@@ -59,7 +60,8 @@ const JOURNEY: { status: OrderStatus; icon: string }[] = [
     DatePipe,
     RouterLink,
     MatButtonModule,
-    IconComponent, NpIconPipe,
+    IconComponent,
+    NpIconPipe,
     BillSummary,
     EmptyState,
     VegBadge,
@@ -68,6 +70,8 @@ const JOURNEY: { status: OrderStatus; icon: string }[] = [
     ConfettiComponent,
     TrackingMap,
     DecimalPipe,
+    OrderReviews,
+    Stars,
   ],
   templateUrl: './order-detail.html',
   styleUrl: './order-detail.scss',
@@ -80,8 +84,9 @@ export class OrderDetail {
   private readonly payments = inject(PaymentService);
 
   readonly id = input.required<string>();
-  /** ?placed=1 right after checkout. */
   readonly placed = input<string>();
+  /** ?rate=1 (from "Rate this order" in the order list) opens the rating dialog. */
+  readonly rate = input<string>();
 
   protected readonly order = signal<Order | null>(null);
   protected readonly loading = signal(true);
@@ -91,14 +96,12 @@ export class OrderDetail {
   protected readonly paymentLabel = PAYMENT_STATUS_LABEL;
   protected readonly providerLabel = PROVIDER_LABEL;
   protected readonly paying = signal(false);
-  /** Online order not paid yet: the restaurant has not received it. */
   protected readonly awaitingPayment = computed(() => {
     const o = this.order();
     return !!o && awaitingPayment(o);
   });
   protected readonly vehicleLabel = VEHICLE_LABEL;
   protected readonly cancelling = signal(false);
-  /** Rider position, routes and estimates for the live map. */
   protected readonly tracking = deliveryTracking(this.order);
   protected readonly minutes = etaMinutes;
 
@@ -106,7 +109,6 @@ export class OrderDetail {
   private readonly confetti = viewChild(ConfettiComponent);
   private celebrated = false;
 
-  /** Index of the current step in JOURNEY ("assigned" shows as ready for pickup). */
   protected readonly activeStep = computed(() => {
     const status = this.order()?.status;
     if (!status) return -1;
@@ -115,7 +117,6 @@ export class OrderDetail {
     );
   });
 
-  /** Steps for <np-timeline>: label, time reached (if any) and icon. */
   protected readonly timeline = computed<TimelineEvent[]>(() => {
     const order = this.order();
     if (!order) return [];
@@ -133,7 +134,6 @@ export class OrderDetail {
     const status = this.order()?.status;
     return status === 'cancelled' || status === 'rejected';
   });
-  /** Still moving: worth refreshing. */
   private readonly inProgress = computed(() => {
     const status = this.order()?.status;
     return !!status && !this.ended() && status !== 'delivered';
@@ -145,15 +145,11 @@ export class OrderDetail {
       untracked(() => this.load(id));
     });
 
-    // Live: reload as soon as the server says this order changed; a slow poll covers dropped connections.
-    // Finished orders never change, so they are not reloaded (the first poll tick also skips: not loaded yet).
-    // Events that repeat the status on screen (e.g. the echo of our own cancel) are skipped too.
     liveRefresh(
       () => (this.inProgress() ? this.orders.get(this.id()).pipe(catchError(() => EMPTY)) : EMPTY),
       {
         pollMs: 60_000,
         debounceMs: 0,
-        // While unpaid, the payment confirmation arrives as an event with the same status.
         when: (e) =>
           e.id === this.id() && (e.status !== this.order()?.status || this.awaitingPayment()),
       },
@@ -167,7 +163,6 @@ export class OrderDetail {
       });
   }
 
-  /** Customers may cancel until the restaurant accepts. */
   protected cancel(order: Order): void {
     confirmed(
       this.dialog,
@@ -195,7 +190,6 @@ export class OrderDetail {
     });
   }
 
-  /** Opens the gateway again for an unpaid online order. */
   protected async payNow(order: Order): Promise<void> {
     this.paying.set(true);
     try {
@@ -213,15 +207,12 @@ export class OrderDetail {
     }
   }
 
-  /** Confetti burst once, right after checkout (?placed=1). */
   private celebrate(): void {
     if (!this.placed() || this.celebrated) return;
     this.celebrated = true;
-    // Wait a frame so the banner (and its canvas) is rendered and sized.
     setTimeout(() => this.confetti()?.fire(), 150);
   }
 
-  /** `quiet` keeps the page on screen while re-reading (after a payment). */
   protected load(id = this.id(), quiet = false): void {
     if (!quiet) this.loading.set(true);
     this.error.set(null);

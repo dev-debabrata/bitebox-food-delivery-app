@@ -1,0 +1,78 @@
+<form [formRoot]="form" novalidate>
+  <header mat-dialog-title class="intro">
+    <np-icon name="circle-check" class="mat-icon done" matButtonIcon />
+    <span class="delivered">Your order was delivered!</span>
+    <span class="order-no">Order #{{ data.orderNumber }}</span>
+    <span class="title">{{ editing() ? 'Your ratings' : 'Rate your experience' }}</span>
+  </header>
+
+  <mat-dialog-content class="content">
+    @if (error(); as message) {
+      <div class="bb-alert error" role="alert">
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ message }}</span>
+      </div>
+    }
+
+    @for (row of rows(); track row.key; let i = $index) {
+      <fieldset class="row" [class.locked]="row.locked">
+        <legend>
+          <span class="row-title">{{ row.title }}</span>
+          <span class="row-hint">{{ row.hint }}</span>
+        </legend>
+        <div class="row-stars">
+          @if (row.locked) {
+            @if (row.review) {
+              <bb-stars [value]="row.review.rating" />
+            }
+            <span class="lock-note">{{ row.locked }}</span>
+          } @else {
+            <np-rating [formField]="form.ratings[i]" [labels]="words" />
+          }
+          <span class="side">
+            <span class="score" aria-hidden="true">{{ model().ratings[i] || '–' }}/5</span>
+            @if (row.review) {
+              <button mat-icon-button type="button" class="delete" (click)="remove(row)" [attr.aria-label]="'Delete your rating of ' + row.title">
+                <np-icon name="trash-2" class="mat-icon" matButtonIcon />
+              </button>
+            }
+          </span>
+        </div>
+      </fieldset>
+    }
+
+    <div class="write">
+      @if (wordsLocked()) {
+        @if (restaurantReview()?.comment) {
+          <p class="locked-words">“{{ restaurantReview()!.comment }}”</p>
+        }
+      } @else {
+        <div class="bb-field">
+          <np-textarea
+            [formField]="form.comment"
+            label="Write a review (optional)"
+            placeholder="Share your experience…"
+            rows="3"
+            autoResize
+          />
+          <bb-field-error [field]="form.comment" />
+        </div>
+        <bb-photo-upload [(urls)]="photos" />
+      }
+    </div>
+    <p class="fine">
+      Shown with your first name and last initial.
+      @if (state().canReview) {
+        You can rate this order until {{ state().closesAt | date: 'd MMM y' }}; ratings can be changed for {{ limits.editDays }} days.
+      }
+    </p>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="actions">
+    <button mat-button type="button" (click)="close()">{{ editing() ? 'Close' : 'Later' }}</button>
+    @if (canSave()) {
+      <button mat-flat-button type="submit" class="submit" [disabled]="form().submitting()">
+        {{ form().submitting() ? 'Saving…' : editing() ? 'Save changes' : 'Submit rating' }}
+      </button>
+    }
+  </mat-dialog-actions>
+</form>

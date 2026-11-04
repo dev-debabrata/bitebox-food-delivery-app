@@ -1,5 +1,13 @@
 import { HttpClient } from '@angular/common/http';
-import { DestroyRef, Injectable, PLATFORM_ID, effect, inject, signal, untracked } from '@angular/core';
+import {
+  DestroyRef,
+  Injectable,
+  PLATFORM_ID,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
@@ -12,11 +20,6 @@ import { RealtimeService } from './realtime.service';
 
 const PAGE_SIZE = 20;
 
-/**
- * The signed-in user's in-app notifications (the bell). Loaded once per
- * sign-in, then kept current from `notification:new` pushes.
- * (Not to be confused with NotificationService, which shows snackbars.)
- */
 @Injectable({ providedIn: 'root' })
 export class InboxService {
   private readonly http = inject(HttpClient);
@@ -57,8 +60,11 @@ export class InboxService {
       });
   }
 
-  /** One page for the full Notifications page (the bell keeps its own latest few). Keeps the badge in step. */
-  page(page: number, limit: number, unreadOnly: boolean): Observable<Paginated<AppNotification> & { unread: number }> {
+  page(
+    page: number,
+    limit: number,
+    unreadOnly: boolean,
+  ): Observable<Paginated<AppNotification> & { unread: number }> {
     return this.http
       .get<ApiResponse<Paginated<AppNotification> & { unread: number }>>(this.url, {
         params: { page, limit, ...(unreadOnly && { unread: true }) },
@@ -69,13 +75,11 @@ export class InboxService {
       );
   }
 
-  /** Opening one (bell or page): mark it read and go to what it is about. */
   open(n: AppNotification): void {
     this.markRead(n);
     if (n.link) void this.router.navigateByUrl(n.link);
   }
 
-  /** Optimistic: the badge updates at once; a failure just reloads the truth. */
   markRead(n: AppNotification): void {
     if (n.readAt) return;
     const readAt = new Date().toISOString();
@@ -92,7 +96,6 @@ export class InboxService {
     this.http.post(`${this.url}/read-all`, {}).subscribe({ error: () => this.load() });
   }
 
-  /** Deletes all of them (the bell's "Clear all"). */
   clearAll(): Observable<unknown> {
     return this.http.delete(this.url).pipe(
       tap(() => {

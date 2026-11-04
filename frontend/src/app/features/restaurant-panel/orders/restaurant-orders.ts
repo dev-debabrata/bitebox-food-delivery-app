@@ -41,7 +41,6 @@ const TABS: { id: Tab; label: string; statuses: OrderStatus[] }[] = [
   { id: 'history', label: 'History', statuses: [] },
 ];
 
-/** The next step a restaurant can take for each status (rejecting is offered separately on new orders). */
 const NEXT: Partial<
   Record<OrderStatus, { action: RestaurantAction; label: string; icon: string }>
 > = {
@@ -50,7 +49,6 @@ const NEXT: Partial<
   preparing: { action: 'ready_for_pickup', label: 'Ready for pickup', icon: 'takeout_dining' },
 };
 
-/** Incoming orders for the partner's restaurant, by stage, plus history. */
 @Component({
   selector: 'bb-restaurant-orders',
   imports: [
@@ -58,7 +56,8 @@ const NEXT: Partial<
     RouterLink,
     MatButtonModule,
     MatButtonToggleModule,
-    IconComponent, NpIconPipe,
+    IconComponent,
+    NpIconPipe,
     MatPaginatorModule,
     EmptyState,
     OrderStatusChip,
@@ -80,12 +79,9 @@ export class RestaurantOrders {
   protected readonly tabs = TABS;
   protected readonly next = NEXT;
   protected readonly tab = signal<Tab>('new');
-  /** Order ids with a status change in flight (their buttons are disabled). */
   protected readonly busy = signal<ReadonlySet<string>>(new Set());
-  /** Ticks every 30 s so "5 min ago" and the auto-reject countdown stay current. */
   protected readonly now = signal(Date.now());
 
-  /** Finished orders; loaded the first time the History tab is opened. */
   protected readonly history = pagedList((page, limit) => this.api.history(page, limit), {
     limit: 15,
     lazy: true,
@@ -116,7 +112,6 @@ export class RestaurantOrders {
     return Math.max(0, Math.floor((this.now() - new Date(order.createdAt).getTime()) / 60_000));
   }
 
-  /** Minutes left before an unanswered order auto-rejects (deadline set by the server). */
   protected minutesLeft(order: RestaurantOrder): number {
     return order.respondBy
       ? Math.max(0, Math.ceil((new Date(order.respondBy).getTime() - this.now()) / 60_000))

@@ -1,0 +1,17 @@
+.rating-field {
+  margin: 0 0 var(--bb-space-3);
+  padding: 0;
+  border: 0;
+  min-width: 0;
+
+  legend {
+    padding: 0;
+    margin-bottom: var(--bb-space-2);
+    font-weight: 600;
+  }
+}
+
+.policy {
+  margin: var(--bb-space-2) 0 0;
+  font-size: 0.82rem;
+}

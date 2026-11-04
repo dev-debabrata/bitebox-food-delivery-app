@@ -28,7 +28,6 @@ export class ResetPassword implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  /** From the `?token=` query parameter in the emailed link. */
   readonly token = input<string>();
   protected readonly resetToken = signal<string | null>(null);
 
@@ -46,7 +45,6 @@ export class ResetPassword implements OnInit {
 
   ngOnInit(): void {
     this.resetToken.set(this.token() ?? null);
-    // Remove the secret token from the address bar and browser history.
     if (this.token()) {
       void this.router.navigate([], { queryParams: {}, replaceUrl: true });
     }

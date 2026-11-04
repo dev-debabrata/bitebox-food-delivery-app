@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { ORDER_STATUS_LABEL, OrderStatus } from '../../models/checkout.models';
 
-/** Groups statuses into colour families: waiting, cooking, handover, on the road, done, stopped. */
 const TONE: Record<OrderStatus, string> = {
   pending: 'waiting',
   confirmed: 'cooking',
@@ -15,7 +14,6 @@ const TONE: Record<OrderStatus, string> = {
   cancelled: 'stopped',
 };
 
-/** Coloured pill for an order status. `label` overrides the default wording. */
 @Component({
   selector: 'bb-order-status-chip',
   templateUrl: './order-status-chip.html',

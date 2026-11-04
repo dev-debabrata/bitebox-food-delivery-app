@@ -1,0 +1,70 @@
+<div class="viewer" role="group" [attr.aria-label]="'Photos' + (data.caption ? ' from ' + data.caption : '')">
+  <header class="bar">
+    <span class="count" aria-live="polite">
+      {{ many ? index() + 1 + ' / ' + data.images.length : '' }}
+      <span class="bb-sr-only">{{ alt() }}, zoom {{ percent() }}%</span>
+    </span>
+    <div class="tools">
+      <button mat-icon-button type="button" aria-label="Zoom out" [disabled]="!zoomed()" (click)="zoom(-step)">
+        <np-icon name="zoom-out" class="mat-icon" matButtonIcon />
+      </button>
+      <span class="zoom-level" aria-hidden="true">{{ percent() }}%</span>
+      <button mat-icon-button type="button" aria-label="Zoom in" [disabled]="!canZoomIn()" (click)="zoom(step)">
+        <np-icon name="zoom-in" class="mat-icon" matButtonIcon />
+      </button>
+      <button mat-icon-button type="button" aria-label="Reset zoom" [disabled]="!zoomed()" (click)="reset()">
+        <np-icon name="rotate-ccw" class="mat-icon" matButtonIcon />
+      </button>
+      <a mat-icon-button [href]="src()" target="_blank" rel="noopener" aria-label="Open the original in a new tab">
+        <np-icon name="external-link" class="mat-icon" matButtonIcon />
+      </a>
+      <button mat-icon-button type="button" mat-dialog-close aria-label="Close" cdkFocusInitial>
+        <np-icon name="x" class="mat-icon" matButtonIcon />
+      </button>
+    </div>
+  </header>
+
+  <div
+    class="stage"
+    [class.zoomed]="zoomed()"
+    [class.dragging]="dragging()"
+    (wheel)="onWheel($event)"
+    (dblclick)="toggleZoom()"
+    (pointerdown)="onPointerDown($event)"
+    (pointermove)="onPointerMove($event)"
+    (pointerup)="onPointerUp($event)"
+    (pointercancel)="onPointerUp($event)"
+  >
+    <img [src]="src()" [alt]="alt()" [style.transform]="transform()" draggable="false" />
+
+    @if (many) {
+      <button mat-icon-button type="button" class="nav prev" aria-label="Previous photo" (click)="go(-1)" (pointerdown)="$event.stopPropagation()">
+        <np-icon name="chevron-left" class="mat-icon" matButtonIcon />
+      </button>
+      <button mat-icon-button type="button" class="nav next" aria-label="Next photo" (click)="go(1)" (pointerdown)="$event.stopPropagation()">
+        <np-icon name="chevron-right" class="mat-icon" matButtonIcon />
+      </button>
+    }
+  </div>
+
+  <p class="help" aria-hidden="true">Scroll, pinch or double-click to zoom · drag to move</p>
+
+  @if (many) {
+    <ul class="strip">
+      @for (img of data.images; track img; let i = $index) {
+        <li>
+          <button
+            type="button"
+            class="thumb"
+            [class.current]="i === index()"
+            [attr.aria-label]="'Show photo ' + (i + 1)"
+            [attr.aria-current]="i === index() ? 'true' : null"
+            (click)="index.set(i); reset()"
+          >
+            <img [src]="img" alt="" />
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

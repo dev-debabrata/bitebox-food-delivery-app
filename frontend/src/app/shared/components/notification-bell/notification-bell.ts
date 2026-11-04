@@ -13,7 +13,6 @@ import { notificationIcon } from '../../models/payment.models';
 import { ROLE_META } from '../../models/user.models';
 import { confirmed } from '../confirm-dialog/confirm-dialog';
 
-/** Header bell: unread count, latest notifications, mark read, clear all. Works for every role. */
 @Component({
   selector: 'bb-notification-bell',
   imports: [DatePipe, RouterLink, MatButtonModule, IconComponent, NpIconPipe, MatMenuModule],
@@ -28,10 +27,10 @@ export class NotificationBell {
   private readonly notify = inject(NotificationService);
 
   protected readonly icon = notificationIcon;
-  /** Menu open: the bell gets a ring. */
   protected readonly opened = signal(false);
-  protected readonly badge = computed(() => (this.inbox.unread() > 99 ? '99+' : String(this.inbox.unread())));
-  /** This role's full Notifications page: /notifications, /admin/notifications… */
+  protected readonly badge = computed(() =>
+    this.inbox.unread() > 99 ? '99+' : String(this.inbox.unread()),
+  );
   protected readonly allLink = computed(() => {
     const role = this.auth.role();
     return role ? `${ROLE_META[role].home.replace(/\/$/, '')}/notifications` : '/notifications';
@@ -44,7 +43,11 @@ export class NotificationBell {
       confirmLabel: 'Clear all',
       danger: true,
     }).subscribe(() =>
-      this.inbox.clearAll().subscribe({ error: () => this.notify.error('Could not clear your notifications. Try again.') }),
+      this.inbox
+        .clearAll()
+        .subscribe({
+          error: () => this.notify.error('Could not clear your notifications. Try again.'),
+        }),
     );
   }
 }

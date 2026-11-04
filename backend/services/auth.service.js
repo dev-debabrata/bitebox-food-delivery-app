@@ -3,14 +3,17 @@ import bcrypt from "bcryptjs";
 import { env } from "../config/env.js";
 import { logger } from "../config/logger.js";
 import { Session } from "../models/session.model.js";
-import { ROLES, SELF_REGISTER_ROLES, User, USER_STATUS } from "../models/user.model.js";
+import {
+  ROLES,
+  SELF_REGISTER_ROLES,
+  User,
+  USER_STATUS,
+} from "../models/user.model.js";
 import { ApiError } from "../utils/api-error.js";
 import { hashToken, randomToken, signAccessToken } from "../utils/tokens.js";
 import { sendMail } from "./mail.service.js";
 import { notifyAdmins } from "./notification.service.js";
 
-// A rotated token presented again within this window is treated as a benign
-// race (two tabs refreshing at once) rather than token theft.
 const ROTATION_GRACE_MS = 15_000;
 
 // Used to keep login timing similar whether or not the email exists.
@@ -33,43 +36,76 @@ async function createSession(user, meta, family = crypto.randomUUID()) {
 
 async function issueTokens(user, meta, family) {
   const refreshToken = await createSession(user, meta, family);
-  return { user: user.toJSON(), accessToken: signAccessToken(user), refreshToken };
+  return {
+    user: user.toJSON(),
+    accessToken: signAccessToken(user),
+    refreshToken,
+  };
 }
 
 async function revokeAllSessions(userId, reason) {
-  await Session.updateMany({ user: userId, revokedAt: null }, { revokedAt: new Date(), revokedReason: reason });
+  await Session.updateMany(
+    { user: userId, revokedAt: null },
+    { revokedAt: new Date(), revokedReason: reason },
+  );
 }
 
 /** Partner sign-ups admins are told about (customers sign up too often to notify). */
 const PARTNER_SIGNUP = {
   [ROLES.RESTAURANT]: { what: "restaurant partner", link: "/admin/users" },
-  [ROLES.DELIVERY]: { what: "delivery partner", link: "/admin/delivery-partners" },
+  [ROLES.DELIVERY]: {
+    what: "delivery partner",
+    link: "/admin/delivery-partners",
+  },
 };
 
-export async function register({ name, email, phone, password, role = ROLES.CUSTOMER }, meta) {
+export async function register(
+  { name, email, phone, password, role = ROLES.CUSTOMER },
+  meta,
+) {
   if (!SELF_REGISTER_ROLES.includes(role)) {
     throw ApiError.forbidden("This role cannot be self-registered");
   }
 
   const existing = await User.exists({ email });
-  if (existing) throw ApiError.conflict("An account with this email already exists");
+  if (existing)
+    throw ApiError.conflict("An account with this email already exists");
   if (phone && (await User.exists({ phone }))) {
     throw ApiError.conflict("An account with this phone number already exists");
   }
 
-  const user = await User.create({ name, email, phone, role, passwordHash: await hashPassword(password) });
+  const user = await User.create({
+    name,
+    email,
+    phone,
+    role,
+    passwordHash: await hashPassword(password),
+  });
   logger.info({ userId: user.id, role }, "User registered");
   const signup = PARTNER_SIGNUP[role];
-  if (signup) await notifyAdmins({ type: `user.${role}`, title: `New ${signup.what}: ${name}`, body: email, link: signup.link });
+  if (signup)
+    await notifyAdmins({
+      type: `user.${role}`,
+      title: `New ${signup.what}: ${name}`,
+      body: email,
+      link: signup.link,
+    });
   return issueTokens(user, meta);
 }
 
 export async function login({ email, password, portal }, meta) {
-  const user = await User.findOne({ email }).select("+passwordHash +tokenVersion");
-  const passwordOk = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
+  const user = await User.findOne({ email }).select(
+    "+passwordHash +tokenVersion",
+  );
+  const passwordOk = await bcrypt.compare(
+    password,
+    user?.passwordHash ?? DUMMY_HASH,
+  );
 
-  if (!user || !passwordOk) throw ApiError.unauthorized("Invalid email or password");
-  if (user.status !== USER_STATUS.ACTIVE) throw ApiError.forbidden("This account has been suspended");
+  if (!user || !passwordOk)
+    throw ApiError.unauthorized("Invalid email or password");
+  if (user.status !== USER_STATUS.ACTIVE)
+    throw ApiError.forbidden("This account has been suspended");
   // Each panel has its own sign-in page; prevent e.g. a customer using the admin login.
   if (portal && user.role !== portal) {
     throw ApiError.forbidden("This account cannot sign in to this portal");
@@ -93,26 +129,41 @@ export async function refresh(rawToken, meta) {
 
   if (!session) {
     const stale = await Session.findOne({ tokenHash });
-    if (stale?.revokedReason === "rotated" && Date.now() - stale.revokedAt.getTime() < ROTATION_GRACE_MS) {
-      throw new ApiError(401, "Session was just refreshed, retry", { code: "REFRESH_RACE" });
+    if (
+      stale?.revokedReason === "rotated" &&
+      Date.now() - stale.revokedAt.getTime() < ROTATION_GRACE_MS
+    ) {
+      throw new ApiError(401, "Session was just refreshed, retry", {
+        code: "REFRESH_RACE",
+      });
     }
     if (stale && stale.revokedReason === "rotated") {
       // A token from this family was replayed: assume it was stolen and kill the family.
-      await Session.updateMany({ family: stale.family, revokedAt: null }, { revokedAt: new Date(), revokedReason: "reuse" });
-      logger.warn({ userId: String(stale.user) }, "Refresh token reuse detected; session family revoked");
+      await Session.updateMany(
+        { family: stale.family, revokedAt: null },
+        { revokedAt: new Date(), revokedReason: "reuse" },
+      );
+      logger.warn(
+        { userId: String(stale.user) },
+        "Refresh token reuse detected; session family revoked",
+      );
     }
     throw ApiError.unauthorized("Session expired, please sign in again");
   }
 
   const user = await User.findById(session.user).select("+tokenVersion");
-  if (!user || user.status !== USER_STATUS.ACTIVE) throw ApiError.unauthorized("Session expired, please sign in again");
+  if (!user || user.status !== USER_STATUS.ACTIVE)
+    throw ApiError.unauthorized("Session expired, please sign in again");
 
   return issueTokens(user, meta, session.family);
 }
 
 export async function logout(rawToken) {
   if (!rawToken) return;
-  await Session.updateOne({ tokenHash: hashToken(rawToken), revokedAt: null }, { revokedAt: new Date(), revokedReason: "logout" });
+  await Session.updateOne(
+    { tokenHash: hashToken(rawToken), revokedAt: null },
+    { revokedAt: new Date(), revokedReason: "logout" },
+  );
 }
 
 export async function forgotPassword(email) {
@@ -122,7 +173,9 @@ export async function forgotPassword(email) {
 
   const token = randomToken(32);
   user.passwordResetTokenHash = hashToken(token);
-  user.passwordResetExpiresAt = new Date(Date.now() + env.passwordReset.ttlMinutes * 60_000);
+  user.passwordResetExpiresAt = new Date(
+    Date.now() + env.passwordReset.ttlMinutes * 60_000,
+  );
   await user.save();
 
   const link = `${env.clientUrls[0]}/reset-password?token=${encodeURIComponent(token)}`;
@@ -138,19 +191,25 @@ export async function resetPassword(token, newPassword) {
   const passwordHash = await hashPassword(newPassword);
   // Atomically consume the token so it can only be used once.
   const user = await User.findOneAndUpdate(
-    { passwordResetTokenHash: hashToken(token), passwordResetExpiresAt: { $gt: new Date() } },
+    {
+      passwordResetTokenHash: hashToken(token),
+      passwordResetExpiresAt: { $gt: new Date() },
+    },
     {
       $set: { passwordHash },
       $unset: { passwordResetTokenHash: 1, passwordResetExpiresAt: 1 },
       $inc: { tokenVersion: 1 },
     },
   );
-  if (!user) throw ApiError.badRequest("This reset link is invalid or has expired");
+  if (!user)
+    throw ApiError.badRequest("This reset link is invalid or has expired");
   await revokeAllSessions(user._id, "password-change");
 }
 
 export async function changePassword(userId, currentPassword, newPassword) {
-  const user = await User.findById(userId).select("+passwordHash +tokenVersion");
+  const user = await User.findById(userId).select(
+    "+passwordHash +tokenVersion",
+  );
   if (!user) throw ApiError.notFound("User not found");
   if (!(await bcrypt.compare(currentPassword, user.passwordHash))) {
     throw ApiError.badRequest("Current password is incorrect");
@@ -173,7 +232,10 @@ export async function updateProfile(userId, { name, phone }) {
 
   const user = await User.findByIdAndUpdate(
     userId,
-    { ...(Object.keys(set).length && { $set: set }), ...(Object.keys(unset).length && { $unset: unset }) },
+    {
+      ...(Object.keys(set).length && { $set: set }),
+      ...(Object.keys(unset).length && { $unset: unset }),
+    },
     { returnDocument: "after", runValidators: true },
   );
   if (!user) throw ApiError.notFound("User not found");
@@ -183,5 +245,11 @@ export async function updateProfile(userId, { name, phone }) {
 export { revokeAllSessions };
 
 function escapeHtml(value) {
-  return value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  return value.replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
 }

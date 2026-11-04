@@ -1,0 +1,55 @@
+.head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.meta {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--bb-ink-muted);
+}
+
+.needs {
+  color: #7a4b00;
+  font-weight: 600;
+}
+
+.reviews {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    padding: var(--bb-space-3) 0;
+  }
+
+  li + li {
+    border-top: 1px solid var(--bb-border);
+  }
+}
+
+.subject {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--bb-space-2);
+  font-size: 0.95rem;
+  --bb-icon-size: 18px;
+
+  np-icon {
+    color: var(--bb-plum-500);
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--bb-space-2);
+}
+
+.reported {
+  font-size: 0.85rem;
+}

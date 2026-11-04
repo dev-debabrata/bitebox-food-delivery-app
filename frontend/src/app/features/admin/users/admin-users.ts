@@ -1,5 +1,13 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { form } from '@angular/forms/signals';
@@ -33,7 +41,6 @@ import { ROLE_META, Role, User } from '../../../shared/models/user.models';
 export class AdminUsers implements OnInit {
   private readonly service = inject(AdminUsersService);
 
-  /** Optional ?role= filter from the URL (e.g. links from the dashboard). */
   readonly role = input<Role>();
 
   protected readonly roleMeta = ROLE_META;
@@ -46,11 +53,15 @@ export class AdminUsers implements OnInit {
     ...this.roles.map((r) => ({ value: r, label: ROLE_META[r].label })),
   ];
 
-  /** Search box + role dropdown above the table. */
   protected readonly filters = form(signal({ search: '', role: '' as Role | '' }));
 
   protected readonly users = signal<User[]>([]);
-  protected readonly pagination = signal<Pagination>({ page: 1, limit: 10, total: 0, totalPages: 0 });
+  protected readonly pagination = signal<Pagination>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
 
@@ -62,7 +73,6 @@ export class AdminUsers implements OnInit {
   );
 
   constructor() {
-    // skip(1): the first emission is the starting value, which ngOnInit already loads.
     toObservable(computed(() => this.filters.search().value().trim()))
       .pipe(skip(1), debounceTime(350), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(() => this.load(1));

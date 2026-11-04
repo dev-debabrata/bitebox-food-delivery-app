@@ -15,14 +15,15 @@ import {
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { FoodCategory } from '../../../shared/models/catalog.models';
-import { CategoryFormDialog } from './category-form-dialog';
+import { CategoryFormDialog } from './category-form-dialog/category-form-dialog';
 
 @Component({
   selector: 'bb-admin-categories',
   imports: [
     ToggleComponent,
     MatButtonModule,
-    IconComponent, NpIconPipe,
+    IconComponent,
+    NpIconPipe,
     MatTooltipModule,
     EmptyState,
     PageHeader,
@@ -74,7 +75,6 @@ export class AdminCategories {
       });
   }
 
-  /** Optimistic: the switch follows the list; on failure the list (and so the switch) goes back. */
   protected toggle(category: FoodCategory, checked: boolean): void {
     const set = (isActive: boolean) =>
       this.categories.update((list) =>

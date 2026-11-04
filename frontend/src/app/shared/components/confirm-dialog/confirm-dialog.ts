@@ -15,14 +15,11 @@ export interface ConfirmDialogData {
   message: string;
   confirmLabel?: string;
   danger?: boolean;
-  /** When set, the user must type a reason (returned as the dialog result). */
   reasonLabel?: string;
+  /** Longest reason the API accepts (default 500). */
+  reasonMax?: number;
 }
 
-/**
- * Generic confirmation. Closes with `true`, the typed reason (if
- * `reasonLabel` is set), or `undefined` when cancelled.
- */
 @Component({
   selector: 'bb-confirm-dialog',
   imports: [FormRoot, NP_FORM_FIELDS, MatDialogModule, MatButtonModule],
@@ -38,13 +35,13 @@ export class ConfirmDialog {
   protected readonly form = form(
     this.model,
     (path) => {
-      // Only asked for when the caller wants a reason; whitespace does not count.
       validate(path.reason, ({ value }) =>
         this.data.reasonLabel && !value().trim()
           ? { kind: 'required', message: 'A reason is required' }
           : undefined,
       );
-      maxLength(path.reason, 500, { message: 'Keep it under 500 characters' });
+      const max = this.data.reasonMax ?? 500;
+      maxLength(path.reason, max, { message: `Keep it under ${max} characters` });
     },
     {
       submission: {
@@ -55,10 +52,6 @@ export class ConfirmDialog {
   );
 }
 
-/**
- * Opens the confirmation and emits only if the user confirms: `true`, or the
- * typed reason when `reasonLabel` is set. Cancelling emits nothing.
- */
 export function confirmed(
   dialog: MatDialog,
   data: ConfirmDialogData,
@@ -68,7 +61,9 @@ export function confirmed(
     .open<ConfirmDialog, ConfirmDialogData, true | string>(ConfirmDialog, { data, width })
     .afterClosed()
     .pipe(
-      // Only an explicit confirmation counts: a bare `mat-dialog-close` closes with '' (not undefined).
-      filter((result): result is true | string => result === true || (typeof result === 'string' && result.length > 0)),
+      filter(
+        (result): result is true | string =>
+          result === true || (typeof result === 'string' && result.length > 0),
+      ),
     );
 }

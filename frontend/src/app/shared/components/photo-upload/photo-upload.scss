@@ -1,0 +1,42 @@
+.photos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  gap: var(--bb-space-2);
+}
+
+.label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.saved {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bb-space-2);
+
+  li {
+    position: relative;
+  }
+
+  img {
+    display: block;
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: var(--bb-radius-sm);
+    border: 1px solid var(--bb-border);
+  }
+}
+
+.remove {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: var(--bb-surface);
+  box-shadow: var(--bb-shadow-sm);
+  --bb-icon-size: 16px;
+}

@@ -4,7 +4,11 @@ import { authenticate, authorize } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { ALL_ROLES, ROLES, User, USER_STATUS } from "../models/user.model.js";
 import { sendSuccess } from "../utils/api-response.js";
-import { escapeRegex, paginationMeta, parsePagination } from "../utils/pagination.js";
+import {
+  escapeRegex,
+  paginationMeta,
+  parsePagination,
+} from "../utils/pagination.js";
 
 const router = Router();
 
@@ -33,12 +37,18 @@ router.get(
     }
 
     const [items, total] = await Promise.all([
-      User.find(filter).sort({ createdAt: -1 }).skip(pagination.skip).limit(pagination.limit),
+      User.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(pagination.skip)
+        .limit(pagination.limit),
       User.countDocuments(filter),
     ]);
 
     sendSuccess(res, {
-      data: { items: items.map((u) => u.toJSON()), pagination: paginationMeta(pagination, total) },
+      data: {
+        items: items.map((u) => u.toJSON()),
+        pagination: paginationMeta(pagination, total),
+      },
     });
   },
 );

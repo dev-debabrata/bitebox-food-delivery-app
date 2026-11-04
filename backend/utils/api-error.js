@@ -1,7 +1,3 @@
-/**
- * Operational error with an HTTP status code. Anything thrown as an ApiError
- * is considered safe to show to the client; other errors become a generic 500.
- */
 export class ApiError extends Error {
   constructor(statusCode, message, { code, details } = {}) {
     super(message);
@@ -19,7 +15,9 @@ export class ApiError extends Error {
     return new ApiError(401, message, { code: "UNAUTHORIZED" });
   }
 
-  static forbidden(message = "You do not have permission to perform this action") {
+  static forbidden(
+    message = "You do not have permission to perform this action",
+  ) {
     return new ApiError(403, message, { code: "FORBIDDEN" });
   }
 

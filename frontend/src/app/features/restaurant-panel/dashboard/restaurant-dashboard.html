@@ -35,8 +35,8 @@
 
   <section class="bb-card summary" aria-labelledby="restaurant-name">
     <div class="identity">
-      @if (r.imageUrl) {
-        <img [src]="r.imageUrl" alt="" />
+      @if (r.imageUrl | usableImage) {
+        <img [bbSrc]="r.imageUrl" alt="" />
       } @else {
         <span class="avatar" aria-hidden="true">{{ r.name.charAt(0) }}</span>
       }
@@ -44,7 +44,7 @@
         <h2 id="restaurant-name">{{ r.name }}</h2>
         <p class="bb-muted">{{ r.cuisines.join(' · ') }} · {{ r.address.city }}</p>
         <p class="bb-muted">
-          {{ r.openingTime }}–{{ r.closingTime }} · {{ r.costForTwoPaise | inr }} for two
+          {{ r.openingTime | clockTime }} – {{ r.closingTime | clockTime }} · {{ r.costForTwoPaise | inr }} for two
         </p>
       </div>
     </div>

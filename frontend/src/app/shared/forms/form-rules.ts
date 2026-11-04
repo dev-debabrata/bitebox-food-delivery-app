@@ -11,20 +11,10 @@ import {
 } from '@angular/forms/signals';
 import { parsePhoneNumberFromString } from 'libphonenumber-js/mobile';
 
-/**
- * Reusable Signal Forms schema rules. Each mirrors the backend validation so
- * users get the same messages instantly in the browser; the server still
- * re-validates everything.
- */
-
 export const POSTAL_CODE_PATTERN = /^[A-Za-z0-9 -]{3,10}$/;
-/**
- * name@domain.tld: Angular's email() accepts "me@in" (no dot in the domain), which the
- * server rejects. This also needs a real top-level domain such as .com or .in.
- */
+
 export const EMAIL_PATTERN = /^[^\s@]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
 
-/** Required text with a length range, e.g. names. */
 export function requiredText(
   path: SchemaPath<string>,
   label: string,
@@ -46,7 +36,6 @@ export function emailRules(
   maxLength(path, 254, { message: 'Email is too long' });
 }
 
-/** 8+ characters, a letter and a number, at most 72 bytes (bcrypt limit). */
 export function passwordRules(path: SchemaPath<string>, label = 'Password'): void {
   required(path, { message: `${label} is required` });
   minLength(path, 8, { message: `${label} must be at least 8 characters` });
@@ -59,7 +48,6 @@ export function passwordRules(path: SchemaPath<string>, label = 'Password'): voi
   );
 }
 
-/** `confirm` must equal the value at `other` (e.g. "Confirm password"). */
 export function matchesField(
   confirm: SchemaPath<string>,
   other: SchemaPath<string>,
@@ -76,7 +64,6 @@ export function phoneRules(
   { optional = false }: { optional?: boolean } = {},
 ): void {
   if (!optional) required(path, { message: 'Phone number is required' });
-  // Checked against the chosen country's numbering plan (legacy numbers without a code are Indian).
   validate(path, ({ value }) =>
     value() && !parsePhoneNumberFromString(value(), 'IN')?.isValid()
       ? { kind: 'phone', message: 'Enter a valid mobile number for the selected country' }
@@ -84,7 +71,6 @@ export function phoneRules(
   );
 }
 
-/** Number between bounds; `null` (empty input) fails when required. */
 export function numberRange(
   path: SchemaPath<number | null>,
   label: string,

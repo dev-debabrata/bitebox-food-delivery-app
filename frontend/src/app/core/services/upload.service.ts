@@ -11,18 +11,18 @@ export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 export class UploadService {
   private readonly http = inject(HttpClient);
 
-  /** Client-side pre-check for fast feedback; the server re-validates the actual bytes. */
   validate(file: File): string | null {
     if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) return 'Choose a JPEG, PNG or WebP image';
     if (file.size > MAX_IMAGE_BYTES) return 'Image must be 2 MB or smaller';
     return null;
   }
 
-  uploadImage(file: File): Observable<string> {
+  /** `review-images` is the customers' endpoint for review photos; `images` is for partners. */
+  uploadImage(file: File, endpoint: 'images' | 'review-images' = 'images'): Observable<string> {
     const form = new FormData();
     form.append('image', file);
     return this.http
-      .post<ApiResponse<{ url: string }>>(`${environment.apiUrl}/uploads/images`, form)
+      .post<ApiResponse<{ url: string }>>(`${environment.apiUrl}/uploads/${endpoint}`, form)
       .pipe(map((res) => res.data.url));
   }
 }

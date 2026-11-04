@@ -1,5 +1,13 @@
 import { IconComponent } from 'nexprime';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormRoot, TreeValidationResult, form, required } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
@@ -12,10 +20,14 @@ import { PageHeader } from '../../shared/components/page-header/page-header';
 import { ROLE_META } from '../../shared/models/user.models';
 import { serverErrors, shownError } from '../../shared/forms/form-errors';
 import { NP_FORM_FIELDS } from '../../shared/forms/np-form-fields';
-import { matchesField, passwordRules, phoneRules, requiredText } from '../../shared/forms/form-rules';
+import {
+  matchesField,
+  passwordRules,
+  phoneRules,
+  requiredText,
+} from '../../shared/forms/form-rules';
 import { PhoneInput } from '../../shared/components/phone-input/phone-input';
 
-/** Profile details + change password. Shared by every panel. */
 @Component({
   selector: 'bb-profile',
   imports: [
@@ -27,7 +39,7 @@ import { PhoneInput } from '../../shared/components/phone-input/phone-input';
     IconComponent,
     MatProgressSpinnerModule,
     PageHeader,
-    ],
+  ],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,7 +66,11 @@ export class Profile {
   );
 
   // Change password
-  protected readonly passwordModel = signal({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  protected readonly passwordModel = signal({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
   protected readonly passwordForm = form(
     this.passwordModel,
     (path) => {
@@ -70,7 +86,6 @@ export class Profile {
   protected readonly shownError = shownError;
 
   constructor() {
-    // Keep the form in sync with the signed-in user (e.g. after session restore), unless being edited.
     effect(() => {
       const user = this.user();
       if (user && !untracked(() => this.profileForm().dirty())) {
@@ -96,7 +111,9 @@ export class Profile {
     this.passwordError.set(null);
     const { currentPassword, newPassword } = this.passwordModel();
     try {
-      this.notify.success(await firstValueFrom(this.auth.changePassword({ currentPassword, newPassword })));
+      this.notify.success(
+        await firstValueFrom(this.auth.changePassword({ currentPassword, newPassword })),
+      );
       return undefined;
     } catch (err) {
       this.passwordError.set(errorMessage(err));

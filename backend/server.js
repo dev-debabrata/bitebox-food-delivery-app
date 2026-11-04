@@ -9,7 +9,6 @@ import { startDispatchLoop } from "./services/dispatch.service.js";
 import { attachRealtime } from "./sockets/index.js";
 
 const app = createApp();
-// A plain http.Server shared by Express and Socket.IO.
 const server = http.createServer(app);
 let io;
 
@@ -21,15 +20,21 @@ async function start() {
     logger.fatal({ err: error }, "Could not connect to MongoDB");
     process.exit(1);
   }
-  // Orders from before online payments went to the restaurant when placed (idempotent; new orders always have the field).
   try {
-    await Order.updateMany({ submittedAt: { $exists: false } }, [{ $set: { submittedAt: "$createdAt" } }], { updatePipeline: true });
+    await Order.updateMany(
+      { submittedAt: { $exists: false } },
+      [{ $set: { submittedAt: "$createdAt" } }],
+      { updatePipeline: true },
+    );
   } catch (err) {
     logger.error({ err }, "Could not backfill order submittedAt");
   }
-  server.listen(env.port, () => logger.info(`Server is running on port ${env.port}`));
-  logger.debug(`Images are stored ${cloudinaryEnabled ? "in Cloudinary" : "on local disk (set CLOUDINARY_* to use Cloudinary)"}`);
-  // Offer timeouts, re-dispatch of waiting orders, auto-reject of unanswered orders.
+  server.listen(env.port, () =>
+    logger.info(`Server is running on port ${env.port}`),
+  );
+  logger.debug(
+    `Images are stored ${cloudinaryEnabled ? "in Cloudinary" : "on local disk (set CLOUDINARY_* to use Cloudinary)"}`,
+  );
   stopDispatch = startDispatchLoop();
 }
 
@@ -43,7 +48,6 @@ async function shutdown(signal) {
   stopDispatch();
   if (io) io.close();
 
-  // Force exit if open connections do not drain in time.
   const forceExit = setTimeout(() => {
     logger.error("Forced shutdown after timeout");
     process.exit(1);
@@ -51,7 +55,9 @@ async function shutdown(signal) {
   forceExit.unref();
 
   server.close(async () => {
-    await disconnectDB().catch((error) => logger.error({ err: error }, "Error closing MongoDB"));
+    await disconnectDB().catch((error) =>
+      logger.error({ err: error }, "Error closing MongoDB"),
+    );
     process.exit(0);
   });
   server.closeIdleConnections();
@@ -59,6 +65,8 @@ async function shutdown(signal) {
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
-process.on("unhandledRejection", (reason) => logger.error({ err: reason }, "Unhandled promise rejection"));
+process.on("unhandledRejection", (reason) =>
+  logger.error({ err: reason }, "Unhandled promise rejection"),
+);
 
 start();

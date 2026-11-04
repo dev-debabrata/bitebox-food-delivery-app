@@ -1,7 +1,3 @@
-/**
- * Order handling and rider dispatch rules, in one place so they are easy to
- * tune and test.
- */
 export const DISPATCH = Object.freeze({
   // A rider has this long to accept an offered delivery before it moves on.
   offerTimeoutSeconds: 90,

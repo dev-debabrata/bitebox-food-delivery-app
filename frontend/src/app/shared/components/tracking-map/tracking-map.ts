@@ -16,7 +16,6 @@ import { environment } from '../../../../environments/environment';
 import { Point, isValidPoint } from '../../../core/services/routing.service';
 
 type MarkerKind = 'restaurant' | 'home' | 'rider';
-/** NexPrime icon per marker, drawn inline (markers are plain Leaflet HTML, not Angular templates). */
 const ICON: Record<MarkerKind, string> = {
   restaurant: 'store',
   home: 'house',
@@ -27,19 +26,8 @@ const LABEL: Record<MarkerKind, string> = {
   home: 'Delivery address',
   rider: 'Rider',
 };
-/** Rider marker glides to each new position over this long. */
 const GLIDE_MS = 900;
 
-/**
- * Read-only delivery map (Leaflet + OpenStreetMap tiles): restaurant, drop-off
- * and the rider's live position, with the road route (solid) or, when no road
- * route is available, a dashed straight line between the two stops.
- *
- * - Invalid coordinates are ignored rather than drawn at 0,0.
- * - The view fits everything once, then pans only when the rider leaves it,
- *   so people can zoom and pan without the map jumping back.
- * - Leaflet loads in the browser only (SSR-safe); a load failure shows a message.
- */
 @Component({
   selector: 'bb-tracking-map',
   templateUrl: './tracking-map.html',
@@ -50,13 +38,9 @@ export class TrackingMap {
   readonly restaurant = input<Point | null>(null);
   readonly destination = input<Point | null>(null);
   readonly rider = input<Point | null>(null);
-  /** Rider position is old: shown greyed out. */
   readonly riderStale = input(false);
-  /** Road route to draw. When null, a dashed straight line joins `lineFrom` and the destination. */
   readonly route = input<Point[] | null>(null);
-  /** Start of the dashed fallback line (defaults to the restaurant). */
   readonly lineFrom = input<Point | null>(null);
-  /** Accessible summary of what the map shows (the same facts are also given as text nearby). */
   readonly label = input('Delivery map');
 
   protected readonly loadError = signal<string | null>(null);
@@ -66,14 +50,12 @@ export class TrackingMap {
   private L?: typeof Leaflet;
   private map?: Leaflet.Map;
   private readonly markers: Partial<Record<MarkerKind, Leaflet.Marker>> = {};
-  /** The marker icons' SVG markup, loaded once from the app's own /icons folder. */
   private svgs: Partial<Record<MarkerKind, string>> = {};
   private line?: Leaflet.Polyline;
   private fitted = false;
   private glide?: number;
   private resizeObserver?: ResizeObserver;
 
-  // Separate so the route line (which depends on the fixed stops) is not rebuilt on every rider move.
   private readonly stops = computed(() => ({
     restaurant: isValidPoint(this.restaurant()) ? this.restaurant() : null,
     home: isValidPoint(this.destination()) ? this.destination() : null,
@@ -102,7 +84,6 @@ export class TrackingMap {
       if (!this.ready()) return;
       const route = (this.route() ?? []).filter(isValidPoint);
       if (route.length > 1) return this.drawLine(route, true);
-      // No road route: dashed straight line. Only this branch reads lineFrom (often the moving rider).
       const from = isValidPoint(this.lineFrom()) ? this.lineFrom() : this.stops().restaurant;
       const to = this.stops().home;
       this.drawLine(from && to ? [from, to] : [], false);
@@ -179,7 +160,6 @@ export class TrackingMap {
     if (kind === 'rider') this.markers.rider?.getElement()?.classList.toggle('is-stale', stale);
   }
 
-  /** Smoothly moves the rider marker instead of jumping. */
   private glideTo(marker: Leaflet.Marker, target: Leaflet.LatLng): void {
     if (this.glide) cancelAnimationFrame(this.glide);
     const start = marker.getLatLng();
@@ -208,7 +188,6 @@ export class TrackingMap {
     this.line.bringToBack();
   }
 
-  /** Fit everything once; afterwards only pan if the rider drives out of view. */
   private keepInView(points: {
     restaurant: Point | null;
     home: Point | null;

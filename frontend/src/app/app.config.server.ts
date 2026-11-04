@@ -7,10 +7,13 @@ import { SERVER_API_ORIGIN } from './core/interceptors/server-api.interceptor';
 const serverConfig: ApplicationConfig = {
   providers: [
     provideServerRendering(withRoutes(serverRoutes)),
-    // Production: the API's internal address for calls made while rendering (unset in development,
-    // where the API URL is already absolute).
     ...(process.env['API_INTERNAL_URL']
-      ? [{ provide: SERVER_API_ORIGIN, useValue: process.env['API_INTERNAL_URL'].replace(/\/$/, '') }]
+      ? [
+          {
+            provide: SERVER_API_ORIGIN,
+            useValue: process.env['API_INTERNAL_URL'].replace(/\/$/, ''),
+          },
+        ]
       : []),
   ],
 };

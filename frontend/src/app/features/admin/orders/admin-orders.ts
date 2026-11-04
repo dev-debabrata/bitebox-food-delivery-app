@@ -11,13 +11,16 @@ import { OrderStatusChip } from '../../../shared/components/order-status-chip/or
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { pagedList } from '../../../shared/list/paged-list';
-import { ORDER_STATUS_LABEL, OrderStatus, customerStatusLabel } from '../../../shared/models/checkout.models';
+import {
+  ORDER_STATUS_LABEL,
+  OrderStatus,
+  customerStatusLabel,
+} from '../../../shared/models/checkout.models';
 import { ACTIVE_STATUSES } from '../../../shared/models/order-management.models';
 import { ItemCountPipe } from '../../../shared/pipes/item-count.pipe';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
-import { openAdminOrder } from './admin-order-dialog';
+import { openAdminOrder } from './admin-order-dialog/admin-order-dialog';
 
-/** Every order on the platform: filter, search by number, open one to act on it. */
 @Component({
   selector: 'bb-admin-orders',
   imports: [
@@ -39,13 +42,11 @@ import { openAdminOrder } from './admin-order-dialog';
 export class AdminOrders {
   private readonly api = inject(AdminOrdersService);
   private readonly dialog = inject(MatDialog);
-  /** "Awaiting payment" for unpaid online orders. */
   protected readonly statusLabel = customerStatusLabel;
 
   protected readonly filterModel = signal({ status: '', search: '' });
   protected readonly filters = form(this.filterModel);
 
-  /** Live list: any order change reloads the current page; slow poll as a fallback. */
   protected readonly list = pagedList(
     (page, limit) => {
       const { status, search } = this.filterModel();

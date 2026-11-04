@@ -3,11 +3,11 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { RouterLink } from '@angular/router';
 import { Restaurant } from '../../models/catalog.models';
 import { DistancePipe, InrPipe } from '../../pipes/money.pipes';
+import { ImageFallback, UsableImagePipe } from '../../images/broken-images';
 
-/** Restaurant tile used in listings. Falls back to a branded illustration when there is no photo. */
 @Component({
   selector: 'bb-restaurant-card',
-  imports: [RouterLink, IconComponent, InrPipe, DistancePipe],
+  imports: [RouterLink, IconComponent, InrPipe, DistancePipe, ImageFallback, UsableImagePipe],
   templateUrl: './restaurant-card.html',
   styleUrl: './restaurant-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

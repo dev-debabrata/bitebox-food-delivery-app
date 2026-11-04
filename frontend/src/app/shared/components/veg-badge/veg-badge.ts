@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-/** The familiar square veg (green) / non-veg (red) marker, with a text label for screen readers. */
 @Component({
   selector: 'bb-veg-badge',
   templateUrl: './veg-badge.html',

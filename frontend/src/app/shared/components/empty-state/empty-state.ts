@@ -2,7 +2,6 @@ import { NpIconPipe } from '../../../shared/icons/np-icon-name';
 import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-/** Friendly "nothing here" message with an optional action slot. */
 @Component({
   selector: 'bb-empty-state',
   imports: [IconComponent, NpIconPipe],

@@ -22,7 +22,6 @@ export const appConfig: ApplicationConfig = {
     ),
     provideClientHydration(withEventReplay()),
     provideHttpClient(withFetch(), withInterceptors([serverApiInterceptor, authInterceptor])),
-    // Restore the session from the refresh cookie without blocking first render.
     provideAppInitializer(() => {
       inject(AuthService).restoreSession().subscribe();
     }),

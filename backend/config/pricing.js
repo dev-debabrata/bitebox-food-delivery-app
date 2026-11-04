@@ -1,8 +1,3 @@
-/**
- * Order pricing rules. All amounts are integer paise (₹1 = 100).
- * Changing these values changes what every new order costs, so keep them
- * here in one place and covered by tests.
- */
 export const PRICING = Object.freeze({
   // Delivery fee: a base fee covers the first few km, then a per-km charge (rounded up), capped.
   deliveryBaseFeePaise: 2500, // ₹25

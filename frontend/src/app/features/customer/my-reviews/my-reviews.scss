@@ -1,0 +1,74 @@
+@use 'breakpoints' as bp;
+
+.page {
+  padding-block: var(--bb-space-5) var(--bb-space-7);
+  max-width: 820px;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--bb-ink-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  --bb-icon-size: 18px;
+}
+
+.filters {
+  margin-bottom: var(--bb-space-4);
+
+  @include bp.tablet-up {
+    max-width: 240px;
+  }
+}
+
+.reviews {
+  list-style: none;
+  margin: 0 0 var(--bb-space-3);
+  padding: 0;
+  display: grid;
+  gap: var(--bb-space-3);
+}
+
+.subject {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-2);
+  margin-bottom: var(--bb-space-2);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+
+  a {
+    color: inherit;
+  }
+}
+
+.kind {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--bb-plum-100);
+  color: var(--bb-plum-700);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.moderation {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  color: var(--bb-danger);
+  font-size: 0.85rem;
+  --bb-icon-size: 16px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--bb-space-2);
+}
+
+.danger-text {
+  color: var(--bb-danger);
+}

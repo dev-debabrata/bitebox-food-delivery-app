@@ -2,18 +2,15 @@ import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable, catchError, filter, switchMap, throwError } from 'rxjs';
-import { ConfirmDialog, ConfirmDialogData } from '../../shared/components/confirm-dialog/confirm-dialog';
+import {
+  ConfirmDialog,
+  ConfirmDialogData,
+} from '../../shared/components/confirm-dialog/confirm-dialog';
 import { AuthService } from '../auth/auth.service';
 import { errorCode, errorMessage } from './api-error';
 import { CartService } from './cart.service';
 import { NotificationService } from './notification.service';
 
-/**
- * UI-level cart actions shared by menus and dialogs:
- * - signed-out visitors are sent to sign in (and brought back),
- * - a dish from another restaurant asks before replacing the cart,
- * - errors become friendly notifications.
- */
 @Injectable({ providedIn: 'root' })
 export class CartActions {
   private readonly cart = inject(CartService);
@@ -22,7 +19,6 @@ export class CartActions {
   private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
 
-  /** Whether the current visitor may use a cart (guests may, after signing in). */
   canOrder(): boolean {
     const role = this.auth.role();
     return role === null || role === 'customer';
@@ -38,7 +34,9 @@ export class CartActions {
       .pipe(
         catchError((err: unknown) => {
           if (errorCode(err) !== 'CART_RESTAURANT_CONFLICT') return throwError(() => err);
-          return this.confirmReplace(errorMessage(err)).pipe(switchMap(() => this.cart.add(foodItemId, 1, true)));
+          return this.confirmReplace(errorMessage(err)).pipe(
+            switchMap(() => this.cart.add(foodItemId, 1, true)),
+          );
         }),
       )
       .subscribe({
@@ -48,7 +46,9 @@ export class CartActions {
   }
 
   setQuantity(foodItemId: string, quantity: number): void {
-    this.cart.setQuantity(foodItemId, quantity).subscribe({ error: (err: unknown) => this.notify.error(errorMessage(err)) });
+    this.cart
+      .setQuantity(foodItemId, quantity)
+      .subscribe({ error: (err: unknown) => this.notify.error(errorMessage(err)) });
   }
 
   private confirmReplace(message: string): Observable<true> {

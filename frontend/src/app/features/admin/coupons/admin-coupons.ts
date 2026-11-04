@@ -15,7 +15,7 @@ import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { AdminCoupon } from '../../../shared/models/checkout.models';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
-import { CouponFormDialog } from './coupon-form-dialog';
+import { CouponFormDialog } from './coupon-form-dialog/coupon-form-dialog';
 
 @Component({
   selector: 'bb-admin-coupons',
@@ -78,7 +78,6 @@ export class AdminCoupons {
       });
   }
 
-  /** Optimistic: the switch follows the list; on failure the list (and so the switch) goes back. */
   protected toggle(coupon: AdminCoupon, checked: boolean): void {
     const set = (isActive: boolean) =>
       this.coupons.update((list) => list.map((c) => (c.id === coupon.id ? { ...c, isActive } : c)));

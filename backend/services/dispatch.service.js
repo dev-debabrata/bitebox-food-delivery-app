@@ -9,37 +9,47 @@ import { ACTORS, transition } from "./order-workflow.service.js";
 import { notifyOffer } from "./order-notifications.js";
 
 const S = ORDER_STATUS;
-// Riders this close to each other count as equally near; the longest-waiting one goes first.
 const DISTANCE_BUCKET_M = 500;
 
-/**
- * Assignment strategy (deterministic, so it is testable and fair):
- * 1. Eligible riders: online, active account, not carrying or being offered another order,
- *    location reported in the last DISPATCH.locationFreshMinutes, within
- *    DISPATCH.maxPickupDistanceKm of the restaurant (straight line), and not one who
- *    already declined or ignored this order.
- * 2. Nearest first, in 500 m bands; within a band, whoever was assigned least recently.
- * 3. The order is offered to one rider at a time for DISPATCH.offerTimeoutSeconds.
- *
- * Returns the offered rider's user id, or null when nobody is available (the sweep retries).
- */
 export async function dispatch(orderId, now = new Date()) {
-  const order = await Order.findOne({ _id: orderId, status: S.READY_FOR_PICKUP, "offer.partner": null });
+  const order = await Order.findOne({
+    _id: orderId,
+    status: S.READY_FOR_PICKUP,
+    "offer.partner": null,
+  });
   if (!order?.restaurantSnapshot?.location?.coordinates) return null;
 
   const candidates = await DeliveryPartner.aggregate([
     {
       $geoNear: {
-        near: { type: "Point", coordinates: order.restaurantSnapshot.location.coordinates },
+        near: {
+          type: "Point",
+          coordinates: order.restaurantSnapshot.location.coordinates,
+        },
         distanceField: "distanceMeters",
         maxDistance: DISPATCH.maxPickupDistanceKm * 1000,
         spherical: true,
-        query: { ...freeRiderFilter(now), user: { $nin: order.declinedBy ?? [] } },
+        query: {
+          ...freeRiderFilter(now),
+          user: { $nin: order.declinedBy ?? [] },
+        },
       },
     },
-    { $lookup: { from: "users", localField: "user", foreignField: "_id", as: "account", pipeline: [{ $project: { status: 1 } }] } },
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "account",
+        pipeline: [{ $project: { status: 1 } }],
+      },
+    },
     { $match: { "account.status": USER_STATUS.ACTIVE } },
-    { $addFields: { band: { $floor: { $divide: ["$distanceMeters", DISTANCE_BUCKET_M] } } } },
+    {
+      $addFields: {
+        band: { $floor: { $divide: ["$distanceMeters", DISTANCE_BUCKET_M] } },
+      },
+    },
     { $sort: { band: 1, lastAssignedAt: 1, distanceMeters: 1 } },
     { $limit: 10 },
   ]);
@@ -47,12 +57,19 @@ export async function dispatch(orderId, now = new Date()) {
   for (const candidate of candidates) {
     // Lock the rider first: only succeeds if they are still free.
     const locked = await DeliveryPartner.findOneAndUpdate(
-      { _id: candidate._id, isOnline: true, activeOrder: null, currentOffer: null },
+      {
+        _id: candidate._id,
+        isOnline: true,
+        activeOrder: null,
+        currentOffer: null,
+      },
       { $set: { currentOffer: order._id } },
     );
     if (!locked) continue;
 
-    const expiresAt = new Date(now.getTime() + DISPATCH.offerTimeoutSeconds * 1000);
+    const expiresAt = new Date(
+      now.getTime() + DISPATCH.offerTimeoutSeconds * 1000,
+    );
     const offered = await Order.findOneAndUpdate(
       { _id: order._id, status: S.READY_FOR_PICKUP, "offer.partner": null },
       { $set: { offer: { partner: candidate.user, expiresAt } } },
@@ -60,10 +77,20 @@ export async function dispatch(orderId, now = new Date()) {
     );
     if (!offered) {
       // The order changed meanwhile (cancelled, or offered by a concurrent sweep): free the rider.
-      await DeliveryPartner.updateOne({ _id: candidate._id, currentOffer: order._id }, { $set: { currentOffer: null } });
+      await DeliveryPartner.updateOne(
+        { _id: candidate._id, currentOffer: order._id },
+        { $set: { currentOffer: null } },
+      );
       return null;
     }
-    logger.info({ orderId: order.id, rider: String(candidate.user), distanceMeters: Math.round(candidate.distanceMeters) }, "Delivery offered");
+    logger.info(
+      {
+        orderId: order.id,
+        rider: String(candidate.user),
+        distanceMeters: Math.round(candidate.distanceMeters),
+      },
+      "Delivery offered",
+    );
     emitOrderUpdated(offered);
     await notifyOffer(offered, candidate.user);
     return candidate.user;
@@ -76,19 +103,27 @@ const freeRiderFilter = (now) => ({
   isOnline: true,
   activeOrder: null,
   currentOffer: null,
-  locationUpdatedAt: { $gte: new Date(now.getTime() - DISPATCH.locationFreshMinutes * 60_000) },
+  locationUpdatedAt: {
+    $gte: new Date(now.getTime() - DISPATCH.locationFreshMinutes * 60_000),
+  },
 });
 
 /** Ready orders nobody is being offered, longest-waiting first. */
 export const findWaitingOrders = (limit) =>
-  Order.find({ status: S.READY_FOR_PICKUP, "offer.partner": null }).sort({ updatedAt: 1 }).select("_id").limit(limit);
+  Order.find({ status: S.READY_FOR_PICKUP, "offer.partner": null })
+    .sort({ updatedAt: 1 })
+    .select("_id")
+    .limit(limit);
 
 /** Dispatch without letting a failure break the caller (e.g. the restaurant's "ready" request). */
 export async function dispatchSafely(orderId) {
   try {
     return await dispatch(orderId);
   } catch (error) {
-    logger.error({ err: error, orderId: String(orderId) }, "Dispatch failed; the sweep will retry");
+    logger.error(
+      { err: error, orderId: String(orderId) },
+      "Dispatch failed; the sweep will retry",
+    );
     return null;
   }
 }
@@ -106,59 +141,86 @@ export async function acceptOffer(userId, orderId) {
       update: { $set: { deliveryPartner: userId }, $unset: { offer: 1 } },
     });
   } catch (error) {
-    if (error instanceof ApiError && error.statusCode === 409) throw offerGone();
+    if (error instanceof ApiError && error.statusCode === 409)
+      throw offerGone();
     throw error;
   }
   // A repeat accept by the same rider is fine; anyone else is told it is gone.
-  if (!result.changed && String(result.order.deliveryPartner) !== String(userId)) throw offerGone();
+  if (
+    !result.changed &&
+    String(result.order.deliveryPartner) !== String(userId)
+  )
+    throw offerGone();
   if (result.changed) {
     await DeliveryPartner.updateOne(
       { user: userId, currentOffer: result.order._id },
-      { $set: { currentOffer: null, activeOrder: result.order._id, lastAssignedAt: now } },
+      {
+        $set: {
+          currentOffer: null,
+          activeOrder: result.order._id,
+          lastAssignedAt: now,
+        },
+      },
     );
   }
   return result.order;
 }
 
-const offerGone = () => new ApiError(409, "This delivery request is no longer available", { code: "OFFER_UNAVAILABLE" });
+const offerGone = () =>
+  new ApiError(409, "This delivery request is no longer available", {
+    code: "OFFER_UNAVAILABLE",
+  });
 
-/** The rider turns the offer down; it goes to the next rider straight away. */
 export async function declineOffer(userId, orderId) {
   const order = await Order.findOneAndUpdate(
     { _id: orderId, status: S.READY_FOR_PICKUP, "offer.partner": userId },
     { $unset: { offer: 1 }, $addToSet: { declinedBy: userId } },
   );
   if (!order) throw offerGone();
-  await DeliveryPartner.updateOne({ user: userId, currentOffer: order._id }, { $set: { currentOffer: null } });
-  // Next rider (emits if offered); otherwise tell everyone the offer is gone.
-  if (!(await dispatchSafely(order._id))) emitOrderUpdated(order, { alsoNotify: [userId] });
+  await DeliveryPartner.updateOne(
+    { user: userId, currentOffer: order._id },
+    { $set: { currentOffer: null } },
+  );
+  if (!(await dispatchSafely(order._id)))
+    emitOrderUpdated(order, { alsoNotify: [userId] });
 }
 
-/**
- * Periodic housekeeping (also safe to call by hand):
- * - expired offers move on; the rider who ignored one is set offline (probably away);
- * - ready orders without an offer are dispatched again (e.g. a rider just came online);
- * - restaurants that never answered a new order auto-reject it;
- * - online orders never paid within the payment window are cancelled.
- */
 export async function sweep(now = new Date()) {
-  const summary = { expiredOffers: 0, dispatched: 0, autoRejected: 0, unpaidCancelled: 0, pickupExpired: 0 };
+  const summary = {
+    expiredOffers: 0,
+    dispatched: 0,
+    autoRejected: 0,
+    unpaidCancelled: 0,
+    pickupExpired: 0,
+  };
 
-  const expired = await Order.find({ status: S.READY_FOR_PICKUP, "offer.expiresAt": { $lte: now } }).select("_id offer").limit(100);
+  const expired = await Order.find({
+    status: S.READY_FOR_PICKUP,
+    "offer.expiresAt": { $lte: now },
+  })
+    .select("_id offer")
+    .limit(100);
   for (const order of expired) {
     const rider = order.offer.partner;
     const cleared = await Order.findOneAndUpdate(
-      { _id: order._id, status: S.READY_FOR_PICKUP, "offer.partner": rider, "offer.expiresAt": { $lte: now } },
+      {
+        _id: order._id,
+        status: S.READY_FOR_PICKUP,
+        "offer.partner": rider,
+        "offer.expiresAt": { $lte: now },
+      },
       { $unset: { offer: 1 }, $addToSet: { declinedBy: rider } },
       { returnDocument: "after" },
     );
     if (!cleared) continue;
-    await DeliveryPartner.updateOne({ user: rider, currentOffer: order._id }, { $set: { currentOffer: null, isOnline: false } });
+    await DeliveryPartner.updateOne(
+      { user: rider, currentOffer: order._id },
+      { $set: { currentOffer: null, isOnline: false } },
+    );
     summary.expiredOffers++;
     emitOrderUpdated(cleared, { alsoNotify: [rider] });
   }
 
-  // Re-dispatch waiting orders, but only if some rider could take one (orders pile up exactly when nobody can).
   if (await DeliveryPartner.exists(freeRiderFilter(now))) {
     for (const order of await findWaitingOrders(50)) {
       if (await dispatchSafely(order._id)) summary.dispatched++;
@@ -168,10 +230,26 @@ export async function sweep(now = new Date()) {
   const minutesAgo = (m) => new Date(now.getTime() - m * 60_000);
   const timeouts = [
     // Restaurant never answered (counted from when it received the order).
-    { filter: { status: S.PENDING, submittedAt: { $ne: null, $lte: minutesAgo(DISPATCH.restaurantResponseMinutes) } }, to: S.REJECTED, reason: "The restaurant did not respond in time", key: "autoRejected" },
+    {
+      filter: {
+        status: S.PENDING,
+        submittedAt: {
+          $ne: null,
+          $lte: minutesAgo(DISPATCH.restaurantResponseMinutes),
+        },
+      },
+      to: S.REJECTED,
+      reason: "The restaurant did not respond in time",
+      key: "autoRejected",
+    },
     // Online payment never completed.
     {
-      filter: { status: S.PENDING, paymentMethod: PAYMENT_METHODS.ONLINE, submittedAt: null, createdAt: { $lte: minutesAgo(DISPATCH.paymentWindowMinutes) } },
+      filter: {
+        status: S.PENDING,
+        paymentMethod: PAYMENT_METHODS.ONLINE,
+        submittedAt: null,
+        createdAt: { $lte: minutesAgo(DISPATCH.paymentWindowMinutes) },
+      },
       to: S.CANCELLED,
       reason: "Payment was not completed in time",
       key: "unpaidCancelled",
@@ -180,7 +258,12 @@ export async function sweep(now = new Date()) {
     {
       filter: {
         status: { $in: [S.READY_FOR_PICKUP, S.ASSIGNED] },
-        statusHistory: { $elemMatch: { status: S.READY_FOR_PICKUP, at: { $lte: minutesAgo(DISPATCH.pickupWindowMinutes) } } },
+        statusHistory: {
+          $elemMatch: {
+            status: S.READY_FOR_PICKUP,
+            at: { $lte: minutesAgo(DISPATCH.pickupWindowMinutes) },
+          },
+        },
       },
       to: S.CANCELLED,
       reason: "No delivery partner picked up the order in time",
@@ -190,7 +273,11 @@ export async function sweep(now = new Date()) {
   for (const { filter, to, reason, key } of timeouts) {
     for (const order of await Order.find(filter).select("_id").limit(100)) {
       try {
-        const { changed } = await transition(order._id, { to, actor: ACTORS.SYSTEM, reason });
+        const { changed } = await transition(order._id, {
+          to,
+          actor: ACTORS.SYSTEM,
+          reason,
+        });
         if (changed) summary[key]++;
       } catch (error) {
         // Accepted, paid or cancelled at the same moment: nothing to do.
@@ -209,7 +296,8 @@ export function startDispatchLoop(intervalMs = DISPATCH.sweepIntervalMs) {
     running = true;
     try {
       const summary = await sweep();
-      if (Object.values(summary).some(Boolean)) logger.info(summary, "Dispatch sweep");
+      if (Object.values(summary).some(Boolean))
+        logger.info(summary, "Dispatch sweep");
     } catch (error) {
       logger.error({ err: error }, "Dispatch sweep failed");
     } finally {

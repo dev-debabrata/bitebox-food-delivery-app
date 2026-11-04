@@ -1,26 +1,65 @@
 import { body, query } from "express-validator";
 import { RESTAURANT_STATUS } from "../models/restaurant.model.js";
-import { booleanQuery, imageUrlBody, mongoIdParam, paginationRules, paiseBody, searchQuery } from "./common.validators.js";
+import {
+  booleanQuery,
+  imageUrlBody,
+  mongoIdParam,
+  paginationRules,
+  paiseBody,
+  searchQuery,
+} from "./common.validators.js";
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-/** Builds rules for create (all required) or update (all optional). */
 function restaurantRules({ partial }) {
   const field = (name) => (partial ? body(name).optional() : body(name));
   return [
-    field("name").isString().trim().isLength({ min: 2, max: 100 }).withMessage("Name must be 2-100 characters"),
+    field("name")
+      .isString()
+      .trim()
+      .isLength({ min: 2, max: 100 })
+      .withMessage("Name must be 2-100 characters"),
     body("description").optional().isString().trim().isLength({ max: 1000 }),
-    field("cuisines").isArray({ min: 1, max: 10 }).withMessage("Add between 1 and 10 cuisines"),
-    body("cuisines.*").isString().trim().isLength({ min: 2, max: 40 }).withMessage("Each cuisine must be 2-40 characters"),
-    field("phone").isString().trim().matches(/^\+?[0-9]{10,15}$/).withMessage("Enter a valid phone number"),
-    body("email").optional({ values: "falsy" }).isEmail().withMessage("Enter a valid email").normalizeEmail({ gmail_remove_dots: false }),
+    field("cuisines")
+      .isArray({ min: 1, max: 10 })
+      .withMessage("Add between 1 and 10 cuisines"),
+    body("cuisines.*")
+      .isString()
+      .trim()
+      .isLength({ min: 2, max: 40 })
+      .withMessage("Each cuisine must be 2-40 characters"),
+    field("phone")
+      .isString()
+      .trim()
+      .matches(/^\+?[0-9]{10,15}$/)
+      .withMessage("Enter a valid phone number"),
+    body("email")
+      .optional({ values: "falsy" })
+      .isEmail()
+      .withMessage("Enter a valid email")
+      .normalizeEmail({ gmail_remove_dots: false }),
 
     field("address").isObject().withMessage("Address is required"),
-    body("address.line1").if(body("address").exists()).isString().trim().isLength({ min: 3, max: 120 }).withMessage("Street address is required"),
+    body("address.line1")
+      .if(body("address").exists())
+      .isString()
+      .trim()
+      .isLength({ min: 3, max: 120 })
+      .withMessage("Street address is required"),
     body("address.line2").optional().isString().trim().isLength({ max: 120 }),
     body("address.area").optional().isString().trim().isLength({ max: 80 }),
-    body("address.city").if(body("address").exists()).isString().trim().isLength({ min: 2, max: 60 }).withMessage("City is required"),
-    body("address.state").if(body("address").exists()).isString().trim().isLength({ min: 2, max: 60 }).withMessage("State is required"),
+    body("address.city")
+      .if(body("address").exists())
+      .isString()
+      .trim()
+      .isLength({ min: 2, max: 60 })
+      .withMessage("City is required"),
+    body("address.state")
+      .if(body("address").exists())
+      .isString()
+      .trim()
+      .isLength({ min: 2, max: 60 })
+      .withMessage("State is required"),
     body("address.postalCode")
       .if(body("address").exists())
       .isString()
@@ -29,14 +68,26 @@ function restaurantRules({ partial }) {
       .withMessage("Enter a valid postal code"),
 
     field("location").isObject().withMessage("Location is required"),
-    body("location.latitude").if(body("location").exists()).isFloat({ min: -90, max: 90 }).withMessage("Latitude must be -90 to 90").toFloat(),
-    body("location.longitude").if(body("location").exists()).isFloat({ min: -180, max: 180 }).withMessage("Longitude must be -180 to 180").toFloat(),
+    body("location.latitude")
+      .if(body("location").exists())
+      .isFloat({ min: -90, max: 90 })
+      .withMessage("Latitude must be -90 to 90")
+      .toFloat(),
+    body("location.longitude")
+      .if(body("location").exists())
+      .isFloat({ min: -180, max: 180 })
+      .withMessage("Longitude must be -180 to 180")
+      .toFloat(),
 
     imageUrlBody(),
     body("isPureVeg").optional().isBoolean().toBoolean(),
     paiseBody("costForTwoPaise", { optional: partial, min: 0 }),
     paiseBody("minOrderPaise", { optional: true, min: 0 }),
-    body("avgPrepTimeMinutes").optional().isInt({ min: 5, max: 180 }).withMessage("Preparation time must be 5-180 minutes").toInt(),
+    body("avgPrepTimeMinutes")
+      .optional()
+      .isInt({ min: 5, max: 180 })
+      .withMessage("Preparation time must be 5-180 minutes")
+      .toInt(),
     field("openingTime").matches(TIME).withMessage("Use 24-hour HH:mm"),
     field("closingTime").matches(TIME).withMessage("Use 24-hour HH:mm"),
   ];
@@ -45,7 +96,12 @@ function restaurantRules({ partial }) {
 export const createRestaurantRules = restaurantRules({ partial: false });
 export const updateRestaurantRules = restaurantRules({ partial: true });
 
-export const acceptingOrdersRules = [body("isAcceptingOrders").isBoolean().withMessage("isAcceptingOrders must be true or false").toBoolean()];
+export const acceptingOrdersRules = [
+  body("isAcceptingOrders")
+    .isBoolean()
+    .withMessage("isAcceptingOrders must be true or false")
+    .toBoolean(),
+];
 
 export const publicListRules = [
   ...paginationRules,
@@ -53,10 +109,9 @@ export const publicListRules = [
   query("cuisine").optional().isString().trim().isLength({ max: 40 }),
   query("category").optional().isMongoId().withMessage("Invalid category"),
   booleanQuery("veg"),
-  query("sort").optional().isIn(["rating", "fastest", "costLow", "costHigh", "newest", "distance"]),
-  // Keep each field in a single chain: matchedData() returns the value from
-  // the last chain for a field, and a later chain without toFloat() would
-  // leave the coordinate as a string.
+  query("sort")
+    .optional()
+    .isIn(["rating", "fastest", "costLow", "costHigh", "newest", "distance"]),
   query("lat")
     .optional()
     .isFloat({ min: -90, max: 90 })
@@ -84,6 +139,8 @@ export const adminListRules = [
 
 export const adminStatusRules = [
   mongoIdParam(),
-  body("status").isIn(Object.values(RESTAURANT_STATUS)).withMessage("Invalid status"),
+  body("status")
+    .isIn(Object.values(RESTAURANT_STATUS))
+    .withMessage("Invalid status"),
   body("reason").optional().isString().trim().isLength({ max: 500 }),
 ];

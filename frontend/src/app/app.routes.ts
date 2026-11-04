@@ -3,7 +3,6 @@ import { RedirectFunction, Route, Router, Routes } from '@angular/router';
 import { customerSiteGuard, guestGuard, roleGuard } from './core/guards/auth.guards';
 import { SelfRegisterRole } from './shared/models/user.models';
 
-/** Login/register style page: only reachable while signed out. */
 const authPage = (
   path: string,
   loadComponent: Route['loadComponent'],
@@ -21,13 +20,12 @@ const login = () => import('./features/auth/login/login').then((m) => m.Login);
 const register = () => import('./features/auth/register/register').then((m) => m.Register);
 const registerAs = (role: SelfRegisterRole) => ({ role });
 /** Old per-role sign-in addresses -> /login, keeping ?returnUrl= and ?reason=. */
-const toLogin: RedirectFunction = ({ queryParams }) => inject(Router).createUrlTree(['/login'], { queryParams });
+const toLogin: RedirectFunction = ({ queryParams }) =>
+  inject(Router).createUrlTree(['/login'], { queryParams });
 const customerLayout = () =>
   import('./layout/customer-layout/customer-layout').then((m) => m.CustomerLayout);
 
 export const routes: Routes = [
-  // Home page. Must come before the empty-path auth group below, which would
-  // otherwise match "/" and render an empty auth layout.
   {
     path: '',
     pathMatch: 'full',
@@ -51,7 +49,8 @@ export const routes: Routes = [
       authPage('register', register, 'Create your account', registerAs('customer')),
       authPage(
         'forgot-password',
-        () => import('./features/auth/forgot-password/forgot-password').then((m) => m.ForgotPassword),
+        () =>
+          import('./features/auth/forgot-password/forgot-password').then((m) => m.ForgotPassword),
         'Forgot password',
       ),
       {
@@ -61,9 +60,13 @@ export const routes: Routes = [
         title: 'Reset password | BiteBox',
         data: { heading: 'Choose a new password' },
       },
-      authPage('restaurant/register', register, 'Partner your restaurant', registerAs('restaurant')),
+      authPage(
+        'restaurant/register',
+        register,
+        'Partner your restaurant',
+        registerAs('restaurant'),
+      ),
       authPage('delivery/register', register, 'Ride with BiteBox', registerAs('delivery')),
-      // One sign-in page for every role; the old per-role addresses still work.
       { path: 'admin/login', redirectTo: toLogin },
       { path: 'restaurant/login', redirectTo: toLogin },
       { path: 'delivery/login', redirectTo: toLogin },
@@ -85,7 +88,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./layout/restaurant-layout/restaurant-layout').then((m) => m.RestaurantLayout),
     loadChildren: () =>
-      import('./features/restaurant-panel/restaurant-panel.routes').then((m) => m.RESTAURANT_ROUTES),
+      import('./features/restaurant-panel/restaurant-panel.routes').then(
+        (m) => m.RESTAURANT_ROUTES,
+      ),
   },
 
   // Delivery partner panel
@@ -103,6 +108,7 @@ export const routes: Routes = [
     path: '',
     loadComponent: customerLayout,
     canActivateChild: [customerSiteGuard],
-    loadChildren: () => import('./features/customer/customer.routes').then((m) => m.CUSTOMER_ROUTES),
+    loadChildren: () =>
+      import('./features/customer/customer.routes').then((m) => m.CUSTOMER_ROUTES),
   },
 ];

@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CatalogService } from '../../../core/services/catalog.service';
+import { ReviewService } from '../../../core/services/review.service';
 import { FoodItem, MenuSection, Restaurant } from '../../../shared/models/catalog.models';
 import { RestaurantDetail } from './restaurant-detail';
 
@@ -36,11 +37,24 @@ const sections: MenuSection[] = [
 describe('RestaurantDetail', () => {
   let fixture: ComponentFixture<RestaurantDetail>;
   const catalog = { restaurant: vi.fn(), menu: vi.fn() };
+  const reviews = {
+    restaurantReviews: vi.fn(() =>
+      of({
+        items: [],
+        pagination: { page: 1, limit: 5, total: 0, totalPages: 0 },
+        summary: { average: 0, count: 0, distribution: [0, 0, 0, 0, 0] },
+      }),
+    ),
+  };
 
   async function create() {
     await TestBed.configureTestingModule({
       imports: [RestaurantDetail],
-      providers: [provideRouter([]), { provide: CatalogService, useValue: catalog }],
+      providers: [
+        provideRouter([]),
+        { provide: CatalogService, useValue: catalog },
+        { provide: ReviewService, useValue: reviews },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(RestaurantDetail);
     fixture.componentRef.setInput('slug', 'spice-route-kitchen');

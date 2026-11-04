@@ -60,8 +60,8 @@
   <ul class="items bb-card">
     @for (item of filtered(); track item.id) {
       <li [class.off]="!item.isAvailable" [attr.aria-busy]="busyId() === item.id">
-        @if (item.imageUrl) {
-          <img [src]="item.imageUrl" alt="" loading="lazy" />
+        @if (item.imageUrl | usableImage) {
+          <img [bbSrc]="item.imageUrl" alt="" loading="lazy" />
         } @else {
           <span class="thumb" aria-hidden="true"
             ><np-icon [name]="(item.category.icon) | npIcon: 'utensils'" class="mat-icon" matButtonIcon /></span

@@ -10,22 +10,45 @@ import { mongoIdParam } from "../validators/common.validators.js";
 import * as foodRules from "../validators/food.validators.js";
 import * as restaurantRules from "../validators/restaurant.validators.js";
 
-/** Admin catalogue management: restaurants (approval), categories, food items. */
 const router = Router();
 router.use(authenticate, authorize(ROLES.ADMIN));
 
-router.get("/restaurants", validate(restaurantRules.adminListRules), restaurants.adminList);
+router.get(
+  "/restaurants",
+  validate(restaurantRules.adminListRules),
+  restaurants.adminList,
+);
 router.get("/restaurants/counts", restaurants.adminCounts);
-router.get("/restaurants/:id", validate([mongoIdParam()]), restaurants.adminGet);
-router.patch("/restaurants/:id/status", validate(restaurantRules.adminStatusRules), restaurants.adminSetStatus);
+router.get(
+  "/restaurants/:id",
+  validate([mongoIdParam()]),
+  restaurants.adminGet,
+);
+router.patch(
+  "/restaurants/:id/status",
+  validate(restaurantRules.adminStatusRules),
+  restaurants.adminSetStatus,
+);
 
 router.get("/categories", categories.adminList);
-router.post("/categories", validate(categoryRules.createCategoryRules), categories.create);
-router.patch("/categories/:id", validate(categoryRules.updateCategoryRules), categories.update);
+router.post(
+  "/categories",
+  validate(categoryRules.createCategoryRules),
+  categories.create,
+);
+router.patch(
+  "/categories/:id",
+  validate(categoryRules.updateCategoryRules),
+  categories.update,
+);
 router.delete("/categories/:id", validate([mongoIdParam()]), categories.remove);
 
 router.get("/foods", validate(foodRules.adminListRules), foods.adminList);
-router.patch("/foods/:id/availability", validate(foodRules.availabilityRules), foods.adminSetAvailability);
+router.patch(
+  "/foods/:id/availability",
+  validate(foodRules.availabilityRules),
+  foods.adminSetAvailability,
+);
 router.delete("/foods/:id", validate([mongoIdParam()]), foods.adminDelete);
 
 export default router;

@@ -30,13 +30,19 @@ export interface ExtractedAddress {
   postalCode: string;
 }
 
-/**
- * Extracts structured address parts (line1, line2, area, city, state, postal code)
- * from a Place object, separating street/building details from city/state/country.
- */
 export function extractAddressFromPlace(place: Place): ExtractedAddress {
-  const parts = (place.displayName || place.label || '').split(',').map((s) => s.trim()).filter(Boolean);
-  const tail = new Set(['india', place.postalCode?.toLowerCase(), place.state?.toLowerCase(), place.city?.toLowerCase()].filter(Boolean));
+  const parts = (place.displayName || place.label || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const tail = new Set(
+    [
+      'india',
+      place.postalCode?.toLowerCase(),
+      place.state?.toLowerCase(),
+      place.city?.toLowerCase(),
+    ].filter(Boolean),
+  );
 
   const streetParts: string[] = [];
   for (const p of parts) {
@@ -46,7 +52,8 @@ export function extractAddressFromPlace(place: Place): ExtractedAddress {
 
   const line1 = streetParts.length ? streetParts.join(', ') : place.label || '';
   const candidate = streetParts.length > 1 && streetParts[0] !== place.area ? streetParts[0] : '';
-  const line2 = place.building || (/^\d+[A-Za-z]?$/.test(streetParts[1] ?? '') ? streetParts[1] : candidate);
+  const line2 =
+    place.building || (/^\d+[A-Za-z]?$/.test(streetParts[1] ?? '') ? streetParts[1] : candidate);
 
   return {
     line1: line1.slice(0, 120),
@@ -69,11 +76,6 @@ export interface DeliveryLocation {
 
 const STORAGE_KEY = 'bb_delivery_location';
 
-/**
- * Where the visitor wants food delivered. Drives "restaurants near you" on the
- * home page and restaurant list. Stored in localStorage on this device only;
- * it is not sensitive and is never sent anywhere except as search coordinates.
- */
 @Injectable({ providedIn: 'root' })
 export class DeliveryLocationService {
   private readonly http = inject(HttpClient);
@@ -81,10 +83,6 @@ export class DeliveryLocationService {
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly api = `${environment.apiUrl}/geo`;
 
-  /**
-   * Starts empty everywhere so server-rendered HTML and the browser's first
-   * render match (hydration); the saved choice is restored right after.
-   */
   readonly location = signal<DeliveryLocation | null>(null);
   private restored = false;
 
@@ -101,24 +99,26 @@ export class DeliveryLocationService {
       try {
         if (value) localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
         else localStorage.removeItem(STORAGE_KEY);
-      } catch {
-        // Storage can be unavailable (private mode); the choice then lasts for this visit only.
-      }
+      } catch {}
     });
   }
 
   search(query: string): Observable<Place[]> {
-    return this.http.get<ApiResponse<{ places: Place[] }>>(`${this.api}/search`, { params: toParams({ q: query }) }).pipe(map((r) => r.data.places));
+    return this.http
+      .get<ApiResponse<{ places: Place[] }>>(`${this.api}/search`, {
+        params: toParams({ q: query }),
+      })
+      .pipe(map((r) => r.data.places));
   }
 
-  /** Coordinates -> address parts (area, city, state, PIN), via the API's cached geocoder. */
   reverse(latitude: number, longitude: number): Observable<Place> {
     return this.http
-      .get<ApiResponse<{ place: Place }>>(`${this.api}/reverse`, { params: toParams({ lat: latitude, lng: longitude }) })
+      .get<ApiResponse<{ place: Place }>>(`${this.api}/reverse`, {
+        params: toParams({ lat: latitude, lng: longitude }),
+      })
       .pipe(map((r) => r.data.place));
   }
 
-  /** Browser GPS -> readable place name. Falls back to coordinates if naming fails. */
   async useCurrentLocation(): Promise<DeliveryLocation> {
     const { latitude, longitude } = await this.geo.currentPrecise();
     let label = 'Current location';
@@ -126,7 +126,9 @@ export class DeliveryLocationService {
     try {
       const place = await firstValueFrom(
         this.http
-          .get<ApiResponse<{ place: Place }>>(`${this.api}/reverse`, { params: toParams({ lat: latitude, lng: longitude }) })
+          .get<ApiResponse<{ place: Place }>>(`${this.api}/reverse`, {
+            params: toParams({ lat: latitude, lng: longitude }),
+          })
           .pipe(map((r) => r.data.place)),
       );
       label = place.label || label;
@@ -139,13 +141,24 @@ export class DeliveryLocationService {
     return location;
   }
 
-  /** A point the user confirmed on the map (after GPS, search, or dragging the pin). */
-  choosePoint(point: { latitude: number; longitude: number; label: string; detail?: string; source: DeliveryLocation['source'] }): void {
+  choosePoint(point: {
+    latitude: number;
+    longitude: number;
+    label: string;
+    detail?: string;
+    source: DeliveryLocation['source'];
+  }): void {
     this.location.set({ ...point });
   }
 
   choosePlace(place: Place): void {
-    this.location.set({ label: place.label, detail: place.displayName, latitude: place.latitude, longitude: place.longitude, source: 'search' });
+    this.location.set({
+      label: place.label,
+      detail: place.displayName,
+      latitude: place.latitude,
+      longitude: place.longitude,
+      source: 'search',
+    });
   }
 
   chooseAddress(address: DeliveryAddress): void {
@@ -167,7 +180,9 @@ export class DeliveryLocationService {
   private restore(): DeliveryLocation | null {
     if (!this.isBrowser) return null;
     try {
-      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as DeliveryLocation | null;
+      const raw = JSON.parse(
+        localStorage.getItem(STORAGE_KEY) ?? 'null',
+      ) as DeliveryLocation | null;
       const valid =
         raw &&
         typeof raw.label === 'string' &&

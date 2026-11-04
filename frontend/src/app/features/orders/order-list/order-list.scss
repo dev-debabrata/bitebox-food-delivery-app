@@ -58,3 +58,22 @@
   justify-content: center;
   margin-top: var(--bb-space-4);
 }
+.my-rating,
+.rate-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--bb-ink-muted);
+}
+.rate-cta {
+  margin: 6px 0 0 var(--bb-space-4);
+  color: var(--bb-plum-500);
+  font-weight: 600;
+  text-decoration: none;
+  --bb-icon-size: 16px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

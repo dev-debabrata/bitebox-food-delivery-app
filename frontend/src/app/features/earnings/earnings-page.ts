@@ -10,13 +10,18 @@ import { NP_FORM_FIELDS } from '../../shared/forms/np-form-fields';
 import { periodReport } from '../../shared/list/period-report';
 import { InrPipe, formatDistance, formatPaise } from '../../shared/pipes/money.pipes';
 
-/**
- * Earnings from delivered orders, for the restaurant panel (food value after
- * commission) and the delivery panel (per-delivery pay). `scope` comes from route data.
- */
 @Component({
   selector: 'bb-earnings-page',
-  imports: [DatePipe, NP_FORM_FIELDS, IconComponent, DailyChart, EmptyState, PageHeader, StatTile, InrPipe],
+  imports: [
+    DatePipe,
+    NP_FORM_FIELDS,
+    IconComponent,
+    DailyChart,
+    EmptyState,
+    PageHeader,
+    StatTile,
+    InrPipe,
+  ],
   templateUrl: './earnings-page.html',
   styleUrl: './earnings-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,7 +30,10 @@ export class EarningsPage {
   private readonly api = inject(ReportsService);
   readonly scope = input<EarningsScope>('restaurant');
 
-  protected readonly report = periodReport((days) => this.api.earnings(this.scope(), days), 'Could not load your earnings.');
+  protected readonly report = periodReport(
+    (days) => this.api.earnings(this.scope(), days),
+    'Could not load your earnings.',
+  );
   protected readonly formatPaise = formatPaise;
   protected readonly distance = formatDistance;
 

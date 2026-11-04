@@ -10,7 +10,6 @@ import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { pagedList } from '../../../shared/list/paged-list';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
 
-/** The rider's finished deliveries, newest first. */
 @Component({
   selector: 'bb-delivery-history',
   imports: [

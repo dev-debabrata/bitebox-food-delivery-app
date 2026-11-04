@@ -1,0 +1,45 @@
+@let s = summary();
+<div class="overall">
+  @if (s.count > 0) {
+    <strong class="average">{{ average() }}</strong>
+    <bb-stars [value]="s.average" size="md" />
+    <span class="count">{{ plural(s.count) }}</span>
+  } @else {
+    <strong class="average none">–</strong>
+    <bb-stars [value]="0" ariaLabel="Not rated yet" />
+    <span class="count">No {{ noun() }}s yet</span>
+  }
+</div>
+
+@if (filterable()) {
+  <ul class="bars" aria-label="Filter by rating">
+    @for (r of rows(); track r.stars) {
+      <li>
+        <button
+          type="button"
+          class="bar-row"
+          [class.selected]="selected() === r.stars"
+          [attr.aria-pressed]="selected() === r.stars"
+          [disabled]="r.n === 0 && selected() !== r.stars"
+          [attr.aria-label]="r.stars + ' star: ' + plural(r.n) + ', ' + r.percent + '%. Show only these.'"
+          (click)="toggle(r.stars)"
+        >
+          <span class="label" aria-hidden="true">{{ r.stars }}★</span>
+          <span class="track" aria-hidden="true"><span class="fill" [style.width.%]="r.percent"></span></span>
+          <span class="n" aria-hidden="true">{{ r.n }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+} @else {
+  <ul class="bars" aria-label="Rating breakdown">
+    @for (r of rows(); track r.stars) {
+      <li class="bar-row">
+        <span class="bb-sr-only">{{ r.stars }} star: {{ plural(r.n) }}, {{ r.percent }}%</span>
+        <span class="label" aria-hidden="true">{{ r.stars }}★</span>
+        <span class="track" aria-hidden="true"><span class="fill" [style.width.%]="r.percent"></span></span>
+        <span class="n" aria-hidden="true">{{ r.n }}</span>
+      </li>
+    }
+  </ul>
+}

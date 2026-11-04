@@ -1,0 +1,73 @@
+@if (summary(); as s) {
+  <bb-rating-summary
+    [summary]="s"
+    [filterable]="s.count > 0"
+    [selected]="rating()"
+    (pick)="rating.set($event)"
+  />
+}
+
+@if (error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="load(1)">Retry</button></span>
+  </div>
+}
+
+@if ((summary()?.count ?? 0) > 0) {
+  <div class="toolbar">
+    <p class="showing" aria-live="polite">
+      @if (rating(); as r) {
+        Showing {{ total() }} {{ r }}-star {{ total() === 1 ? 'review' : 'reviews' }}
+        <button class="bb-link-button" type="button" (click)="rating.set(null)">Show all</button>
+      } @else {
+        {{ total() }} {{ total() === 1 ? 'review' : 'reviews' }} from verified orders
+      }
+    </p>
+    <div class="sort">
+      <np-select
+        ariaLabel="Sort reviews"
+        [options]="sortOptions"
+        [value]="sort()"
+        (valueChange)="setSort($event)"
+      />
+    </div>
+  </div>
+}
+
+@if (loading() && items().length === 0) {
+  @for (i of [1, 2]; track i) {
+    <span class="bb-skeleton" style="height: 84px; margin-bottom: 8px"></span>
+  }
+} @else if (!error() && items().length === 0) {
+  <p class="bb-muted empty">
+    {{ rating() ? 'No reviews with this rating.' : 'No reviews yet. Order and be the first to rate it.' }}
+  </p>
+} @else {
+  <ul class="list" [class.bb-dim]="loading()" [attr.aria-busy]="loading()">
+    @for (r of items(); track r.id) {
+      <li>
+        <bb-review-card [review]="r" [responder]="responder()" [showFood]="subject().kind === 'restaurant'">
+          @if (canReport()) {
+            <div class="report">
+              @if (reported().has(r.id)) {
+                <span class="bb-muted">Reported</span>
+              } @else {
+                <button mat-button type="button" (click)="report(r)" [attr.aria-label]="'Report review by ' + r.authorName">
+                  <np-icon name="flag" class="mat-icon" matButtonIcon />Report
+                </button>
+              }
+            </div>
+          }
+        </bb-review-card>
+      </li>
+    }
+  </ul>
+  @if (hasMore()) {
+    <div class="more">
+      <button mat-stroked-button type="button" (click)="more()" [disabled]="loading()">
+        {{ loading() ? 'Loading…' : 'Show more reviews' }}
+      </button>
+    </div>
+  }
+}

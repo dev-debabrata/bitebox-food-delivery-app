@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { Pricing } from '../../models/checkout.models';
 import { DistancePipe, InrPipe } from '../../pipes/money.pipes';
 
-/** Itemised bill. All amounts come from the server. */
 @Component({
   selector: 'bb-bill-summary',
   imports: [InrPipe, DistancePipe],

@@ -1,0 +1,117 @@
+<header mat-dialog-title class="head">
+  <div class="title-row">
+    <h2>{{ targetLabel[r.target] }} review · {{ r.orderNumber }}</h2>
+    <span class="bb-status is-{{ r.status }}">{{ statusLabel[r.status] }}</span>
+  </div>
+  <p class="meta">
+    {{ r.restaurant?.name }}
+    @if (r.foodName) {
+      · {{ r.foodName }}
+    }
+    @if (r.deliveryPartner) {
+      · Rider {{ r.deliveryPartner.name }}
+    }
+  </p>
+</header>
+
+<mat-dialog-content class="content">
+  <section aria-labelledby="words-title">
+    <h3 id="words-title">The review as written</h3>
+    <div class="quote">
+      <bb-stars [value]="r.rating" />
+      @if (r.comment) {
+        <p class="comment">{{ r.comment }}</p>
+      } @else {
+        <p class="bb-muted">No written comment.</p>
+      }
+      <p class="bb-muted small">
+        By {{ r.customer?.name ?? r.customerName }}
+        @if (r.customer?.email) {
+          ({{ r.customer!.email }})
+        }
+        · {{ r.createdAt | date: 'd MMM y, h:mm a' }}
+        @if (r.editedAt) {
+          · edited {{ r.editedAt | date: 'd MMM y' }}
+        }
+        @if (r.deletedAt) {
+          · deleted by the author {{ r.deletedAt | date: 'd MMM y' }}
+        }
+      </p>
+    </div>
+    <p class="bb-muted small policy">
+      <np-icon name="lock" class="mat-icon" matButtonIcon />Admins can hide, remove or restore a review, never edit its words.
+    </p>
+    @if (r.response?.text) {
+      <div class="reply">
+        <strong>Restaurant reply</strong>
+        <p>{{ r.response!.text }}</p>
+      </div>
+    }
+  </section>
+
+  @if (r.edits.length) {
+    <section aria-labelledby="edits-title">
+      <h3 id="edits-title">Earlier versions ({{ r.edits.length }})</h3>
+      <ol class="log">
+        @for (e of r.edits; track e.replacedAt) {
+          <li>
+            <bb-stars [value]="e.rating" size="sm" />
+            <span>{{ e.comment || 'No comment' }}</span>
+            <span class="bb-muted small">replaced {{ e.replacedAt | date: 'd MMM y, h:mm a' }}</span>
+          </li>
+        }
+      </ol>
+    </section>
+  }
+
+  <section aria-labelledby="reports-title">
+    <h3 id="reports-title">Reports ({{ r.reports.length }}, {{ r.openReports }} open)</h3>
+    @if (r.reports.length === 0) {
+      <p class="bb-muted">Nobody has reported this review.</p>
+    } @else {
+      <ul class="log">
+        @for (rep of r.reports; track rep.id) {
+          <li>
+            <strong>{{ reasonLabel[rep.reason] }}</strong>
+            <span class="bb-status is-{{ rep.status }}">{{ rep.status }}</span>
+            @if (rep.note) {
+              <span>“{{ rep.note }}”</span>
+            }
+            <span class="bb-muted small">
+              {{ rep.reporterName ?? 'A user' }} ({{ rep.reporterRole }}) · {{ rep.createdAt | date: 'd MMM, h:mm a' }}
+              @if (rep.resolvedBy) {
+                · closed by {{ rep.resolvedBy }}
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section aria-labelledby="log-title">
+    <h3 id="log-title">Moderation log</h3>
+    @if (r.moderationLog.length === 0) {
+      <p class="bb-muted">No moderation actions yet.</p>
+    } @else {
+      <ol class="log">
+        @for (m of r.moderationLog; track m.at) {
+          <li>
+            <strong>{{ actionLabel[m.action] }}</strong>
+            <span>{{ m.reason }}</span>
+            <span class="bb-muted small">
+              {{ m.by?.name ?? 'Admin' }} · {{ m.at | date: 'd MMM y, h:mm a' }}
+              @if (m.fromStatus !== m.toStatus) {
+                · {{ statusLabel[m.fromStatus] }} → {{ statusLabel[m.toStatus] }}
+              }
+            </span>
+          </li>
+        }
+      </ol>
+    }
+  </section>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Close</button>
+</mat-dialog-actions>

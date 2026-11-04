@@ -176,7 +176,8 @@
   }
 }
 
-.menu-section {
+.menu-section,
+.reviews-section {
   scroll-margin-top: 130px;
   margin-bottom: var(--bb-space-5);
 
@@ -409,4 +410,32 @@
   justify-content: space-between;
   gap: var(--bb-space-3);
   padding-block: var(--bb-space-3);
+}
+
+.dish-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--bb-ink-muted);
+  font-size: 0.82rem;
+}
+
+.rating-link {
+  color: inherit;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.reviews-section {
+  margin-top: var(--bb-space-6);
+
+  h2 {
+    outline: none;
+  }
 }

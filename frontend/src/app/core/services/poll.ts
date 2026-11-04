@@ -13,13 +13,6 @@ import {
 } from 'rxjs';
 import { OrderEvent, RealtimeService } from './realtime.service';
 
-/**
- * Runs `request` now and every `intervalMs` while the tab is visible, and
- * immediately when the user comes back to the tab. Hidden tabs do not poll.
- * Usually combined with live events via `liveRefresh` below.
- * `request` should catch its own errors: an error would end the polling.
- * Unsubscribe (e.g. takeUntilDestroyed) to stop. Pass `document` when not in an injection context.
- */
 export function pollWhileVisible<T>(
   request: () => Observable<T>,
   intervalMs: number,
@@ -36,11 +29,6 @@ export function pollWhileVisible<T>(
   );
 }
 
-/**
- * Re-runs `request` whenever a live order event arrives (optionally only matching
- * ones, debounced), with `pollWhileVisible` as the fallback if the socket drops.
- * Call in an injection context. `request` should catch its own errors.
- */
 export function liveRefresh<T>(
   request: () => Observable<T>,
   {

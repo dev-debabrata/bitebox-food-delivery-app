@@ -31,7 +31,17 @@ describe("location search (geocoding proxy)", () => {
     reply = () => ({
       ok: true,
       json: async () => [
-        { lat: "11.5", lon: "21.5", display_name: "Sample Area, Sample City, Test State", address: { suburb: "Sample Area", city: "Sample City", state: "Test State", postcode: "100002" } },
+        {
+          lat: "11.5",
+          lon: "21.5",
+          display_name: "Sample Area, Sample City, Test State",
+          address: {
+            suburb: "Sample Area",
+            city: "Sample City",
+            state: "Test State",
+            postcode: "100002",
+          },
+        },
       ],
     });
     const res = await request(app).get("/api/v1/geo/search?q=topsia");
@@ -51,16 +61,32 @@ describe("location search (geocoding proxy)", () => {
   });
 
   it("caches repeated lookups so the free provider is not hammered", async () => {
-    reply = () => ({ ok: true, json: async () => ({ lat: "10.5", lon: "20.5", display_name: "Test Area", address: { suburb: "Test Area", city: "Test City" } }) });
+    reply = () => ({
+      ok: true,
+      json: async () => ({
+        lat: "10.5",
+        lon: "20.5",
+        display_name: "Test Area",
+        address: { suburb: "Test Area", city: "Test City" },
+      }),
+    });
     await request(app).get("/api/v1/geo/reverse?lat=10.500000&lng=20.500000");
-    const second = await request(app).get("/api/v1/geo/reverse?lat=10.5&lng=20.5");
+    const second = await request(app).get(
+      "/api/v1/geo/reverse?lat=10.5&lng=20.5",
+    );
     assert.equal(calls.length, 1);
     assert.equal(second.body.data.place.label, "Test Area, Test City");
   });
 
   it("validates input and reports provider outages as 503", async () => {
-    assert.equal((await request(app).get("/api/v1/geo/search?q=ab")).status, 422);
-    assert.equal((await request(app).get("/api/v1/geo/reverse?lat=200&lng=1")).status, 422);
+    assert.equal(
+      (await request(app).get("/api/v1/geo/search?q=ab")).status,
+      422,
+    );
+    assert.equal(
+      (await request(app).get("/api/v1/geo/reverse?lat=200&lng=1")).status,
+      422,
+    );
     reply = () => ({ ok: false, status: 500, json: async () => ({}) });
     const res = await request(app).get("/api/v1/geo/search?q=kolkata");
     assert.equal(res.status, 503);

@@ -26,7 +26,13 @@ describe('CartActions', () => {
         { provide: CartService, useValue: cart },
         { provide: NotificationService, useValue: notify },
         { provide: MatDialog, useValue: dialog },
-        { provide: AuthService, useValue: { isAuthenticated: () => authenticated, role: () => (authenticated ? 'customer' : null) } },
+        {
+          provide: AuthService,
+          useValue: {
+            isAuthenticated: () => authenticated,
+            role: () => (authenticated ? 'customer' : null),
+          },
+        },
       ],
     });
     actions = TestBed.inject(CartActions);
@@ -52,7 +58,11 @@ describe('CartActions', () => {
   it('asks before replacing a cart from another restaurant', () => {
     const conflict = new HttpErrorResponse({
       status: 409,
-      error: { success: false, message: 'Your cart has dishes from X. Start a new cart?', error: { code: 'CART_RESTAURANT_CONFLICT' } },
+      error: {
+        success: false,
+        message: 'Your cart has dishes from X. Start a new cart?',
+        error: { code: 'CART_RESTAURANT_CONFLICT' },
+      },
     });
     cart.add.mockReturnValueOnce(throwError(() => conflict)).mockReturnValueOnce(of({}));
     dialog.open.mockReturnValue({ afterClosed: () => of(true) });
@@ -65,7 +75,10 @@ describe('CartActions', () => {
   });
 
   it('keeps the existing cart if the customer declines', () => {
-    const conflict = new HttpErrorResponse({ status: 409, error: { error: { code: 'CART_RESTAURANT_CONFLICT' }, message: 'x' } });
+    const conflict = new HttpErrorResponse({
+      status: 409,
+      error: { error: { code: 'CART_RESTAURANT_CONFLICT' }, message: 'x' },
+    });
     cart.add.mockReturnValue(throwError(() => conflict));
     dialog.open.mockReturnValue({ afterClosed: () => of(undefined) });
     actions.add('f2', 'Dosa');

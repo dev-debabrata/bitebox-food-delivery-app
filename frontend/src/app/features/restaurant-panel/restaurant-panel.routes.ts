@@ -24,6 +24,11 @@ export const RESTAURANT_ROUTES: Routes = [
     loadComponent: () => import('./menu/restaurant-menu').then((m) => m.RestaurantMenu),
   },
   {
+    path: 'reviews',
+    title: 'Reviews | BiteBox Restaurant',
+    loadComponent: () => import('./reviews/restaurant-reviews').then((m) => m.RestaurantReviews),
+  },
+  {
     path: 'earnings',
     title: 'Earnings | BiteBox Restaurant',
     data: { scope: 'restaurant' },

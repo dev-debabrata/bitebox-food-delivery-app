@@ -52,6 +52,9 @@
             <span class="bb-muted">
               {{ r.completedDeliveries }}
               {{ r.completedDeliveries === 1 ? 'delivery' : 'deliveries' }}
+              @if (r.rating?.count) {
+                · ★ {{ r.rating!.average.toFixed(1) }} ({{ r.rating!.count }})
+              }
               @if (r.isOnline && r.locationUpdatedAt) {
                 · location {{ r.locationUpdatedAt | date: 'h:mm a' }}
               }

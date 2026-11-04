@@ -2,20 +2,35 @@ import mongoose from "mongoose";
 
 export const MAX_ADDRESSES_PER_USER = 10;
 
-/** A customer's saved delivery address. Orders copy (snapshot) it at checkout. */
 const addressSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     label: { type: String, enum: ["home", "work", "other"], default: "home" },
-    recipientName: { type: String, required: true, trim: true, minlength: 2, maxlength: 80 },
-    phone: { type: String, required: true, trim: true, match: /^\+?[0-9]{10,15}$/ },
+    recipientName: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 2,
+      maxlength: 80,
+    },
+    phone: {
+      type: String,
+      required: true,
+      trim: true,
+      match: /^\+?[0-9]{10,15}$/,
+    },
     line1: { type: String, required: true, trim: true, maxlength: 120 },
     line2: { type: String, trim: true, maxlength: 120 },
     area: { type: String, trim: true, maxlength: 80 },
     landmark: { type: String, trim: true, maxlength: 80 },
     city: { type: String, required: true, trim: true, maxlength: 60 },
     state: { type: String, required: true, trim: true, maxlength: 60 },
-    postalCode: { type: String, required: true, trim: true, match: /^[A-Za-z0-9 -]{3,10}$/ },
+    postalCode: {
+      type: String,
+      required: true,
+      trim: true,
+      match: /^[A-Za-z0-9 -]{3,10}$/,
+    },
     location: {
       type: { type: String, enum: ["Point"], default: "Point", required: true },
       // [longitude, latitude]
@@ -23,8 +38,10 @@ const addressSchema = new mongoose.Schema(
         type: [Number],
         required: true,
         validate: {
-          validator: ([lng, lat] = []) => lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90,
-          message: "Coordinates must be [longitude, latitude] within valid ranges",
+          validator: ([lng, lat] = []) =>
+            lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90,
+          message:
+            "Coordinates must be [longitude, latitude] within valid ranges",
         },
       },
     },

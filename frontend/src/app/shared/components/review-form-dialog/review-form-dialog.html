@@ -1,0 +1,45 @@
+<h2 mat-dialog-title>Edit your review</h2>
+<form [formRoot]="form" novalidate>
+  <mat-dialog-content class="bb-form">
+    @if (error()) {
+      <div class="bb-alert error" role="alert">
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ error() }}</span>
+      </div>
+    }
+    <fieldset class="rating-field">
+      <legend>{{ prompt }} <span class="bb-sr-only">({{ data.subject }}, 1 to 5 stars, required)</span></legend>
+      <np-rating
+        [formField]="form.rating"
+        size="large"
+        [labels]="words"
+        cdkFocusInitial
+      />
+      <bb-field-error [field]="form.rating" />
+    </fieldset>
+    <div class="bb-field">
+      <np-textarea
+        [formField]="form.comment"
+        label="Tell others more (optional)"
+        placeholder="What did you like? What could be better?"
+        rows="4"
+        autoResize
+      />
+      <bb-field-error [field]="form.comment" />
+    </div>
+    @if (allowsPhotos) {
+      <bb-photo-upload [(urls)]="photos" />
+    }
+    <p class="policy bb-muted">
+      Reviews show your first name and last initial. Please don't share phone numbers or addresses.
+      @if (data.review.editableUntil; as until) {
+        You can edit this review until {{ until | date: 'd MMM y' }}.
+      }
+    </p>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="form().submitting()">
+      {{ form().submitting() ? 'Saving…' : 'Save changes' }}
+    </button>
+  </mat-dialog-actions>
+</form>

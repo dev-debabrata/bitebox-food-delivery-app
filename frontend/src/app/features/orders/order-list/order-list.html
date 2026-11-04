@@ -28,11 +28,22 @@
               <span class="status status-{{ o.status }}">{{ statusLabel(o) }}</span>
             </div>
             <span class="bb-muted items">{{ summary(o) }}</span>
+            @if (o.myRating) {
+              <span class="my-rating">
+                <bb-stars [value]="o.myRating" size="sm" [ariaLabel]="'You rated this ' + o.myRating + ' out of 5'" />
+                Your rating
+              </span>
+            }
             <div class="bottom bb-muted">
               <span>{{ o.createdAt | date: 'medium' }} · {{ o.orderNumber }}</span>
               <strong class="total">{{ o.pricing.totalPaise | inr }}</strong>
             </div>
           </a>
+          @if (o.status === 'delivered' && !o.myRating) {
+            <a class="rate-cta" [routerLink]="['/orders', o.id]" [queryParams]="{ rate: 1 }">
+              <np-icon name="star" class="mat-icon" matButtonIcon />Rate this order
+            </a>
+          }
         </li>
       }
     </ul>

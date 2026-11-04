@@ -1,0 +1,74 @@
+<section class="bb-container page">
+  <a routerLink="/account" class="back"><np-icon name="arrow-left" class="mat-icon" matButtonIcon />My account</a>
+  <bb-page-header title="My reviews" subtitle="Ratings you've given restaurants, dishes and deliveries." />
+
+  <div class="filters">
+    <np-select [formField]="filters.target" ariaLabel="Show" [options]="targetOptions" />
+  </div>
+
+  @if (list.error(); as message) {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+    </div>
+  }
+
+  @if (!list.data()) {
+    @for (i of [1, 2, 3]; track i) {
+      <span class="bb-skeleton" style="height: 120px; margin-bottom: 12px"></span>
+    }
+  } @else if (list.data()!.items.length === 0) {
+    <bb-empty-state
+      icon="star"
+      title="No reviews yet"
+      message="After a delivery, open the order to rate the restaurant, dishes and rider."
+    >
+      <a mat-flat-button routerLink="/orders">My orders</a>
+    </bb-empty-state>
+  } @else {
+    <ul class="reviews" [class.bb-dim]="list.loading()" [attr.aria-busy]="list.loading()">
+      @for (r of list.data()!.items; track r.id) {
+        <li class="bb-card">
+          <div class="subject">
+            <span class="kind">{{ targetLabel[r.target] }}</span>
+            @if (r.restaurantSlug && r.target !== 'rider') {
+              <a [routerLink]="['/restaurants', r.restaurantSlug]">{{ subject(r) }}</a>
+            } @else {
+              <span>{{ subject(r) }}</span>
+            }
+          </div>
+          <bb-review-card [review]="r" [responder]="r.restaurantName ?? 'The restaurant'">
+            @if (r.status !== 'published') {
+              <span badge class="bb-status is-{{ r.status }}">{{ statusLabel[r.status] }}</span>
+            }
+            @if (r.moderation; as m) {
+              <p class="moderation" role="note">
+                <np-icon name="shield-alert" class="mat-icon" matButtonIcon />
+                <span>Moderators {{ r.status === 'hidden' ? 'hid' : 'removed' }} this review: {{ m.reason }}</span>
+              </p>
+            }
+            <div class="actions">
+              <a mat-button [routerLink]="['/orders', r.order]">Order {{ r.orderNumber }}</a>
+              @if (editable(r)) {
+                <button mat-stroked-button type="button" (click)="edit(r)">
+                  <np-icon name="pencil" class="mat-icon" matButtonIcon />Edit
+                </button>
+              }
+              <button mat-button type="button" class="danger-text" (click)="remove(r)">
+                <np-icon name="trash-2" class="mat-icon" matButtonIcon />Delete
+              </button>
+            </div>
+          </bb-review-card>
+        </li>
+      }
+    </ul>
+    <mat-paginator
+      [length]="list.data()!.pagination.total"
+      [pageIndex]="list.data()!.pagination.page - 1"
+      [pageSize]="list.data()!.pagination.limit"
+      [pageSizeOptions]="[10, 20, 50]"
+      (page)="list.onPage($event)"
+      aria-label="Review pages"
+    />
+  }
+</section>

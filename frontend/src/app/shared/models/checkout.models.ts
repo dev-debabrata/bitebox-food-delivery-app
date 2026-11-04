@@ -1,7 +1,5 @@
 import type { PaymentInfo } from './payment.models';
 
-/** All money values are integer paise (₹1 = 100). */
-
 export interface Pricing {
   subtotalPaise: number;
   discountPaise: number;
@@ -145,7 +143,13 @@ export interface Order {
   id: string;
   orderNumber: string;
   restaurant: string;
-  restaurantSnapshot: { name: string; slug?: string; phone?: string; address?: string; location?: { type: 'Point'; coordinates: [number, number] } };
+  restaurantSnapshot: {
+    name: string;
+    slug?: string;
+    phone?: string;
+    address?: string;
+    location?: { type: 'Point'; coordinates: [number, number] };
+  };
   items: OrderItem[];
   deliveryAddress: Omit<DeliveryAddress, 'id' | 'isDefault'>;
   pricing: Pricing;
@@ -161,9 +165,15 @@ export interface Order {
   /** Payment record state (customer and admin views). */
   payment?: PaymentInfo | null;
   /** Why it was rejected or cancelled, and by whom. */
-  cancellation?: { by: 'customer' | 'restaurant' | 'admin' | 'system'; reason?: string; at: string };
+  cancellation?: {
+    by: 'customer' | 'restaurant' | 'admin' | 'system';
+    reason?: string;
+    at: string;
+  };
   /** The rider, once one has accepted the delivery (customer and admin views). */
   rider?: RiderCard | null;
+  /** Order history only: the customer's own rating of the restaurant for this order. */
+  myRating?: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -174,6 +184,8 @@ export interface RiderCard {
   phone: string | null;
   vehicleType: VehicleType | null;
   vehicleNumber: string | null;
+  /** Published delivery ratings; null until the rider has one. */
+  rating?: { average: number; count: number } | null;
 }
 
 export type VehicleType = 'bicycle' | 'scooter' | 'motorbike' | 'car';
@@ -203,5 +215,6 @@ export const awaitingPayment = (o: Pick<Order, 'status' | 'paymentMethod' | 'pay
   o.status === 'pending' && o.paymentMethod === 'online' && o.paymentStatus !== 'paid';
 
 /** The customer-facing status, with "Awaiting payment" for unpaid online orders. */
-export const customerStatusLabel = (o: Pick<Order, 'status' | 'paymentMethod' | 'paymentStatus'>) =>
-  awaitingPayment(o) ? 'Awaiting payment' : ORDER_STATUS_LABEL[o.status];
+export const customerStatusLabel = (
+  o: Pick<Order, 'status' | 'paymentMethod' | 'paymentStatus'>,
+) => (awaitingPayment(o) ? 'Awaiting payment' : ORDER_STATUS_LABEL[o.status]);

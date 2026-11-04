@@ -1,19 +1,20 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, model, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  model,
+  signal,
+  untracked,
+} from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ImageUploadComponent } from 'nexprime';
 import { errorMessage } from '../../../core/services/api-error';
 import { MAX_IMAGE_BYTES, UploadService } from '../../../core/services/upload.service';
+import { BrokenImages } from '../../images/broken-images';
 
-/**
- * Image picker (NexPrime <np-image-upload>) that uploads the file to the API
- * and exposes the stored image URL via two-way binding:
- *
- *   <bb-image-upload [(url)]="imageUrl" label="Add a cover photo" />
- *
- * NexPrime previews the chosen file locally (as a data URL) straight away; we
- * then upload the real file and replace the preview with the server URL. Only
- * the server URL is ever written to `url`.
- */
 @Component({
   selector: 'bb-image-upload',
   imports: [ImageUploadComponent, MatProgressBarModule],
@@ -23,25 +24,27 @@ import { MAX_IMAGE_BYTES, UploadService } from '../../../core/services/upload.se
 })
 export class ImageUpload {
   private readonly uploads = inject(UploadService);
+  private readonly images = inject(BrokenImages);
 
-  /** Stored image URL (server URL or ''). */
   readonly url = model<string>('');
   readonly label = input('Upload image');
-  /** Width / height of the drop zone, e.g. "16 / 9" for covers, 1 for dishes. */
   readonly aspectRatio = input<string | number>('16 / 9');
 
   protected readonly maxBytes = MAX_IMAGE_BYTES;
-  /** What the NexPrime box shows: the stored URL, or a local preview while uploading. */
   protected readonly preview = signal('');
   protected readonly uploading = signal(false);
   protected readonly error = signal<string | null>(null);
 
+  /** The saved image no longer loads (e.g. a deleted upload): show an empty box and ask for a new one. */
+  protected readonly missing = computed(() => !!this.url() && !this.images.usable(this.url()));
+
   constructor() {
-    // Keep the box in sync when the form loads or resets the stored URL.
     effect(() => {
       const url = this.url();
+      const shown = this.missing() ? '' : url;
       untracked(() => {
-        if (!this.uploading()) this.preview.set(url);
+        if (!this.uploading()) this.preview.set(shown);
+        this.images.check(url);
       });
     });
   }

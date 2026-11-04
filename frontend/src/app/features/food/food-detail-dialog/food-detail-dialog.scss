@@ -34,3 +34,14 @@ dd {
     --bb-icon-size: 18px;
   }
 }
+
+.dish-reviews {
+  margin-top: var(--bb-space-4);
+  padding-top: var(--bb-space-3);
+  border-top: 1px solid var(--bb-border);
+
+  h3 {
+    margin: 0 0 var(--bb-space-3);
+    font-size: 1rem;
+  }
+}

@@ -22,32 +22,50 @@ export class AdminCatalogService {
   private readonly http = inject(HttpClient);
   private readonly url = `${environment.apiUrl}/admin`;
 
-  // Restaurants -------------------------------------------------------------
-  restaurants(query: { status?: RestaurantStatus; search?: string; page?: number; limit?: number }): Observable<Paginated<AdminRestaurant>> {
+  // Restaurants
+  restaurants(query: {
+    status?: RestaurantStatus;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Observable<Paginated<AdminRestaurant>> {
     return this.http
-      .get<ApiResponse<Paginated<AdminRestaurant>>>(`${this.url}/restaurants`, { params: toParams(query) })
+      .get<ApiResponse<Paginated<AdminRestaurant>>>(`${this.url}/restaurants`, {
+        params: toParams(query),
+      })
       .pipe(map((res) => res.data));
   }
 
   restaurantCounts(): Observable<Record<RestaurantStatus, number>> {
     return this.http
-      .get<ApiResponse<{ counts: Record<RestaurantStatus, number> }>>(`${this.url}/restaurants/counts`)
+      .get<ApiResponse<{ counts: Record<RestaurantStatus, number> }>>(
+        `${this.url}/restaurants/counts`,
+      )
       .pipe(map((res) => res.data.counts));
   }
 
   restaurant(id: string): Observable<{ restaurant: AdminRestaurant; stats: MenuStats }> {
     return this.http
-      .get<ApiResponse<{ restaurant: AdminRestaurant; stats: MenuStats }>>(`${this.url}/restaurants/${id}`)
+      .get<ApiResponse<{ restaurant: AdminRestaurant; stats: MenuStats }>>(
+        `${this.url}/restaurants/${id}`,
+      )
       .pipe(map((res) => res.data));
   }
 
-  setRestaurantStatus(id: string, status: RestaurantStatus, reason?: string): Observable<AdminRestaurant> {
+  setRestaurantStatus(
+    id: string,
+    status: RestaurantStatus,
+    reason?: string,
+  ): Observable<AdminRestaurant> {
     return this.http
-      .patch<ApiResponse<{ restaurant: AdminRestaurant }>>(`${this.url}/restaurants/${id}/status`, { status, ...(reason ? { reason } : {}) })
+      .patch<ApiResponse<{ restaurant: AdminRestaurant }>>(`${this.url}/restaurants/${id}/status`, {
+        status,
+        ...(reason ? { reason } : {}),
+      })
       .pipe(map((res) => res.data.restaurant));
   }
 
-  // Categories --------------------------------------------------------------
+  // Categories
   categories(): Observable<FoodCategory[]> {
     return this.http
       .get<ApiResponse<{ categories: FoodCategory[] }>>(`${this.url}/categories`)
@@ -67,11 +85,19 @@ export class AdminCatalogService {
   }
 
   deleteCategory(id: string): Observable<void> {
-    return this.http.delete<ApiResponse<null>>(`${this.url}/categories/${id}`).pipe(map(() => undefined));
+    return this.http
+      .delete<ApiResponse<null>>(`${this.url}/categories/${id}`)
+      .pipe(map(() => undefined));
   }
 
-  // Food items --------------------------------------------------------------
-  foods(query: { search?: string; restaurant?: string; available?: boolean; page?: number; limit?: number }): Observable<Paginated<AdminFoodItem>> {
+  // Food items
+  foods(query: {
+    search?: string;
+    restaurant?: string;
+    available?: boolean;
+    page?: number;
+    limit?: number;
+  }): Observable<Paginated<AdminFoodItem>> {
     return this.http
       .get<ApiResponse<Paginated<AdminFoodItem>>>(`${this.url}/foods`, { params: toParams(query) })
       .pipe(map((res) => res.data));
@@ -79,12 +105,15 @@ export class AdminCatalogService {
 
   setFoodAvailability(id: string, isAvailable: boolean): Observable<AdminFoodItem> {
     return this.http
-      .patch<ApiResponse<{ item: AdminFoodItem }>>(`${this.url}/foods/${id}/availability`, { isAvailable })
+      .patch<ApiResponse<{ item: AdminFoodItem }>>(`${this.url}/foods/${id}/availability`, {
+        isAvailable,
+      })
       .pipe(map((res) => res.data.item));
   }
 
   deleteFood(id: string): Observable<void> {
-    return this.http.delete<ApiResponse<null>>(`${this.url}/foods/${id}`).pipe(map(() => undefined));
+    return this.http
+      .delete<ApiResponse<null>>(`${this.url}/foods/${id}`)
+      .pipe(map(() => undefined));
   }
 }
-

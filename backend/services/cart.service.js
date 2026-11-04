@@ -12,7 +12,9 @@ import { computePricing } from "./pricing.service.js";
 /** Retries a load-modify-save once if a concurrent edit bumped the cart version. */
 async function mutateCart(userId, mutate) {
   for (let attempt = 0; attempt < 2; attempt++) {
-    const cart = (await Cart.findOne({ user: userId })) ?? new Cart({ user: userId, items: [] });
+    const cart =
+      (await Cart.findOne({ user: userId })) ??
+      new Cart({ user: userId, items: [] });
     await mutate(cart);
     try {
       if (cart.items.length === 0) {
@@ -21,7 +23,8 @@ async function mutateCart(userId, mutate) {
       }
       return await cart.save();
     } catch (error) {
-      if (error instanceof mongoose.Error.VersionError && attempt === 0) continue;
+      if (error instanceof mongoose.Error.VersionError && attempt === 0)
+        continue;
       if (error?.code === 11000 && attempt === 0) continue; // first cart created concurrently
       throw error;
     }
@@ -30,34 +33,62 @@ async function mutateCart(userId, mutate) {
 }
 
 async function loadOrderableItem(foodItemId) {
-  const item = await FoodItem.findOne({ _id: foodItemId, deletedAt: null }).populate("restaurant", "status name");
-  if (!item || !item.restaurant || item.restaurant.status !== RESTAURANT_STATUS.APPROVED) {
+  const item = await FoodItem.findOne({
+    _id: foodItemId,
+    deletedAt: null,
+  }).populate("restaurant", "status name");
+  if (
+    !item ||
+    !item.restaurant ||
+    item.restaurant.status !== RESTAURANT_STATUS.APPROVED
+  ) {
     throw ApiError.notFound("This dish is not available");
   }
-  if (!item.isAvailable) throw new ApiError(409, `${item.name} is currently unavailable`, { code: "ITEM_UNAVAILABLE" });
+  if (!item.isAvailable)
+    throw new ApiError(409, `${item.name} is currently unavailable`, {
+      code: "ITEM_UNAVAILABLE",
+    });
   return item;
 }
 
-export async function addItem(userId, { foodItemId, quantity = 1, replace = false }) {
+export async function addItem(
+  userId,
+  { foodItemId, quantity = 1, replace = false },
+) {
   const item = await loadOrderableItem(foodItemId);
   const restaurantId = item.restaurant._id;
 
   return mutateCart(userId, async (cart) => {
-    if (cart.restaurant && cart.items.length && !cart.restaurant.equals(restaurantId)) {
+    if (
+      cart.restaurant &&
+      cart.items.length &&
+      !cart.restaurant.equals(restaurantId)
+    ) {
       if (!replace) {
-        const current = await Restaurant.findById(cart.restaurant).select("name");
-        throw new ApiError(409, `Your cart has dishes from ${current?.name ?? "another restaurant"}. Start a new cart?`, {
-          code: "CART_RESTAURANT_CONFLICT",
-          details: [{ field: "restaurant", message: current?.name ?? "" }],
-        });
+        const current = await Restaurant.findById(cart.restaurant).select(
+          "name",
+        );
+        throw new ApiError(
+          409,
+          `Your cart has dishes from ${current?.name ?? "another restaurant"}. Start a new cart?`,
+          {
+            code: "CART_RESTAURANT_CONFLICT",
+            details: [{ field: "restaurant", message: current?.name ?? "" }],
+          },
+        );
       }
       cart.items = [];
       cart.couponCode = undefined;
     }
     cart.restaurant = restaurantId;
     const line = cart.items.find((l) => l.foodItem.equals(item._id));
-    if (line) line.quantity = Math.min(MAX_ITEM_QUANTITY, line.quantity + quantity);
-    else cart.items.push({ foodItem: item._id, quantity: Math.min(MAX_ITEM_QUANTITY, quantity) });
+    if (line)
+      line.quantity = Math.min(MAX_ITEM_QUANTITY, line.quantity + quantity);
+    else
+      cart.items.push({
+        foodItem: item._id,
+        quantity: Math.min(MAX_ITEM_QUANTITY, quantity),
+      });
   });
 }
 
@@ -69,13 +100,15 @@ export async function setQuantity(userId, foodItemId, quantity) {
     if (quantity === 0) cart.items.splice(index, 1);
     else {
       // Increasing quantity requires the dish to still be orderable.
-      if (quantity > cart.items[index].quantity) await loadOrderableItem(foodItemId);
+      if (quantity > cart.items[index].quantity)
+        await loadOrderableItem(foodItemId);
       cart.items[index].quantity = quantity;
     }
   });
 }
 
-export const removeItem = (userId, foodItemId) => setQuantity(userId, foodItemId, 0);
+export const removeItem = (userId, foodItemId) =>
+  setQuantity(userId, foodItemId, 0);
 
 export async function clear(userId) {
   await Cart.deleteOne({ user: userId });
@@ -129,7 +162,12 @@ export async function buildQuote(userId, { addressId } = {}) {
 
   const lines = cart.items.map((line) => {
     const food = foodById.get(String(line.foodItem));
-    const orderable = Boolean(food && !food.deletedAt && food.isAvailable && food.restaurant.equals(cart.restaurant));
+    const orderable = Boolean(
+      food &&
+      !food.deletedAt &&
+      food.isAvailable &&
+      food.restaurant.equals(cart.restaurant),
+    );
     return {
       foodItemId: String(line.foodItem),
       name: food?.name ?? "Removed dish",
@@ -143,10 +181,16 @@ export async function buildQuote(userId, { addressId } = {}) {
   });
 
   if (lines.some((l) => !l.isAvailable)) {
-    issues.push({ code: "ITEMS_UNAVAILABLE", message: "Some dishes are no longer available. Remove them to continue." });
+    issues.push({
+      code: "ITEMS_UNAVAILABLE",
+      message: "Some dishes are no longer available. Remove them to continue.",
+    });
   }
   if (!restaurant || restaurant.status !== RESTAURANT_STATUS.APPROVED) {
-    issues.push({ code: "RESTAURANT_UNAVAILABLE", message: "This restaurant is not taking orders on BiteBox right now." });
+    issues.push({
+      code: "RESTAURANT_UNAVAILABLE",
+      message: "This restaurant is not taking orders on BiteBox right now.",
+    });
   } else if (!restaurant.isOpenNow) {
     issues.push({
       code: "RESTAURANT_CLOSED",
@@ -169,7 +213,11 @@ export async function buildQuote(userId, { addressId } = {}) {
   let couponError = null;
   if (cart.couponCode) {
     try {
-      coupon = await couponService.assertEligible(cart.couponCode, { userId, restaurantId: cart.restaurant, subtotalPaise });
+      coupon = await couponService.assertEligible(cart.couponCode, {
+        userId,
+        restaurantId: cart.restaurant,
+        subtotalPaise,
+      });
     } catch (error) {
       couponError = { code: cart.couponCode, message: error.message };
     }
@@ -185,7 +233,10 @@ export async function buildQuote(userId, { addressId } = {}) {
   if (!address) {
     issues.push({ code: "NO_ADDRESS", message: "Add a delivery address." });
   } else if (restaurant) {
-    distanceMeters = haversineMeters(restaurant.location.coordinates, address.location.coordinates);
+    distanceMeters = haversineMeters(
+      restaurant.location.coordinates,
+      address.location.coordinates,
+    );
     if (distanceMeters > PRICING.maxDeliveryDistanceKm * 1000) {
       issues.push({
         code: "OUT_OF_RANGE",
@@ -214,7 +265,13 @@ export async function buildQuote(userId, { addressId } = {}) {
       items: lines,
       itemCount: lines.reduce((n, l) => n + l.quantity, 0),
     },
-    coupon: coupon ? { code: coupon.code, description: coupon.description, discountPaise: pricing.discountPaise } : null,
+    coupon: coupon
+      ? {
+          code: coupon.code,
+          description: coupon.description,
+          discountPaise: pricing.discountPaise,
+        }
+      : null,
     couponError,
     address: address?.toJSON() ?? null,
     delivery:

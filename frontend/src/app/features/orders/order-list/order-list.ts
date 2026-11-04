@@ -9,13 +9,23 @@ import { errorMessage } from '../../../core/services/api-error';
 import { OrderService } from '../../../core/services/checkout-api.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { Stars } from '../../../shared/components/stars/stars';
 import { Pagination } from '../../../shared/models/api.models';
 import { Order, customerStatusLabel } from '../../../shared/models/checkout.models';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
 
 @Component({
   selector: 'bb-order-list',
-  imports: [DatePipe, RouterLink, MatButtonModule, IconComponent, EmptyState, PageHeader, InrPipe],
+  imports: [
+    DatePipe,
+    RouterLink,
+    MatButtonModule,
+    IconComponent,
+    EmptyState,
+    PageHeader,
+    InrPipe,
+    Stars,
+  ],
   templateUrl: './order-list.html',
   styleUrl: './order-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,10 +44,13 @@ export class OrderList {
 
   constructor() {
     this.load(1);
-    // Live status changes for orders already on screen.
     inject(RealtimeService)
       .orderUpdates$.pipe(takeUntilDestroyed())
-      .subscribe((e) => this.orders.update((list) => list.map((o) => (o.id === e.id ? { ...o, status: e.status } : o))));
+      .subscribe((e) =>
+        this.orders.update((list) =>
+          list.map((o) => (o.id === e.id ? { ...o, status: e.status } : o)),
+        ),
+      );
   }
 
   protected load(page: number): void {

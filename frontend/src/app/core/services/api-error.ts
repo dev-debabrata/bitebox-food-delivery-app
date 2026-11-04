@@ -2,9 +2,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ApiErrorBody, ApiFieldError } from '../../shared/models/api.models';
 
 /** Human-readable message for any HTTP error. */
-export function errorMessage(error: unknown, fallback = 'Something went wrong. Please try again.'): string {
+export function errorMessage(
+  error: unknown,
+  fallback = 'Something went wrong. Please try again.',
+): string {
   if (error instanceof HttpErrorResponse) {
-    if (error.status === 0) return 'Cannot reach BiteBox servers. Check your connection and try again.';
+    if (error.status === 0)
+      return 'Cannot reach BiteBox servers. Check your connection and try again.';
     const body = error.error as Partial<ApiErrorBody> | null;
     if (body && typeof body.message === 'string') return body.message;
   }

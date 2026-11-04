@@ -13,14 +13,6 @@ import { EMPTY, catchError, debounceTime, distinctUntilChanged, switchMap, tap }
 import { errorMessage } from '../../../core/services/api-error';
 import { DeliveryLocationService, Place } from '../../../core/services/delivery-location.service';
 
-/**
- * Place search box with its results list (OpenStreetMap search via the API):
- * debounced, from 3 characters, with loading, empty and error states.
- * Emits `picked` and clears itself. Extra controls (e.g. a "Current location"
- * button) can be projected into the same row:
- *
- *   <bb-place-search (picked)="setPin($event)"><button …>Current location</button></bb-place-search>
- */
 @Component({
   selector: 'bb-place-search',
   imports: [IconComponent, SearchInputComponent],
@@ -32,7 +24,6 @@ export class PlaceSearch {
   private readonly places = inject(DeliveryLocationService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
 
-  /** Say "No places found" after a search that matched nothing. */
   readonly showEmpty = input(false);
   readonly picked = output<Place>();
 
@@ -74,7 +65,6 @@ export class PlaceSearch {
       });
   }
 
-  /** Put the cursor in the search box (e.g. after a failed GPS attempt). */
   focus(): void {
     this.host.querySelector('input')?.focus();
   }

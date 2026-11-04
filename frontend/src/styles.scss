@@ -388,6 +388,17 @@ np-icon[matChipAvatar] {
   overflow: hidden;
 }
 
+// Review photo viewer: full screen, dark, no rounded corners.
+.bb-photo-viewer-panel .mat-mdc-dialog-surface {
+  overflow: hidden;
+  background: #141016;
+  border-radius: 0 !important;
+}
+
+.bb-photo-viewer-backdrop {
+  background: #141016;
+}
+
 // Dialog actions: "Cancel" (a text button) is outlined and as tall as the primary action beside it.
 .mat-mdc-dialog-actions .mat-mdc-button-base {
   --mat-button-text-container-height: 44px;
@@ -660,6 +671,33 @@ np-time-picker .time-picker-field {
 }
 
 // Role badge used in admin lists
+// Review status chips (and report status): green when public, amber while pending, red when off.
+.bb-status {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--bb-surface-alt);
+  color: var(--bb-ink-muted);
+
+  &.is-published {
+    background: #e6f5ec;
+    color: var(--bb-success);
+  }
+
+  &.is-hidden,
+  &.is-open {
+    background: var(--bb-amber-100);
+    color: #7a4b00;
+  }
+
+  &.is-removed {
+    background: #fdecee;
+    color: var(--bb-danger);
+  }
+}
+
 .bb-role-chip {
   font-size: 0.75rem;
   font-weight: 700;

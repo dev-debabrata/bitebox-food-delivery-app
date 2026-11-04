@@ -11,9 +11,11 @@ const email = () =>
     .withMessage("Enter a valid email address")
     .bail()
     .isLength({ max: 254 })
-    .normalizeEmail({ gmail_remove_dots: false, gmail_remove_subaddress: false });
+    .normalizeEmail({
+      gmail_remove_dots: false,
+      gmail_remove_subaddress: false,
+    });
 
-// bcrypt only uses the first 72 bytes of a password, so cap the length.
 const newPassword = (field = "password") =>
   body(field)
     .isString()
@@ -56,19 +58,31 @@ export const registerRules = [
 
 export const loginRules = [
   email(),
-  body("password").isString().withMessage("Password is required").bail().isLength({ min: 1, max: 128 }),
+  body("password")
+    .isString()
+    .withMessage("Password is required")
+    .bail()
+    .isLength({ min: 1, max: 128 }),
   body("portal").optional().isIn(ALL_ROLES).withMessage("Invalid portal"),
 ];
 
 export const forgotPasswordRules = [email()];
 
 export const resetPasswordRules = [
-  body("token").isString().withMessage("Reset token is required").bail().isLength({ min: 20, max: 200 }),
+  body("token")
+    .isString()
+    .withMessage("Reset token is required")
+    .bail()
+    .isLength({ min: 20, max: 200 }),
   newPassword(),
 ];
 
 export const changePasswordRules = [
-  body("currentPassword").isString().withMessage("Current password is required").bail().isLength({ min: 1, max: 128 }),
+  body("currentPassword")
+    .isString()
+    .withMessage("Current password is required")
+    .bail()
+    .isLength({ min: 1, max: 128 }),
   newPassword("newPassword"),
 ];
 

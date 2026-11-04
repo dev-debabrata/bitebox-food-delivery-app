@@ -8,7 +8,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { errorMessage, fieldErrors } from '../../../core/services/api-error';
 import { MyRestaurantService } from '../../../core/services/my-restaurant.service';
 import { ImageUpload } from '../../../shared/components/image-upload/image-upload';
-import { FoodCategory, FoodItem, FoodItemInput, categoryIdOf } from '../../../shared/models/catalog.models';
+import {
+  FoodCategory,
+  FoodItem,
+  FoodItemInput,
+  categoryIdOf,
+} from '../../../shared/models/catalog.models';
 import { rupeesToPaise } from '../../../shared/pipes/money.pipes';
 import { serverErrors, shownError } from '../../../shared/forms/form-errors';
 import { IconComponent, SelectOption, ToggleComponent } from 'nexprime';
@@ -20,7 +25,6 @@ export interface FoodFormData {
   categories: FoodCategory[];
 }
 
-/** Add or edit a menu item. Closes with the saved item. */
 @Component({
   selector: 'bb-food-form-dialog',
   imports: [
@@ -40,7 +44,10 @@ export interface FoodFormData {
 })
 export class FoodFormDialog {
   protected readonly data = inject<FoodFormData>(MAT_DIALOG_DATA);
-  protected readonly categoryOptions: SelectOption[] = this.data.categories.map((c) => ({ value: c.id, label: c.name }));
+  protected readonly categoryOptions: SelectOption[] = this.data.categories.map((c) => ({
+    value: c.id,
+    label: c.name,
+  }));
   private readonly ref = inject(MatDialogRef<FoodFormDialog, FoodItem>);
   private readonly service = inject(MyRestaurantService);
   protected readonly shownError = shownError;
@@ -48,7 +55,6 @@ export class FoodFormDialog {
   protected readonly error = signal<string | null>(null);
   protected readonly imageUrl = signal(this.data.item?.imageUrl ?? '');
 
-  /** Price is typed in rupees and sent to the API as integer paise. */
   protected readonly model = signal({
     name: this.data.item?.name ?? '',
     category: this.data.item ? categoryIdOf(this.data.item) : '',
@@ -85,13 +91,17 @@ export class FoodFormDialog {
     };
     this.error.set(null);
     try {
-      const request = this.data.item ? this.service.updateFood(this.data.item.id, input) : this.service.createFood(input);
+      const request = this.data.item
+        ? this.service.updateFood(this.data.item.id, input)
+        : this.service.createFood(input);
       this.ref.close(await firstValueFrom(request));
       return undefined;
     } catch (err) {
       this.error.set(errorMessage(err, 'Could not save this dish.'));
-      // The API reports the price as "pricePaise"; show it under the Price field.
-      return serverErrors(this.form, fieldErrors(err).map((e) => (e.field === 'pricePaise' ? { ...e, field: 'price' } : e)));
+      return serverErrors(
+        this.form,
+        fieldErrors(err).map((e) => (e.field === 'pricePaise' ? { ...e, field: 'price' } : e)),
+      );
     }
   }
 }

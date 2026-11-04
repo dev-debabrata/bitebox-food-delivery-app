@@ -54,6 +54,11 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./foods/admin-foods').then((m) => m.AdminFoods),
   },
   {
+    path: 'reviews',
+    title: 'Reviews | BiteBox Admin',
+    loadComponent: () => import('./reviews/admin-reviews').then((m) => m.AdminReviews),
+  },
+  {
     path: 'coupons',
     title: 'Coupons | BiteBox Admin',
     loadComponent: () => import('./coupons/admin-coupons').then((m) => m.AdminCoupons),

@@ -13,11 +13,13 @@ import {
 import { NotificationService } from '../../../core/services/notification.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
+import { ClockTimePipe } from '../../../shared/pipes/clock-time.pipe';
 import { StatusBanner } from '../status-banner/status-banner';
+import { ImageFallback, UsableImagePipe } from '../../../shared/images/broken-images';
 
 @Component({
   selector: 'bb-restaurant-dashboard',
-  imports: [ToggleComponent, RouterLink, MatButtonModule, IconComponent, InrPipe, StatusBanner],
+  imports: [ToggleComponent, RouterLink, MatButtonModule, IconComponent, InrPipe, ClockTimePipe, StatusBanner, ImageFallback, UsableImagePipe],
   templateUrl: './restaurant-dashboard.html',
   styleUrl: './restaurant-dashboard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,7 +35,6 @@ export class RestaurantDashboard {
 
   constructor() {
     this.load();
-    // An admin approved, rejected or suspended the restaurant: show the new status at once.
     inject(RealtimeService)
       .notifications$.pipe(
         filter((n) => n.type.startsWith('restaurant.')),
@@ -50,7 +51,6 @@ export class RestaurantDashboard {
     });
   }
 
-  /** Optimistic: the switch follows the state; on failure the state (and so the switch) goes back. */
   protected toggleOrders(checked: boolean): void {
     const set = (isAcceptingOrders: boolean) =>
       this.state.update((s) =>

@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-/** BiteBox wordmark. Use `variant="light"` on dark backgrounds. */
 @Component({
   selector: 'bb-brand-logo',
   templateUrl: './brand-logo.html',

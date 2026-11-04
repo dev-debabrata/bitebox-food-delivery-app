@@ -1,0 +1,29 @@
+<div class="photos" role="group" [attr.aria-label]="label()">
+  <span class="label">{{ label() }}</span>
+  @if (saved().length) {
+    <ul class="saved">
+      @for (url of saved(); track url; let i = $index) {
+        <li>
+          <img [src]="url" [alt]="'Photo ' + (i + 1)" />
+          <button mat-icon-button type="button" class="remove" [attr.aria-label]="'Remove photo ' + (i + 1)" (click)="removeSaved(url)">
+            <np-icon name="x" class="mat-icon" matButtonIcon />
+          </button>
+        </li>
+      }
+    </ul>
+  }
+  @if (room() > 0) {
+    <np-file-upload
+      variant="cards"
+      multiple
+      auto
+      [accept]="accept"
+      [maxFileSize]="maxBytes"
+      [fileLimit]="room()"
+      chooseLabel="Choose photos"
+      [hint]="'JPEG, PNG or WebP · up to 2 MB each · ' + (left() ? left() + ' more' : 'limit reached')"
+      [uploadHandler]="upload"
+      (remove)="removed($event.file)"
+    />
+  }
+</div>

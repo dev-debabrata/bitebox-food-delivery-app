@@ -1,13 +1,16 @@
 import mongoose from "mongoose";
 import { FoodItem } from "../models/food-item.model.js";
-import { ADMIN_STATUS_TRANSITIONS, RESTAURANT_STATUS, Restaurant } from "../models/restaurant.model.js";
+import {
+  ADMIN_STATUS_TRANSITIONS,
+  RESTAURANT_STATUS,
+  Restaurant,
+} from "../models/restaurant.model.js";
 import { ApiError } from "../utils/api-error.js";
 import { notify, notifyAdmins } from "./notification.service.js";
 import { escapeRegex, paginationMeta } from "../utils/pagination.js";
 import { toPoint } from "../utils/geo.js";
 import { uniqueSlug } from "../utils/slug.js";
 
-/** Fields a restaurant owner may set. Status, rating and owner are never client-controlled. */
 const OWNER_FIELDS = [
   "name",
   "description",
@@ -24,13 +27,12 @@ const OWNER_FIELDS = [
   "closingTime",
 ];
 
-const pick = (source, keys) => Object.fromEntries(keys.filter((k) => source[k] !== undefined).map((k) => [k, source[k]]));
+const pick = (source, keys) =>
+  Object.fromEntries(
+    keys.filter((k) => source[k] !== undefined).map((k) => [k, source[k]]),
+  );
 
-
-// ---------------------------------------------------------------------------
 // Owner (restaurant partner)
-// ---------------------------------------------------------------------------
-
 export async function getOwnRestaurant(ownerId) {
   return Restaurant.findOne({ owner: ownerId });
 }
@@ -38,7 +40,8 @@ export async function getOwnRestaurant(ownerId) {
 /** Loads the caller's restaurant or fails with 404 (used by menu management). */
 export async function requireOwnRestaurant(ownerId) {
   const restaurant = await getOwnRestaurant(ownerId);
-  if (!restaurant) throw ApiError.notFound("Create your restaurant profile first");
+  if (!restaurant)
+    throw ApiError.notFound("Create your restaurant profile first");
   return restaurant;
 }
 
@@ -52,9 +55,18 @@ const reviewRequest = (restaurant, title, body) => ({
 
 /** What the owner is told when an admin changes their restaurant's status. */
 const STATUS_NOTICE = {
-  [RESTAURANT_STATUS.APPROVED]: { title: "Your restaurant is live", body: "Customers can now find you and place orders." },
-  [RESTAURANT_STATUS.REJECTED]: { title: "Your application needs changes", body: "Update your details to send it for review again." },
-  [RESTAURANT_STATUS.SUSPENDED]: { title: "Your restaurant is suspended", body: "Customers cannot order until BiteBox reinstates it." },
+  [RESTAURANT_STATUS.APPROVED]: {
+    title: "Your restaurant is live",
+    body: "Customers can now find you and place orders.",
+  },
+  [RESTAURANT_STATUS.REJECTED]: {
+    title: "Your application needs changes",
+    body: "Update your details to send it for review again.",
+  },
+  [RESTAURANT_STATUS.SUSPENDED]: {
+    title: "Your restaurant is suspended",
+    body: "Customers cannot order until BiteBox reinstates it.",
+  },
 };
 
 export async function createOwnRestaurant(ownerId, input) {
@@ -68,7 +80,13 @@ export async function createOwnRestaurant(ownerId, input) {
     slug: await uniqueSlug(Restaurant, input.name),
     status: RESTAURANT_STATUS.PENDING,
   });
-  await notifyAdmins(reviewRequest(restaurant, "New restaurant application", "Review it to put it live on BiteBox."));
+  await notifyAdmins(
+    reviewRequest(
+      restaurant,
+      "New restaurant application",
+      "Review it to put it live on BiteBox.",
+    ),
+  );
   return restaurant;
 }
 
@@ -86,7 +104,14 @@ export async function updateOwnRestaurant(ownerId, input) {
     restaurant.statusReason = undefined;
   }
   const saved = await restaurant.save();
-  if (resubmitted) await notifyAdmins(reviewRequest(saved, "Restaurant resubmitted", "The owner updated a rejected application."));
+  if (resubmitted)
+    await notifyAdmins(
+      reviewRequest(
+        saved,
+        "Restaurant resubmitted",
+        "The owner updated a rejected application.",
+      ),
+    );
   return saved;
 }
 
@@ -96,23 +121,32 @@ export async function setAcceptingOrders(ownerId, isAcceptingOrders) {
     { isAcceptingOrders },
     { returnDocument: "after" },
   );
-  if (!restaurant) throw ApiError.notFound("Create your restaurant profile first");
+  if (!restaurant)
+    throw ApiError.notFound("Create your restaurant profile first");
   return restaurant;
 }
 
 export async function ownerStats(restaurantId) {
   const [total, available] = await Promise.all([
     FoodItem.countDocuments({ restaurant: restaurantId, deletedAt: null }),
-    FoodItem.countDocuments({ restaurant: restaurantId, deletedAt: null, isAvailable: true }),
+    FoodItem.countDocuments({
+      restaurant: restaurantId,
+      deletedAt: null,
+      isAvailable: true,
+    }),
   ]);
-  const categories = await FoodItem.distinct("category", { restaurant: restaurantId, deletedAt: null });
-  return { totalItems: total, availableItems: available, categoriesUsed: categories.length };
+  const categories = await FoodItem.distinct("category", {
+    restaurant: restaurantId,
+    deletedAt: null,
+  });
+  return {
+    totalItems: total,
+    availableItems: available,
+    categoriesUsed: categories.length,
+  };
 }
 
-// ---------------------------------------------------------------------------
 // Admin
-// ---------------------------------------------------------------------------
-
 export async function adminList({ status, search }, pagination) {
   const filter = {};
   if (status) filter.status = status;
@@ -132,32 +166,40 @@ export async function adminList({ status, search }, pagination) {
 }
 
 export async function adminGet(id) {
-  const restaurant = await Restaurant.findById(id).populate("owner", "name email phone status");
+  const restaurant = await Restaurant.findById(id).populate(
+    "owner",
+    "name email phone status",
+  );
   if (!restaurant) throw ApiError.notFound("Restaurant not found");
   return restaurant;
 }
 
 export async function adminCounts() {
-  const rows = await Restaurant.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]);
-  const counts = Object.fromEntries(Object.values(RESTAURANT_STATUS).map((s) => [s, 0]));
+  const rows = await Restaurant.aggregate([
+    { $group: { _id: "$status", count: { $sum: 1 } } },
+  ]);
+  const counts = Object.fromEntries(
+    Object.values(RESTAURANT_STATUS).map((s) => [s, 0]),
+  );
   for (const row of rows) counts[row._id] = row.count;
   return counts;
 }
 
-/**
- * Applies an admin status change if allowed by ADMIN_STATUS_TRANSITIONS.
- * The update is conditional on the current status, so two admins acting at
- * once cannot both succeed (the second gets 409).
- */
 export async function adminSetStatus(id, nextStatus, reason, adminId) {
   const current = await Restaurant.findById(id).select("status");
   if (!current) throw ApiError.notFound("Restaurant not found");
 
   const allowed = ADMIN_STATUS_TRANSITIONS[current.status] ?? [];
   if (!allowed.includes(nextStatus)) {
-    throw ApiError.conflict(`Cannot change a ${current.status} restaurant to ${nextStatus}`);
+    throw ApiError.conflict(
+      `Cannot change a ${current.status} restaurant to ${nextStatus}`,
+    );
   }
-  if ((nextStatus === RESTAURANT_STATUS.REJECTED || nextStatus === RESTAURANT_STATUS.SUSPENDED) && !reason) {
+  if (
+    (nextStatus === RESTAURANT_STATUS.REJECTED ||
+      nextStatus === RESTAURANT_STATUS.SUSPENDED) &&
+    !reason
+  ) {
     throw ApiError.badRequest("A reason is required");
   }
 
@@ -172,7 +214,10 @@ export async function adminSetStatus(id, nextStatus, reason, adminId) {
     { returnDocument: "after" },
   ).populate("owner", "name email phone status");
 
-  if (!updated) throw ApiError.conflict("This restaurant was updated by someone else. Refresh and try again.");
+  if (!updated)
+    throw ApiError.conflict(
+      "This restaurant was updated by someone else. Refresh and try again.",
+    );
   const notice = STATUS_NOTICE[nextStatus];
   if (notice) {
     await notify(updated.owner._id, {
@@ -185,10 +230,7 @@ export async function adminSetStatus(id, nextStatus, reason, adminId) {
   return updated;
 }
 
-// ---------------------------------------------------------------------------
 // Public discovery
-// ---------------------------------------------------------------------------
-
 const SORTS = {
   rating: { "rating.average": -1, "rating.count": -1, _id: 1 },
   fastest: { avgPrepTimeMinutes: 1, _id: 1 },
@@ -198,21 +240,24 @@ const SORTS = {
   distance: { distanceMeters: 1, _id: 1 },
 };
 
-/**
- * Lists approved restaurants with search, filters, sorting and paging.
- * With lat/lng it runs a $geoNear query and returns `distanceMeters`, which
- * is straight-line distance, not road distance.
- */
 export async function listPublic(query, pagination) {
   const match = { status: RESTAURANT_STATUS.APPROVED };
 
   if (query.search) {
     const re = new RegExp(escapeRegex(query.search), "i");
     // Also match restaurants that serve a dish with this name.
-    const dishRestaurants = await FoodItem.distinct("restaurant", { name: re, deletedAt: null });
-    match.$or = [{ name: re }, { cuisines: re }, { _id: { $in: dishRestaurants } }];
+    const dishRestaurants = await FoodItem.distinct("restaurant", {
+      name: re,
+      deletedAt: null,
+    });
+    match.$or = [
+      { name: re },
+      { cuisines: re },
+      { _id: { $in: dishRestaurants } },
+    ];
   }
-  if (query.cuisine) match.cuisines = new RegExp(`^${escapeRegex(query.cuisine)}$`, "i");
+  if (query.cuisine)
+    match.cuisines = new RegExp(`^${escapeRegex(query.cuisine)}$`, "i");
   if (query.veg) match.isPureVeg = true;
   if (query.category) {
     const ids = await FoodItem.distinct("restaurant", {
@@ -225,7 +270,8 @@ export async function listPublic(query, pagination) {
 
   const geo = query.lat !== undefined && query.lng !== undefined;
   const sortKey = query.sort ?? (geo ? "distance" : "rating");
-  if (sortKey === "distance" && !geo) throw ApiError.badRequest("Sorting by distance needs lat and lng");
+  if (sortKey === "distance" && !geo)
+    throw ApiError.badRequest("Sorting by distance needs lat and lng");
 
   const first = geo
     ? {
@@ -243,7 +289,11 @@ export async function listPublic(query, pagination) {
     first,
     {
       $facet: {
-        items: [{ $sort: SORTS[sortKey] }, { $skip: pagination.skip }, { $limit: pagination.limit }],
+        items: [
+          { $sort: SORTS[sortKey] },
+          { $skip: pagination.skip },
+          { $limit: pagination.limit },
+        ],
         total: [{ $count: "count" }],
       },
     },
@@ -251,27 +301,48 @@ export async function listPublic(query, pagination) {
 
   const items = result.items.map((raw) => {
     const json = Restaurant.hydrate(raw).toJSON();
-    return raw.distanceMeters === undefined ? json : { ...json, distanceMeters: Math.round(raw.distanceMeters) };
+    return raw.distanceMeters === undefined
+      ? json
+      : { ...json, distanceMeters: Math.round(raw.distanceMeters) };
   });
-  return { items: items.map(publicView), pagination: paginationMeta(pagination, result.total[0]?.count ?? 0) };
+  return {
+    items: items.map(publicView),
+    pagination: paginationMeta(pagination, result.total[0]?.count ?? 0),
+  };
 }
 
 /** Distinct cuisines across approved restaurants (for filter dropdowns). */
 export async function listCuisines() {
-  const cuisines = await Restaurant.distinct("cuisines", { status: RESTAURANT_STATUS.APPROVED });
-  return [...new Set(cuisines.map((c) => c.trim()))].sort((a, b) => a.localeCompare(b));
+  const cuisines = await Restaurant.distinct("cuisines", {
+    status: RESTAURANT_STATUS.APPROVED,
+  });
+  return [...new Set(cuisines.map((c) => c.trim()))].sort((a, b) =>
+    a.localeCompare(b),
+  );
 }
 
 export async function getPublicBySlugOrId(slugOrId) {
-  const filter = mongoose.isValidObjectId(slugOrId) ? { _id: slugOrId } : { slug: String(slugOrId).toLowerCase() };
-  const restaurant = await Restaurant.findOne({ ...filter, status: RESTAURANT_STATUS.APPROVED });
+  const filter = mongoose.isValidObjectId(slugOrId)
+    ? { _id: slugOrId }
+    : { slug: String(slugOrId).toLowerCase() };
+  const restaurant = await Restaurant.findOne({
+    ...filter,
+    status: RESTAURANT_STATUS.APPROVED,
+  });
   if (!restaurant) throw ApiError.notFound("Restaurant not found");
   return restaurant;
 }
 
 /** Removes internal/admin-only fields from a restaurant for public responses. */
 export function publicView(restaurant) {
-  const json = typeof restaurant.toJSON === "function" ? restaurant.toJSON() : restaurant;
-  const { owner: _owner, statusReason: _reason, reviewedAt: _at, reviewedBy: _by, ...rest } = json;
+  const json =
+    typeof restaurant.toJSON === "function" ? restaurant.toJSON() : restaurant;
+  const {
+    owner: _owner,
+    statusReason: _reason,
+    reviewedAt: _at,
+    reviewedBy: _by,
+    ...rest
+  } = json;
   return rest;
 }

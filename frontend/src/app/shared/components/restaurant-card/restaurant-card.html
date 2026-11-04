@@ -1,8 +1,8 @@
 @let r = restaurant();
 <a class="card" [routerLink]="['/restaurants', r.slug]">
   <div class="media">
-    @if (r.imageUrl) {
-      <img [src]="r.imageUrl" [alt]="''" loading="lazy" />
+    @if (r.imageUrl | usableImage) {
+      <img [bbSrc]="r.imageUrl" [alt]="''" loading="lazy" />
     } @else {
       <div class="placeholder" aria-hidden="true">
         <np-icon name="utensils" class="mat-icon" matButtonIcon />
@@ -21,8 +21,9 @@
     <div class="title-row">
       <h3>{{ r.name }}</h3>
       @if (rating(); as stars) {
-        <span class="rating" [attr.aria-label]="'Rated ' + stars + ' out of 5'">
+        <span class="rating" role="img" [attr.aria-label]="'Rated ' + stars + ' out of 5 from ' + r.rating.count + ' reviews'">
           <np-icon name="star" class="mat-icon" matButtonIcon />{{ stars }}
+          <span class="rating-count" aria-hidden="true">({{ r.rating.count }})</span>
         </span>
       } @else {
         <span class="rating new">New</span>

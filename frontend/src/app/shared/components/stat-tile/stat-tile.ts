@@ -2,7 +2,6 @@ import { NpIconPipe } from '../../../shared/icons/np-icon-name';
 import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-/** A headline number with its label (and an optional hint underneath). */
 @Component({
   selector: 'bb-stat-tile',
   imports: [IconComponent, NpIconPipe],

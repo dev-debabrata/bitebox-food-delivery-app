@@ -1,0 +1,64 @@
+@if (data(); as d) {
+  <header mat-dialog-title class="head">
+    <h2>Order {{ d.orderNumber }}</h2>
+    <p class="meta">
+      {{ d.authorName }} · {{ d.createdAt | date: 'd MMM y' }} · {{ d.reviews.length }}
+      {{ d.reviews.length === 1 ? 'review' : 'reviews' }}
+      @if (d.unanswered) {
+        · <span class="needs">{{ d.unanswered }} without a reply</span>
+      }
+    </p>
+  </header>
+  <mat-dialog-content>
+    <ul class="reviews">
+      @for (r of d.reviews; track r.id) {
+        <li>
+          <h3 class="subject">
+            <np-icon [name]="r.target === 'restaurant' ? 'store' : 'utensils'" class="mat-icon" matButtonIcon />
+            {{ heading(r) }}
+          </h3>
+          <bb-review-card [review]="r" responder="You">
+            @if (replying() === r.id) {
+              <bb-reply-form [review]="r" (saved)="replied(r, $event)" (cancelled)="replying.set(null)" />
+            } @else {
+              <div class="actions">
+                @if (r.response) {
+                  <button mat-button type="button" (click)="replying.set(r.id)">
+                    <np-icon name="pencil" class="mat-icon" matButtonIcon />Edit reply
+                  </button>
+                  <button mat-button type="button" (click)="deleteReply(r)">
+                    <np-icon name="trash-2" class="mat-icon" matButtonIcon />Remove reply
+                  </button>
+                } @else {
+                  <button mat-stroked-button type="button" (click)="replying.set(r.id)" [attr.aria-label]="'Reply to the ' + heading(r) + ' review'">
+                    <np-icon name="message-square-reply" class="mat-icon" matButtonIcon />Reply
+                  </button>
+                }
+                @if (r.reportedByYou) {
+                  <span class="bb-muted reported">Reported</span>
+                } @else {
+                  <button mat-button type="button" (click)="report(r)" [attr.aria-label]="'Report the ' + heading(r) + ' review'">
+                    <np-icon name="flag" class="mat-icon" matButtonIcon />Report
+                  </button>
+                }
+              </div>
+            }
+          </bb-review-card>
+        </li>
+      }
+    </ul>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" [mat-dialog-close]="changed()">Close</button>
+  </mat-dialog-actions>
+} @else if (error(); as message) {
+  <mat-dialog-content>
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>{{ message }} <button class="bb-link-button" (click)="load()">Retry</button></span>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end"><button mat-button mat-dialog-close>Close</button></mat-dialog-actions>
+} @else {
+  <mat-dialog-content><span class="bb-skeleton" style="height: 280px" aria-busy="true"></span></mat-dialog-content>
+}

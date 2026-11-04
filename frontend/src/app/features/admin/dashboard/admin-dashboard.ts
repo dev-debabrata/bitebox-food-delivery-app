@@ -42,7 +42,6 @@ export class AdminDashboard {
   protected readonly stats = signal<StatCard[]>([]);
   protected readonly recent = signal<User[]>([]);
   protected readonly restaurantCounts = signal<Record<RestaurantStatus, number> | null>(null);
-  /** Business headline for the last 30 days (independent of the account totals). */
   private readonly reports = inject(ReportsService);
   protected readonly report = rxResource({ stream: () => this.reports.adminReport(30) });
   protected readonly formatPaise = formatPaise;
@@ -65,8 +64,18 @@ export class AdminDashboard {
       next: (res) => {
         this.stats.set([
           { role: 'customer', label: 'Customers', icon: 'group', value: res.customer },
-          { role: 'restaurant', label: 'Restaurant accounts', icon: 'storefront', value: res.restaurant },
-          { role: 'delivery', label: 'Delivery partners', icon: 'two_wheeler', value: res.delivery },
+          {
+            role: 'restaurant',
+            label: 'Restaurant accounts',
+            icon: 'storefront',
+            value: res.restaurant,
+          },
+          {
+            role: 'delivery',
+            label: 'Delivery partners',
+            icon: 'two_wheeler',
+            value: res.delivery,
+          },
           { role: 'admin', label: 'Administrators', icon: 'shield_person', value: res.admin },
         ]);
         this.recent.set(res.recent.items);

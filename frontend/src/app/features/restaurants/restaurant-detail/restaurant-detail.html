@@ -33,7 +33,10 @@
       <ul class="facts">
         <li>
           @if (rating(); as stars) {
-            <np-icon name="star" class="mat-icon" matButtonIcon />{{ stars }} <span class="muted">({{ r.rating.count }})</span>
+            <a href="#reviews" class="rating-link" (click)="scrollToReviews($event)">
+              <np-icon name="star" class="mat-icon" matButtonIcon />{{ stars }}
+              <span class="muted">({{ r.rating.count }} {{ r.rating.count === 1 ? 'review' : 'reviews' }})</span>
+            </a>
           } @else {
             <np-icon name="sparkles" class="mat-icon" matButtonIcon />New on BiteBox
           }
@@ -42,7 +45,7 @@
         <li><np-icon name="banknote" class="mat-icon" matButtonIcon />{{ r.costForTwoPaise | inr }} for two</li>
         <li [class.closed]="!r.isOpenNow">
           <np-icon [name]="(r.isOpenNow ? 'storefront' : 'door_front') | npIcon" class="mat-icon" matButtonIcon />
-          {{ r.isOpenNow ? 'Open now' : 'Closed now' }} · {{ r.openingTime }}–{{ r.closingTime }}
+          {{ r.isOpenNow ? 'Open now' : 'Closed now' }} · {{ r.openingTime | clockTime }} – {{ r.closingTime | clockTime }}
         </li>
         @if (r.isPureVeg) {
           <li class="veg"><np-icon name="leaf" class="mat-icon" matButtonIcon />Pure veg</li>
@@ -73,7 +76,7 @@
           <np-icon name="clock" class="mat-icon" matButtonIcon />
           <span>
             @if (!r.isOpenNow) {
-              {{ r.name }} is closed right now. You can browse the menu; ordering opens at {{ r.openingTime }}.
+              {{ r.name }} is closed right now. You can browse the menu; ordering opens at {{ r.openingTime | clockTime }}.
             } @else {
               {{ r.name }} is not taking orders right now. Please check back soon.
             }
@@ -115,6 +118,12 @@
                   <button type="button" class="dish-text" (click)="openItem(item)">
                     <span class="dish-name"><bb-veg-badge [veg]="item.isVeg" /> {{ item.name }}</span>
                     <span class="dish-price">{{ item.pricePaise | inr }}</span>
+                    @if (item.rating?.count) {
+                      <span class="dish-rating">
+                        <bb-stars [value]="item.rating!.average" size="sm" />
+                        <span>{{ item.rating!.average | number: '1.1-1' }} ({{ item.rating!.count }})</span>
+                      </span>
+                    }
                     @if (item.description) {
                       <span class="dish-desc">{{ item.description }}</span>
                     }
@@ -123,13 +132,13 @@
                     }
                   </button>
                   <div class="dish-side">
-                    @if (item.imageUrl) {
-                      <img [src]="item.imageUrl" alt="" loading="lazy" />
+                    @if (item.imageUrl | usableImage) {
+                      <img [bbSrc]="item.imageUrl" alt="" loading="lazy" />
                     }
                     @if (canOrder() && item.isAvailable) {
                       <bb-qty-stepper
                         class="stepper"
-                        [class.over-image]="!!item.imageUrl"
+                        [class.over-image]="item.imageUrl | usableImage"
                         [quantity]="quantityOf(item.id)"
                         [label]="item.name"
                         [disabled]="cart.busy() || !takingOrders()"
@@ -144,6 +153,11 @@
           </ul>
         </section>
       }
+
+      <section class="reviews-section" id="reviews" aria-labelledby="reviews-title">
+        <h2 id="reviews-title" tabindex="-1"><np-icon name="star" class="mat-icon" matButtonIcon />Ratings and reviews</h2>
+        <bb-public-reviews [subject]="{ kind: 'restaurant', key: r.slug }" [responder]="r.name" />
+      </section>
     </div>
 
     <!-- Desktop: the cart sits beside the menu. Phones/tablets use the bar below. -->

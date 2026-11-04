@@ -26,13 +26,18 @@ describe("Health & app basics", () => {
   });
 
   it("rejects malformed JSON with 400", async () => {
-    const res = await request(app).post("/api/v1/auth/login").set("Content-Type", "application/json").send("{bad json");
+    const res = await request(app)
+      .post("/api/v1/auth/login")
+      .set("Content-Type", "application/json")
+      .send("{bad json");
     assert.equal(res.status, 400);
     assert.equal(res.body.success, false);
   });
 
   it("rejects oversized payloads with 413", async () => {
-    const res = await request(app).post("/api/v1/auth/login").send({ email: "a@b.co", password: "x".repeat(200_000) });
+    const res = await request(app)
+      .post("/api/v1/auth/login")
+      .send({ email: "a@b.co", password: "x".repeat(200_000) });
     assert.equal(res.status, 413);
   });
 
@@ -43,20 +48,38 @@ describe("Health & app basics", () => {
   });
 
   it("only allows CORS for allow-listed origins", async () => {
-    const allowed = await request(app).options("/api/v1/auth/login").set("Origin", "http://localhost:4200").set("Access-Control-Request-Method", "POST");
-    assert.equal(allowed.headers["access-control-allow-origin"], "http://localhost:4200");
-    const denied = await request(app).options("/api/v1/auth/login").set("Origin", "https://evil.example").set("Access-Control-Request-Method", "POST");
+    const allowed = await request(app)
+      .options("/api/v1/auth/login")
+      .set("Origin", "http://localhost:4200")
+      .set("Access-Control-Request-Method", "POST");
+    assert.equal(
+      allowed.headers["access-control-allow-origin"],
+      "http://localhost:4200",
+    );
+    const denied = await request(app)
+      .options("/api/v1/auth/login")
+      .set("Origin", "https://evil.example")
+      .set("Access-Control-Request-Method", "POST");
     assert.equal(denied.headers["access-control-allow-origin"], undefined);
   });
 
   it("documents only routes that exist", async () => {
-    const operations = Object.entries(openApiDocument.paths).flatMap(([path, ops]) =>
-      Object.keys(ops).map((method) => [method, path.replace("{id}", "0123456789abcdef01234567").replace("{slugOrId}", "x")]),
+    const operations = Object.entries(openApiDocument.paths).flatMap(
+      ([path, ops]) =>
+        Object.keys(ops).map((method) => [
+          method,
+          path
+            .replace("{id}", "0123456789abcdef01234567")
+            .replace("{slugOrId}", "x"),
+        ]),
     );
     assert.ok(operations.length > 30);
     for (const [method, path] of operations) {
       const res = await request(app)[method](`/api/v1${path}`);
-      assert.ok(!String(res.body.message).startsWith("Route not found"), `${method.toUpperCase()} ${path} is documented but not routed`);
+      assert.ok(
+        !String(res.body.message).startsWith("Route not found"),
+        `${method.toUpperCase()} ${path} is documented but not routed`,
+      );
     }
   });
 

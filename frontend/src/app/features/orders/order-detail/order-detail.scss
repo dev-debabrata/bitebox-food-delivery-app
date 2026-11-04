@@ -271,3 +271,11 @@ address {
 .estimate-note {
   margin: var(--bb-space-2) 0 0;
 }
+
+.rider-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--bb-ink-muted);
+}

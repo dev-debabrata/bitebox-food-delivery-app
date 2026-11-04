@@ -1,0 +1,46 @@
+@let r = review();
+<article class="review">
+  <header class="head">
+    <bb-stars [value]="r.rating" size="sm" />
+    <span class="word">{{ words[r.rating - 1] }}</span>
+    @if (showFood() && r.foodName) {
+      <span class="food">· {{ r.foodName }}</span>
+    }
+    <ng-content select="[badge]" />
+  </header>
+  @if (r.comment) {
+    <p class="comment">{{ r.comment }}</p>
+  }
+  @if (r.images?.length) {
+    <ul class="photos" [attr.aria-label]="'Photos from ' + r.authorName">
+      @for (src of r.images; track src; let i = $index) {
+        <li>
+          <button type="button" class="photo" (click)="view(i)" [attr.aria-label]="'View photo ' + (i + 1) + ' of ' + r.images!.length + ' larger'">
+            <img [src]="src" alt="" loading="lazy" />
+          </button>
+        </li>
+      }
+    </ul>
+  }
+  <p class="meta">
+    <span class="author">{{ r.authorName }}</span>
+    @if (r.verifiedOrder) {
+      <span class="verified"><np-icon name="badge-check" class="mat-icon" matButtonIcon />Verified order</span>
+    }
+    <span>· <time [attr.datetime]="r.createdAt">{{ r.createdAt | date: 'd MMM y' }}</time></span>
+    @if (r.editedAt) {
+      <span>· edited</span>
+    }
+  </p>
+  @if (r.response; as reply) {
+    <div class="reply">
+      <p class="reply-head">
+        <np-icon name="message-square-reply" class="mat-icon" matButtonIcon />
+        <strong>{{ responder() }} replied</strong>
+        <span class="bb-muted">· {{ reply.updatedAt | date: 'd MMM y' }}</span>
+      </p>
+      <p class="reply-text">{{ reply.text }}</p>
+    </div>
+  }
+  <ng-content />
+</article>

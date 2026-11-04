@@ -1,16 +1,16 @@
 /**
- * Production configuration. Public values only: anything here ships to the
- * browser, so never put secrets in environment files.
+ * Development talks to the API directly on port 5000, on the host the page was opened from
+ * (localhost, or the machine's LAN IP from a phone). Server-side rendering uses localhost.
  */
+const apiOrigin =
+  typeof window === 'undefined'
+    ? 'http://localhost:5000'
+    : `${window.location.protocol}//${window.location.hostname}:5000`;
+
 export const environment = {
-  production: true,
-  // Same-origin API behind a reverse proxy in production. Change if the API lives elsewhere.
-  apiUrl: '/api/v1',
-  /**
-   * Map tiles. The public OpenStreetMap tile server is fine for development and
-   * light use only (https://operations.osmfoundation.org/policies/tiles/); use a
-   * tile provider or your own tile server for production traffic.
-   */
+  production: false,
+  apiUrl: `${apiOrigin}/api/v1`,
+
   map: {
     tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution:

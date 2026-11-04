@@ -18,22 +18,47 @@ const page = (req) => parsePagination(req.validatedQuery);
 const asOrder = (order) => ({ order });
 
 // Customer
-export const customerGet = respond(async (req) => asOrder(await orders.customerGet(req.user._id, req.params.id)));
-export const customerCancel = respond(async (req) => asOrder(await orders.customerCancel(req.user._id, req.params.id, req.body.reason)), "Order cancelled");
+export const customerGet = respond(async (req) =>
+  asOrder(await orders.customerGet(req.user._id, req.params.id)),
+);
+export const customerCancel = respond(
+  async (req) =>
+    asOrder(
+      await orders.customerCancel(req.user._id, req.params.id, req.body.reason),
+    ),
+  "Order cancelled",
+);
 
 // Restaurant
-export const restaurantList = respond((req) => orders.restaurantList(req.user._id, req.validatedQuery, page(req)));
-export const restaurantGet = respond(async (req) => asOrder(await orders.restaurantGet(req.user._id, req.params.id)));
-export const restaurantSetStatus = respond(async (req) => asOrder(await orders.restaurantSetStatus(req.user._id, req.params.id, req.body)), statusMessage);
+export const restaurantList = respond((req) =>
+  orders.restaurantList(req.user._id, req.validatedQuery, page(req)),
+);
+export const restaurantGet = respond(async (req) =>
+  asOrder(await orders.restaurantGet(req.user._id, req.params.id)),
+);
+export const restaurantSetStatus = respond(
+  async (req) =>
+    asOrder(
+      await orders.restaurantSetStatus(req.user._id, req.params.id, req.body),
+    ),
+  statusMessage,
+);
 
 // Rider: actions answer with the fresh dashboard (offer + active order) so the app needs no second call.
 export const riderDashboard = respond((req) => riders.dashboard(req.user._id));
-export const riderUpdateVehicle = respond(async (req) => ({ profile: await riders.updateVehicle(req.user._id, req.body) }), "Vehicle saved");
+export const riderUpdateVehicle = respond(
+  async (req) => ({
+    profile: await riders.updateVehicle(req.user._id, req.body),
+  }),
+  "Vehicle saved",
+);
 export const riderSetAvailability = respond(
   (req) => riders.setAvailability(req.user._id, req.body),
   (req) => (req.body.isOnline ? "You are online" : "You are offline"),
 );
-export const riderUpdateLocation = respond((req) => riders.updateLocation(req.user._id, req.body));
+export const riderUpdateLocation = respond((req) =>
+  riders.updateLocation(req.user._id, req.body),
+);
 export const riderAcceptOffer = respond(async (req) => {
   await dispatch.acceptOffer(req.user._id, req.params.id);
   return riders.dashboard(req.user._id);
@@ -46,18 +71,38 @@ export const riderSetStatus = respond(async (req) => {
   await orders.riderSetStatus(req.user._id, req.params.id, req.body.status);
   return riders.dashboard(req.user._id);
 }, statusMessage);
-export const riderHistory = respond((req) => orders.riderHistory(req.user._id, page(req)));
+export const riderHistory = respond((req) =>
+  orders.riderHistory(req.user._id, page(req)),
+);
 
 // Admin
-export const adminList = respond((req) => orders.adminList(req.validatedQuery, page(req)));
-export const adminGet = respond(async (req) => asOrder(await orders.adminGet(req.params.id)));
-export const adminCancel = respond(async (req) => asOrder(await orders.adminCancel(req.user._id, req.params.id, req.body.reason)), "Order cancelled");
+export const adminList = respond((req) =>
+  orders.adminList(req.validatedQuery, page(req)),
+);
+export const adminGet = respond(async (req) =>
+  asOrder(await orders.adminGet(req.params.id)),
+);
+export const adminCancel = respond(
+  async (req) =>
+    asOrder(
+      await orders.adminCancel(req.user._id, req.params.id, req.body.reason),
+    ),
+  "Order cancelled",
+);
 export const adminUnassign = respond(
-  async (req) => asOrder(await orders.adminUnassign(req.user._id, req.params.id, req.body.reason)),
+  async (req) =>
+    asOrder(
+      await orders.adminUnassign(req.user._id, req.params.id, req.body.reason),
+    ),
   "Rider unassigned; looking for another rider",
 );
-export const adminRiderList = respond((req) => riders.adminList(req.validatedQuery, page(req)));
+export const adminRiderList = respond((req) =>
+  riders.adminList(req.validatedQuery, page(req)),
+);
 export const adminRiderSetStatus = respond(
-  async (req) => ({ user: await riders.adminSetStatus(req.params.id, req.body.status) }),
-  (_req, data) => (data.user.status === "active" ? "Rider reactivated" : "Rider suspended"),
+  async (req) => ({
+    user: await riders.adminSetStatus(req.params.id, req.body.status),
+  }),
+  (_req, data) =>
+    data.user.status === "active" ? "Rider reactivated" : "Rider suspended",
 );

@@ -1,0 +1,83 @@
+<bb-page-header
+  title="Reviews"
+  subtitle="Moderate reported reviews against the review policy and follow rating trends. Every action needs a reason and is logged."
+/>
+
+<mat-tab-group [selectedIndex]="activeTab()" (selectedIndexChange)="selectTab($event)" mat-stretch-tabs="false" aria-label="Review views">
+  <mat-tab>
+    <ng-template mat-tab-label>
+      Reported
+      @if (list.data()?.counts?.reported; as n) {
+        <span class="count alert">{{ n }}</span>
+      }
+    </ng-template>
+  </mat-tab>
+  <mat-tab label="All reviews" />
+  <mat-tab label="Analytics" />
+</mat-tab-group>
+
+@if (tab() === 'analytics') {
+  <bb-review-analytics />
+} @else {
+  <div class="filters" role="group" aria-label="Filter reviews">
+    <np-text-input [formField]="filters.search" ariaLabel="Search reviews" placeholder="Order number, customer, dish or words" icon="search" clearable />
+    <np-select [formField]="filters.target" ariaLabel="About" [options]="targetOptions" />
+    @if (tab() === 'all') {
+      <np-select [formField]="filters.status" ariaLabel="Status" [options]="statusOptions" />
+    }
+    <np-select [formField]="filters.rating" ariaLabel="Rating" [options]="ratingOptions" />
+  </div>
+
+  @if (list.error(); as message) {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+    </div>
+  }
+
+  <div class="bb-card list-card" [attr.aria-busy]="list.loading()">
+    @if (!list.data()) {
+      @for (i of [1, 2, 3, 4]; track i) {
+        <span class="bb-skeleton row-skeleton"></span>
+      }
+    } @else if (list.data()!.items.length === 0) {
+      <bb-empty-state
+        [icon]="tab() === 'reported' ? 'verified_user' : 'star'"
+        [title]="tab() === 'reported' ? 'No reported reviews' : 'No reviews match these filters'"
+        [message]="tab() === 'reported' ? 'Reports from customers, restaurants and riders appear here.' : ''"
+      />
+    } @else {
+      <ul class="rows" [class.bb-dim]="list.loading()">
+        @for (row of list.data()!.items; track row.order) {
+          <li>
+            <button type="button" class="row" (click)="open(row)" [attr.aria-label]="'Open the reviews of order ' + row.orderNumber">
+              <bb-review-order-row
+                [orderNumber]="row.orderNumber"
+                [author]="row.customerName"
+                [subtitle]="row.restaurant?.name ?? null"
+                [date]="row.createdAt"
+                [reviews]="row.reviews"
+              >
+                @if (statusNote(row); as note) {
+                  <span badges class="bb-status is-hidden">{{ note }}</span>
+                }
+                @if (row.openReports > 0) {
+                  <span badges class="reports"><np-icon name="flag" class="mat-icon" matButtonIcon />{{ row.openReports }} open</span>
+                }
+              </bb-review-order-row>
+              <np-icon name="chevron-right" class="mat-icon chevron" matButtonIcon />
+            </button>
+          </li>
+        }
+      </ul>
+      <mat-paginator
+        [length]="list.data()!.pagination.total"
+        [pageIndex]="list.data()!.pagination.page - 1"
+        [pageSize]="list.data()!.pagination.limit"
+        [pageSizeOptions]="[20, 50, 100]"
+        (page)="list.onPage($event)"
+        aria-label="Review pages"
+      />
+    }
+  </div>
+}

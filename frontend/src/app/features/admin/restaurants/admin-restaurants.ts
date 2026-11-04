@@ -1,5 +1,13 @@
 import { IconComponent } from 'nexprime';
-import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  input,
+  signal,
+  computed,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
@@ -15,6 +23,7 @@ import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { Pagination } from '../../../shared/models/api.models';
 import { AdminRestaurant, RestaurantStatus } from '../../../shared/models/catalog.models';
+import { ImageFallback, UsableImagePipe } from '../../../shared/images/broken-images';
 
 const TABS: { status: RestaurantStatus; label: string }[] = [
   { status: 'pending', label: 'Pending' },
@@ -23,7 +32,6 @@ const TABS: { status: RestaurantStatus; label: string }[] = [
   { status: 'suspended', label: 'Suspended' },
 ];
 
-/** Restaurant approval queue and management. Defaults to the Pending tab. */
 @Component({
   selector: 'bb-admin-restaurants',
   imports: [
@@ -36,6 +44,8 @@ const TABS: { status: RestaurantStatus; label: string }[] = [
     MatTabsModule,
     EmptyState,
     PageHeader,
+    ImageFallback,
+    UsableImagePipe,
   ],
   templateUrl: './admin-restaurants.html',
   styleUrl: './admin-restaurants.scss',
@@ -51,14 +61,18 @@ export class AdminRestaurants implements OnInit {
   protected readonly activeTab = signal(0);
   protected readonly counts = signal<Record<RestaurantStatus, number> | null>(null);
   protected readonly restaurants = signal<AdminRestaurant[]>([]);
-  protected readonly pagination = signal<Pagination>({ page: 1, limit: 10, total: 0, totalPages: 0 });
+  protected readonly pagination = signal<Pagination>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly filters = form(signal({ search: '' }));
   private inFlight?: Subscription;
 
   constructor() {
-    // skip(1): the first emission is the starting value, which is loaded on init.
     toObservable(computed(() => this.filters.search().value().trim()))
       .pipe(skip(1), debounceTime(350), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(() => this.load(1));
@@ -73,7 +87,10 @@ export class AdminRestaurants implements OnInit {
 
   protected selectTab(index: number): void {
     this.activeTab.set(index);
-    void this.router.navigate([], { queryParams: { status: TABS[index].status }, replaceUrl: true });
+    void this.router.navigate([], {
+      queryParams: { status: TABS[index].status },
+      replaceUrl: true,
+    });
     this.load(1);
   }
 
@@ -83,7 +100,9 @@ export class AdminRestaurants implements OnInit {
   }
 
   protected loadCounts(): void {
-    this.service.restaurantCounts().subscribe({ next: (c) => this.counts.set(c), error: () => this.counts.set(null) });
+    this.service
+      .restaurantCounts()
+      .subscribe({ next: (c) => this.counts.set(c), error: () => this.counts.set(null) });
   }
 
   protected load(page: number): void {

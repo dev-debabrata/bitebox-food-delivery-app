@@ -1,23 +1,35 @@
 import mongoose from "mongoose";
+import { emptyRating, ratingSummarySchema } from "./rating-summary.schema.js";
 
-/**
- * A dish on a restaurant's menu. Items are soft-deleted (deletedAt) so that
- * historical references stay valid; orders will additionally snapshot the
- * name and price at checkout time (Phase 3).
- */
 const foodItemSchema = new mongoose.Schema(
   {
-    restaurant: { type: mongoose.Schema.Types.ObjectId, ref: "Restaurant", required: true },
-    category: { type: mongoose.Schema.Types.ObjectId, ref: "FoodCategory", required: true },
-    name: { type: String, required: true, trim: true, minlength: 2, maxlength: 100 },
+    restaurant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Restaurant",
+      required: true,
+    },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FoodCategory",
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 2,
+      maxlength: 100,
+    },
     description: { type: String, trim: true, maxlength: 500 },
-    // Integer paise (₹1 = 100 paise).
     pricePaise: {
       type: Number,
       required: true,
       min: 100,
       max: 10_000_000,
-      validate: { validator: Number.isInteger, message: "Price must be a whole number of paise" },
+      validate: {
+        validator: Number.isInteger,
+        message: "Price must be a whole number of paise",
+      },
     },
     isVeg: { type: Boolean, required: true },
     isAvailable: { type: Boolean, default: true },
@@ -25,8 +37,12 @@ const foodItemSchema = new mongoose.Schema(
     prepTimeMinutes: { type: Number, min: 1, max: 180 },
     tags: {
       type: [{ type: String, trim: true, lowercase: true, maxlength: 30 }],
-      validate: { validator: (v) => v.length <= 10, message: "At most 10 tags" },
+      validate: {
+        validator: (v) => v.length <= 10,
+        message: "At most 10 tags",
+      },
     },
+    rating: { type: ratingSummarySchema, default: emptyRating },
     deletedAt: { type: Date, default: null },
   },
   {

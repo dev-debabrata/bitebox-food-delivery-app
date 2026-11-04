@@ -1,0 +1,48 @@
+:host {
+  --star-size: 18px;
+  display: inline-flex;
+  gap: 1px;
+  vertical-align: middle;
+  line-height: 0;
+}
+
+:host(.size-sm) {
+  --star-size: 14px;
+}
+
+.star {
+  position: relative;
+  width: var(--star-size);
+  height: var(--star-size);
+}
+
+svg {
+  display: block;
+  width: var(--star-size);
+  height: var(--star-size);
+}
+
+.base {
+  fill: #ddd6e3;
+}
+
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  overflow: hidden;
+
+  svg {
+    fill: var(--bb-amber);
+  }
+}
+
+// Windows high contrast: keep the filled part visible.
+@media (forced-colors: active) {
+  .base {
+    fill: GrayText;
+  }
+
+  .fill svg {
+    fill: CanvasText;
+  }
+}

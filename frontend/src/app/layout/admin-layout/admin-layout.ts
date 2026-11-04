@@ -16,6 +16,7 @@ export class AdminLayout {
     { label: 'Restaurants', icon: 'storefront', link: '/admin/restaurants' },
     { label: 'Categories', icon: 'category', link: '/admin/categories' },
     { label: 'Food items', icon: 'ramen_dining', link: '/admin/foods' },
+    { label: 'Reviews', icon: 'star', link: '/admin/reviews' },
     { label: 'Coupons', icon: 'local_offer', link: '/admin/coupons' },
     { label: 'Delivery partners', icon: 'two_wheeler', link: '/admin/delivery-partners' },
     { label: 'Users', icon: 'group', link: '/admin/users' },

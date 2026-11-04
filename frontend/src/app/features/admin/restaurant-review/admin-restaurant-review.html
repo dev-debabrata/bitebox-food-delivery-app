@@ -14,8 +14,8 @@
 } @else if (restaurant(); as r) {
   <header class="head">
     <div class="identity">
-      @if (r.imageUrl) {
-        <img [src]="r.imageUrl" alt="" />
+      @if (r.imageUrl | usableImage) {
+        <img [bbSrc]="r.imageUrl" alt="" />
       } @else {
         <span class="avatar" aria-hidden="true">{{ r.name.charAt(0) }}</span>
       }
@@ -55,7 +55,7 @@
         }
         <div><dt>Phone</dt><dd>{{ r.phone }}</dd></div>
         <div><dt>Email</dt><dd>{{ r.email || '—' }}</dd></div>
-        <div><dt>Hours</dt><dd>{{ r.openingTime }} – {{ r.closingTime }}</dd></div>
+        <div><dt>Hours</dt><dd>{{ r.openingTime | clockTime }} – {{ r.closingTime | clockTime }}</dd></div>
         <div><dt>Pure veg</dt><dd>{{ r.isPureVeg ? 'Yes' : 'No' }}</dd></div>
         <div><dt>Cost for two</dt><dd>{{ r.costForTwoPaise | inr }}</dd></div>
         <div><dt>Minimum order</dt><dd>{{ r.minOrderPaise | inr }}</dd></div>

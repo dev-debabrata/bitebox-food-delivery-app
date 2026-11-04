@@ -1,15 +1,3 @@
-/**
- * Development seed data. Safe to re-run: records are matched by email and
- * never duplicated. Refuses to run with NODE_ENV=production.
- *
- *   SEED_PASSWORD='Choose-a-dev-password1' npm run seed
- *   SEED_PASSWORD='...' npm run seed -- --reset-passwords   # also reset existing seed users
- *
- * Seeds one account per role, food categories, one approved restaurant
- * (owned by the restaurant account) and its menu, sample coupons and a
- * default delivery address for the customer, and the rider's vehicle profile.
- * All names and data are fictional.
- */
 import { pathToFileURL } from "node:url";
 import bcrypt from "bcryptjs";
 import { connectDB, disconnectDB } from "../config/db.js";
@@ -23,10 +11,30 @@ import { Restaurant } from "../models/restaurant.model.js";
 import { ROLES, User } from "../models/user.model.js";
 
 export const SEED_USERS = [
-  { name: "BiteBox Admin", email: "admin@bitebox.test", phone: "9000000001", role: ROLES.ADMIN },
-  { name: "Asha Customer", email: "customer@bitebox.test", phone: "9000000002", role: ROLES.CUSTOMER },
-  { name: "Spice Route Owner", email: "restaurant@bitebox.test", phone: "9000000003", role: ROLES.RESTAURANT },
-  { name: "Ravi Rider", email: "rider@bitebox.test", phone: "9000000004", role: ROLES.DELIVERY },
+  {
+    name: "BiteBox Admin",
+    email: "admin@bitebox.test",
+    phone: "9000000001",
+    role: ROLES.ADMIN,
+  },
+  {
+    name: "Asha Customer",
+    email: "customer@bitebox.test",
+    phone: "9000000002",
+    role: ROLES.CUSTOMER,
+  },
+  {
+    name: "Spice Route Owner",
+    email: "restaurant@bitebox.test",
+    phone: "9000000003",
+    role: ROLES.RESTAURANT,
+  },
+  {
+    name: "Ravi Rider",
+    email: "rider@bitebox.test",
+    phone: "9000000004",
+    role: ROLES.DELIVERY,
+  },
 ];
 
 export async function seedUsers(password, { resetPasswords = false } = {}) {
@@ -39,16 +47,33 @@ export async function seedUsers(password, { resetPasswords = false } = {}) {
       update.$set = { passwordHash };
       update.$inc = { tokenVersion: 1 };
     }
-    const result = await User.updateOne({ email: seed.email }, update, { upsert: true, runValidators: true });
-    results.push({ email: seed.email, role: seed.role, created: result.upsertedCount === 1 });
+    const result = await User.updateOne({ email: seed.email }, update, {
+      upsert: true,
+      runValidators: true,
+    });
+    results.push({
+      email: seed.email,
+      role: seed.role,
+      created: result.upsertedCount === 1,
+    });
   }
   return results;
 }
 
 export const SEED_CATEGORIES = [
   { name: "Biryani", slug: "biryani", icon: "rice_bowl", sortOrder: 10 },
-  { name: "North Indian", slug: "north-indian", icon: "soup_kitchen", sortOrder: 20 },
-  { name: "South Indian", slug: "south-indian", icon: "breakfast_dining", sortOrder: 30 },
+  {
+    name: "North Indian",
+    slug: "north-indian",
+    icon: "soup_kitchen",
+    sortOrder: 20,
+  },
+  {
+    name: "South Indian",
+    slug: "south-indian",
+    icon: "breakfast_dining",
+    sortOrder: 30,
+  },
   { name: "Chinese", slug: "chinese", icon: "ramen_dining", sortOrder: 40 },
   { name: "Pizza", slug: "pizza", icon: "local_pizza", sortOrder: 50 },
   { name: "Burgers", slug: "burgers", icon: "lunch_dining", sortOrder: 60 },
@@ -59,11 +84,18 @@ export const SEED_CATEGORIES = [
 export const SEED_RESTAURANT = {
   name: "Spice Route Kitchen",
   slug: "spice-route-kitchen",
-  description: "Slow-cooked biryanis, smoky tandoor dishes and comforting South Indian classics.",
+  description:
+    "Slow-cooked biryanis, smoky tandoor dishes and comforting South Indian classics.",
   cuisines: ["Biryani", "North Indian", "South Indian"],
   phone: "9000000003",
   email: "hello@spiceroute.test",
-  address: { line1: "12, 100 Feet Road", area: "Indiranagar", city: "Bengaluru", state: "Karnataka", postalCode: "560038" },
+  address: {
+    line1: "12, 100 Feet Road",
+    area: "Indiranagar",
+    city: "Bengaluru",
+    state: "Karnataka",
+    postalCode: "560038",
+  },
   // [longitude, latitude]
   location: { type: "Point", coordinates: [77.6412, 12.9719] },
   isPureVeg: false,
@@ -77,38 +109,120 @@ export const SEED_RESTAURANT = {
 };
 
 const SEED_FOODS = [
-  ["Hyderabadi Chicken Biryani", "biryani", 32900, false, "Long-grain basmati layered with spiced chicken, cooked dum style."],
-  ["Paneer Tikka Biryani", "biryani", 28900, true, "Smoky paneer tikka folded into saffron rice."],
-  ["Butter Chicken", "north-indian", 34900, false, "Tandoori chicken in a silky tomato and butter gravy."],
-  ["Dal Makhani", "north-indian", 24900, true, "Black lentils simmered overnight with cream."],
-  ["Garlic Naan", "north-indian", 6900, true, "Tandoor-baked flatbread with garlic butter."],
-  ["Masala Dosa", "south-indian", 14900, true, "Crisp rice crepe with spiced potato, sambar and chutneys."],
-  ["Gulab Jamun (2 pcs)", "desserts", 9900, true, "Warm milk dumplings in cardamom syrup."],
-  ["Mango Lassi", "beverages", 11900, true, "Thick yoghurt smoothie with Alphonso mango."],
+  [
+    "Hyderabadi Chicken Biryani",
+    "biryani",
+    32900,
+    false,
+    "Long-grain basmati layered with spiced chicken, cooked dum style.",
+  ],
+  [
+    "Paneer Tikka Biryani",
+    "biryani",
+    28900,
+    true,
+    "Smoky paneer tikka folded into saffron rice.",
+  ],
+  [
+    "Butter Chicken",
+    "north-indian",
+    34900,
+    false,
+    "Tandoori chicken in a silky tomato and butter gravy.",
+  ],
+  [
+    "Dal Makhani",
+    "north-indian",
+    24900,
+    true,
+    "Black lentils simmered overnight with cream.",
+  ],
+  [
+    "Garlic Naan",
+    "north-indian",
+    6900,
+    true,
+    "Tandoor-baked flatbread with garlic butter.",
+  ],
+  [
+    "Masala Dosa",
+    "south-indian",
+    14900,
+    true,
+    "Crisp rice crepe with spiced potato, sambar and chutneys.",
+  ],
+  [
+    "Gulab Jamun (2 pcs)",
+    "desserts",
+    9900,
+    true,
+    "Warm milk dumplings in cardamom syrup.",
+  ],
+  [
+    "Mango Lassi",
+    "beverages",
+    11900,
+    true,
+    "Thick yoghurt smoothie with Alphonso mango.",
+  ],
 ];
 
 /** Idempotent: categories by slug, restaurant by owner, items by (restaurant, name). */
 export async function seedCatalog() {
   for (const category of SEED_CATEGORIES) {
-    await FoodCategory.updateOne({ slug: category.slug }, { $setOnInsert: { ...category, isActive: true } }, { upsert: true });
+    await FoodCategory.updateOne(
+      { slug: category.slug },
+      { $setOnInsert: { ...category, isActive: true } },
+      { upsert: true },
+    );
   }
   const owner = await User.findOne({ email: "restaurant@bitebox.test" });
   if (!owner) throw new Error("Seed users must exist before the catalog");
 
-  await Restaurant.updateOne({ owner: owner._id }, { $setOnInsert: { ...SEED_RESTAURANT, owner: owner._id, reviewedAt: new Date() } }, { upsert: true, runValidators: true });
+  await Restaurant.updateOne(
+    { owner: owner._id },
+    {
+      $setOnInsert: {
+        ...SEED_RESTAURANT,
+        owner: owner._id,
+        reviewedAt: new Date(),
+      },
+    },
+    { upsert: true, runValidators: true },
+  );
   const restaurant = await Restaurant.findOne({ owner: owner._id });
 
-  const categories = new Map((await FoodCategory.find({ slug: { $in: SEED_CATEGORIES.map((c) => c.slug) } })).map((c) => [c.slug, c._id]));
+  const categories = new Map(
+    (
+      await FoodCategory.find({
+        slug: { $in: SEED_CATEGORIES.map((c) => c.slug) },
+      })
+    ).map((c) => [c.slug, c._id]),
+  );
   let created = 0;
   for (const [name, slug, pricePaise, isVeg, description] of SEED_FOODS) {
     const result = await FoodItem.updateOne(
       { restaurant: restaurant._id, name, deletedAt: null },
-      { $setOnInsert: { restaurant: restaurant._id, name, category: categories.get(slug), pricePaise, isVeg, description, isAvailable: true } },
+      {
+        $setOnInsert: {
+          restaurant: restaurant._id,
+          name,
+          category: categories.get(slug),
+          pricePaise,
+          isVeg,
+          description,
+          isAvailable: true,
+        },
+      },
       { upsert: true, runValidators: true },
     );
     created += result.upsertedCount;
   }
-  return { restaurant: restaurant.name, categories: categories.size, foodItemsCreated: created };
+  return {
+    restaurant: restaurant.name,
+    categories: categories.size,
+    foodItemsCreated: created,
+  };
 }
 
 export const SEED_COUPONS = [
@@ -138,7 +252,16 @@ export async function seedCheckoutData() {
   for (const coupon of SEED_COUPONS) {
     await Coupon.updateOne(
       { code: coupon.code },
-      { $setOnInsert: { ...coupon, validFrom: now, validUntil: oneYear, isActive: true, usedCount: 0, usageLimit: null } },
+      {
+        $setOnInsert: {
+          ...coupon,
+          validFrom: now,
+          validUntil: oneYear,
+          isActive: true,
+          usedCount: 0,
+          usageLimit: null,
+        },
+      },
       { upsert: true },
     );
   }
@@ -162,7 +285,10 @@ export async function seedCheckoutData() {
     });
     addressCreated = true;
   }
-  return { coupons: SEED_COUPONS.map((c) => c.code).join(", "), customerAddressCreated: addressCreated };
+  return {
+    coupons: SEED_COUPONS.map((c) => c.code).join(", "),
+    customerAddressCreated: addressCreated,
+  };
 }
 
 /** Idempotent: gives the seeded rider a vehicle so they can go online (offline until they do). */
@@ -171,7 +297,14 @@ export async function seedDeliveryData() {
   if (!rider) return { riderProfileCreated: false };
   const result = await DeliveryPartner.updateOne(
     { user: rider._id },
-    { $setOnInsert: { user: rider._id, vehicleType: "motorbike", vehicleNumber: "KA 01 BB 0004", isOnline: false } },
+    {
+      $setOnInsert: {
+        user: rider._id,
+        vehicleType: "motorbike",
+        vehicleNumber: "KA 01 BB 0004",
+        isOnline: false,
+      },
+    },
     { upsert: true },
   );
   return { riderProfileCreated: result.upsertedCount === 1 };
@@ -183,19 +316,30 @@ async function main() {
     process.exit(1);
   }
   const password = process.env.SEED_PASSWORD;
-  if (!password || password.length < 8 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-    console.error("Set SEED_PASSWORD (8+ chars, a letter and a number) in backend/.env or the environment.");
+  if (
+    !password ||
+    password.length < 8 ||
+    !/[A-Za-z]/.test(password) ||
+    !/[0-9]/.test(password)
+  ) {
+    console.error(
+      "Set SEED_PASSWORD (8+ chars, a letter and a number) in backend/.env or the environment.",
+    );
     process.exit(1);
   }
 
   await connectDB(env.mongoUri);
   try {
-    const results = await seedUsers(password, { resetPasswords: process.argv.includes("--reset-passwords") });
+    const results = await seedUsers(password, {
+      resetPasswords: process.argv.includes("--reset-passwords"),
+    });
     console.table(results);
     console.table([await seedCatalog()]);
     console.table([await seedCheckoutData()]);
     console.table([await seedDeliveryData()]);
-    console.log("Development-only accounts. All use the SEED_PASSWORD value. Never use these in production.");
+    console.log(
+      "Development-only accounts. All use the SEED_PASSWORD value. Never use these in production.",
+    );
   } finally {
     await disconnectDB();
   }

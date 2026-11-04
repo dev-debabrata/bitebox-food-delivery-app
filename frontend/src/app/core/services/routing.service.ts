@@ -9,11 +9,9 @@ export interface Point {
   longitude: number;
 }
 
-/** A road route estimate from the API (OSRM by default). Not live traffic, not actual progress. */
 export interface RoadRoute {
   distanceMeters: number;
   durationSeconds: number;
-  /** Straight-line distance between the same two points, for honest labelling. */
   straightLineMeters: number;
   path: Point[];
   provider: string;
@@ -21,7 +19,6 @@ export interface RoadRoute {
   estimate: true;
 }
 
-/** Valid, non-null-island coordinates. */
 export function isValidPoint(p: Partial<Point> | null | undefined): p is Point {
   return (
     !!p &&
@@ -33,7 +30,6 @@ export function isValidPoint(p: Partial<Point> | null | undefined): p is Point {
   );
 }
 
-/** Straight-line ("as the crow flies") metres between two points. Not road distance. */
 export function distanceMeters(a: Point, b: Point): number {
   const r = (d: number) => (d * Math.PI) / 180;
   const h =
@@ -44,10 +40,8 @@ export function distanceMeters(a: Point, b: Point): number {
   return 2 * 6_371_000 * Math.asin(Math.sqrt(h));
 }
 
-/** Seconds -> whole minutes for "about N min" (never 0). */
 export const etaMinutes = (seconds: number) => Math.max(1, Math.round(seconds / 60));
 
-/** [longitude, latitude] (GeoJSON, as stored by the API) -> Point. */
 export const fromCoordinates = (c?: [number, number] | null): Point | null =>
   c ? { latitude: c[1], longitude: c[0] } : null;
 
@@ -56,10 +50,6 @@ export class RoutingService {
   private readonly http = inject(HttpClient);
   private readonly cache = new Map<string, Observable<RoadRoute | null>>();
 
-  /**
-   * Road route between two points, or null when routing is unavailable (the
-   * map then shows a dashed straight line). Shared per ~11 m rounded pair.
-   */
   route(from: Point, to: Point): Observable<RoadRoute | null> {
     if (!isValidPoint(from) || !isValidPoint(to)) return of(null);
     const key = [from.latitude, from.longitude, to.latitude, to.longitude]
@@ -79,7 +69,7 @@ export class RoutingService {
         .pipe(
           map((r) => r.data.route),
           catchError(() => {
-            this.cache.delete(key); // try again next time
+            this.cache.delete(key);
             return of(null);
           }),
           shareReplay(1),

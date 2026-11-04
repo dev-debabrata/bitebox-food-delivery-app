@@ -14,13 +14,25 @@ export const ORDER_STATUS = Object.freeze({
 });
 
 const S = ORDER_STATUS;
-/** Still in progress (restaurant board, admin "active" filter). */
-export const ACTIVE_STATUSES = Object.freeze([S.PENDING, S.CONFIRMED, S.PREPARING, S.READY_FOR_PICKUP, S.ASSIGNED, S.PICKED_UP, S.ON_THE_WAY]);
-/** Finished: no further changes, nothing to track. */
-export const FINAL_STATUSES = Object.freeze([S.DELIVERED, S.REJECTED, S.CANCELLED]);
-/** A rider carries the order: their position is shared with its viewers. */
-export const TRACKED_STATUSES = Object.freeze([S.ASSIGNED, S.PICKED_UP, S.ON_THE_WAY]);
-
+export const ACTIVE_STATUSES = Object.freeze([
+  S.PENDING,
+  S.CONFIRMED,
+  S.PREPARING,
+  S.READY_FOR_PICKUP,
+  S.ASSIGNED,
+  S.PICKED_UP,
+  S.ON_THE_WAY,
+]);
+export const FINAL_STATUSES = Object.freeze([
+  S.DELIVERED,
+  S.REJECTED,
+  S.CANCELLED,
+]);
+export const TRACKED_STATUSES = Object.freeze([
+  S.ASSIGNED,
+  S.PICKED_UP,
+  S.ON_THE_WAY,
+]);
 export const PAYMENT_METHODS = Object.freeze({ COD: "cod", ONLINE: "online" });
 export const PAYMENT_STATUS = Object.freeze({
   PENDING: "pending",
@@ -30,13 +42,13 @@ export const PAYMENT_STATUS = Object.freeze({
   CANCELLED: "cancelled",
 });
 
-/**
- * OrderItem: a snapshot of the dish at checkout time. Later menu edits or
- * deletions never change what the customer ordered or paid.
- */
 const orderItemSchema = new mongoose.Schema(
   {
-    foodItem: { type: mongoose.Schema.Types.ObjectId, ref: "FoodItem", required: true },
+    foodItem: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FoodItem",
+      required: true,
+    },
     name: { type: String, required: true },
     isVeg: { type: Boolean, required: true },
     unitPricePaise: { type: Number, required: true, min: 0 },
@@ -47,16 +59,26 @@ const orderItemSchema = new mongoose.Schema(
 );
 
 const pointSchema = new mongoose.Schema(
-  { type: { type: String, enum: ["Point"], default: "Point" }, coordinates: { type: [Number], required: true } },
+  {
+    type: { type: String, enum: ["Point"], default: "Point" },
+    coordinates: { type: [Number], required: true },
+  },
   { _id: false },
 );
 
 const orderSchema = new mongoose.Schema(
   {
     orderNumber: { type: String, required: true },
-    customer: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    restaurant: { type: mongoose.Schema.Types.ObjectId, ref: "Restaurant", required: true },
-    // Snapshot of restaurant identity for display even if it is later renamed.
+    customer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    restaurant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Restaurant",
+      required: true,
+    },
     restaurantSnapshot: {
       name: { type: String, required: true },
       slug: String,
@@ -87,30 +109,41 @@ const orderSchema = new mongoose.Schema(
       totalPaise: { type: Number, required: true },
     },
     coupon: { code: String, discountPaise: Number },
-    // Straight-line distance used for the delivery fee (not road distance).
     distanceMeters: { type: Number, required: true },
     note: { type: String, trim: true, maxlength: 300 },
 
-    status: { type: String, enum: Object.values(ORDER_STATUS), default: ORDER_STATUS.PENDING },
+    status: {
+      type: String,
+      enum: Object.values(ORDER_STATUS),
+      default: ORDER_STATUS.PENDING,
+    },
     statusHistory: [
       {
         _id: false,
-        status: { type: String, enum: Object.values(ORDER_STATUS), required: true },
+        status: {
+          type: String,
+          enum: Object.values(ORDER_STATUS),
+          required: true,
+        },
         at: { type: Date, default: Date.now },
         by: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         note: String,
       },
     ],
 
-    // Payment status lives on the Payment document; this is a denormalised copy for listings.
-    paymentMethod: { type: String, enum: Object.values(PAYMENT_METHODS), required: true },
-    paymentStatus: { type: String, enum: Object.values(PAYMENT_STATUS), default: PAYMENT_STATUS.PENDING },
+    paymentMethod: {
+      type: String,
+      enum: Object.values(PAYMENT_METHODS),
+      required: true,
+    },
+    paymentStatus: {
+      type: String,
+      enum: Object.values(PAYMENT_STATUS),
+      default: PAYMENT_STATUS.PENDING,
+    },
     payment: { type: mongoose.Schema.Types.ObjectId, ref: "Payment" },
 
-    // When the restaurant received the order: at placement for cash, once paid for online payment.
-    // Unpaid online orders (null) are invisible to the restaurant and expire.
     submittedAt: { type: Date, default: null },
-    // Who earns what, fixed when the order is delivered (integer paise; see config/earnings.js).
     settlement: {
       restaurantPaise: Number,
       riderPaise: Number,
@@ -118,18 +151,17 @@ const orderSchema = new mongoose.Schema(
       at: Date,
     },
 
-    // Client-supplied key so retries of the same checkout never create two orders.
     idempotencyKey: { type: String, maxlength: 100 },
-    // The rider (User) carrying this order, set when they accept an offer.
-    deliveryPartner: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
-    // The rider currently being offered this order (while ready_for_pickup), and until when.
+    deliveryPartner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     offer: {
       partner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       expiresAt: Date,
     },
-    // Riders who declined or let an offer expire; they are not offered this order again.
     declinedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    // Why an order was rejected or cancelled, and by whom.
     cancellation: {
       by: { type: String, enum: ["customer", "restaurant", "admin", "system"] },
       reason: { type: String, trim: true, maxlength: 300 },
@@ -156,37 +188,51 @@ orderSchema.index({ customer: 1, createdAt: -1 });
 orderSchema.index({ restaurant: 1, status: 1, createdAt: -1 });
 orderSchema.index({ status: 1, createdAt: -1 });
 orderSchema.index({ deliveryPartner: 1, status: 1, createdAt: -1 });
-// Earnings and reports: delivered orders by time.
 orderSchema.index({ restaurant: 1, status: 1, "settlement.at": -1 });
 orderSchema.index({ deliveryPartner: 1, "settlement.at": -1 });
 orderSchema.index({ status: 1, "settlement.at": -1 });
-// Dispatch sweep: expired offers and ready orders without one.
 orderSchema.index({ status: 1, "offer.expiresAt": 1 });
 orderSchema.index(
   { customer: 1, idempotencyKey: 1 },
-  { unique: true, partialFilterExpression: { idempotencyKey: { $type: "string" } } },
+  {
+    unique: true,
+    partialFilterExpression: { idempotencyKey: { $type: "string" } },
+  },
 );
 
 export const Order = mongoose.model("Order", orderSchema);
 
-/** Payment record, separate from the order so payment and order status evolve independently. */
 const paymentSchema = new mongoose.Schema(
   {
-    order: { type: mongoose.Schema.Types.ObjectId, ref: "Order", required: true },
+    order: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      required: true,
+    },
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    method: { type: String, enum: Object.values(PAYMENT_METHODS), required: true },
-    provider: { type: String, enum: ["cash_on_delivery", "razorpay", "mock"], required: true },
+    method: {
+      type: String,
+      enum: Object.values(PAYMENT_METHODS),
+      required: true,
+    },
+    provider: {
+      type: String,
+      enum: ["cash_on_delivery", "razorpay", "mock"],
+      required: true,
+    },
     amountPaise: { type: Number, required: true, min: 0 },
     currency: { type: String, default: "INR" },
-    status: { type: String, enum: Object.values(PAYMENT_STATUS), default: PAYMENT_STATUS.PENDING },
-    // Gateway references (online payments).
+    status: {
+      type: String,
+      enum: Object.values(PAYMENT_STATUS),
+      default: PAYMENT_STATUS.PENDING,
+    },
     providerOrderId: String,
     providerPaymentId: String,
     failureReason: String,
     paidAt: Date,
     refundedAt: Date,
     providerRefundId: String,
-    // Gateway events already applied (webhook ids), so a replayed or duplicate callback is ignored.
     processedEvents: { type: [String], default: [], select: false },
   },
   {

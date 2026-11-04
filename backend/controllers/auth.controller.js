@@ -6,15 +6,18 @@ const cookieOptions = () => ({
   httpOnly: true,
   secure: env.isProduction,
   sameSite: process.env.COOKIE_SAMESITE || "strict",
-  // Only sent to the auth endpoints that need it.
   path: "/api/v1/auth",
   maxAge: env.refreshToken.ttlDays * 86_400_000,
 });
 
 const requestMeta = (req) => ({ ip: req.ip, userAgent: req.get("user-agent") });
 
-/** Puts the refresh token in an HttpOnly cookie and returns only the access token in JSON. */
-function sendSession(res, { user, accessToken, refreshToken }, message, statusCode = 200) {
+function sendSession(
+  res,
+  { user, accessToken, refreshToken },
+  message,
+  statusCode = 200,
+) {
   res.cookie(env.refreshToken.cookieName, refreshToken, cookieOptions());
   return sendSuccess(res, { statusCode, message, data: { user, accessToken } });
 }
@@ -36,7 +39,10 @@ export async function login(req, res) {
 
 export async function refresh(req, res) {
   try {
-    const session = await authService.refresh(req.cookies?.[env.refreshToken.cookieName], requestMeta(req));
+    const session = await authService.refresh(
+      req.cookies?.[env.refreshToken.cookieName],
+      requestMeta(req),
+    );
     sendSession(res, session, "Session refreshed");
   } catch (error) {
     if (error.code !== "REFRESH_RACE") clearSessionCookie(res);
@@ -52,17 +58,25 @@ export async function logout(req, res) {
 
 export async function forgotPassword(req, res) {
   await authService.forgotPassword(req.body.email);
-  sendSuccess(res, { message: "If an account exists for this email, a reset link has been sent" });
+  sendSuccess(res, {
+    message: "If an account exists for this email, a reset link has been sent",
+  });
 }
 
 export async function resetPassword(req, res) {
   await authService.resetPassword(req.body.token, req.body.password);
   clearSessionCookie(res);
-  sendSuccess(res, { message: "Password has been reset. Please sign in with your new password" });
+  sendSuccess(res, {
+    message: "Password has been reset. Please sign in with your new password",
+  });
 }
 
 export async function changePassword(req, res) {
-  await authService.changePassword(req.user._id, req.body.currentPassword, req.body.newPassword);
+  await authService.changePassword(
+    req.user._id,
+    req.body.currentPassword,
+    req.body.newPassword,
+  );
   clearSessionCookie(res);
   sendSuccess(res, { message: "Password changed. Please sign in again" });
 }
@@ -73,5 +87,8 @@ export function me(req, res) {
 
 export async function updateMe(req, res) {
   const user = await authService.updateProfile(req.user._id, req.body);
-  sendSuccess(res, { message: "Profile updated", data: { user: user.toJSON() } });
+  sendSuccess(res, {
+    message: "Profile updated",
+    data: { user: user.toJSON() },
+  });
 }

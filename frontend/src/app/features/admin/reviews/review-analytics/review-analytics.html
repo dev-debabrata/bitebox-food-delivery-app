@@ -1,0 +1,77 @@
+<div class="period">
+  <np-select class="bb-period" [formField]="report.filters.days" ariaLabel="Period" [options]="report.periods" />
+</div>
+
+@if (report.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="report.resource.reload()">Retry</button></span>
+  </div>
+}
+
+@if (report.data(); as d) {
+  <section class="bb-grid cols-4" aria-label="Totals" [class.bb-dim]="report.resource.isLoading()">
+    <bb-stat-tile icon="star" label="Restaurant rating" [value]="average(d.targets.restaurant) ?? '–'" [hint]="published(d.targets.restaurant.count)" />
+    <bb-stat-tile icon="ramen_dining" label="Dish rating" [value]="average(d.targets.food) ?? '–'" [hint]="published(d.targets.food.count)" />
+    <bb-stat-tile icon="two_wheeler" label="Delivery rating" [value]="average(d.targets.rider) ?? '–'" [hint]="published(d.targets.rider.count, 'rating')" />
+    <bb-stat-tile icon="fiber_new" label="New reviews" [value]="d.newReviews" hint="In this period" />
+    <bb-stat-tile icon="flag" label="Open reports" [value]="d.openReports" hint="Waiting for a decision" />
+    <bb-stat-tile icon="block" label="Hidden or removed" [value]="moderated()" hint="Moderation actions in this period" />
+    <bb-stat-tile icon="eye-off" label="Not public now" [value]="(d.statusCounts.hidden ?? 0) + (d.statusCounts.removed ?? 0)" hint="All time" />
+  </section>
+
+  <div class="bb-grid cols-2">
+    <bb-daily-chart title="Reviews by day" [dates]="dates()" [series]="volume()" [format]="count" />
+    <bb-daily-chart title="Average rating by day" [dates]="dates()" [series]="trend()" [format]="stars" />
+  </div>
+
+  <div class="bb-grid cols-3">
+    @for (t of targets; track t) {
+      <section class="bb-card">
+        <h3>{{ targetLabel[t] }}</h3>
+        <p class="bb-muted note">All published reviews</p>
+        <bb-rating-summary [summary]="d.targets[t]" />
+      </section>
+    }
+  </div>
+
+  <div class="bb-grid cols-3">
+    <section class="bb-card">
+      <h3>Why reviews were reported</h3>
+      <p class="bb-muted note">Reports in this period</p>
+      @for (r of d.reportReasons; track r.reason) {
+        <div class="share-row">
+          <span>{{ reasonLabel[r.reason] }}</span>
+          <span class="num">{{ r.count }} · {{ (r.count / reportTotal()) * 100 | number: '1.0-0' }}%</span>
+          <span class="track"><span class="fill" [style.width.%]="(r.count / reportTotal()) * 100" [style.background]="barColor"></span></span>
+        </div>
+      } @empty {
+        <p class="bb-muted">No reports in this period.</p>
+      }
+    </section>
+
+    @for (rank of rankings(); track rank.title) {
+      <section class="bb-card">
+        <h3>{{ rank.title }}</h3>
+        <p class="bb-muted note">At least {{ d.minReviewsToRank }} published reviews</p>
+        @if (rank.rows.length) {
+          <table class="top">
+            <thead>
+              <tr><th scope="col">Name</th><th scope="col">Rating</th><th scope="col">Reviews</th></tr>
+            </thead>
+            <tbody>
+              @for (r of rank.rows; track r.id) {
+                <tr><th scope="row">{{ r.name }}</th><td>{{ r.average | number: '1.1-2' }}</td><td>{{ r.count }}</td></tr>
+              }
+            </tbody>
+          </table>
+        } @else {
+          <p class="bb-muted">Not enough reviews yet.</p>
+        }
+      </section>
+    }
+  </div>
+} @else if (!report.error()) {
+  <span class="bb-skeleton" style="height: 92px" aria-busy="true"></span>
+  <span class="bb-skeleton" style="height: 300px"></span>
+}

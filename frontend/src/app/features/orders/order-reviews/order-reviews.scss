@@ -1,0 +1,52 @@
+.prompt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bb-space-3);
+
+  h2,
+  p {
+    margin: 0;
+  }
+}
+
+.prompt-icon {
+  --bb-icon-size: 32px;
+  color: var(--bb-amber-600);
+}
+
+.prompt-text {
+  flex: 1 1 220px;
+}
+
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--bb-space-3);
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bb-space-3);
+  margin-top: var(--bb-space-2);
+
+  bb-review-order-row {
+    flex: 1 1 280px;
+  }
+}
+
+.moderated {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #fdecee;
+  color: var(--bb-danger);
+  font-size: 0.75rem;
+  font-weight: 700;
+}

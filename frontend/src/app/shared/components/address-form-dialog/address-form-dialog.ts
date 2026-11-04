@@ -43,12 +43,6 @@ import { PhoneInput } from '../phone-input/phone-input';
 
 type AutoField = 'line1' | 'line2' | 'area' | 'city' | 'state' | 'postalCode';
 
-/**
- * Add or edit a delivery address. The location can be set by place search,
- * the browser's current location, or by dragging the pin on a map; the
- * address fields are then filled from the pinned point.
- * Closes with the saved address.
- */
 @Component({
   selector: 'bb-address-form-dialog',
   imports: [
@@ -81,16 +75,12 @@ export class AddressFormDialog {
   protected readonly locating = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly locationError = signal<string | null>(null);
-  /** Short description of the pinned point (from reverse geocoding). */
   protected readonly pinLabel = signal<string | null>(null);
-  /** Raw coordinate inputs are tucked away unless GPS is unavailable. */
   protected readonly showCoordinates = signal(!this.geo.supported);
   protected readonly triedSave = signal(false);
 
-  /** Text in the place search box (follows typing; set to '' to clear it). */
   private readonly placeSearch = viewChild(PlaceSearch);
 
-  /** Values this dialog filled in automatically; only these may be replaced when the pin moves. */
   private readonly autoFilled = new Map<AutoField, string>();
 
   protected readonly model = signal({
@@ -137,7 +127,6 @@ export class AddressFormDialog {
       this.form.longitude().valid()
     );
   });
-  /** Shown after a save attempt without a pin (the save itself is blocked by validation). */
   protected readonly pinMissing = computed(() => this.triedSave() && !this.pinned());
 
   protected async useCurrentLocation(): Promise<void> {
@@ -147,7 +136,6 @@ export class AddressFormDialog {
       const { latitude, longitude } = await this.geo.currentPrecise();
       await this.setPin({ latitude, longitude });
     } catch (err) {
-      // Never pin a vague reading: it would show a place the customer is not at.
       this.locationError.set(
         err instanceof ImpreciseLocationError
           ? err.message
@@ -163,7 +151,6 @@ export class AddressFormDialog {
     await this.setPin({ latitude: place.latitude, longitude: place.longitude }, place);
   }
 
-  /** The user dragged the pin or tapped the map: that is the exact spot. */
   protected async onPinMoved(point: LatLng): Promise<void> {
     await this.setPin(point);
   }
@@ -177,15 +164,18 @@ export class AddressFormDialog {
     await this.fillFromCoordinates(latitude, longitude, knownPlace);
   }
 
-  /**
-   * Fills area / city / state / PIN from the pinned point. Fields the user typed
-   * are never overwritten; fields we filled earlier are updated when the pin moves.
-   */
-  private async fillFromCoordinates(latitude: number, longitude: number, knownPlace?: Place): Promise<void> {
+  private async fillFromCoordinates(
+    latitude: number,
+    longitude: number,
+    knownPlace?: Place,
+  ): Promise<void> {
     try {
       const place = knownPlace ?? (await firstValueFrom(this.places.reverse(latitude, longitude)));
       this.pinLabel.set(place.displayName ?? place.label);
-      for (const [key, val] of Object.entries(extractAddressFromPlace(place)) as [AutoField, string][]) {
+      for (const [key, val] of Object.entries(extractAddressFromPlace(place)) as [
+        AutoField,
+        string,
+      ][]) {
         const current = this.model()[key].trim();
         if (val && (!current || current === this.autoFilled.get(key))) {
           this.form[key]().value.set(val);
@@ -193,21 +183,17 @@ export class AddressFormDialog {
         }
       }
     } catch {
-      // Naming the place is a convenience; the pin itself is what matters.
       this.pinLabel.set(null);
     }
   }
 
-  /** Submit button click: remember the attempt so a missing pin is pointed out. */
   protected onSaveClick(): void {
     this.triedSave.set(true);
-    // Make a missing pin visible even when the coordinate inputs are hidden.
     if (!this.pinned() && !this.geo.supported) this.showCoordinates.set(true);
   }
 
   private async save(): Promise<TreeValidationResult> {
     const v = this.model();
-    // Optional fields are always sent (possibly empty) so clearing one in an edit really clears it.
     const input: AddressInput = {
       label: v.label,
       recipientName: v.recipientName.trim(),
@@ -232,7 +218,6 @@ export class AddressFormDialog {
       return undefined;
     } catch (err) {
       this.error.set(errorMessage(err));
-      // The API reports coordinates as location.latitude / location.longitude.
       return serverErrors(
         this.form,
         fieldErrors(err).map((e) => ({ ...e, field: e.field.replace('location.', '') })),

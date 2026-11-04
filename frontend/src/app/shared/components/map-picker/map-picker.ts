@@ -20,15 +20,8 @@ export interface LatLng {
   longitude: number;
 }
 
-/** Centre of India, shown zoomed out when nothing is pinned yet. */
 const FALLBACK: LatLng = { latitude: 22.35, longitude: 78.67 };
 
-/**
- * Map with a draggable pin (Leaflet + OpenStreetMap tiles).
- * - Drag the pin or tap the map to move it; `moved` emits the new point.
- * - Changing `latitude`/`longitude` from outside (GPS, search) moves the pin.
- * Leaflet is loaded only in the browser, so this is safe with SSR.
- */
 @Component({
   selector: 'bb-map-picker',
   templateUrl: './map-picker.html',
@@ -38,7 +31,6 @@ const FALLBACK: LatLng = { latitude: 22.35, longitude: 78.67 };
 export class MapPicker {
   readonly latitude = input<number | null>(null);
   readonly longitude = input<number | null>(null);
-  /** Shows a circle of this radius (metres) around the pin, e.g. GPS accuracy. */
   readonly accuracyMeters = input<number | null>(null);
   readonly moved = output<LatLng>();
 
@@ -59,7 +51,6 @@ export class MapPicker {
       this.map?.remove();
     });
 
-    // Follow position changes made outside the map (GPS button, search result).
     effect(() => {
       const lat = this.latitude();
       const lng = this.longitude();
@@ -73,23 +64,24 @@ export class MapPicker {
     try {
       const mod = await import('leaflet');
       const L = (this.L = ((mod as { default?: typeof Leaflet }).default ?? mod) as typeof Leaflet);
-      const start = this.hasPoint() ? { latitude: this.latitude()!, longitude: this.longitude()! } : FALLBACK;
-      this.map = L.map(this.container().nativeElement, { zoomControl: true, attributionControl: true }).setView(
-        [start.latitude, start.longitude],
-        this.hasPoint() ? 17 : 5,
-      );
-      L.tileLayer(environment.map.tileUrl, { maxZoom: environment.map.maxZoom, attribution: environment.map.attribution }).addTo(this.map);
+      const start = this.hasPoint()
+        ? { latitude: this.latitude()!, longitude: this.longitude()! }
+        : FALLBACK;
+      this.map = L.map(this.container().nativeElement, {
+        zoomControl: true,
+        attributionControl: true,
+      }).setView([start.latitude, start.longitude], this.hasPoint() ? 17 : 5);
+      L.tileLayer(environment.map.tileUrl, {
+        maxZoom: environment.map.maxZoom,
+        attribution: environment.map.attribution,
+      }).addTo(this.map);
 
-      // Clicking/tapping the map moves the pin there.
       this.map.on('click', (event: Leaflet.LeafletMouseEvent) => {
         const point = { latitude: event.latlng.lat, longitude: event.latlng.lng };
         this.placePin(point, null, false);
         this.moved.emit(point);
       });
       if (this.hasPoint()) this.placePin(start, this.accuracyMeters());
-      // The map is often created while a dialog is still animating open, so its
-      // first measured size is wrong (tiles only fill part of the box). Re-measure
-      // whenever the container's size changes.
       this.resizeObserver = new ResizeObserver(() => this.map?.invalidateSize());
       this.resizeObserver.observe(this.container().nativeElement);
       this.ready.set(true);
@@ -109,9 +101,18 @@ export class MapPicker {
     const latLng = L.latLng(point.latitude, point.longitude);
 
     if (!this.marker) {
-      // A CSS pin avoids Leaflet's default image assets (which need extra build config).
-      const icon = L.divIcon({ className: 'bb-map-pin', html: '<span></span>', iconSize: [30, 42], iconAnchor: [15, 42] });
-      this.marker = L.marker(latLng, { draggable: true, icon, keyboard: true, title: 'Delivery location (drag to adjust)' }).addTo(map);
+      const icon = L.divIcon({
+        className: 'bb-map-pin',
+        html: '<span></span>',
+        iconSize: [30, 42],
+        iconAnchor: [15, 42],
+      });
+      this.marker = L.marker(latLng, {
+        draggable: true,
+        icon,
+        keyboard: true,
+        title: 'Delivery location (drag to adjust)',
+      }).addTo(map);
       this.marker.on('dragend', () => {
         const p = this.marker!.getLatLng();
         this.circle?.remove();
@@ -122,11 +123,16 @@ export class MapPicker {
       this.marker.setLatLng(latLng);
     }
 
-    // Show the uncertainty circle only when it is meaningful. A huge radius
-    // (rough network guess) would zoom the map out to a whole country.
     const showCircle = !!accuracy && accuracy <= UNRELIABLE_ACCURACY_M;
     this.circle?.remove();
-    this.circle = showCircle ? L.circle(latLng, { radius: accuracy!, color: '#e89a0c', weight: 1, fillOpacity: 0.12 }).addTo(map) : undefined;
+    this.circle = showCircle
+      ? L.circle(latLng, {
+          radius: accuracy!,
+          color: '#e89a0c',
+          weight: 1,
+          fillOpacity: 0.12,
+        }).addTo(map)
+      : undefined;
 
     if (recenter) {
       if (this.circle && accuracy! > 150) map.fitBounds(this.circle.getBounds(), { maxZoom: 17 });

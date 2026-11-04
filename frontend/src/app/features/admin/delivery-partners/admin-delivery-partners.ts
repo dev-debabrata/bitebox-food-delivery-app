@@ -16,9 +16,8 @@ import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { pagedList } from '../../../shared/list/paged-list';
 import { OrderStatus, VEHICLE_LABEL } from '../../../shared/models/checkout.models';
 import { AdminRider } from '../../../shared/models/order-management.models';
-import { openAdminOrder } from '../orders/admin-order-dialog';
+import { openAdminOrder } from '../orders/admin-order-dialog/admin-order-dialog';
 
-/** Order changes that can affect a rider's row (availability, current delivery, count). */
 const RIDER_EVENTS: OrderStatus[] = [
   'ready_for_pickup',
   'assigned',
@@ -28,7 +27,6 @@ const RIDER_EVENTS: OrderStatus[] = [
   'cancelled',
 ];
 
-/** Riders: who is online, what they are carrying, suspend/reactivate. */
 @Component({
   selector: 'bb-admin-delivery-partners',
   imports: [

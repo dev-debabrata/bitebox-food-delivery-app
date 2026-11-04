@@ -6,12 +6,6 @@ import { errorMessage } from '../../core/services/api-error';
 import { liveRefresh } from '../../core/services/poll';
 import { OrderEvent } from '../../core/services/realtime.service';
 
-/**
- * State for a paginated list page: loads `fetch(page, limit)`. With `pollMs` it
- * also reloads on live order events (`when`), polling as a fallback; with
- * `filterKey` it goes back to page 1 (debounced) whenever that changes.
- * Call in an injection context (component constructor / field initialiser).
- */
 export function pagedList<T>(
   fetch: (page: number, limit: number) => Observable<T>,
   opts: {
@@ -19,7 +13,6 @@ export function pagedList<T>(
     pollMs?: number;
     when?: (event: OrderEvent) => boolean;
     limit?: number;
-    /** Don't load until `load(1)` is called (e.g. a tab that may never be opened). */
     lazy?: boolean;
     errorText: string;
   },

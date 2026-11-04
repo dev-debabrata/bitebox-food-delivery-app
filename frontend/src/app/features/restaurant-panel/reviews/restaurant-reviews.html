@@ -1,0 +1,118 @@
+<bb-page-header
+  title="Reviews"
+  subtitle="What customers say about your restaurant and dishes. Reply publicly; reviews can't be edited or removed by you."
+/>
+
+@if (summaryError(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="loadSummary()">Retry</button></span>
+  </div>
+}
+
+<div class="overview">
+  <section class="bb-card" aria-labelledby="overall-title">
+    <h2 class="bb-h3" id="overall-title">Restaurant rating</h2>
+    @if (summary(); as s) {
+      <bb-rating-summary
+        [summary]="s.rating"
+        [filterable]="s.rating.count > 0"
+        [selected]="selectedRating()"
+        (pick)="filterBy({ rating: $event ? '' + $event : '', target: 'restaurant' })"
+      />
+      @if (s.unanswered > 0) {
+        <button class="unanswered" type="button" (click)="filterBy({ responded: 'false' })">
+          <np-icon name="message-square-reply" class="mat-icon" matButtonIcon />
+          {{ s.unanswered }} {{ s.unanswered === 1 ? 'review needs' : 'reviews need' }} a reply
+        </button>
+      }
+    } @else if (!summaryError()) {
+      <span class="bb-skeleton" style="height: 140px"></span>
+    }
+  </section>
+
+  <section class="bb-card" aria-labelledby="dishes-title">
+    <h2 class="bb-h3" id="dishes-title">Dish ratings</h2>
+    @if (summary()) {
+      @if (ratedFoods().length === 0) {
+        <p class="bb-muted">No dish has been rated yet.</p>
+      } @else {
+        <ul class="dishes">
+          @for (f of ratedFoods(); track f.id) {
+            <li>
+              <button
+                type="button"
+                class="dish"
+                [class.selected]="filterModel().foodItemId === f.id"
+                [attr.aria-pressed]="filterModel().foodItemId === f.id"
+                (click)="filterBy({ foodItemId: filterModel().foodItemId === f.id ? '' : f.id, target: 'food' })"
+              >
+                <span class="dish-name">{{ f.name }}</span>
+                <bb-stars [value]="f.rating.average" size="sm" />
+                <span class="dish-score">{{ f.rating.average | number: '1.1-1' }}</span>
+                <span class="bb-muted dish-count">({{ f.rating.count }})</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    } @else if (!summaryError()) {
+      <span class="bb-skeleton" style="height: 140px"></span>
+    }
+  </section>
+</div>
+
+<div class="filters" role="group" aria-label="Filter reviews">
+  <np-select [formField]="filters.target" ariaLabel="About" [options]="targetOptions" />
+  <np-select [formField]="filters.foodItemId" ariaLabel="Dish" [options]="foodOptions()" />
+  <np-select [formField]="filters.rating" ariaLabel="Rating" [options]="ratingOptions" />
+  <np-select [formField]="filters.responded" ariaLabel="Reply status" [options]="respondedOptions" />
+  <np-select [formField]="filters.sort" ariaLabel="Sort" [options]="sortOptions" />
+</div>
+
+@if (list.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+  </div>
+}
+
+<div class="bb-card list-card" [attr.aria-busy]="list.loading()">
+  @if (!list.data()) {
+    @for (i of [1, 2, 3]; track i) {
+      <span class="bb-skeleton row-skeleton"></span>
+    }
+  } @else if (list.data()!.items.length === 0) {
+    <bb-empty-state icon="star" title="No reviews match" message="Reviews appear here after customers rate delivered orders." />
+  } @else {
+    <ul class="rows" [class.bb-dim]="list.loading()">
+      @for (row of list.data()!.items; track row.order) {
+        <li>
+          <button type="button" class="row" (click)="open(row)" [attr.aria-label]="'Open the reviews of order ' + row.orderNumber">
+            <bb-review-order-row
+              [orderNumber]="row.orderNumber"
+              [author]="row.authorName"
+              [date]="row.createdAt"
+              [reviews]="row.reviews"
+            >
+              @if (row.unanswered) {
+                <span badges class="needs">{{ row.unanswered }} need{{ row.unanswered === 1 ? 's' : '' }} a reply</span>
+              } @else {
+                <span badges class="done">Replied</span>
+              }
+            </bb-review-order-row>
+            <np-icon name="chevron-right" class="mat-icon chevron" matButtonIcon />
+          </button>
+        </li>
+      }
+    </ul>
+    <mat-paginator
+      [length]="list.data()!.pagination.total"
+      [pageIndex]="list.data()!.pagination.page - 1"
+      [pageSize]="list.data()!.pagination.limit"
+      [pageSizeOptions]="[10, 20, 50]"
+      (page)="list.onPage($event)"
+      aria-label="Review pages"
+    />
+  }
+</div>

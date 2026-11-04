@@ -22,7 +22,6 @@ interface RazorpayResult {
 }
 type RazorpayCtor = new (options: Record<string, unknown>) => { open(): void };
 
-/** Customer payment steps for online orders (cash on delivery needs none). */
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
   private readonly http = inject(HttpClient);
@@ -31,9 +30,10 @@ export class PaymentService {
   private readonly url = `${environment.apiUrl}/payments`;
   private razorpay?: Promise<RazorpayCtor>;
 
-  /** What checkout offers (cached for the session). */
   readonly methods$: Observable<PaymentMethodOption[]> = this.http
-    .get<ApiResponse<{ methods: PaymentMethodOption[] }>>(`${this.url}/methods`, { context: publicRequest() })
+    .get<ApiResponse<{ methods: PaymentMethodOption[] }>>(`${this.url}/methods`, {
+      context: publicRequest(),
+    })
     .pipe(
       map((r) => r.data.methods),
       shareReplay({ bufferSize: 1, refCount: false }),
@@ -45,18 +45,12 @@ export class PaymentService {
       .pipe(map((r) => r.data.checkout));
   }
 
-  /** Closed the payment page at checkout: cancel the unpaid order and put its dishes back in the cart. */
   abandon(orderId: string): Observable<{ restored: boolean }> {
     return this.http
       .post<ApiResponse<{ restored: boolean }>>(`${this.orderUrl(orderId)}/abandon`, {})
       .pipe(map((r) => r.data));
   }
 
-  /**
-   * Opens the gateway for `session` and reports the result to the server.
-   * Resolves with the payment state, or null when the customer closed the
-   * checkout without paying. Rejects on a network or verification error.
-   */
   async pay(orderId: string, session: CheckoutSession): Promise<PaymentInfo | null> {
     if (session.provider === 'mock') {
       const outcome = await firstValueFrom(
@@ -74,7 +68,10 @@ export class PaymentService {
     }
     const result = await this.openRazorpay(session);
     return result
-      ? this.post(orderId, 'confirm', { providerPaymentId: result.razorpay_payment_id, signature: result.razorpay_signature })
+      ? this.post(orderId, 'confirm', {
+          providerPaymentId: result.razorpay_payment_id,
+          signature: result.razorpay_signature,
+        })
       : null;
   }
 
@@ -107,14 +104,14 @@ export class PaymentService {
     });
   }
 
-  /** Razorpay's checkout script, loaded once on first use. */
   private loadRazorpay(): Promise<RazorpayCtor> {
     const win = this.document.defaultView as (Window & { Razorpay?: RazorpayCtor }) | null;
     if (win?.Razorpay) return Promise.resolve(win.Razorpay);
     this.razorpay ??= new Promise<RazorpayCtor>((resolve, reject) => {
       const script = this.document.createElement('script');
       script.src = RAZORPAY_SCRIPT;
-      script.onload = () => (win?.Razorpay ? resolve(win.Razorpay) : reject(new Error('Razorpay unavailable')));
+      script.onload = () =>
+        win?.Razorpay ? resolve(win.Razorpay) : reject(new Error('Razorpay unavailable'));
       script.onerror = () => {
         this.razorpay = undefined;
         script.remove();

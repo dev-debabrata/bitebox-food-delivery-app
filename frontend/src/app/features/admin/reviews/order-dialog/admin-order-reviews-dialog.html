@@ -1,0 +1,85 @@
+@if (data(); as d) {
+  <header mat-dialog-title class="head">
+    <h2>Order {{ d.orderNumber }}</h2>
+    <p class="meta">
+      {{ d.customerName }} · {{ d.restaurant?.name }} · {{ d.reviews.length }}
+      {{ d.reviews.length === 1 ? 'review' : 'reviews' }}
+      @if (d.openReports) {
+        · <span class="reports">{{ d.openReports }} open {{ d.openReports === 1 ? 'report' : 'reports' }}</span>
+      }
+    </p>
+  </header>
+  <mat-dialog-content>
+    <p class="policy">
+      <np-icon name="lock" class="mat-icon" matButtonIcon />Admins can hide, remove or restore a review, never edit its words.
+    </p>
+    <ul class="reviews">
+      @for (row of rows(); track row.r.id) {
+        @let r = row.r;
+        <li [class.inactive]="r.status !== 'published'">
+          <div class="subject-row">
+            <h3 class="subject">{{ row.heading }}</h3>
+            <span class="bb-status is-{{ r.status }}">{{ statusLabel[r.status] }}</span>
+          </div>
+          <bb-review-card [review]="row.card" [responder]="r.restaurant?.name ?? 'The restaurant'">
+            @if (r.moderation?.reason && r.status !== 'published') {
+              <p class="moderation">Moderators: {{ r.moderation!.reason }}</p>
+            }
+            @if (row.openReports.length) {
+              <ul class="open-reports" [attr.aria-label]="'Open reports on the ' + row.heading + ' review'">
+                @for (rep of row.openReports; track rep.id) {
+                  <li>
+                    <np-icon name="flag" class="mat-icon" matButtonIcon />
+                    <strong>{{ reasonLabel[rep.reason] }}</strong>
+                    @if (rep.note) {
+                      <span>“{{ rep.note }}”</span>
+                    }
+                    <span class="bb-muted">· {{ rep.reporterName ?? 'A user' }} ({{ rep.reporterRole }})</span>
+                  </li>
+                }
+              </ul>
+            }
+            <div class="actions">
+              <button mat-button type="button" (click)="history(r)" [attr.aria-label]="'History and reports of the ' + row.heading + ' review'">
+                <np-icon name="history" class="mat-icon" matButtonIcon />History
+              </button>
+              @if (r.openReports > 0 && r.status !== 'deleted') {
+                <button mat-stroked-button type="button" [disabled]="busy() === r.id" (click)="act(r, 'dismiss')">Dismiss reports</button>
+              }
+              @if (r.status === 'published') {
+                <button mat-stroked-button type="button" [disabled]="busy() === r.id" (click)="act(r, 'hide')" [attr.aria-label]="'Hide the ' + row.heading + ' review'">
+                  <np-icon name="eye-off" class="mat-icon" matButtonIcon />Hide
+                </button>
+              }
+              @if (r.status === 'published' || r.status === 'hidden') {
+                <button mat-flat-button type="button" class="danger" [disabled]="busy() === r.id" (click)="act(r, 'remove')" [attr.aria-label]="'Remove the ' + row.heading + ' review'">
+                  <np-icon name="trash-2" class="mat-icon" matButtonIcon />Remove
+                </button>
+              }
+              @if (r.status === 'hidden' || r.status === 'removed') {
+                <button mat-flat-button type="button" [disabled]="busy() === r.id" (click)="act(r, 'restore')" [attr.aria-label]="'Restore the ' + row.heading + ' review'">
+                  <np-icon name="rotate-ccw" class="mat-icon" matButtonIcon />Restore
+                </button>
+              }
+            </div>
+          </bb-review-card>
+        </li>
+      }
+    </ul>
+  </mat-dialog-content>
+  <mat-dialog-actions class="footer">
+    <button mat-button type="button" (click)="openOrder()">View order</button>
+    <span class="spacer"></span>
+    <button mat-button type="button" [mat-dialog-close]="changed()">Close</button>
+  </mat-dialog-actions>
+} @else if (error(); as message) {
+  <mat-dialog-content>
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>{{ message }} <button class="bb-link-button" (click)="load()">Retry</button></span>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end"><button mat-button mat-dialog-close>Close</button></mat-dialog-actions>
+} @else {
+  <mat-dialog-content><span class="bb-skeleton" style="height: 320px" aria-busy="true"></span></mat-dialog-content>
+}

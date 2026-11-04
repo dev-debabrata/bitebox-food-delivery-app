@@ -15,9 +15,6 @@ const redactOptions = {
   censor: "[REDACTED]",
 };
 
-/**
- * Human-readable console output for local development.
- */
 const devStream = new Writable({
   write(chunk, _encoding, callback) {
     try {

@@ -13,13 +13,18 @@ import { PageHeader } from '../../shared/components/page-header/page-header';
 import { pagedList } from '../../shared/list/paged-list';
 import { AppNotification, notificationIcon } from '../../shared/models/payment.models';
 
-/**
- * Every notification of the signed-in account, any role: full text, newest first,
- * All / Unread, mark read. Opening one marks it read and follows its link.
- */
 @Component({
   selector: 'bb-notifications-page',
-  imports: [DatePipe, MatButtonModule, MatButtonToggleModule, IconComponent, NpIconPipe, MatPaginatorModule, EmptyState, PageHeader],
+  imports: [
+    DatePipe,
+    MatButtonModule,
+    MatButtonToggleModule,
+    IconComponent,
+    NpIconPipe,
+    MatPaginatorModule,
+    EmptyState,
+    PageHeader,
+  ],
   templateUrl: './notifications-page.html',
   styleUrl: './notifications-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,16 +34,17 @@ export class NotificationsPage {
   protected readonly icon = notificationIcon;
 
   protected readonly tab = signal<'all' | 'unread'>('all');
-  protected readonly list = pagedList((page, limit) => this.inbox.page(page, limit, this.tab() === 'unread'), {
-    filterKey: () => this.tab(),
-    errorText: 'Could not load your notifications.',
-  });
-  /** Read here since the page loaded (shown at once, without a reload). */
+  protected readonly list = pagedList(
+    (page, limit) => this.inbox.page(page, limit, this.tab() === 'unread'),
+    {
+      filterKey: () => this.tab(),
+      errorText: 'Could not load your notifications.',
+    },
+  );
   private readonly readHere = signal(new Set<string>());
   private readonly allReadHere = signal(false);
 
   constructor() {
-    // Something new arrived: show it at the top.
     inject(RealtimeService)
       .notifications$.pipe(takeUntilDestroyed())
       .subscribe(() => this.list.load(1));

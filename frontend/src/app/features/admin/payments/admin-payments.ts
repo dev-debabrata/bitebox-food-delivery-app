@@ -20,12 +20,20 @@ import {
   PaymentMethod,
 } from '../../../shared/models/payment.models';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
-import { openAdminOrder } from '../orders/admin-order-dialog';
+import { openAdminOrder } from '../orders/admin-order-dialog/admin-order-dialog';
 
-/** Every payment, with failed refunds flagged for a retry. */
 @Component({
   selector: 'bb-admin-payments',
-  imports: [DatePipe, NP_FORM_FIELDS, MatButtonModule, IconComponent, MatPaginatorModule, EmptyState, PageHeader, InrPipe],
+  imports: [
+    DatePipe,
+    NP_FORM_FIELDS,
+    MatButtonModule,
+    IconComponent,
+    MatPaginatorModule,
+    EmptyState,
+    PageHeader,
+    InrPipe,
+  ],
   templateUrl: './admin-payments.html',
   styleUrl: './admin-payments.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,7 +49,10 @@ export class AdminPayments {
   protected readonly filters = form(this.filterModel);
   protected readonly statusOptions: SelectOption[] = [
     { value: '', label: 'Any status' },
-    ...(Object.keys(PAYMENT_STATUS_LABEL) as PaymentStatus[]).map((s) => ({ value: s, label: PAYMENT_STATUS_LABEL[s] })),
+    ...(Object.keys(PAYMENT_STATUS_LABEL) as PaymentStatus[]).map((s) => ({
+      value: s,
+      label: PAYMENT_STATUS_LABEL[s],
+    })),
   ];
   protected readonly methodOptions: SelectOption[] = [
     { value: '', label: 'Any method' },

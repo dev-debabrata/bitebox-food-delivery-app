@@ -44,10 +44,8 @@ import {
 import { ItemCountPipe } from '../../../shared/pipes/item-count.pipe';
 import { InrPipe, formatDistance } from '../../../shared/pipes/money.pipes';
 
-/** Fallback refresh; offers and status changes normally arrive live over Socket.IO. */
 const POLL_MS = 30_000;
 
-/** The next step on an active delivery, and what the rider should do before pressing it. */
 const NEXT_STEP: Partial<
   Record<RiderOrder['status'], { action: RiderAction; label: string; hint: string; icon: string }>
 > = {
@@ -71,7 +69,6 @@ const NEXT_STEP: Partial<
   },
 };
 
-/** The rider's home: availability, the request on offer, and the delivery in progress. */
 @Component({
   selector: 'bb-delivery-dashboard',
   imports: [
@@ -80,7 +77,8 @@ const NEXT_STEP: Partial<
     NP_FORM_FIELDS,
     RouterLink,
     MatButtonModule,
-    IconComponent, NpIconPipe,
+    IconComponent,
+    NpIconPipe,
     MatProgressBarModule,
     ToggleComponent,
     EmptyState,
@@ -98,7 +96,6 @@ export class DeliveryDashboard {
   private readonly rider = inject(RiderService);
   private readonly geo = inject(GeolocationService);
   private readonly notify = inject(NotificationService);
-  /** Device GPS, shared with the server while online (frequently during a delivery). */
   protected readonly gps = inject(RiderGps);
 
   protected readonly data = signal<RiderDashboard | null>(null);
@@ -106,12 +103,10 @@ export class DeliveryDashboard {
   protected readonly switching = signal(false);
   protected readonly acting = signal(false);
   protected readonly availabilityError = signal<string | null>(null);
-  /** Ticks every second while a request is on offer (for the countdown). */
   protected readonly now = signal(Date.now());
 
   protected readonly profile = computed(() => this.data()?.profile ?? null);
   protected readonly online = computed(() => this.profile()?.isOnline ?? false);
-  /** What the switch shows: follows `online`, set optimistically on tap and put back on failure. */
   protected readonly onlineSwitch = linkedSignal(() => this.online());
   protected readonly offer = computed(() => this.data()?.offer ?? null);
   protected readonly active = computed(() => this.data()?.activeOrder ?? null);
@@ -133,7 +128,6 @@ export class DeliveryDashboard {
   });
   protected readonly vehicleLabel = VEHICLE_LABEL;
 
-  // Map of the active delivery: our position and the road route to the next stop.
   protected readonly stops = computed(() => {
     const o = this.active();
     if (!o) return null;
@@ -146,7 +140,6 @@ export class DeliveryDashboard {
       toRestaurant: o.status === 'assigned',
     };
   });
-  /** Turn-by-turn directions to the next stop on OpenStreetMap. */
   protected readonly directionsUrl = computed(() => {
     const t = this.stops()?.target;
     return t
@@ -159,14 +152,12 @@ export class DeliveryDashboard {
       ? { latitude: fix.latitude, longitude: fix.longitude }
       : null;
   });
-  /** Road route from our position to the next stop (re-estimated as we move). */
   protected readonly routeToStop = rerouteWhileMoving(
     this.myPosition,
     computed(() => this.stops()?.target ?? null),
   );
   protected readonly minutes = etaMinutes;
 
-  /** Seconds left on the offer, and as a share of the full window (for the bar). */
   protected readonly offerSecondsLeft = computed(() => {
     const expires = this.offer()?.offerExpiresAt;
     return expires ? Math.max(0, Math.ceil((new Date(expires).getTime() - this.now()) / 1000)) : 0;
@@ -175,7 +166,6 @@ export class DeliveryDashboard {
     () => (this.offerSecondsLeft() / (this.offer()?.offerWindowSeconds ?? 90)) * 100,
   );
 
-  // Vehicle (first-time setup and edits) -------------------------------------
   protected readonly vehicleOptions: SelectOption[] = (
     Object.keys(VEHICLE_LABEL) as VehicleType[]
   ).map((v) => ({
@@ -192,7 +182,6 @@ export class DeliveryDashboard {
   protected readonly shownError = shownError;
 
   constructor() {
-    // A new offer, a withdrawn one, or a change to the order we carry (slow poll as a fallback).
     const reload = () =>
       this.rider.dashboard().pipe(
         catchError((err: unknown) => {
@@ -211,7 +200,6 @@ export class DeliveryDashboard {
       )
       .subscribe(() => this.now.set(Date.now()));
 
-    // GPS: watch while online; share often during a delivery, rarely when idle.
     effect(() => {
       const online = this.online();
       const delivering = !!this.active();
@@ -256,7 +244,6 @@ export class DeliveryDashboard {
     return undefined;
   }
 
-  /** Online needs a precise location (requests are offered by distance). */
   protected async setOnline(online: boolean): Promise<void> {
     this.onlineSwitch.set(online);
     this.switching.set(true);
@@ -278,7 +265,6 @@ export class DeliveryDashboard {
             ? err.message
             : errorMessage(err),
       );
-      // Put the switch back (an input change, so it does not fire checkedChange again).
       this.onlineSwitch.set(this.online());
       this.rider.dashboard().subscribe({ next: (d) => this.data.set(d), error: () => undefined });
     } finally {

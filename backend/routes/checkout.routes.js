@@ -9,6 +9,9 @@ import { ROLES } from "../models/user.model.js";
 import * as rules from "../validators/checkout.validators.js";
 import * as orderRules from "../validators/order-management.validators.js";
 import { mongoIdParam } from "../validators/common.validators.js";
+import { orderReviews, reviewOrder } from "../services/review.service.js";
+import { orderReviewRules } from "../validators/review.validators.js";
+import { respond } from "../utils/api-response.js";
 
 const customerOnly = [authenticate, authorize(ROLES.CUSTOMER)];
 
@@ -17,13 +20,29 @@ export const cartRouter = Router()
   .use(...customerOnly)
   .get("/", validate(rules.quoteRules), c.getCart)
   .delete("/", validate(rules.quoteRules), c.clearCart)
-  .post("/items", validate([...rules.quoteRules, ...rules.addItemRules]), c.addItem)
-  .patch("/items/:foodItemId", validate([...rules.quoteRules, ...rules.setQuantityRules]), c.setQuantity)
-  .delete("/items/:foodItemId", validate([...rules.quoteRules, ...rules.removeItemRules]), c.removeItem)
+  .post(
+    "/items",
+    validate([...rules.quoteRules, ...rules.addItemRules]),
+    c.addItem,
+  )
+  .patch(
+    "/items/:foodItemId",
+    validate([...rules.quoteRules, ...rules.setQuantityRules]),
+    c.setQuantity,
+  )
+  .delete(
+    "/items/:foodItemId",
+    validate([...rules.quoteRules, ...rules.removeItemRules]),
+    c.removeItem,
+  )
   .post(
     "/coupon",
     // Slow down coupon-code guessing.
-    createRateLimiter({ windowMs: 15 * 60_000, limit: env.isTest ? 1000 : 30, message: "Too many coupon attempts. Try again later." }),
+    createRateLimiter({
+      windowMs: 15 * 60_000,
+      limit: env.isTest ? 1000 : 30,
+      message: "Too many coupon attempts. Try again later.",
+    }),
     validate([...rules.quoteRules, ...rules.couponCodeRules]),
     c.applyCoupon,
   )
@@ -43,13 +62,35 @@ export const ordersRouter = Router()
   .use(...customerOnly)
   .post(
     "/",
-    createRateLimiter({ windowMs: 60_000, limit: env.isTest ? 1000 : 10, message: "Too many order attempts. Please wait a moment." }),
+    createRateLimiter({
+      windowMs: 60_000,
+      limit: env.isTest ? 1000 : 10,
+      message: "Too many order attempts. Please wait a moment.",
+    }),
     validate(rules.placeOrderRules),
     c.placeOrder,
   )
   .get("/", validate(rules.listOrdersRules), c.listMyOrders)
   .get("/:id", validate([mongoIdParam()]), orders.customerGet)
-  .post("/:id/cancel", validate(orderRules.customerCancelRules), orders.customerCancel);
+  .get(
+    "/:id/reviews",
+    validate([mongoIdParam()]),
+    respond((req) => orderReviews(req.user._id, req.params.id)),
+  )
+  .post(
+    "/:id/reviews",
+    validate(orderReviewRules),
+    respond(
+      (req) => reviewOrder(req.user, req.params.id, req.body),
+      "Thanks for rating your order",
+      201,
+    ),
+  )
+  .post(
+    "/:id/cancel",
+    validate(orderRules.customerCancelRules),
+    orders.customerCancel,
+  );
 
 /** /api/v1/coupons (signed-in customers) */
 export const couponsRouter = Router()

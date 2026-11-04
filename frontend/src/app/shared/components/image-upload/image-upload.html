@@ -16,4 +16,6 @@
 </div>
 @if (error()) {
   <p class="error" role="alert">{{ error() }}</p>
+} @else if (missing()) {
+  <p class="error" role="status">The saved image could not be found. Please upload it again.</p>
 }

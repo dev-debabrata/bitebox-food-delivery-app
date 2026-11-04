@@ -9,29 +9,28 @@ import {
 } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { Observable, filter } from 'rxjs';
-import { errorMessage } from '../../../core/services/api-error';
-import { NotificationService } from '../../../core/services/notification.service';
-import { AdminOrdersService } from '../../../core/services/order-management.service';
-import { BillSummary } from '../../../shared/components/bill-summary/bill-summary';
+import { errorMessage } from '../../../../core/services/api-error';
+import { NotificationService } from '../../../../core/services/notification.service';
+import { AdminOrdersService } from '../../../../core/services/order-management.service';
+import { BillSummary } from '../../../../shared/components/bill-summary/bill-summary';
 import {
   ConfirmDialogData,
   confirmed,
-} from '../../../shared/components/confirm-dialog/confirm-dialog';
-import { OrderStatusChip } from '../../../shared/components/order-status-chip/order-status-chip';
-import { deliveryTracking } from '../../../shared/components/tracking-map/delivery-tracking';
-import { TrackingMap } from '../../../shared/components/tracking-map/tracking-map';
-import { VegBadge } from '../../../shared/components/veg-badge/veg-badge';
+} from '../../../../shared/components/confirm-dialog/confirm-dialog';
+import { OrderStatusChip } from '../../../../shared/components/order-status-chip/order-status-chip';
+import { deliveryTracking } from '../../../../shared/components/tracking-map/delivery-tracking';
+import { TrackingMap } from '../../../../shared/components/tracking-map/tracking-map';
+import { VegBadge } from '../../../../shared/components/veg-badge/veg-badge';
 import {
   ORDER_STATUS_LABEL,
   OrderStatus,
   VEHICLE_LABEL,
   customerStatusLabel,
-} from '../../../shared/models/checkout.models';
-import { AdminOrder, TRACKED_STATUSES } from '../../../shared/models/order-management.models';
-import { InrPipe } from '../../../shared/pipes/money.pipes';
-import { PAYMENT_STATUS_LABEL, PROVIDER_LABEL } from '../../../shared/models/payment.models';
+} from '../../../../shared/models/checkout.models';
+import { AdminOrder, TRACKED_STATUSES } from '../../../../shared/models/order-management.models';
+import { InrPipe } from '../../../../shared/pipes/money.pipes';
+import { PAYMENT_STATUS_LABEL, PROVIDER_LABEL } from '../../../../shared/models/payment.models';
 
-/** Statuses from which an admin may cancel (mirrors the backend transition table). */
 const CANCELLABLE: OrderStatus[] = [
   'pending',
   'confirmed',
@@ -40,7 +39,6 @@ const CANCELLABLE: OrderStatus[] = [
   'assigned',
 ];
 
-/** One order in full, for admins. Closes with `true` when something was changed. */
 @Component({
   selector: 'bb-admin-order-dialog',
   imports: [
@@ -74,7 +72,6 @@ export class AdminOrderDialog {
   protected readonly paymentLabel = PAYMENT_STATUS_LABEL;
   protected readonly customerLabel = customerStatusLabel;
   protected readonly providerLabel = PROVIDER_LABEL;
-  /** Live rider position for orders on the road. */
   protected readonly tracking = deliveryTracking(this.order);
   protected readonly onTheRoad = (o: AdminOrder) => TRACKED_STATUSES.includes(o.status);
 
@@ -147,7 +144,6 @@ export class AdminOrderDialog {
   }
 }
 
-/** Opens one order for an admin; emits once if something was changed (so the caller can reload). */
 export function openAdminOrder(dialog: MatDialog, orderId: string): Observable<true> {
   const config: MatDialogConfig<string> = {
     data: orderId,

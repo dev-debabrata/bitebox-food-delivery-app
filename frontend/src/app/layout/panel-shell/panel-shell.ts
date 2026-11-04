@@ -1,7 +1,15 @@
 import { NpIconPipe } from '../../shared/icons/np-icon-name';
 import { IconComponent } from 'nexprime';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  Signal,
+  computed,
+  inject,
+  input,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -19,17 +27,10 @@ export interface NavItem {
   label: string;
   icon: string;
   link: string;
-  /** Match the link exactly (use for index routes such as the dashboard). */
   exact?: boolean;
-  /** Count shown next to the label (e.g. new orders); hidden when 0. */
   badge?: Signal<number>;
 }
 
-/**
- * Shared chrome for the Admin, Restaurant and Delivery panels.
- * Desktop (>= 1024px): persistent sidebar. Tablet/phone: overlay drawer
- * opened from the toolbar and closed automatically after navigation.
- */
 import { initialsOf } from '../../shared/models/user.models';
 
 @Component({
@@ -40,7 +41,8 @@ import { initialsOf } from '../../shared/models/user.models';
     RouterLinkActive,
     MatButtonModule,
     MatDividerModule,
-    IconComponent, NpIconPipe,
+    IconComponent,
+    NpIconPipe,
     MatListModule,
     MatMenuModule,
     MatSidenavModule,

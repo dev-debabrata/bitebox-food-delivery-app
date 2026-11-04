@@ -9,7 +9,6 @@ export const ROLES = Object.freeze({
 
 export const ALL_ROLES = Object.values(ROLES);
 
-/** Roles a visitor may choose when self-registering. Admins are created by seed/admin only. */
 export const SELF_REGISTER_ROLES = [
   ROLES.CUSTOMER,
   ROLES.RESTAURANT,
@@ -21,11 +20,6 @@ export const USER_STATUS = Object.freeze({
   SUSPENDED: "suspended",
 });
 
-/**
- * One authentication record per person. Role-specific data (restaurant
- * business details, delivery vehicle, etc.) lives in separate profile
- * collections added in later phases and references this document.
- */
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -61,7 +55,6 @@ const userSchema = new mongoose.Schema(
     },
 
     passwordHash: { type: String, required: true, select: false },
-    // Incremented on password change/reset to invalidate outstanding access tokens.
     tokenVersion: { type: Number, default: 0, select: false },
 
     passwordResetTokenHash: { type: String, select: false },

@@ -51,8 +51,8 @@ npm install
 
 ### Frontend environments
 
-- `src/environments/environment.development.ts` sets `apiUrl: 'http://localhost:5000/api/v1'` (used by `ng serve`).
-- `src/environments/environment.ts` (production) sets `apiUrl: '/api/v1'`, which assumes a reverse proxy serves the API on the same origin.
+- `src/environments/environment.ts` (development, the default) calls the API directly on port 5000 of the host the page was opened from (`http://localhost:5000/api/v1`, or `http://<LAN IP>:5000/api/v1` from another device). Add that page origin to `CLIENT_URL` so CORS allows it.
+- `src/environments/environment.prod.ts` (swapped in by the production build) sets `apiUrl: '/api/v1'`, which assumes a reverse proxy serves the API on the same origin.
 
 These files are bundled into browser code, so **never put secrets in them**.
 
@@ -422,6 +422,41 @@ How it works:
 - **Reports page:** delivered value (GMV), platform revenue, delivered and cancelled orders, average order, refunds and new customers; daily charts of value and of orders placed vs delivered; payment mix; order outcomes; top restaurants.
 - **Dashboard:** shows the last 30 days at a glance.
 - **Scope:** figures cover orders *placed* in the period; values count delivered orders only. Every chart has a "Show as table" view.
+
+### Ratings and reviews
+
+**Review policy** (`backend/config/reviews.js`):
+- **What can be reviewed:** a customer can review the restaurant, each dish and the rider of their own **delivered** order. Each one can be reviewed once. A rating is 1 to 5 whole stars, with an optional comment of up to 1000 characters.
+- **Photos:** restaurant and dish reviews can have up to 5 photos (JPEG, PNG or WebP, 2 MB each). Customers upload them with `POST /uploads/review-images`, and reviews accept only URLs that BiteBox stored (local uploads or our Cloudinary account), never outside links. Delivery ratings take no photos.
+- **Server checks:** eligibility is checked on the server against the order in the database (owner, `delivered` status, which dishes were in it, who delivered it). A unique index on `(order, target, foodItem)` stops duplicates, including double-clicks.
+- **Time limits:** reviews can be written for 30 days after delivery. A review can be edited for 30 days after it is posted, and earlier versions are kept for moderators. Deleting is final: the review leaves every page and average, and it can't be written again for that order.
+- **What others see:** a short name ("Asha C.") and a "Verified order" badge. Restaurants also see the order number. Riders see only the customer's first name and the order number. Nobody sees phone numbers or addresses.
+- **Moderation:** admins can **hide** (pending a decision), **remove** (breaks the policy) or **restore** a review. A reason is always required; the author sees it, and it is appended to the review's moderation log. Admins never edit a review's words.
+
+**Ratings.**
+- **Where they are stored:** each restaurant, dish and rider has a cached `rating { average, count, distribution[5] }`, built from **published** reviews only.
+- **How they are updated:** every create, edit, delete and moderation action rebuilds the summary from the reviews themselves (`review.service.js#refreshRating`) instead of adding deltas, so counts cannot drift.
+- **Where they are shown:** restaurant cards, restaurant pages, dish details, the rider card on an order, and the panels.
+
+| Who | Endpoints (`/api/v1`) |
+|---|---|
+| Public | `GET /restaurants/{slugOrId}/reviews`, `GET /foods/{id}/reviews` (`rating`, `sort=newest\|oldest\|highest\|lowest`, paging; include the summary) |
+| Customer | `GET /orders/{id}/reviews` (what can be rated on that order), `POST /orders/{id}/reviews` (restaurant, food quality and delivery in one go, see below), `POST /reviews`, `GET /reviews/mine`, `GET/PATCH/DELETE /reviews/{id}`, `POST /uploads/review-images` |
+| Report | `POST /reviews/{id}/reports`: customers (any review but their own), the reviewed restaurant, the reviewed rider |
+| Restaurant | `GET /my/restaurant/reviews/orders` (one row per order; `target`, `foodItemId`, `rating`, `responded`, `sort`), `GET /my/restaurant/reviews/orders/{orderId}`, `GET /my/restaurant/reviews` (flat list), `GET /my/restaurant/reviews/summary`, `PUT/DELETE /my/restaurant/reviews/{id}/response` |
+| Rider | `GET /delivery/reviews` (read-only, with their summary) |
+| Admin | `GET /admin/reviews/orders` (one row per order, `reported=true` puts reported orders first), `GET /admin/reviews/orders/{orderId}`, `GET /admin/reviews` (flat list), `GET /admin/reviews/{id}` (earlier versions, reports, log), `POST /admin/reviews/{id}/moderation` (`hide\|remove\|restore` + reason), `POST /admin/reviews/{id}/reports/dismiss`, `GET /admin/reviews/analytics?days=` |
+
+**Screens.**
+- **Customers:** a delivered order shows "How was your order?". Its button opens the **Rate your experience** dialog. "Rate this order" in My orders opens the dialog directly (`/orders/{id}?rate=1`).
+  - **The dialog:** Restaurant, Food quality and Delivery partner star rows (with "n/5"), "Write a review" and photos, then **Submit rating**.
+  - **Saving:** everything is saved with one `POST /orders/{id}/reviews`, all or nothing. The comment and photos belong to the restaurant review, so the restaurant must be rated to add them. The food-quality rating is given to every dish not yet rated.
+  - **Your ratings:** once something is rated, the order page shows one summary card (a chip per rating, the review and photos) with a single button: **Rate the rest**, **View & edit** or **View**. It opens the same dialog, pre-filled: one row per dish once any dish has its own rating, edit or delete each rating, change the words and photos. Moderated ratings, or ones past the edit window, show read-only with the reason.
+- **More for customers:** **My reviews** (`/account/reviews`). The restaurant page lists reviews and their photos, with a star filter and sort. Dish details show that dish's reviews. Customers can report any review.
+- **Restaurant → Reviews:** the rating summary and dish ratings, filters, and one row per order (author, a chip per rating, the review, photos, "needs a reply"). Clicking a row opens that order's restaurant and dish reviews, where the restaurant replies publicly (edit or remove; the review itself can't be changed) and reports.
+- **Delivery → Ratings:** the rider's summary and ratings; riders can report but not change them. The dashboard shows the rider's rating.
+- **Admin → Reviews:** a **Reported** queue and **All reviews**, one row per order. Clicking a row opens all of that order's reviews (restaurant, dishes, delivery) with their open reports and the hide / remove / restore / dismiss actions. **History** shows a review's earlier versions, every report and its moderation log. **Analytics**: averages per target, daily volume and average, report reasons, moderation counts, and the best- and worst-rated restaurants and riders (at least 3 reviews).
+- **Notifications:** restaurants and riders hear about new reviews. Customers hear about replies and moderation. Admins hear about the first report on a review.
 
 ### Quality: security, performance and accessibility
 

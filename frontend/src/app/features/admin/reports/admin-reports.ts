@@ -18,13 +18,13 @@ interface ShareRow {
   share: number;
 }
 
-/** Rows sorted by size, each with its share of the total. */
 function shares(rows: { label: string; n: number; value: string }[]): ShareRow[] {
   const total = rows.reduce((sum, r) => sum + r.n, 0);
-  return [...rows].sort((a, b) => b.n - a.n).map((r) => ({ label: r.label, value: r.value, share: total ? r.n / total : 0 }));
+  return [...rows]
+    .sort((a, b) => b.n - a.n)
+    .map((r) => ({ label: r.label, value: r.value, share: total ? r.n / total : 0 }));
 }
 
-/** Platform analytics: totals, daily trends, payment mix, order outcomes and top restaurants. */
 @Component({
   selector: 'bb-admin-reports',
   imports: [DecimalPipe, NP_FORM_FIELDS, IconComponent, DailyChart, PageHeader, StatTile, InrPipe],
@@ -35,20 +35,24 @@ function shares(rows: { label: string; n: number; value: string }[]): ShareRow[]
 export class AdminReports {
   private readonly api = inject(ReportsService);
 
-  protected readonly report = periodReport((days) => this.api.adminReport(days), 'Could not load the report.');
+  protected readonly report = periodReport(
+    (days) => this.api.adminReport(days),
+    'Could not load the report.',
+  );
   protected readonly formatPaise = formatPaise;
   protected readonly count = String;
   protected readonly barColor = SERIES_COLORS[0];
 
   private readonly daily = computed(() => this.report.data()?.daily ?? []);
   protected readonly dates = computed(() => this.daily().map((d) => d.date));
-  protected readonly gmvSeries = computed(() => [{ label: 'Delivered value', values: this.daily().map((d) => d.gmvPaise) }]);
+  protected readonly gmvSeries = computed(() => [
+    { label: 'Delivered value', values: this.daily().map((d) => d.gmvPaise) },
+  ]);
   protected readonly orderSeries = computed(() => [
     { label: 'Placed', values: this.daily().map((d) => d.orders) },
     { label: 'Delivered', values: this.daily().map((d) => d.delivered) },
   ]);
 
-  /** The share-bar cards: payment mix and order outcomes. */
   protected readonly breakdowns = computed(() => {
     const d = this.report.data();
     const counts = d?.statusCounts ?? {};
@@ -70,7 +74,11 @@ export class AdminReports {
         note: 'Current status of orders placed in the period',
         empty: 'No orders yet.',
         rows: shares(
-          (Object.keys(counts) as OrderStatus[]).map((s) => ({ label: ORDER_STATUS_LABEL[s], n: counts[s]!, value: String(counts[s]) })),
+          (Object.keys(counts) as OrderStatus[]).map((s) => ({
+            label: ORDER_STATUS_LABEL[s],
+            n: counts[s]!,
+            value: String(counts[s]),
+          })),
         ),
       },
     ];
@@ -78,6 +86,8 @@ export class AdminReports {
 
   protected readonly deliveryRate = computed(() => {
     const t = this.report.data()?.totals;
-    return t?.orders ? `${Math.round((t.delivered / t.orders) * 100)}% of ${t.orders} placed` : undefined;
+    return t?.orders
+      ? `${Math.round((t.delivered / t.orders) * 100)}% of ${t.orders} placed`
+      : undefined;
   });
 }

@@ -13,10 +13,6 @@ import { NotificationBell } from '../../shared/components/notification-bell/noti
 import { BrandLogo } from '../../shared/components/brand-logo/brand-logo';
 import { ROLE_META } from '../../shared/models/user.models';
 
-/**
- * Public / customer site chrome: sticky header, footer, and a bottom tab bar
- * on phones for thumb-friendly navigation.
- */
 import { initialsOf } from '../../shared/models/user.models';
 
 @Component({
@@ -43,21 +39,16 @@ export class CustomerLayout {
   protected readonly cart = inject(CartService);
   protected readonly deliveryLocation = inject(DeliveryLocationService).location;
   private readonly dialog = inject(MatDialog);
-  /** Real user, or the remembered one while the session is restored (display only). */
   protected readonly shown = this.auth.displayUser;
-  /** Known who to show: session checked, or a remembered user to show meanwhile. */
   protected readonly ready = computed(() => this.auth.initialised() || this.shown() !== null);
-  /** Signed-in partner/admin accounts get a shortcut to their own panel. */
   protected readonly panelLink = computed(() => {
     const role = this.shown()?.role;
     return role && role !== 'customer' ? ROLE_META[role].home : null;
   });
-  /** Customers see the cart (also while their session is being restored). */
   protected readonly showCart = computed(
     () => this.cart.enabled() || this.shown()?.role === 'customer',
   );
   protected readonly firstName = computed(() => this.shown()?.name.split(' ')[0] ?? '');
-  /** "Asha Customer" -> "AC", shown in the round account button. */
   protected readonly initials = computed(() => initialsOf(this.shown()?.name));
   protected readonly year = new Date().getFullYear();
 

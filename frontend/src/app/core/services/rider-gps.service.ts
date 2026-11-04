@@ -13,32 +13,19 @@ export interface GpsFix {
   at: number;
 }
 
-/** During a delivery: at most one update this often... */
 const DELIVERY_MIN_GAP_MS = 4_000;
-/** ...and at least one this often, even when standing still. */
 const DELIVERY_MAX_GAP_MS = 15_000;
-/** Moving at least this far triggers an update (after the minimum gap). */
 const DELIVERY_MIN_MOVE_M = 15;
-/** Online but idle: keep the position fresh enough for dispatch. */
 const IDLE_GAP_MS = 60_000;
 
-/**
- * The rider's device GPS while they are online. Shares positions with the
- * server over Socket.IO (REST fallback when idle and disconnected):
- * frequently during a delivery so the customer's map moves smoothly, rarely
- * when idle. Imprecise readings are never sent.
- */
 @Injectable({ providedIn: 'root' })
 export class RiderGps {
   private readonly realtime = inject(RealtimeService);
   private readonly rider = inject(RiderService);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  /** Latest reading from the device (even if too imprecise to share). */
   readonly fix = signal<GpsFix | null>(null);
-  /** Why sharing is not working, in words for the rider. */
   readonly problem = signal<string | null>(null);
-  /** When a position was last accepted by the server. */
   readonly lastSharedAt = signal<number | null>(null);
 
   private watchId: number | null = null;
@@ -46,10 +33,6 @@ export class RiderGps {
   private lastSent: GpsFix | null = null;
   private sending = false;
 
-  /**
-   * Watch while online (stop when offline); `delivering` switches to frequent updates.
-   * Starting a delivery shares the current position straight away. Idempotent.
-   */
   update(online: boolean, delivering: boolean): void {
     if (!online) return this.stop();
     const startedDelivering = delivering && !this.delivering;
@@ -123,7 +106,6 @@ export class RiderGps {
       };
       let ack: LocationAck = await this.realtime.sendRiderLocation(point);
       if (!ack.ok && ack.error === 'NOT_CONNECTED' && !this.delivering) {
-        // Idle and no live connection: the REST endpoint keeps dispatch working.
         ack = await firstValueFrom(this.rider.reportLocation(point.latitude, point.longitude)).then(
           () => ({ ok: true }),
           () => ({ ok: false, error: 'NOT_CONNECTED' as const }),

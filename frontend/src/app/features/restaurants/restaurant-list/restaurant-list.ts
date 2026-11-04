@@ -1,5 +1,14 @@
 import { NpIconPipe } from '../../../shared/icons/np-icon-name';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  untracked,
+} from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -25,10 +34,6 @@ const SORT_LABELS: Record<RestaurantSort, string> = {
   distance: 'Nearest',
 };
 
-/**
- * Restaurant discovery. All filters live in the URL query string, so results
- * are shareable and survive refresh / back navigation.
- */
 import { IconComponent, SelectOption, ToggleComponent } from 'nexprime';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 
@@ -40,7 +45,8 @@ import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
     RouterLink,
     MatButtonModule,
     MatChipsModule,
-    IconComponent, NpIconPipe,
+    IconComponent,
+    NpIconPipe,
     EmptyState,
     RestaurantCard,
   ],
@@ -54,7 +60,6 @@ export class RestaurantList {
   private readonly dialog = inject(MatDialog);
   protected readonly deliveryLocation = inject(DeliveryLocationService).location;
 
-  // Query params (bound via withComponentInputBinding)
   readonly search = input<string>();
   readonly cuisine = input<string>();
   readonly category = input<string>();
@@ -62,11 +67,15 @@ export class RestaurantList {
   readonly sort = input<RestaurantSort>();
   readonly lat = input<string>();
   readonly lng = input<string>();
-  /** ?all=true ignores the saved delivery location and lists every restaurant. */
   readonly all = input<string>();
 
-  protected readonly categories = toSignal(this.catalog.categories().pipe(catchError(() => of([]))), { initialValue: [] });
-  protected readonly cuisines = toSignal(this.catalog.cuisines().pipe(catchError(() => of([]))), { initialValue: [] });
+  protected readonly categories = toSignal(
+    this.catalog.categories().pipe(catchError(() => of([]))),
+    { initialValue: [] },
+  );
+  protected readonly cuisines = toSignal(this.catalog.cuisines().pipe(catchError(() => of([]))), {
+    initialValue: [],
+  });
   protected readonly cuisineOptions = computed<SelectOption[]>(() => [
     { value: '', label: 'All cuisines' },
     ...this.cuisines().map((c) => ({ value: c, label: c })),
@@ -77,23 +86,25 @@ export class RestaurantList {
       .map((value) => ({ value, label: SORT_LABELS[value] })),
   );
 
-  /** The search box; the URL (?search=) is the source of truth for what is shown. */
   protected readonly filters = form(signal({ search: '' }));
   protected readonly restaurants = signal<Restaurant[]>([]);
   protected readonly pagination = signal<Pagination | null>(null);
   protected readonly loading = signal(true);
   protected readonly loadingMore = signal(false);
   protected readonly error = signal<string | null>(null);
-  /**
-   * Coordinates to search around: explicit ?lat&lng in the URL, otherwise the
-   * delivery location chosen in the header (unless ?all=true).
-   */
+
   protected readonly coords = computed(() => {
     if (this.lat() !== undefined && this.lng() !== undefined) {
-      return { latitude: Number(this.lat()), longitude: Number(this.lng()), label: 'the selected point' };
+      return {
+        latitude: Number(this.lat()),
+        longitude: Number(this.lng()),
+        label: 'the selected point',
+      };
     }
     const loc = this.deliveryLocation();
-    return loc && this.all() !== 'true' ? { latitude: loc.latitude, longitude: loc.longitude, label: loc.label } : null;
+    return loc && this.all() !== 'true'
+      ? { latitude: loc.latitude, longitude: loc.longitude, label: loc.label }
+      : null;
   });
   protected readonly nearby = computed(() => this.coords() !== null);
   protected readonly vegOnly = computed(() => this.veg() === 'true');
@@ -119,11 +130,9 @@ export class RestaurantList {
   }));
 
   constructor() {
-    // Reload whenever the URL filters change.
     effect(() => {
       const query = this.query();
       untracked(() => {
-        // Follow the URL (back/forward, links) without fighting what is being typed.
         const box = this.filters.search().value;
         if (box().trim() !== (query.search ?? '')) box.set(query.search ?? '');
         this.load(query, 1);
@@ -138,7 +147,11 @@ export class RestaurantList {
   }
 
   protected setParams(params: Record<string, string | number | boolean | null>): void {
-    void this.router.navigate([], { queryParams: params, queryParamsHandling: 'merge', replaceUrl: true });
+    void this.router.navigate([], {
+      queryParams: params,
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   protected toggleCategory(id: string): void {
@@ -146,8 +159,10 @@ export class RestaurantList {
   }
 
   protected clearFilters(): void {
-    // Keep "show all" if it was chosen; clearing filters should not silently re-apply the location.
-    void this.router.navigate([], { queryParams: this.all() === 'true' ? { all: 'true' } : {}, replaceUrl: true });
+    void this.router.navigate([], {
+      queryParams: this.all() === 'true' ? { all: 'true' } : {},
+      replaceUrl: true,
+    });
   }
 
   protected chooseLocation(): void {
@@ -159,9 +174,13 @@ export class RestaurantList {
       });
   }
 
-  /** Show every restaurant regardless of the delivery location. */
   protected showAll(): void {
-    this.setParams({ all: 'true', lat: null, lng: null, sort: this.sort() === 'distance' ? null : (this.sort() ?? null) });
+    this.setParams({
+      all: 'true',
+      lat: null,
+      lng: null,
+      sort: this.sort() === 'distance' ? null : (this.sort() ?? null),
+    });
   }
 
   protected loadMore(): void {
@@ -175,7 +194,6 @@ export class RestaurantList {
 
   private load(query: RestaurantQuery, page: number): void {
     const append = page > 1;
-    // A newer search supersedes any request still in flight (avoids stale results winning).
     this.inFlight?.unsubscribe();
     (append ? this.loadingMore : this.loading).set(true);
     this.error.set(null);

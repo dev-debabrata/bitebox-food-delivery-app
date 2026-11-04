@@ -1,0 +1,65 @@
+<bb-page-header
+  title="Ratings"
+  subtitle="How customers rated your deliveries. Only their first name and the order number are shown."
+/>
+
+@if (list.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+  </div>
+}
+
+@if (list.data()?.summary; as s) {
+  <section class="bb-card summary" aria-labelledby="summary-title">
+    <h2 class="bb-h3" id="summary-title">Your rating</h2>
+    <bb-rating-summary
+      [summary]="s"
+      noun="rating"
+      [filterable]="s.count > 0"
+      [selected]="rating()"
+      (pick)="rating.set($event)"
+    />
+  </section>
+}
+
+<div class="bb-card list-card" [attr.aria-busy]="list.loading()">
+  @if (!list.data()) {
+    @for (i of [1, 2, 3]; track i) {
+      <span class="bb-skeleton row-skeleton"></span>
+    }
+  } @else if (list.data()!.items.length === 0) {
+    <bb-empty-state
+      icon="star"
+      [title]="rating() ? 'No ratings with this score' : 'No ratings yet'"
+      message="Customers can rate a delivery once it's complete."
+    />
+  } @else {
+    <ul class="rows" [class.bb-dim]="list.loading()">
+      @for (r of list.data()!.items; track r.id) {
+        <li>
+          <bb-review-card [review]="r">
+            <span badge class="order-no">Order {{ r.orderNumber }}</span>
+            <div class="actions">
+              @if (r.reportedByYou) {
+                <span class="bb-muted">Reported</span>
+              } @else {
+                <button mat-button type="button" (click)="report(r)" [attr.aria-label]="'Report rating from ' + r.authorName">
+                  <np-icon name="flag" class="mat-icon" matButtonIcon />Report
+                </button>
+              }
+            </div>
+          </bb-review-card>
+        </li>
+      }
+    </ul>
+    <mat-paginator
+      [length]="list.data()!.pagination.total"
+      [pageIndex]="list.data()!.pagination.page - 1"
+      [pageSize]="list.data()!.pagination.limit"
+      [pageSizeOptions]="[10, 20, 50]"
+      (page)="list.onPage($event)"
+      aria-label="Rating pages"
+    />
+  }
+</div>

@@ -17,7 +17,11 @@ import {
 } from "./helpers.js";
 
 const refreshWith = (app, cookie) =>
-  request(app).post("/api/v1/auth/refresh").set("Origin", ORIGIN).set("X-Requested-With", "BiteBox").set("Cookie", cookie);
+  request(app)
+    .post("/api/v1/auth/refresh")
+    .set("Origin", ORIGIN)
+    .set("X-Requested-With", "BiteBox")
+    .set("Cookie", cookie);
 
 describe("Authentication", () => {
   let app;
@@ -30,14 +34,18 @@ describe("Authentication", () => {
 
   describe("registration", () => {
     it("registers a customer, hashes the password and never returns it", async () => {
-      const { res, body } = await registerUser(app, { email: "Asha@Example.com" });
+      const { res, body } = await registerUser(app, {
+        email: "Asha@Example.com",
+      });
       assert.equal(res.status, 201);
       assert.equal(res.body.data.user.email, "asha@example.com");
       assert.equal(res.body.data.user.role, "customer");
       assert.equal(res.body.data.user.passwordHash, undefined);
       assert.ok(res.body.data.accessToken);
 
-      const stored = await User.findOne({ email: "asha@example.com" }).select("+passwordHash");
+      const stored = await User.findOne({ email: "asha@example.com" }).select(
+        "+passwordHash",
+      );
       assert.notEqual(stored.passwordHash, body.password);
       assert.match(stored.passwordHash, /^\$2[aby]\$/);
     });
@@ -74,7 +82,11 @@ describe("Authentication", () => {
     });
 
     it("validates input and reports field errors", async () => {
-      const { res } = await registerUser(app, { name: "A", email: "not-an-email", password: "short" });
+      const { res } = await registerUser(app, {
+        name: "A",
+        email: "not-an-email",
+        password: "short",
+      });
       assert.equal(res.status, 422);
       const fields = res.body.error.details.map((d) => d.field).sort();
       assert.deepEqual(fields, ["email", "name", "password"]);
@@ -82,7 +94,9 @@ describe("Authentication", () => {
 
     it("strips MongoDB operators from the request body", async () => {
       await registerUser(app, { email: "victim@example.com" });
-      const res = await request(app).post("/api/v1/auth/login").send({ email: { $gt: "" }, password: { $gt: "" } });
+      const res = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: { $gt: "" }, password: { $gt: "" } });
       assert.equal(res.status, 422);
     });
   });
@@ -90,7 +104,9 @@ describe("Authentication", () => {
   describe("login", () => {
     it("signs in with correct credentials", async () => {
       const { body } = await registerUser(app);
-      const res = await request(app).post("/api/v1/auth/login").send({ email: body.email, password: PASSWORD });
+      const res = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: body.email, password: PASSWORD });
       assert.equal(res.status, 200);
       assert.ok(res.body.data.accessToken);
       assert.ok(refreshCookie(res.headers["set-cookie"]));
@@ -98,8 +114,12 @@ describe("Authentication", () => {
 
     it("returns the same 401 for wrong password and unknown email", async () => {
       const { body } = await registerUser(app);
-      const wrong = await request(app).post("/api/v1/auth/login").send({ email: body.email, password: "Wrong-pass1" });
-      const unknown = await request(app).post("/api/v1/auth/login").send({ email: "nobody@example.com", password: PASSWORD });
+      const wrong = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: body.email, password: "Wrong-pass1" });
+      const unknown = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: "nobody@example.com", password: PASSWORD });
       assert.equal(wrong.status, 401);
       assert.equal(unknown.status, 401);
       assert.equal(wrong.body.message, unknown.body.message);
@@ -107,20 +127,29 @@ describe("Authentication", () => {
 
     it("rejects signing in to a portal for a different role", async () => {
       const { body } = await registerUser(app);
-      const res = await request(app).post("/api/v1/auth/login").send({ email: body.email, password: PASSWORD, portal: "admin" });
+      const res = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: body.email, password: PASSWORD, portal: "admin" });
       assert.equal(res.status, 403);
     });
 
     it("blocks suspended accounts", async () => {
       const { body } = await registerUser(app);
       await User.updateOne({ email: body.email }, { status: "suspended" });
-      const res = await request(app).post("/api/v1/auth/login").send({ email: body.email, password: PASSWORD });
+      const res = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: body.email, password: PASSWORD });
       assert.equal(res.status, 403);
     });
 
     it("rate-limits repeated login attempts", async () => {
-      const limited = buildApp({ rateLimits: { authRateLimit: 3, sensitiveRateLimit: 3 } });
-      const attempt = () => request(limited).post("/api/v1/auth/login").send({ email: "x@example.com", password: "Wrong-pass1" });
+      const limited = buildApp({
+        rateLimits: { authRateLimit: 3, sensitiveRateLimit: 3 },
+      });
+      const attempt = () =>
+        request(limited)
+          .post("/api/v1/auth/login")
+          .send({ email: "x@example.com", password: "Wrong-pass1" });
       for (let i = 0; i < 3; i++) assert.equal((await attempt()).status, 401);
       assert.equal((await attempt()).status, 429);
     });
@@ -129,7 +158,9 @@ describe("Authentication", () => {
   describe("access tokens", () => {
     it("returns the current user for a valid token", async () => {
       const { token, body } = await registerUser(app);
-      const res = await request(app).get("/api/v1/auth/me").set("Authorization", `Bearer ${token}`);
+      const res = await request(app)
+        .get("/api/v1/auth/me")
+        .set("Authorization", `Bearer ${token}`);
       assert.equal(res.status, 200);
       assert.equal(res.body.data.user.email, body.email);
     });
@@ -137,15 +168,37 @@ describe("Authentication", () => {
     it("rejects missing, malformed and tampered tokens", async () => {
       const { token } = await registerUser(app);
       assert.equal((await request(app).get("/api/v1/auth/me")).status, 401);
-      assert.equal((await request(app).get("/api/v1/auth/me").set("Authorization", "Bearer nope")).status, 401);
-      const tampered = token.slice(0, -2) + (token.endsWith("aa") ? "bb" : "aa");
-      assert.equal((await request(app).get("/api/v1/auth/me").set("Authorization", `Bearer ${tampered}`)).status, 401);
+      assert.equal(
+        (
+          await request(app)
+            .get("/api/v1/auth/me")
+            .set("Authorization", "Bearer nope")
+        ).status,
+        401,
+      );
+      const tampered =
+        token.slice(0, -2) + (token.endsWith("aa") ? "bb" : "aa");
+      assert.equal(
+        (
+          await request(app)
+            .get("/api/v1/auth/me")
+            .set("Authorization", `Bearer ${tampered}`)
+        ).status,
+        401,
+      );
     });
 
     it("invalidates tokens of suspended users immediately", async () => {
       const { token, body } = await registerUser(app);
       await User.updateOne({ email: body.email }, { status: "suspended" });
-      assert.equal((await request(app).get("/api/v1/auth/me").set("Authorization", `Bearer ${token}`)).status, 401);
+      assert.equal(
+        (
+          await request(app)
+            .get("/api/v1/auth/me")
+            .set("Authorization", `Bearer ${token}`)
+        ).status,
+        401,
+      );
     });
 
     it("updates the profile with validated fields only", async () => {
@@ -167,12 +220,17 @@ describe("Authentication", () => {
       const res = await refreshWith(app, refreshCookie(cookie));
       assert.equal(res.status, 200);
       assert.ok(res.body.data.accessToken);
-      assert.notEqual(refreshCookie(res.headers["set-cookie"]), refreshCookie(cookie));
+      assert.notEqual(
+        refreshCookie(res.headers["set-cookie"]),
+        refreshCookie(cookie),
+      );
     });
 
     it("requires the CSRF header and a trusted origin", async () => {
       const { cookie } = await registerUser(app);
-      const noHeader = await request(app).post("/api/v1/auth/refresh").set("Cookie", refreshCookie(cookie));
+      const noHeader = await request(app)
+        .post("/api/v1/auth/refresh")
+        .set("Cookie", refreshCookie(cookie));
       assert.equal(noHeader.status, 403);
       const badOrigin = await request(app)
         .post("/api/v1/auth/refresh")
@@ -189,7 +247,10 @@ describe("Authentication", () => {
       const second = refreshCookie(rotated.headers["set-cookie"]);
 
       // Pretend the rotation happened outside the race grace window.
-      await Session.updateOne({ revokedReason: "rotated" }, { revokedAt: new Date(Date.now() - 60_000) });
+      await Session.updateOne(
+        { revokedReason: "rotated" },
+        { revokedAt: new Date(Date.now() - 60_000) },
+      );
 
       const replay = await refreshWith(app, first);
       assert.equal(replay.status, 401);
@@ -204,25 +265,40 @@ describe("Authentication", () => {
       const race = await refreshWith(app, first);
       assert.equal(race.status, 401);
       assert.equal(race.body.error.code, "REFRESH_RACE");
-      assert.equal((await refreshWith(app, refreshCookie(rotated.headers["set-cookie"]))).status, 200);
+      assert.equal(
+        (await refreshWith(app, refreshCookie(rotated.headers["set-cookie"])))
+          .status,
+        200,
+      );
     });
 
     it("logout revokes the refresh session", async () => {
       const { cookie } = await registerUser(app);
       const c = refreshCookie(cookie);
-      const res = await request(app).post("/api/v1/auth/logout").set("Origin", ORIGIN).set("X-Requested-With", "BiteBox").set("Cookie", c);
+      const res = await request(app)
+        .post("/api/v1/auth/logout")
+        .set("Origin", ORIGIN)
+        .set("X-Requested-With", "BiteBox")
+        .set("Cookie", c);
       assert.equal(res.status, 200);
       assert.equal((await refreshWith(app, c)).status, 401);
     });
   });
 
   describe("password reset", () => {
-    const tokenFromEmail = () => new URL(testOutbox.at(-1).text.match(/https?:\/\/\S+/)[0]).searchParams.get("token");
+    const tokenFromEmail = () =>
+      new URL(
+        testOutbox.at(-1).text.match(/https?:\/\/\S+/)[0],
+      ).searchParams.get("token");
 
     it("responds identically for known and unknown emails", async () => {
       const { body } = await registerUser(app);
-      const known = await request(app).post("/api/v1/auth/forgot-password").send({ email: body.email });
-      const unknown = await request(app).post("/api/v1/auth/forgot-password").send({ email: "ghost@example.com" });
+      const known = await request(app)
+        .post("/api/v1/auth/forgot-password")
+        .send({ email: body.email });
+      const unknown = await request(app)
+        .post("/api/v1/auth/forgot-password")
+        .send({ email: "ghost@example.com" });
       assert.equal(known.status, 200);
       assert.equal(unknown.status, 200);
       assert.equal(known.body.message, unknown.body.message);
@@ -231,38 +307,76 @@ describe("Authentication", () => {
 
     it("stores only a hash of the reset token", async () => {
       const { body } = await registerUser(app);
-      await request(app).post("/api/v1/auth/forgot-password").send({ email: body.email });
-      const user = await User.findOne({ email: body.email }).select("+passwordResetTokenHash");
+      await request(app)
+        .post("/api/v1/auth/forgot-password")
+        .send({ email: body.email });
+      const user = await User.findOne({ email: body.email }).select(
+        "+passwordResetTokenHash",
+      );
       assert.ok(user.passwordResetTokenHash);
       assert.notEqual(user.passwordResetTokenHash, tokenFromEmail());
     });
 
     it("resets the password once, revokes sessions and old access tokens", async () => {
       const { body, token: oldAccess, cookie } = await registerUser(app);
-      await request(app).post("/api/v1/auth/forgot-password").send({ email: body.email });
+      await request(app)
+        .post("/api/v1/auth/forgot-password")
+        .send({ email: body.email });
       const token = tokenFromEmail();
 
-      const reset = await request(app).post("/api/v1/auth/reset-password").send({ token, password: "Brand-new-pass9" });
+      const reset = await request(app)
+        .post("/api/v1/auth/reset-password")
+        .send({ token, password: "Brand-new-pass9" });
       assert.equal(reset.status, 200);
 
       // Single use
-      const again = await request(app).post("/api/v1/auth/reset-password").send({ token, password: "Another-pass9" });
+      const again = await request(app)
+        .post("/api/v1/auth/reset-password")
+        .send({ token, password: "Another-pass9" });
       assert.equal(again.status, 400);
 
       // Old password fails, new one works
-      assert.equal((await request(app).post("/api/v1/auth/login").send({ email: body.email, password: PASSWORD })).status, 401);
-      assert.equal((await request(app).post("/api/v1/auth/login").send({ email: body.email, password: "Brand-new-pass9" })).status, 200);
+      assert.equal(
+        (
+          await request(app)
+            .post("/api/v1/auth/login")
+            .send({ email: body.email, password: PASSWORD })
+        ).status,
+        401,
+      );
+      assert.equal(
+        (
+          await request(app)
+            .post("/api/v1/auth/login")
+            .send({ email: body.email, password: "Brand-new-pass9" })
+        ).status,
+        200,
+      );
 
       // Existing sessions and access tokens are invalidated
       assert.equal((await refreshWith(app, refreshCookie(cookie))).status, 401);
-      assert.equal((await request(app).get("/api/v1/auth/me").set("Authorization", `Bearer ${oldAccess}`)).status, 401);
+      assert.equal(
+        (
+          await request(app)
+            .get("/api/v1/auth/me")
+            .set("Authorization", `Bearer ${oldAccess}`)
+        ).status,
+        401,
+      );
     });
 
     it("rejects expired reset tokens", async () => {
       const { body } = await registerUser(app);
-      await request(app).post("/api/v1/auth/forgot-password").send({ email: body.email });
-      await User.updateOne({ email: body.email }, { passwordResetExpiresAt: new Date(Date.now() - 1000) });
-      const res = await request(app).post("/api/v1/auth/reset-password").send({ token: tokenFromEmail(), password: "Brand-new-pass9" });
+      await request(app)
+        .post("/api/v1/auth/forgot-password")
+        .send({ email: body.email });
+      await User.updateOne(
+        { email: body.email },
+        { passwordResetExpiresAt: new Date(Date.now() - 1000) },
+      );
+      const res = await request(app)
+        .post("/api/v1/auth/reset-password")
+        .send({ token: tokenFromEmail(), password: "Brand-new-pass9" });
       assert.equal(res.status, 400);
     });
 
@@ -286,16 +400,24 @@ describe("Authentication", () => {
   describe("role authorization", () => {
     it("allows admins to list users", async () => {
       const { token } = await createAndLogin(app, "admin");
-      const res = await request(app).get("/api/v1/admin/users?role=customer&limit=10").set("Authorization", `Bearer ${token}`);
+      const res = await request(app)
+        .get("/api/v1/admin/users?role=customer&limit=10")
+        .set("Authorization", `Bearer ${token}`);
       assert.equal(res.status, 200);
       assert.equal(res.body.data.pagination.limit, 10);
-      assert.ok(res.body.data.items.every((u) => u.role === "customer" && !("passwordHash" in u)));
+      assert.ok(
+        res.body.data.items.every(
+          (u) => u.role === "customer" && !("passwordHash" in u),
+        ),
+      );
     });
 
     for (const role of ["customer", "restaurant", "delivery"]) {
       it(`forbids ${role} accounts from admin endpoints`, async () => {
         const { token } = await createAndLogin(app, role);
-        const res = await request(app).get("/api/v1/admin/users").set("Authorization", `Bearer ${token}`);
+        const res = await request(app)
+          .get("/api/v1/admin/users")
+          .set("Authorization", `Bearer ${token}`);
         assert.equal(res.status, 403);
       });
     }

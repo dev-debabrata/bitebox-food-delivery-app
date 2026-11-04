@@ -32,7 +32,6 @@ import { VegBadge } from '../../../shared/components/veg-badge/veg-badge';
 import { Pagination } from '../../../shared/models/api.models';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
 
-/** Platform-wide food item moderation: search, toggle availability, remove. */
 @Component({
   selector: 'bb-admin-foods',
   imports: [
@@ -57,7 +56,6 @@ export class AdminFoods implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly router = inject(Router);
 
-  /** Optional ?restaurant=<id> filter (linked from the restaurant review page). */
   readonly restaurant = input<string>();
 
   protected readonly filters = form(signal({ search: '' }));
@@ -73,7 +71,6 @@ export class AdminFoods implements OnInit {
   private inFlight?: Subscription;
 
   constructor() {
-    // skip(1): the first emission is the starting value, which is loaded on init.
     toObservable(computed(() => this.filters.search().value().trim()))
       .pipe(skip(1), debounceTime(350), distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(() => this.load(1));
@@ -116,7 +113,6 @@ export class AdminFoods implements OnInit {
       });
   }
 
-  /** Optimistic: the switch follows the list; on failure the list (and so the switch) goes back. */
   protected toggle(item: AdminFoodItem, checked: boolean): void {
     const set = (isAvailable: boolean) =>
       this.items.update((list) => list.map((i) => (i.id === item.id ? { ...i, isAvailable } : i)));

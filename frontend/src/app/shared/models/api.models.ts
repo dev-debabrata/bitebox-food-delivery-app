@@ -1,4 +1,3 @@
-/** Envelope returned by every BiteBox API endpoint. */
 export interface ApiResponse<T> {
   success: true;
   message: string;

@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import {
   FormRoot,
   TreeValidationResult,
@@ -44,7 +51,6 @@ import { rupeesToPaise } from '../../../shared/pipes/money.pipes';
 import { StatusBanner } from '../status-banner/status-banner';
 import { PhoneInput } from '../../../shared/components/phone-input/phone-input';
 
-/** "HH:mm" <-> a Date today at that time (what the NexPrime time picker edits). */
 function timeToDate(time: string): Date {
   const [h, m] = time.split(':').map(Number);
   const date = new Date();
@@ -72,7 +78,6 @@ function emptyModel() {
   };
 }
 
-/** Create or edit the partner's restaurant (business info, address, location, hours, pricing). */
 @Component({
   selector: 'bb-restaurant-details',
   imports: [
@@ -108,17 +113,15 @@ export class RestaurantDetails {
   protected readonly locating = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly imageUrl = signal('');
-  /** The values as last loaded or saved, to tell whether anything was edited since. */
   private readonly saved = signal('');
   private readonly snapshot = () => JSON.stringify({ ...this.model(), imageUrl: this.imageUrl() });
-  /** Save is only offered once something changed (a new restaurant can always be submitted). */
-  protected readonly changed = computed(() => this.restaurant() === null || this.snapshot() !== this.saved());
+  protected readonly changed = computed(
+    () => this.restaurant() === null || this.snapshot() !== this.saved(),
+  );
 
-  /** Text in the cuisine box, added as a chip on Enter or comma. */
   protected readonly cuisineDraft = signal('');
   protected readonly cuisineError = signal<string | null>(null);
 
-  // Map location (search / current location / drag the pin)
   protected readonly locationError = signal<string | null>(null);
   protected readonly pinLabel = signal<string | null>(null);
   protected readonly showCoordinates = signal(false);
@@ -196,11 +199,14 @@ export class RestaurantDetails {
       openingTime: timeToDate(r.openingTime),
       closingTime: timeToDate(r.closingTime),
     });
-    this.pinLabel.set([r.address.line1, r.address.area, r.address.city, r.address.state].filter(Boolean).join(', ') || null);
+    this.pinLabel.set(
+      [r.address.line1, r.address.area, r.address.city, r.address.state]
+        .filter(Boolean)
+        .join(', ') || null,
+    );
     this.saved.set(this.snapshot());
   }
 
-  /** Enter or comma in the cuisine box turns the typed text into a chip. */
   protected onCuisineKey(event: KeyboardEvent): void {
     if (event.key !== 'Enter' && event.key !== ',') return;
     event.preventDefault(); // Enter must not submit the whole form
@@ -239,7 +245,6 @@ export class RestaurantDetails {
       const point = await this.geo.currentPrecise();
       await this.setPin(point);
     } catch (err) {
-      // A vague reading would put the restaurant in the wrong place; ask for a search instead.
       this.locationError.set(
         err instanceof ImpreciseLocationError ? err.message : (err as Error).message,
       );
@@ -253,7 +258,6 @@ export class RestaurantDetails {
     await this.setPin(place, place);
   }
 
-  /** Sets the pin and fills empty address fields from it (never overwrites typed values). */
   protected async setPin({ latitude, longitude }: LatLng, knownPlace?: Place): Promise<void> {
     this.form
       .location()
@@ -261,7 +265,9 @@ export class RestaurantDetails {
     this.form.location().markAsTouched();
     try {
       const place = knownPlace ?? (await firstValueFrom(this.places.reverse(latitude, longitude)));
-      this.pinLabel.set(place.displayName || place.label || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+      this.pinLabel.set(
+        place.displayName || place.label || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
+      );
       type AddressKey = 'line1' | 'line2' | 'area' | 'city' | 'state' | 'postalCode';
       const extracted = extractAddressFromPlace(place);
       for (const key of Object.keys(extracted) as AddressKey[]) {
@@ -269,7 +275,6 @@ export class RestaurantDetails {
         if (val && !this.model().address[key]?.trim()) this.form.address[key]().value.set(val);
       }
     } catch {
-      // Naming the place is a convenience; the pin is what matters.
       this.pinLabel.set(`${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
     }
   }
