@@ -117,7 +117,7 @@ export const reviewsSchemas = {
       target: { type: "string", enum: ["restaurant", "food", "rider"] },
       rating: { type: "integer", minimum: 1, maximum: 5 },
       comment: { type: "string" },
-      authorName: { type: "string", example: "Asha C." },
+      authorName: { type: "string", example: "Asha Customer" },
       foodItem: { type: ["string", "null"] },
       foodName: { type: ["string", "null"] },
       images: {

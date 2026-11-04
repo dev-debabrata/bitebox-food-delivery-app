@@ -25,11 +25,9 @@ const T = REVIEW_TARGETS;
 const DAY_MS = 86_400_000;
 export const toId = (id) => new mongoose.Types.ObjectId(String(id));
 
-/** "Asha Customer" -> "Asha C.": enough to feel personal, not enough to identify. */
+/** Full name of the customer ("Asha Customer"). */
 export function shortName(name = "") {
-  const [first = "Customer", ...rest] = name.trim().split(/\s+/);
-  const last = rest.at(-1);
-  return last ? `${first} ${last[0].toUpperCase()}.` : first;
+  return name.trim() || "Customer";
 }
 
 // Rating summaries
@@ -150,7 +148,7 @@ function presentForRider(review, reportedIds) {
     id: String(review._id),
     rating: review.rating,
     comment: review.comment,
-    authorName: shortName(review.customerName).split(" ")[0],
+    authorName: shortName(review.customerName),
     orderNumber: review.orderNumber,
     createdAt: review.createdAt,
     editedAt: review.editedAt,

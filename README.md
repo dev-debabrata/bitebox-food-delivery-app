@@ -430,7 +430,7 @@ How it works:
 - **Photos:** restaurant and dish reviews can have up to 5 photos (JPEG, PNG or WebP, 2 MB each). Customers upload them with `POST /uploads/review-images`, and reviews accept only URLs that BiteBox stored (local uploads or our Cloudinary account), never outside links. Delivery ratings take no photos.
 - **Server checks:** eligibility is checked on the server against the order in the database (owner, `delivered` status, which dishes were in it, who delivered it). A unique index on `(order, target, foodItem)` stops duplicates, including double-clicks.
 - **Time limits:** reviews can be written for 30 days after delivery. A review can be edited for 30 days after it is posted, and earlier versions are kept for moderators. Deleting is final: the review leaves every page and average, and it can't be written again for that order.
-- **What others see:** a short name ("Asha C.") and a "Verified order" badge. Restaurants also see the order number. Riders see only the customer's first name and the order number. Nobody sees phone numbers or addresses.
+- **What others see:** author's full name and a "Verified order" badge. Restaurants also see the order number. Nobody sees phone numbers or addresses.
 - **Moderation:** admins can **hide** (pending a decision), **remove** (breaks the policy) or **restore** a review. A reason is always required; the author sees it, and it is appended to the review's moderation log. Admins never edit a review's words.
 
 **Ratings.**

@@ -222,7 +222,7 @@ describe("ratings and reviews", () => {
     const r = await rateRestaurant(customer.token, id, 4, "  Lovely food, quick service ");
     assert.equal(r.status, 201, JSON.stringify(r.body));
     assert.equal(r.body.data.review.comment, "Lovely food, quick service");
-    assert.equal(r.body.data.review.authorName, "Asha C.");
+    assert.equal(r.body.data.review.authorName, "Asha Customer");
     const f = await review(customer.token, {
       orderId: id,
       target: "food",
@@ -373,7 +373,7 @@ describe("ratings and reviews", () => {
     assert.equal(reviewsSeen.length, 2, "never the rider's reviews");
     const item = reviewsSeen.find((x) => x.target === "restaurant");
     assert.equal(item.customer, undefined, "no customer id");
-    assert.equal(item.authorName, "Asha C.");
+    assert.equal(item.authorName, "Asha Customer");
 
     const filtered = await request(app)
       .get("/api/v1/my/restaurant/reviews/orders?target=food&rating=5&sort=lowest&limit=1")
@@ -454,7 +454,7 @@ describe("ratings and reviews", () => {
     assert.equal(res.body.data.summary.average, 4);
     assert.equal(res.body.data.items.length, 1, "only reviews of the rider");
     const [item] = res.body.data.items;
-    assert.equal(item.authorName, "Asha", "first name only");
+    assert.equal(item.authorName, "Asha Customer", "full name");
     assert.deepEqual(
       Object.keys(item).sort(),
       ["authorName", "comment", "createdAt", "editedAt", "id", "orderNumber", "rating", "reportedByYou"],
@@ -816,7 +816,7 @@ describe("ratings and reviews", () => {
       "restaurant first, then dishes; never the rider",
     );
     assert.equal(row.unanswered, 3);
-    assert.equal(row.authorName, "Asha C.");
+    assert.equal(row.authorName, "Asha Customer");
 
     // Filters pick orders; the row still shows the whole order.
     const lowOnly = await request(app)
