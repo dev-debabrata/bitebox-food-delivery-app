@@ -241,7 +241,7 @@ export async function moderate(adminId, id, { action, reason }) {
         action === A.RESTORE
           ? `Order ${updated.orderNumber}`
           : `Reason: ${reason}`.slice(0, 300),
-      link: "/account/reviews",
+      link: `/orders/${updated.order}`,
     }),
   ]);
   return adminGet(id);

@@ -9,7 +9,6 @@ import {
   untracked,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { IconComponent } from 'nexprime';
@@ -26,7 +25,7 @@ import { openRateOrder } from '../rate-order-dialog/rate-order-dialog';
  */
 @Component({
   selector: 'bb-order-reviews',
-  imports: [DatePipe, RouterLink, MatButtonModule, IconComponent, ReviewOrderRow],
+  imports: [DatePipe, MatButtonModule, IconComponent, ReviewOrderRow],
   templateUrl: './order-reviews.html',
   styleUrl: './order-reviews.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

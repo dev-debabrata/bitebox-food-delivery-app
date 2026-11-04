@@ -272,6 +272,7 @@ export function openRateOrder(dialog: MatDialog, data: RateOrderData): Observabl
       width: '560px',
       maxWidth: '95vw',
       autoFocus: 'first-tabbable',
+      panelClass: 'bb-rate-order-panel',
     })
     .afterClosed()
     .pipe(filter((s): s is OrderReviewState => !!s));

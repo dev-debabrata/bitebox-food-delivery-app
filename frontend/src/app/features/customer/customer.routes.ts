@@ -51,12 +51,6 @@ export const CUSTOMER_ROUTES: Routes = [
     loadComponent: () => import('../orders/order-detail/order-detail').then((m) => m.OrderDetail),
   },
   {
-    path: 'account/reviews',
-    title: 'My reviews | BiteBox',
-    canActivate: [roleGuard('customer')],
-    loadComponent: () => import('./my-reviews/my-reviews').then((m) => m.MyReviews),
-  },
-  {
     path: 'account/addresses',
     title: 'Saved addresses | BiteBox',
     canActivate: [roleGuard('customer')],

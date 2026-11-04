@@ -388,6 +388,30 @@ np-icon[matChipAvatar] {
   overflow: hidden;
 }
 
+// Order rating dialog: hide scroller and clip to rounded corners.
+.bb-rate-order-panel {
+  .mat-mdc-dialog-surface {
+    overflow: hidden;
+  }
+
+  .mat-mdc-dialog-content {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding-bottom: 8px !important;
+
+    &::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+  }
+
+  .mat-mdc-dialog-actions {
+    padding: 8px 24px 16px !important;
+    min-height: auto !important;
+  }
+}
+
 // Review photo viewer: full screen, dark, no rounded corners.
 .bb-photo-viewer-panel .mat-mdc-dialog-surface {
   overflow: hidden;

@@ -41,6 +41,15 @@
   gap: var(--bb-space-3);
   border-top: 1px solid var(--bb-border);
   padding-top: var(--bb-space-3) !important;
+  padding-bottom: 8px !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
 }
 
 .row {
@@ -120,7 +129,11 @@
 }
 
 .actions {
+  display: flex;
   gap: var(--bb-space-2);
+  padding: 8px 24px 16px !important;
+  margin: 0 !important;
+  min-height: auto !important;
 }
 
 .submit {

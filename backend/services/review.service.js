@@ -788,7 +788,7 @@ export async function respond(ownerId, reviewId, text) {
       type: "review.response",
       title: `${restaurant.name} replied to your review`,
       body: text.slice(0, 140),
-      link: "/account/reviews",
+      link: `/orders/${updated.order}`,
     });
   return presentForRestaurant(updated, await reportedBy(ownerId, [updated]));
 }
