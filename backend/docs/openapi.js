@@ -399,5 +399,47 @@ export const openApiDocument = {
         },
       },
     },
+    "/admin/users/{id}/status": {
+      patch: {
+        tags: ["Admin - Users"],
+        summary: "Suspend or reactivate a user account (admin only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            in: "path",
+            name: "id",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["status"],
+                properties: {
+                  status: { type: "string", enum: ["active", "suspended"] },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: ok({
+            type: "object",
+            properties: {
+              user: { $ref: "#/components/schemas/User" },
+            },
+          }),
+          400: err("Cannot suspend own account"),
+          401: err("Unauthenticated"),
+          403: err("Not an admin"),
+          404: err("User not found"),
+          422: err("Validation failed"),
+        },
+      },
+    },
   },
 };

@@ -10,6 +10,7 @@
     clearable
   />
   <np-select class="role-select" [formField]="filters.role" ariaLabel="Role" [options]="roleOptions" />
+  <np-select class="status-select" [formField]="filters.status" ariaLabel="Status" [options]="statusOptions" />
 </div>
 
 @if (error()) {
@@ -52,12 +53,29 @@
         <ng-container matColumnDef="status">
           <th mat-header-cell *matHeaderCellDef>Status</th>
           <td mat-cell *matCellDef="let u">
-            <span class="status status-{{ u.status }}">{{ u.status }}</span>
+            <span class="status status-{{ u.status }}">{{ u.status === 'suspended' ? 'Inactive' : 'Active' }}</span>
           </td>
         </ng-container>
         <ng-container matColumnDef="createdAt">
           <th mat-header-cell *matHeaderCellDef>Joined</th>
           <td mat-cell *matCellDef="let u">{{ u.createdAt | date: 'mediumDate' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="th-actions">Actions</th>
+          <td mat-cell *matCellDef="let u" class="td-actions">
+            @if (u.id === currentUserId()) {
+              <span class="bb-muted small">(You)</span>
+            } @else {
+              <button
+                mat-stroked-button
+                [class.danger]="u.status === 'active'"
+                [disabled]="busyId() === u.id"
+                (click)="toggleStatus(u)"
+              >
+                {{ u.status === 'active' ? 'Suspend' : 'Reactivate' }}
+              </button>
+            }
+          </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="columns"></tr>
         <tr mat-row *matRowDef="let row; columns: columns"></tr>
@@ -74,9 +92,21 @@
           <span class="bb-muted small">{{ u.email }}</span>
           <div class="card-meta small">
             <span>{{ u.phone || 'No phone' }}</span>
-            <span class="status status-{{ u.status }}">{{ u.status }}</span>
+            <span class="status status-{{ u.status }}">{{ u.status === 'suspended' ? 'Inactive' : 'Active' }}</span>
             <span class="bb-muted">Joined {{ u.createdAt | date: 'mediumDate' }}</span>
           </div>
+          @if (u.id !== currentUserId()) {
+            <div class="card-actions">
+              <button
+                mat-stroked-button
+                [class.danger]="u.status === 'active'"
+                [disabled]="busyId() === u.id"
+                (click)="toggleStatus(u)"
+              >
+                {{ u.status === 'active' ? 'Suspend' : 'Reactivate' }}
+              </button>
+            </div>
+          }
         </li>
       }
     </ul>

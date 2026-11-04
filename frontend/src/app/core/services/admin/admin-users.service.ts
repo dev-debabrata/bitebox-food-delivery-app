@@ -26,6 +26,12 @@ export class AdminUsersService {
     return this.http.get<ApiResponse<Paginated<User>>>(this.url, { params }).pipe(map((res) => res.data));
   }
 
+  setStatus(id: string, status: UserStatus): Observable<User> {
+    return this.http
+      .patch<ApiResponse<{ user: User }>>(`${this.url}/${id}/status`, { status })
+      .pipe(map((res) => res.data.user));
+  }
+
   /** Total number of accounts for a role (uses the pagination total). */
   countByRole(role: Role): Observable<number> {
     return this.list({ role, limit: 1 }).pipe(map((page) => page.pagination.total));

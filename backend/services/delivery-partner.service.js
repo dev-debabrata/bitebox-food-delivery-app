@@ -1,5 +1,6 @@
 import { DeliveryPartner } from "../models/delivery-partner.model.js";
 import { ORDER_STATUS, Order } from "../models/order.model.js";
+import { Session } from "../models/session.model.js";
 import { ROLES, User, USER_STATUS } from "../models/user.model.js";
 import { ApiError } from "../utils/api-error.js";
 import { toPoint } from "../utils/geo.js";
@@ -192,6 +193,14 @@ export async function adminSetStatus(userId, status) {
     );
   }
   user.status = status;
+  user.tokenVersion = (user.tokenVersion || 0) + 1;
   await user.save();
+  await Session.updateMany(
+    { user: userId, revokedAt: null },
+    {
+      revokedAt: new Date(),
+      revokedReason: status === USER_STATUS.SUSPENDED ? "suspended" : "logout",
+    },
+  );
   return user.toJSON();
 }

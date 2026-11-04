@@ -425,6 +425,55 @@ describe("Authentication", () => {
     it("requires authentication for admin endpoints", async () => {
       assert.equal((await request(app).get("/api/v1/admin/users")).status, 401);
     });
+
+    it("allows admins to suspend and reactivate a user", async () => {
+      const admin = await createAndLogin(app, "admin");
+      const customer = await createAndLogin(app, "customer");
+
+      // Suspend customer
+      const suspendRes = await request(app)
+        .patch(`/api/v1/admin/users/${customer.user.id}/status`)
+        .set("Authorization", `Bearer ${admin.token}`)
+        .send({ status: "suspended" });
+      assert.equal(suspendRes.status, 200);
+      assert.equal(suspendRes.body.data.user.status, "suspended");
+
+      // Customer's existing token should now be rejected
+      const profileRes = await request(app)
+        .get("/api/v1/auth/me")
+        .set("Authorization", `Bearer ${customer.token}`);
+      assert.equal(profileRes.status, 401);
+
+      // Customer cannot login while suspended
+      const loginRes = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: customer.user.email, password: PASSWORD });
+      assert.equal(loginRes.status, 403);
+
+      // Reactivate customer
+      const reactivateRes = await request(app)
+        .patch(`/api/v1/admin/users/${customer.user.id}/status`)
+        .set("Authorization", `Bearer ${admin.token}`)
+        .send({ status: "active" });
+      assert.equal(reactivateRes.status, 200);
+      assert.equal(reactivateRes.body.data.user.status, "active");
+
+      // Customer can now log in
+      const reLoginRes = await request(app)
+        .post("/api/v1/auth/login")
+        .send({ email: customer.user.email, password: PASSWORD });
+      assert.equal(reLoginRes.status, 200);
+    });
+
+    it("prevents admin from suspending themselves", async () => {
+      const admin = await createAndLogin(app, "admin");
+      const res = await request(app)
+        .patch(`/api/v1/admin/users/${admin.user.id}/status`)
+        .set("Authorization", `Bearer ${admin.token}`)
+        .send({ status: "suspended" });
+      assert.equal(res.status, 400);
+      assert.match(res.body.message, /cannot suspend your own account/i);
+    });
   });
 
   describe("seed", () => {

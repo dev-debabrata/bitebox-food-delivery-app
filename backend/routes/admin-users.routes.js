@@ -1,14 +1,18 @@
 import { Router } from "express";
-import { query } from "express-validator";
+import { body, query } from "express-validator";
 import { authenticate, authorize } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
+import { Session } from "../models/session.model.js";
 import { ALL_ROLES, ROLES, User, USER_STATUS } from "../models/user.model.js";
+import { adminSetStatus } from "../services/delivery-partner.service.js";
+import { ApiError } from "../utils/api-error.js";
 import { sendSuccess } from "../utils/api-response.js";
 import {
   escapeRegex,
   paginationMeta,
   parsePagination,
 } from "../utils/pagination.js";
+import { mongoIdParam } from "../validators/common.validators.js";
 
 const router = Router();
 
@@ -49,6 +53,53 @@ router.get(
         items: items.map((u) => u.toJSON()),
         pagination: paginationMeta(pagination, total),
       },
+    });
+  },
+);
+
+/** PATCH /api/v1/admin/users/:id/status */
+router.patch(
+  "/:id/status",
+  validate([
+    mongoIdParam(),
+    body("status")
+      .isIn(Object.values(USER_STATUS))
+      .withMessage(`Status must be one of: ${Object.values(USER_STATUS).join(", ")}`),
+  ]),
+  async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (String(req.user._id) === String(id)) {
+      throw ApiError.badRequest("You cannot suspend your own account");
+    }
+
+    const user = await User.findById(id).select("+tokenVersion");
+    if (!user) throw ApiError.notFound("User not found");
+
+    if (user.role === ROLES.DELIVERY) {
+      const updated = await adminSetStatus(user._id, status);
+      return sendSuccess(res, {
+        data: { user: updated },
+        message: status === USER_STATUS.ACTIVE ? "User reactivated" : "User suspended",
+      });
+    }
+
+    user.status = status;
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    await user.save();
+
+    await Session.updateMany(
+      { user: user._id, revokedAt: null },
+      {
+        revokedAt: new Date(),
+        revokedReason: status === USER_STATUS.SUSPENDED ? "suspended" : "logout",
+      },
+    );
+
+    sendSuccess(res, {
+      data: { user: user.toJSON() },
+      message: status === USER_STATUS.ACTIVE ? "User reactivated" : "User suspended",
     });
   },
 );
