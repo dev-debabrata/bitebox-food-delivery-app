@@ -1,7 +1,6 @@
 export const environment = {
   production: true,
-  // apiUrl: '/api/v1',
-  apiUrl: 'https://bitebox-backend-opal.vercel.app/api/v1',
+  apiUrl: '/api/v1',
 
   map: {
     tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',

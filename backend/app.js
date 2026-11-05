@@ -61,8 +61,6 @@ export function createApp(options = {}) {
   app.disable("x-powered-by");
 
   app.use(pinoHttp({ logger, autoLogging: process.env.LOG_HTTP === "true" }));
-  app.use(helmet());
-  app.use(compression());
   app.use(
     cors({
       origin: (origin, callback) => callback(null, isAllowedOrigin(origin)),
@@ -73,9 +71,11 @@ export function createApp(options = {}) {
         "X-Requested-With",
         "Idempotency-Key",
       ],
-      methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     }),
   );
+  app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+  app.use(compression());
   // Signed gateway webhooks need the raw body, so they are mounted before the JSON parser.
   app.use("/api/v1/payments/webhooks/razorpay", razorpayWebhookRouter);
   app.use(express.json({ limit: "100kb" }));

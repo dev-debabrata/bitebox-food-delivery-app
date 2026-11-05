@@ -3,20 +3,25 @@ import { createApp } from "../app.js";
 import { connectDB } from "../config/db.js";
 import { env } from "../config/env.js";
 
-let app = null;
+const app = createApp();
 
-async function bootstrap() {
-  if (mongoose.connection.readyState === 0) {
-    await connectDB(env.mongoUri);
+let dbPromise = null;
+
+app.use(async (_req, _res, next) => {
+  try {
+    if (mongoose.connection.readyState === 0) {
+      if (!dbPromise) {
+        dbPromise = connectDB(env.mongoUri).catch((err) => {
+          dbPromise = null;
+          throw err;
+        });
+      }
+      await dbPromise;
+    }
+    next();
+  } catch (err) {
+    next(err);
   }
-  if (!app) {
-    app = createApp();
-  }
-  return app;
-}
+});
 
-export default async function handler(req, res) {
-  const expressApp = await bootstrap();
-  return expressApp(req, res);
-}
-
+export default app;
