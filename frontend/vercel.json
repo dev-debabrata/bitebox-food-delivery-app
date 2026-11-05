@@ -6,8 +6,12 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/api/:match*",
+      "destination": "https://bitebox-backend-opal.vercel.app/api/:match*"
+    },
+    {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/index.csr.html"
     }
   ]
 }

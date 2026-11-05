@@ -99,12 +99,16 @@ export class AuthService {
   refresh(): Observable<string> {
     if (!this.refreshInFlight$) {
       const attempt = () =>
-        this.http.post<ApiResponse<AuthSession>>(`${this.baseUrl}/refresh`, {}).pipe(
-          map((res) => {
-            this.applySession(res.data);
-            return res.data.accessToken;
-          }),
-        );
+        this.http
+          .post<ApiResponse<AuthSession>>(`${this.baseUrl}/refresh`, {
+            refreshToken: this.isBrowser ? (readRefreshToken() ?? undefined) : undefined,
+          })
+          .pipe(
+            map((res) => {
+              this.applySession(res.data);
+              return res.data.accessToken;
+            }),
+          );
 
       this.refreshInFlight$ = attempt().pipe(
         catchError((error: unknown) =>
@@ -125,14 +129,18 @@ export class AuthService {
 
   logout(): Observable<void> {
     const role = this._user()?.role ?? 'customer';
-    return this.http.post<ApiResponse<null>>(`${this.baseUrl}/logout`, {}).pipe(
-      catchError(() => of(null)),
-      map(() => undefined),
-      tap(() => {
-        this.clearSession();
-        void this.router.navigateByUrl(ROLE_META[role].login);
-      }),
-    );
+    return this.http
+      .post<ApiResponse<null>>(`${this.baseUrl}/logout`, {
+        refreshToken: this.isBrowser ? (readRefreshToken() ?? undefined) : undefined,
+      })
+      .pipe(
+        catchError(() => of(null)),
+        map(() => undefined),
+        tap(() => {
+          this.clearSession();
+          void this.router.navigateByUrl(ROLE_META[role].login);
+        }),
+      );
   }
 
   forgotPassword(email: string): Observable<string> {
@@ -181,16 +189,27 @@ export class AuthService {
     this._user.set(null);
     this._accessToken.set(null);
     this._hint.set(null);
-    if (this.isBrowser) localStorage.removeItem(HINT_KEY);
+    if (this.isBrowser) {
+      localStorage.removeItem(HINT_KEY);
+      writeRefreshToken(undefined);
+    }
   }
 
   private applySession(session: AuthSession): User {
     this._accessToken.set(session.accessToken);
     this._user.set(session.user);
-    if (this.isBrowser) writeHint(session.user);
+    if (this.isBrowser) {
+      writeHint(session.user);
+      if (session.refreshToken) writeRefreshToken(session.refreshToken);
+    }
     return session.user;
   }
 }
+
+const REFRESH_KEY = 'bb.refresh-token';
+const readRefreshToken = () => localStorage.getItem(REFRESH_KEY);
+const writeRefreshToken = (t?: string) =>
+  t ? localStorage.setItem(REFRESH_KEY, t) : localStorage.removeItem(REFRESH_KEY);
 
 function readHint(): SessionHint | null {
   try {

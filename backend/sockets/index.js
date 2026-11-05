@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import { env } from "../config/env.js";
 import { logger } from "../config/logger.js";
+import { isAllowedOrigin } from "../middleware/security.middleware.js";
 import { Restaurant } from "../models/restaurant.model.js";
 import { ROLES, User, USER_STATUS } from "../models/user.model.js";
 import { verifyAccessToken } from "../utils/tokens.js";
@@ -10,7 +11,10 @@ import { registerTracking } from "./tracking.js";
 export function attachRealtime(httpServer) {
   const io = new Server(httpServer, {
     path: "/socket.io",
-    cors: { origin: env.clientUrls, credentials: true },
+    cors: {
+      origin: (origin, callback) => callback(null, isAllowedOrigin(origin)),
+      credentials: true,
+    },
     maxHttpBufferSize: 10_000,
   });
 

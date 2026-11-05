@@ -5,12 +5,15 @@ import { sendSuccess } from "../utils/api-response.js";
 const cookieOptions = () => ({
   httpOnly: true,
   secure: env.isProduction,
-  sameSite: process.env.COOKIE_SAMESITE || "strict",
+  sameSite: env.isProduction ? "none" : "lax",
   path: "/api/v1/auth",
   maxAge: env.refreshToken.ttlDays * 86_400_000,
 });
 
 const requestMeta = (req) => ({ ip: req.ip, userAgent: req.get("user-agent") });
+
+const getRefreshToken = (req) =>
+  req.cookies?.[env.refreshToken.cookieName] || req.body?.refreshToken;
 
 function sendSession(
   res,
@@ -19,7 +22,11 @@ function sendSession(
   statusCode = 200,
 ) {
   res.cookie(env.refreshToken.cookieName, refreshToken, cookieOptions());
-  return sendSuccess(res, { statusCode, message, data: { user, accessToken } });
+  return sendSuccess(res, {
+    statusCode,
+    message,
+    data: { user, accessToken, refreshToken },
+  });
 }
 
 function clearSessionCookie(res) {
@@ -40,7 +47,7 @@ export async function login(req, res) {
 export async function refresh(req, res) {
   try {
     const session = await authService.refresh(
-      req.cookies?.[env.refreshToken.cookieName],
+      getRefreshToken(req),
       requestMeta(req),
     );
     sendSession(res, session, "Session refreshed");
@@ -51,7 +58,7 @@ export async function refresh(req, res) {
 }
 
 export async function logout(req, res) {
-  await authService.logout(req.cookies?.[env.refreshToken.cookieName]);
+  await authService.logout(getRefreshToken(req));
   clearSessionCookie(res);
   sendSuccess(res, { message: "Signed out successfully" });
 }

@@ -10,7 +10,10 @@ import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import { openApiDocument } from "./docs/openapi.js";
 import { errorHandler, notFound } from "./middleware/error.middleware.js";
-import { mongoSanitize } from "./middleware/security.middleware.js";
+import {
+  isAllowedOrigin,
+  mongoSanitize,
+} from "./middleware/security.middleware.js";
 import adminCatalogRoutes from "./routes/admin-catalog.routes.js";
 import adminUsersRoutes from "./routes/admin-users.routes.js";
 import { createAuthRouter } from "./routes/auth.routes.js";
@@ -62,8 +65,7 @@ export function createApp(options = {}) {
   app.use(compression());
   app.use(
     cors({
-      origin: (origin, callback) =>
-        callback(null, !origin || env.clientUrls.includes(origin)),
+      origin: (origin, callback) => callback(null, isAllowedOrigin(origin)),
       credentials: true,
       allowedHeaders: [
         "Content-Type",
