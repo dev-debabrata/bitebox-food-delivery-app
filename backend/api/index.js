@@ -1,5 +1,3 @@
-// Vercel serverless entry. A warm function reuses the app and its MongoDB connection;
-// a cold one connects on its first request (server.js does this at start-up elsewhere).
 import { createApp } from "../app.js";
 import { connectDB } from "../config/db.js";
 import { env } from "../config/env.js";

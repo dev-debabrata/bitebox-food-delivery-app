@@ -5,7 +5,6 @@ import { NavItem, PanelShell } from '../panel-shell/panel-shell';
 
 const PROFILE: NavItem[] = [{ label: 'Profile', icon: 'manage_accounts', link: '/admin/profile' }];
 
-/** Each admin role gets its own menu; the API checks every call regardless. */
 const NAV: Record<AdminRole, NavItem[]> = {
   // The super admin monitors each team's area through its own expandable tree.
   admin: [
@@ -29,7 +28,11 @@ const NAV: Record<AdminRole, NavItem[]> = {
       children: [
         { label: 'Overview', icon: 'space_dashboard', link: '/admin/finance', exact: true },
         { label: 'Transactions', icon: 'payments', link: '/admin/payments' },
-        { label: 'Restaurant payouts', icon: 'storefront', link: '/admin/finance/payouts/restaurant' },
+        {
+          label: 'Restaurant payouts',
+          icon: 'storefront',
+          link: '/admin/finance/payouts/restaurant',
+        },
         { label: 'Rider payments', icon: 'two_wheeler', link: '/admin/finance/payouts/rider' },
         { label: 'Refunds', icon: 'undo-2', link: '/admin/finance/refunds' },
         { label: 'Commission', icon: 'percent', link: '/admin/finance/commission' },
@@ -42,8 +45,16 @@ const NAV: Record<AdminRole, NavItem[]> = {
       children: [
         { label: 'Overview', icon: 'space_dashboard', link: '/admin/support', exact: true },
         { label: 'All tickets', icon: 'ticket', link: '/admin/support/queue/all' },
-        { label: 'Customer complaints', icon: 'users-round', link: '/admin/support/queue/customer' },
-        { label: 'Restaurant complaints', icon: 'storefront', link: '/admin/support/queue/restaurant' },
+        {
+          label: 'Customer complaints',
+          icon: 'users-round',
+          link: '/admin/support/queue/customer',
+        },
+        {
+          label: 'Restaurant complaints',
+          icon: 'storefront',
+          link: '/admin/support/queue/restaurant',
+        },
         { label: 'Rider complaints', icon: 'two_wheeler', link: '/admin/support/queue/delivery' },
         { label: 'Refund requests', icon: 'undo-2', link: '/admin/support/queue/refunds' },
         { label: 'Reviews', icon: 'star', link: '/admin/reviews' },
@@ -81,7 +92,11 @@ const NAV: Record<AdminRole, NavItem[]> = {
     { label: 'Dashboard', icon: 'space_dashboard', link: '/admin/finance', exact: true },
     { label: 'Transactions', icon: 'payments', link: '/admin/payments' },
     { label: 'Restaurant payouts', icon: 'storefront', link: '/admin/finance/payouts/restaurant' },
-    { label: 'Delivery partner payments', icon: 'two_wheeler', link: '/admin/finance/payouts/rider' },
+    {
+      label: 'Delivery partner payments',
+      icon: 'two_wheeler',
+      link: '/admin/finance/payouts/rider',
+    },
     { label: 'Refund management', icon: 'undo-2', link: '/admin/finance/refunds' },
     { label: 'Commission management', icon: 'percent', link: '/admin/finance/commission' },
     { label: 'Financial reports', icon: 'insights', link: '/admin/reports' },

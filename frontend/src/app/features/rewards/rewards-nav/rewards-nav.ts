@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { IconComponent } from 'nexprime';
 
-/** Tabs between the customer's coin wallet, refer & earn and special rewards pages. */
 @Component({
   selector: 'bb-rewards-nav',
   imports: [RouterLink, RouterLinkActive, IconComponent],
