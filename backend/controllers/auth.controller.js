@@ -5,15 +5,16 @@ import { sendSuccess } from "../utils/api-response.js";
 const cookieOptions = () => ({
   httpOnly: true,
   secure: env.isProduction,
-  sameSite: env.isProduction ? "none" : "lax",
+  // The web app reaches the API through a same-origin /api proxy, so the cookie is first-party.
+  // Set COOKIE_SAMESITE=none only if the browser calls the API on a different site.
+  sameSite: process.env.COOKIE_SAMESITE || "strict",
   path: "/api/v1/auth",
   maxAge: env.refreshToken.ttlDays * 86_400_000,
 });
 
 const requestMeta = (req) => ({ ip: req.ip, userAgent: req.get("user-agent") });
 
-const getRefreshToken = (req) =>
-  req.cookies?.[env.refreshToken.cookieName] || req.body?.refreshToken;
+const getRefreshToken = (req) => req.cookies?.[env.refreshToken.cookieName];
 
 function sendSession(
   res,
@@ -22,11 +23,7 @@ function sendSession(
   statusCode = 200,
 ) {
   res.cookie(env.refreshToken.cookieName, refreshToken, cookieOptions());
-  return sendSuccess(res, {
-    statusCode,
-    message,
-    data: { user, accessToken, refreshToken },
-  });
+  return sendSuccess(res, { statusCode, message, data: { user, accessToken } });
 }
 
 function clearSessionCookie(res) {

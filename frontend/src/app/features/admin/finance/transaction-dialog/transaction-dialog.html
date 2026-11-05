@@ -1,0 +1,78 @@
+<h2 mat-dialog-title>Transaction details</h2>
+<mat-dialog-content>
+  @if (error(); as message) {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ message }}</span>
+    </div>
+  } @else if (tx.hasValue()) {
+    @let t = tx.value();
+    <section class="head">
+      <div>
+        <span class="amount">{{ t.amountPaise | inr }}</span>
+        <span class="bb-muted">{{ providerLabel[t.provider] }} · {{ t.createdAt | date: 'd MMM y, h:mm a' }}</span>
+      </div>
+      <span class="bb-badge" [class.tone-good]="t.status === 'paid'" [class.tone-bad]="t.status === 'failed'" [class.tone-info]="t.status === 'refunded'">
+        {{ statusLabel[t.status] }}
+      </span>
+    </section>
+
+    <dl class="facts">
+      @if (t.paidAt) {
+        <div><dt>Paid</dt><dd>{{ t.paidAt | date: 'd MMM y, h:mm a' }}</dd></div>
+      }
+      @if (t.refundedAt) {
+        <div><dt>Refunded</dt><dd>{{ t.refundedAt | date: 'd MMM y, h:mm a' }}</dd></div>
+      }
+      @if (t.failureReason) {
+        <div><dt>Failure</dt><dd>{{ t.failureReason }}</dd></div>
+      }
+      @if (t.providerPaymentId) {
+        <div><dt>Gateway payment</dt><dd class="ref">{{ t.providerPaymentId }}</dd></div>
+      }
+      @if (t.providerRefundId) {
+        <div><dt>Gateway refund</dt><dd class="ref">{{ t.providerRefundId }}</dd></div>
+      }
+      @if (t.customer; as c) {
+        <div><dt>Customer</dt><dd>{{ c.name }}<span class="sub">{{ c.email }}{{ c.phone ? ' · ' + c.phone : '' }}</span></dd></div>
+      }
+    </dl>
+
+    @if (t.order; as o) {
+      <h3>Order {{ o.orderNumber }}</h3>
+      <p class="bb-muted">{{ o.restaurantName }} · {{ orderStatus[o.status] }} · placed {{ o.createdAt | date: 'd MMM, h:mm a' }}</p>
+      @if (o.cancellation?.reason) {
+        <p class="bb-muted">Cancelled by {{ o.cancellation!.by }}: {{ o.cancellation!.reason }}</p>
+      }
+      <table class="lines">
+        <tr><td>Food</td><td>{{ o.pricing.subtotalPaise | inr }}</td></tr>
+        @if (o.pricing.discountPaise) {
+          <tr><td>Discount</td><td>−{{ o.pricing.discountPaise | inr }}</td></tr>
+        }
+        <tr><td>Delivery fee</td><td>{{ o.pricing.deliveryFeePaise | inr }}</td></tr>
+        <tr><td>Platform fee</td><td>{{ o.pricing.platformFeePaise | inr }}</td></tr>
+        <tr><td>Tax</td><td>{{ o.pricing.taxPaise | inr }}</td></tr>
+        <tr class="total"><td>Total</td><td>{{ o.pricing.totalPaise | inr }}</td></tr>
+      </table>
+
+      @if (o.settlement; as s) {
+        <h3>Settlement</h3>
+        <table class="lines">
+          <tr>
+            <td>Restaurant <span class="bb-badge" [class.tone-good]="o.paidOut.restaurant">{{ o.paidOut.restaurant ? 'Paid out' : 'Owed' }}</span></td>
+            <td>{{ s.restaurantPaise | inr }}</td>
+          </tr>
+          <tr>
+            <td>Delivery partner <span class="bb-badge" [class.tone-good]="o.paidOut.rider">{{ o.paidOut.rider ? 'Paid out' : 'Owed' }}</span></td>
+            <td>{{ s.riderPaise | inr }}</td>
+          </tr>
+          <tr class="total"><td>BiteBox</td><td>{{ s.platformPaise | inr }}</td></tr>
+        </table>
+      }
+    }
+  } @else {
+    <span class="bb-skeleton block"></span>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Close</button>
+</mat-dialog-actions>

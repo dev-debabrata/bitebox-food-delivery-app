@@ -10,6 +10,7 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { serverApiInterceptor } from './core/interceptors/server-api.interceptor';
+import { pageLoaderInterceptor } from './core/services/page-loader';
 import { AuthService } from './core/auth/auth.service';
 
 export const appConfig: ApplicationConfig = {
@@ -21,7 +22,7 @@ export const appConfig: ApplicationConfig = {
       withInMemoryScrolling({ scrollPositionRestoration: 'top', anchorScrolling: 'enabled' }),
     ),
     provideClientHydration(withEventReplay()),
-    provideHttpClient(withFetch(), withInterceptors([serverApiInterceptor, authInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([pageLoaderInterceptor, serverApiInterceptor, authInterceptor])),
     provideAppInitializer(() => {
       inject(AuthService).restoreSession().subscribe();
     }),

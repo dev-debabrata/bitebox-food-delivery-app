@@ -1,0 +1,64 @@
+<h2 mat-dialog-title>{{ data()?.campaign?.name ?? 'Campaign' }}</h2>
+<mat-dialog-content>
+  @if (error(); as message) {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ message }}</span>
+    </div>
+  }
+  @if (data(); as d) {
+    @let c = d.campaign;
+    <p class="bb-muted">{{ c.description }}</p>
+    <dl class="facts">
+      <div><dt>Status</dt><dd>{{ statusLabel[c.status] }}</dd></div>
+      <div><dt>Reward</dt><dd>{{ c.rewardCoins }} coins · {{ c.trigger === 'CLAIM' ? 'claimed' : 'on delivered orders' }}</dd></div>
+      <div><dt>Runs</dt><dd>{{ c.startAt | date: 'd MMM y, h:mm a' }} – {{ c.endAt | date: 'd MMM y, h:mm a' }}</dd></div>
+      <div><dt>Customers</dt><dd>{{ groupLabel[c.conditions.customerGroup] }}</dd></div>
+      @if (c.trigger === 'ORDER') {
+        <div>
+          <dt>Orders</dt>
+          <dd>
+            From {{ c.conditions.minOrderPaise | inr }}{{ c.conditions.firstOrderOnly ? ', first order only' : '' }}
+          </dd>
+        </div>
+      }
+      <div>
+        <dt>Limits</dt>
+        <dd>
+          {{ c.limits.maxClaimsPerCustomer }} per customer · {{ c.limits.maxTotalClaims ?? 'no' }} total limit ·
+          {{ c.limits.maxTotalCoins ? c.limits.maxTotalCoins + ' coin budget' : 'no budget' }}
+        </dd>
+      </div>
+    </dl>
+    <section class="bb-grid cols-3 tiles" aria-label="Performance">
+      <bb-stat-tile icon="gift" label="Rewards given" [value]="d.performance.claims" [hint]="c.remainingClaims !== null ? c.remainingClaims + ' left' : ''" />
+      <bb-stat-tile icon="coins" label="Coins given" [value]="d.performance.coins" [hint]="c.remainingCoins !== null ? c.remainingCoins + ' left in budget' : ''" />
+      <bb-stat-tile icon="users-round" label="Customers" [value]="d.performance.customers" />
+    </section>
+    <h3>Latest rewards</h3>
+    @if (!d.recentClaims.length) {
+      <p class="bb-muted">Nobody has received this reward yet.</p>
+    } @else {
+      <div class="bb-table-scroll">
+        <table class="bb-table">
+          <thead>
+            <tr><th scope="col">Customer</th><th scope="col" class="num">Coins</th><th scope="col">When</th></tr>
+          </thead>
+          <tbody>
+            @for (r of d.recentClaims; track r.id) {
+              <tr>
+                <td>{{ r.customer?.name ?? '–' }} <span class="bb-muted sub">{{ r.customer?.email }}</span></td>
+                <td class="num">{{ r.coins }}</td>
+                <td>{{ r.claimedAt | date: 'd MMM, h:mm a' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  } @else if (!error()) {
+    <span class="bb-skeleton" style="height: 240px"></span>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Close</button>
+</mat-dialog-actions>

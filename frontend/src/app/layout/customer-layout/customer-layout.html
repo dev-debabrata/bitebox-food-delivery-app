@@ -33,8 +33,10 @@
         >Home</a
       >
       <a routerLink="/restaurants" routerLinkActive="active">Restaurants</a>
-      <a routerLink="/dishes" routerLinkActive="active">Dishes</a>
-      <a routerLink="/" fragment="partners">Partner with us</a>
+      <!-- Partner sign-up is shown to visitors only (the home page hides it once signed in). -->
+      @if (!shown()) {
+        <a routerLink="/" fragment="partners">Partner with us</a>
+      }
     </nav>
 
     <div class="header-actions">
@@ -70,7 +72,7 @@
           <span class="hide-phone">{{ firstName() }}</span>
           <span class="bb-sr-only">account menu</span>
         </button>
-        <mat-menu #accountMenu="matMenu" xPosition="before">
+        <mat-menu #accountMenu="matMenu" xPosition="before" class="bb-account-menu">
           <!-- Clicking the name/email area keeps the menu open (it is not a menu item). -->
           <div class="menu-header" (click)="$event.stopPropagation()" role="presentation">
             <strong>{{ u.name }}</strong>
@@ -91,11 +93,30 @@
               <np-icon name="map-pin" class="mat-icon" matButtonIcon />
               <span>Saved addresses</span>
             </a>
+            <mat-divider />
+            <a mat-menu-item routerLink="/account/coins">
+              <np-icon name="coins" class="mat-icon" matButtonIcon />
+              <span>My coins</span>
+            </a>
+            <a mat-menu-item routerLink="/account/refer">
+              <np-icon name="user-plus" class="mat-icon" matButtonIcon />
+              <span>Refer & earn</span>
+            </a>
+            <a mat-menu-item routerLink="/account/rewards">
+              <np-icon name="gift" class="mat-icon" matButtonIcon />
+              <span>Rewards</span>
+            </a>
+            <mat-divider />
             <a mat-menu-item routerLink="/account">
               <np-icon name="user-cog" class="mat-icon" matButtonIcon />
               <span>My account</span>
             </a>
+            <a mat-menu-item routerLink="/support">
+              <np-icon name="life-buoy" class="mat-icon" matButtonIcon />
+              <span>Help & support</span>
+            </a>
           }
+          <mat-divider />
           <button mat-menu-item (click)="logout()">
             <np-icon name="log-out" class="mat-icon" matButtonIcon />
             <span>Sign out</span>
@@ -113,27 +134,8 @@
   <router-outlet />
 </main>
 
-<footer class="site-footer">
-  <div class="bb-container footer-grid">
-    <div>
-      <bb-brand-logo variant="light" [height]="32" />
-      <p>Good food, boxed and delivered.</p>
-    </div>
-    <nav aria-label="Partners">
-      <h2 class="bb-h3">Partners</h2>
-      <a routerLink="/restaurant/register">Add your restaurant</a>
-      <a routerLink="/delivery/register">Ride with BiteBox</a>
-      <a routerLink="/login">Partner &amp; rider sign in</a>
-    </nav>
-    <nav aria-label="Account">
-      <h2 class="bb-h3">Account</h2>
-      <a routerLink="/login">Sign in</a>
-      <a routerLink="/register">Create account</a>
-      <a routerLink="/forgot-password">Forgot password</a>
-    </nav>
-  </div>
-  <p class="bb-container copyright">&copy; {{ year }} BiteBox. All rights reserved.</p>
-</footer>
+<!-- Checkout keeps only the bottom bar so nothing distracts from paying. -->
+<bb-site-footer [compact]="onCheckout()" />
 
 <!-- Back-to-top button with a scroll-progress ring (NexPrime) -->
 <np-scroll-top
@@ -163,11 +165,6 @@
         }
       </span>
       <span>Cart</span>
-    </a>
-  } @else {
-    <a routerLink="/dishes" routerLinkActive="active">
-      <np-icon name="soup" class="mat-icon" matButtonIcon />
-      <span>Dishes</span>
     </a>
   }
   @if (shown()) {

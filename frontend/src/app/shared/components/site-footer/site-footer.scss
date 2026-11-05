@@ -1,0 +1,346 @@
+@use 'breakpoints' as bp;
+
+:host {
+  display: block;
+}
+
+// Light text on the brand plum (all pairs meet WCAG AA contrast).
+$text: #e8dcef;
+$muted: #c9b8d6;
+$line: rgb(255 255 255 / 12%);
+
+.site-footer {
+  background: var(--bb-plum);
+  color: $text;
+  // Room for the phone tab bar under the page.
+  padding-bottom: 64px;
+
+  @include bp.desktop-up {
+    padding-bottom: 0;
+  }
+}
+
+h2,
+h3 {
+  margin: 0;
+}
+
+// Small amber caps over each footer section.
+%eyebrow {
+  color: var(--bb-amber);
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+%focus-ring:focus-visible {
+  outline: 2px solid var(--bb-amber);
+  outline-offset: 2px;
+}
+
+a {
+  color: $text;
+  text-decoration: none;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+
+  @extend %focus-ring;
+
+  &:hover {
+    color: #fff;
+    text-decoration: underline;
+  }
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+// Newsletter band
+.newsletter {
+  display: grid;
+  gap: var(--bb-space-4);
+  padding: var(--bb-space-6) 0;
+  border-bottom: 1px solid $line;
+
+  @include bp.desktop-up {
+    grid-template-columns: 1fr 1.2fr;
+    align-items: center;
+  }
+
+  h2 {
+    color: #fff;
+    font-size: 1.4rem;
+  }
+  p {
+    margin: var(--bb-space-1) 0 0;
+    color: $muted;
+  }
+}
+.apps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bb-space-2);
+
+  h3 {
+    width: 100%;
+    font-size: 0.95rem;
+    color: #fff;
+  }
+}
+.app-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bb-space-1);
+  padding: 8px 14px;
+  border: 1px solid $line;
+  border-radius: var(--bb-radius-sm);
+  background: rgb(0 0 0 / 25%);
+}
+
+// Brand + link groups
+.main {
+  display: grid;
+  gap: var(--bb-space-5);
+  padding: var(--bb-space-6) 0;
+
+  @include bp.desktop-up {
+    grid-template-columns: minmax(240px, 1.3fr) 3fr;
+  }
+}
+.brand {
+  p {
+    margin: var(--bb-space-3) 0 0;
+    color: $muted;
+    line-height: 1.6;
+    max-width: 420px;
+  }
+}
+.logo {
+  display: inline-block;
+}
+.social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bb-space-2);
+  margin-top: var(--bb-space-4);
+
+  a {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 8%);
+    --bb-icon-size: 20px;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+
+    &:hover {
+      background: var(--bb-amber);
+      color: var(--bb-plum);
+      text-decoration: none;
+    }
+  }
+}
+
+.groups {
+  display: grid;
+  gap: var(--bb-space-5);
+  grid-template-columns: 1fr;
+
+  @include bp.tablet-up {
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  }
+}
+.group-title {
+  @extend %eyebrow;
+  margin-bottom: var(--bb-space-3);
+}
+.links {
+  display: grid;
+  gap: var(--bb-space-2);
+
+  &[hidden] {
+    display: none;
+  }
+  a {
+    display: inline-block;
+    padding: 2px 0;
+  }
+}
+
+// Phones: each group is an accordion row.
+@include bp.phone-only {
+  .groups {
+    gap: 0;
+    border-top: 1px solid $line;
+  }
+  .group {
+    border-bottom: 1px solid $line;
+  }
+  .group-title {
+    margin: 0;
+  }
+  .links {
+    padding-bottom: var(--bb-space-3);
+
+    a {
+      padding: 6px 0;
+    }
+  }
+}
+.group-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  @extend %focus-ring;
+  .chevron {
+    --bb-icon-size: 18px;
+    transition: transform 0.2s ease;
+  }
+  &[aria-expanded='true'] .chevron {
+    transform: rotate(180deg);
+  }
+}
+
+// Partner cards
+.partners {
+  display: grid;
+  gap: var(--bb-space-3);
+  padding-bottom: var(--bb-space-6);
+
+  @include bp.tablet-up {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.partner {
+  display: flex;
+  gap: var(--bb-space-3);
+  padding: var(--bb-space-4);
+  border: 1px solid $line;
+  border-radius: var(--bb-radius);
+  background: rgb(255 255 255 / 5%);
+
+  h2 {
+    color: #fff;
+    font-size: 1.05rem;
+  }
+  p {
+    margin: var(--bb-space-1) 0 var(--bb-space-3);
+    color: $muted;
+    font-size: 0.9rem;
+  }
+}
+.partner-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--bb-amber);
+  color: var(--bb-plum);
+  --bb-icon-size: 22px;
+}
+.partner-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bb-space-2) var(--bb-space-4);
+  align-items: center;
+
+  a {
+    font-weight: 600;
+  }
+  .primary {
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--bb-amber);
+    color: var(--bb-plum);
+
+    &:hover {
+      text-decoration: none;
+      background: #ffc65a;
+    }
+  }
+}
+
+// Payment methods
+.payments {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bb-space-3);
+  padding: var(--bb-space-4) 0;
+  border-top: 1px solid $line;
+
+  h2 {
+    @extend %eyebrow;
+  }
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--bb-space-2);
+  }
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border: 1px solid $line;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    --bb-icon-size: 16px;
+  }
+}
+
+// Bottom bar
+.bottom {
+  border-top: 1px solid $line;
+  background: rgb(0 0 0 / 15%);
+}
+.bottom-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bb-space-2) var(--bb-space-4);
+  padding-block: var(--bb-space-4);
+  font-size: 0.85rem;
+
+  p {
+    margin: 0;
+    color: $muted;
+  }
+}
+.bottom-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bb-space-2) var(--bb-space-4);
+}
+
+.compact .bottom {
+  border-top: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a,
+  .social a,
+  .group-toggle .chevron {
+    transition: none;
+  }
+}

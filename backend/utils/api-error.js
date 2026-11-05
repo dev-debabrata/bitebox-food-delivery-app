@@ -25,7 +25,7 @@ export class ApiError extends Error {
     return new ApiError(404, message, { code: "NOT_FOUND" });
   }
 
-  static conflict(message = "Resource already exists") {
-    return new ApiError(409, message, { code: "CONFLICT" });
+  static conflict(message = "Resource already exists", code = "CONFLICT") {
+    return new ApiError(409, message, { code });
   }
 }

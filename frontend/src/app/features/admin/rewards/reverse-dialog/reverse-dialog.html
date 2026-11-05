@@ -1,0 +1,27 @@
+<h2 mat-dialog-title>Reverse reward</h2>
+<form [formRoot]="form">
+  <mat-dialog-content class="bb-form">
+    <p>
+      <strong>{{ txn.coins }} coins</strong> · {{ sourceLabel[txn.source] }} for {{ txn.customer?.name ?? 'a customer' }} on
+      {{ txn.createdAt | date: 'd MMM y' }}
+    </p>
+    @if (error()) {
+      <div class="bb-alert error" role="alert">
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ error() }}</span>
+      </div>
+    }
+    <div class="bb-field">
+      <np-input-number [formField]="form.coins" label="Coins to take back" [maxFractionDigits]="0" cdkFocusInitial />
+      <bb-field-error [field]="form.coins" />
+    </div>
+    <np-text-input [formField]="form.reason" label="Reason (staff only)" placeholder="e.g. order refunded, fake review" [error]="shownError(form.reason)" />
+    <p class="bb-muted small">
+      Coins the customer already spent cannot be taken back; they are recorded as a shortfall. Earlier partial reversals
+      count towards the reward.
+    </p>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button type="submit" class="danger" [disabled]="form().submitting()">Reverse</button>
+  </mat-dialog-actions>
+</form>

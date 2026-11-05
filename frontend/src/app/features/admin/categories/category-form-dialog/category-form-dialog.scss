@@ -7,3 +7,12 @@
 .picked {
   background: var(--bb-amber-100);
 }
+bb-image-upload {
+  display: block;
+  max-width: 220px;
+}
+.hint {
+  margin: var(--bb-space-1) 0 var(--bb-space-3);
+  font-size: 0.85rem;
+  color: var(--bb-ink-muted);
+}

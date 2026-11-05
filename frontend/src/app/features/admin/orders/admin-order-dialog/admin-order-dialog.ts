@@ -9,6 +9,7 @@ import {
 } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { Observable, filter } from 'rxjs';
+import { AuthService } from '../../../../core/auth/auth.service';
 import { errorMessage } from '../../../../core/services/api-error';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { AdminOrdersService } from '../../../../core/services/order-management.service';
@@ -62,6 +63,8 @@ export class AdminOrderDialog {
   private readonly api = inject(AdminOrdersService);
   private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
+  /** Support can read orders; only operations (and the super admin) cancel or unassign. */
+  protected readonly canManage = inject(AuthService).can('orders:manage');
 
   protected readonly order = signal<AdminOrder | null>(null);
   protected readonly error = signal<string | null>(null);

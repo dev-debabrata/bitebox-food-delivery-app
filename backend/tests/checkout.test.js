@@ -76,8 +76,19 @@ describe("pricing rules", () => {
       deliveryFeePaise: 2500,
       platformFeePaise: 500,
       taxPaise: 1250, // 5% of 25000
+      coinDiscountPaise: 0,
       totalPaise: 25000 + 2500 + 500 + 1250,
     });
+  });
+
+  it("takes coins off the payable total without changing tax or fees", () => {
+    const p = computePricing({ subtotalPaise: 30000, distanceMeters: 1000, coinDiscountPaise: 2000 });
+    assert.equal(p.taxPaise, 1500);
+    assert.equal(p.deliveryFeePaise, 2500);
+    assert.equal(p.coinDiscountPaise, 2000);
+    assert.equal(p.totalPaise, 30000 + 2500 + 500 + 1500 - 2000);
+    // Never more than the bill.
+    assert.equal(computePricing({ subtotalPaise: 100, coinDiscountPaise: 99_999 }).totalPaise, 0);
   });
 });
 

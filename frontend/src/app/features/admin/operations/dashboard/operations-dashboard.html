@@ -1,0 +1,72 @@
+<bb-page-header title="Operations" subtitle="Orders, restaurants and riders at a glance. Pending and active orders are live; the rest cover the selected period.">
+  <np-select class="bb-period" [formField]="report.filters.days" ariaLabel="Period" [options]="report.periods" />
+</bb-page-header>
+
+@if (report.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="report.resource.reload()">Retry</button></span>
+  </div>
+}
+
+@if (report.data(); as d) {
+  <section class="bb-grid cols-4" aria-label="Totals" [class.bb-dim]="report.resource.isLoading()">
+    <bb-stat-tile icon="receipt_long" label="Total orders" [value]="d.orders.total" hint="Placed in the period" />
+    <bb-stat-tile icon="clock-alert" label="Pending orders" [value]="d.orders.pending" hint="Waiting for the restaurant now" />
+    <bb-stat-tile icon="activity" label="Active orders" [value]="d.orders.active" hint="Being prepared or delivered now" />
+    <bb-stat-tile icon="task_alt" label="Completed orders" [value]="d.orders.completed" />
+    <bb-stat-tile icon="cancel" label="Cancelled orders" [value]="d.orders.cancelled" hint="Cancelled or rejected" />
+    <bb-stat-tile icon="storefront" label="Total restaurants" [value]="d.restaurants.total" [hint]="d.restaurants.openNow + ' open now'" />
+    <bb-stat-tile icon="two_wheeler" label="Active delivery partners" [value]="d.riders.online" [hint]="d.riders.busy + ' on a delivery'" />
+  </section>
+
+  <div class="bb-grid cols-3 panels">
+    <section class="bb-card" aria-labelledby="live-title">
+      <div class="panel-head">
+        <h2 class="bb-h3" id="live-title">Live orders</h2>
+        <a mat-button routerLink="/admin/operations/monitoring">Monitor</a>
+      </div>
+      @for (r of live(); track r.status) {
+        <div class="bb-bar-row">
+          <span>{{ r.label }}</span>
+          <span class="num">{{ r.count }}</span>
+          <span class="track"><span class="fill" [style.width.%]="r.share * 100"></span></span>
+        </div>
+      }
+    </section>
+
+    <section class="bb-card" aria-labelledby="restaurants-title">
+      <div class="panel-head">
+        <h2 class="bb-h3" id="restaurants-title">Restaurants</h2>
+        <a mat-button routerLink="/admin/restaurants">Manage</a>
+      </div>
+      <dl class="facts">
+        <div><dt>Open now</dt><dd>{{ d.restaurants.openNow }}</dd></div>
+        <div><dt>Paused by owner</dt><dd>{{ d.restaurants.paused }}</dd></div>
+        <div>
+          <dt>Waiting for approval</dt>
+          <dd [class.attention]="d.restaurants.awaitingApproval > 0">{{ d.restaurants.awaitingApproval }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="bb-card" aria-labelledby="riders-title">
+      <div class="panel-head">
+        <h2 class="bb-h3" id="riders-title">Delivery partners</h2>
+        <a mat-button routerLink="/admin/delivery-partners">Manage</a>
+      </div>
+      <dl class="facts">
+        <div><dt>Online</dt><dd>{{ d.riders.online }}</dd></div>
+        <div><dt>On a delivery</dt><dd>{{ d.riders.busy }}</dd></div>
+        <div><dt>Free to take orders</dt><dd>{{ d.riders.online - d.riders.busy }}</dd></div>
+        <div><dt>Registered</dt><dd>{{ d.riders.total }}</dd></div>
+      </dl>
+    </section>
+  </div>
+} @else if (!report.error()) {
+  <section class="bb-grid cols-4">
+    @for (i of [1, 2, 3, 4, 5, 6, 7]; track i) {
+      <span class="bb-skeleton tile"></span>
+    }
+  </section>
+}

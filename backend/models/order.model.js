@@ -33,6 +33,13 @@ export const TRACKED_STATUSES = Object.freeze([
   S.PICKED_UP,
   S.ON_THE_WAY,
 ]);
+/** Coins redeemed on an order: held at placement, spent once paid (cash: at once), given back if it closes. */
+export const ORDER_COIN_STATES = Object.freeze({
+  RESERVED: "reserved",
+  COMMITTED: "committed",
+  RELEASED: "released",
+  REFUNDED: "refunded",
+});
 export const PAYMENT_METHODS = Object.freeze({ COD: "cod", ONLINE: "online" });
 export const PAYMENT_STATUS = Object.freeze({
   PENDING: "pending",
@@ -106,9 +113,18 @@ const orderSchema = new mongoose.Schema(
       deliveryFeePaise: { type: Number, required: true },
       platformFeePaise: { type: Number, required: true },
       taxPaise: { type: Number, required: true },
+      // Paid with BiteBox coins (platform-funded; comes off the payable total, not the food value).
+      coinDiscountPaise: { type: Number, default: 0, min: 0 },
       totalPaise: { type: Number, required: true },
     },
     coupon: { code: String, discountPaise: Number },
+    coins: {
+      redeemed: { type: Number, default: 0, min: 0 },
+      discountPaise: { type: Number, default: 0, min: 0 },
+      state: { type: String, enum: [...Object.values(ORDER_COIN_STATES), null], default: null },
+      // Coins this order earned once delivered.
+      earned: { type: Number, default: 0, min: 0 },
+    },
     distanceMeters: { type: Number, required: true },
     note: { type: String, trim: true, maxlength: 300 },
 
@@ -149,6 +165,11 @@ const orderSchema = new mongoose.Schema(
       riderPaise: Number,
       platformPaise: Number,
       at: Date,
+    },
+    // The payout batch that paid each side of the settlement (null until finance pays it out).
+    payouts: {
+      restaurant: { type: mongoose.Schema.Types.ObjectId, ref: "Payout", default: null },
+      rider: { type: mongoose.Schema.Types.ObjectId, ref: "Payout", default: null },
     },
 
     idempotencyKey: { type: String, maxlength: 100 },
@@ -191,7 +212,13 @@ orderSchema.index({ deliveryPartner: 1, status: 1, createdAt: -1 });
 orderSchema.index({ restaurant: 1, status: 1, "settlement.at": -1 });
 orderSchema.index({ deliveryPartner: 1, "settlement.at": -1 });
 orderSchema.index({ status: 1, "settlement.at": -1 });
+orderSchema.index({ status: 1, "payouts.restaurant": 1, restaurant: 1 });
+orderSchema.index({ status: 1, "payouts.rider": 1, deliveryPartner: 1 });
 orderSchema.index({ status: 1, "offer.expiresAt": 1 });
+orderSchema.index(
+  { "coins.state": 1, status: 1 },
+  { partialFilterExpression: { "coins.state": "reserved" } },
+);
 orderSchema.index(
   { customer: 1, idempotencyKey: 1 },
   {

@@ -1,0 +1,35 @@
+@use 'breakpoints' as bp;
+
+.signup {
+  display: grid;
+  gap: var(--bb-space-2);
+  align-items: start;
+
+  @include bp.tablet-up {
+    grid-template-columns: 1fr auto;
+  }
+}
+.email {
+  min-width: 0;
+}
+.subscribe {
+  min-height: 44px;
+  width: 100%;
+
+  @include bp.tablet-up {
+    width: auto;
+  }
+}
+.result {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-1);
+  margin: var(--bb-space-2) 0 0;
+  font-size: 0.9rem;
+  color: #c9f2d8;
+  --bb-icon-size: 18px;
+
+  &.error {
+    color: #ffc9cf;
+  }
+}

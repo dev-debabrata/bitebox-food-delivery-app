@@ -13,6 +13,7 @@
 .list-card {
   padding: 0;
   overflow: hidden;
+  --mat-paginator-container-background-color: var(--bb-surface);
 }
 
 .row-skeleton {
@@ -27,6 +28,11 @@
 table {
   width: 100%;
   min-width: 720px;
+  // Brand surface and light dividers instead of Material's tinted defaults.
+  --mat-table-background-color: var(--bb-surface);
+  --mat-table-row-item-outline-color: var(--bb-border);
+  --mat-table-header-headline-color: var(--bb-ink-muted);
+  --mat-table-header-container-height: 48px;
 }
 
 .dim {
@@ -52,33 +58,30 @@ table {
   }
 }
 
-.danger {
-  --mat-button-outlined-label-text-color: var(--bb-danger);
-}
-
 .th-actions,
 .td-actions {
-  text-align: right;
-  padding-right: var(--bb-space-4) !important;
+  width: 1%; // shrink to the button
+  text-align: center;
+  white-space: nowrap;
+  padding-inline: var(--bb-space-4) !important;
 }
 
-.td-actions {
-  white-space: nowrap;
-
-  button {
-    min-width: 96px;
-    font-size: 0.82rem;
-  }
+.you-chip {
+  display: inline-block;
+  min-width: 112px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--bb-plum-100);
+  color: var(--bb-plum-700);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
 }
 
 .card-actions {
   display: flex;
   justify-content: flex-end;
   padding-top: var(--bb-space-2);
-
-  button {
-    font-size: 0.82rem;
-  }
 }
 
 .empty {

@@ -1,0 +1,28 @@
+<form class="signup" [formRoot]="form" aria-labelledby="newsletter-title">
+  <np-text-input
+    class="email"
+    [formField]="form.email"
+    type="email"
+    icon="mail"
+    ariaLabel="Email address"
+    placeholder="Enter your email address"
+    autocomplete="email"
+    inputmode="email"
+    [error]="shownError(form.email)"
+  />
+  <button
+    mat-flat-button
+    type="submit"
+    class="bb-btn-accent subscribe"
+    [disabled]="form().submitting()"
+  >
+    <np-icon name="send" class="mat-icon" matButtonIcon />
+    {{ form().submitting() ? 'Subscribing…' : 'Subscribe' }}
+  </button>
+</form>
+@if (result(); as r) {
+  <p class="result" [class.error]="!r.ok" [attr.role]="r.ok ? 'status' : 'alert'">
+    <np-icon [name]="r.ok ? 'circle-check' : 'circle-alert'" class="mat-icon" matButtonIcon />
+    {{ r.text }}
+  </p>
+}

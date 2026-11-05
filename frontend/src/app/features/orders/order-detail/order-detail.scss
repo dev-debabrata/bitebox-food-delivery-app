@@ -95,6 +95,23 @@
 .journey {
   display: block;
   margin-bottom: var(--bb-space-3);
+
+  // Step colours: done = green, current = amber (pulsing), upcoming = grey outline (NexPrime).
+  ::ng-deep {
+    .timeline-event--done {
+      --tl-c: var(--bb-success);
+    }
+    .timeline-event--active {
+      --tl-c: var(--bb-amber-600);
+    }
+    .timeline--horizontal .timeline-content {
+      padding: var(--bb-space-2) var(--bb-space-2) 0 0;
+    }
+    .timeline--horizontal .timeline-status {
+      font-size: 13px;
+      line-height: 1.3;
+    }
+  }
 }
 
 .placed-confetti {
@@ -277,5 +294,24 @@ address {
   align-items: center;
   gap: 4px;
   font-size: 0.82rem;
+  color: var(--bb-ink-muted);
+}
+
+.help-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: var(--bb-space-3);
+  --bb-icon-size: 18px;
+}
+
+.coins-earned {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--bb-space-1);
+  margin: var(--bb-space-2) 0 0;
+  font-size: 0.9rem;
+  --bb-icon-size: 18px;
   color: var(--bb-ink-muted);
 }

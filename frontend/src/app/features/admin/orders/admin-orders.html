@@ -23,11 +23,11 @@
 }
 
 <div class="bb-card list-card" [attr.aria-busy]="list.loading()">
-  @if (!list.data()) {
+  @if (list.showSkeleton()) {
     @for (i of [1, 2, 3, 4, 5]; track i) {
       <span class="bb-skeleton row-skeleton"></span>
     }
-  } @else if (list.data()!.items.length === 0) {
+  } @else if (list.empty()) {
     <bb-empty-state icon="receipt_long" title="No orders match these filters" />
   } @else {
     <ul class="rows" [class.dim]="list.loading()">

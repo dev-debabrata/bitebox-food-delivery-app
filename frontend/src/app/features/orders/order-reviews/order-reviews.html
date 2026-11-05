@@ -48,6 +48,9 @@
           {{ canRate() ? 'Rate the rest' : canEdit() ? 'View & edit' : 'View' }}
         </button>
       </div>
+      @for (r of replies(); track r.id) {
+        <bb-review-reply [reply]="r.reply" [responder]="s.restaurant.name" [about]="r.about" />
+      }
       @if (canRate()) {
         <p class="bb-muted small">{{ unrated() }} still to rate.</p>
       }

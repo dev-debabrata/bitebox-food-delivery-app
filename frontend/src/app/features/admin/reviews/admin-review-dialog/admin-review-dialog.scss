@@ -58,17 +58,6 @@
   --bb-icon-size: 14px;
 }
 
-.reply {
-  margin-top: var(--bb-space-2);
-  padding-left: var(--bb-space-3);
-  border-left: 3px solid var(--bb-plum-100);
-
-  p {
-    margin: 2px 0 0;
-    white-space: pre-line;
-  }
-}
-
 .log {
   list-style: none;
   margin: 0;

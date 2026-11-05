@@ -1,0 +1,40 @@
+@let c = coins();
+<section class="bb-card coins" aria-labelledby="coins-title">
+  <div class="head">
+    <h2 id="coins-title"><np-icon name="coins" class="mat-icon" matButtonIcon /> BiteBox coins</h2>
+    <span class="balance">{{ c.available }} available</span>
+  </div>
+
+  @if (applied()) {
+    <div class="applied" role="status">
+      <div>
+        <strong>{{ c.applied }} coins applied</strong>
+        <span class="bb-muted small">You save {{ c.discountPaise | inr }}</span>
+      </div>
+      <button mat-button type="button" (click)="remove.emit()" [disabled]="busy()">Remove</button>
+    </div>
+    @if (methodBlocked()) {
+      <div class="bb-alert error" role="alert">
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+        <span>Coins can't be used with this payment method. Choose another method or remove the coins.</span>
+      </div>
+    }
+  } @else if (redeemable()) {
+    <p class="bb-muted small">
+      Use up to {{ c.maxRedeemable }} coins ({{ maxValuePaise() | inr }}) on this order. {{ c.coinValueCoins }} coins =
+      {{ c.coinValuePaise | inr }}.
+    </p>
+    <form class="coins-form" [formRoot]="form">
+      <div class="bb-field">
+        <np-input-number [formField]="form.coins" ariaLabel="Coins to use" [maxFractionDigits]="0" suffix=" coins" />
+        <bb-field-error [field]="form.coins" />
+      </div>
+      <button mat-stroked-button type="submit" [disabled]="busy()">Apply</button>
+    </form>
+    <button class="bb-link-button" type="button" (click)="useMax()" [disabled]="busy()">Use maximum ({{ c.maxRedeemable }})</button>
+  }
+
+  @if (c.message) {
+    <p class="bb-muted small message">{{ c.message }}</p>
+  }
+</section>

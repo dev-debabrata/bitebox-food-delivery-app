@@ -2,12 +2,14 @@ import { Router } from "express";
 import * as c from "../controllers/checkout.controller.js";
 import * as orders from "../controllers/order-management.controller.js";
 import { env } from "../config/env.js";
-import { authenticate, authorize } from "../middleware/auth.middleware.js";
+import { PERMISSIONS } from "../config/permissions.js";
+import { authenticate, authorize, can } from "../middleware/auth.middleware.js";
 import { createRateLimiter } from "../middleware/security.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { ROLES } from "../models/user.model.js";
 import * as rules from "../validators/checkout.validators.js";
 import * as orderRules from "../validators/order-management.validators.js";
+import { cartCoinsRules } from "../validators/rewards.validators.js";
 import { mongoIdParam } from "../validators/common.validators.js";
 import { orderReviews, reviewOrder } from "../services/review.service.js";
 import { orderReviewRules } from "../validators/review.validators.js";
@@ -46,7 +48,9 @@ export const cartRouter = Router()
     validate([...rules.quoteRules, ...rules.couponCodeRules]),
     c.applyCoupon,
   )
-  .delete("/coupon", validate(rules.quoteRules), c.removeCoupon);
+  .delete("/coupon", validate(rules.quoteRules), c.removeCoupon)
+  .put("/coins", validate([...rules.quoteRules, ...cartCoinsRules]), c.setCoins)
+  .delete("/coins", validate(rules.quoteRules), c.removeCoins);
 
 /** /api/v1/addresses */
 export const addressesRouter = Router()
@@ -99,7 +103,7 @@ export const couponsRouter = Router()
 
 /** /api/v1/admin/coupons */
 export const adminCouponsRouter = Router()
-  .use(authenticate, authorize(ROLES.ADMIN))
+  .use(authenticate, can(PERMISSIONS.CATALOG_MANAGE))
   .get("/", validate(rules.adminCouponListRules), c.adminListCoupons)
   .post("/", validate(rules.createCouponRules), c.adminCreateCoupon)
   .patch("/:id", validate(rules.updateCouponRules), c.adminUpdateCoupon)

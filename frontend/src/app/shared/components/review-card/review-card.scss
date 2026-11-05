@@ -49,32 +49,6 @@
   --bb-icon-size: 15px;
 }
 
-.reply {
-  margin-top: var(--bb-space-1);
-  padding: var(--bb-space-2) var(--bb-space-3);
-  border-left: 3px solid var(--bb-plum-100);
-  background: var(--bb-surface-alt);
-  border-radius: 0 var(--bb-radius-sm) var(--bb-radius-sm) 0;
-
-  p {
-    margin: 0;
-  }
-}
-
-.reply-head {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.85rem;
-  --bb-icon-size: 16px;
-}
-
-.reply-text {
-  margin-top: 4px !important;
-  white-space: pre-line;
-  overflow-wrap: anywhere;
-}
-
 .photos {
   list-style: none;
   margin: 0;

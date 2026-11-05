@@ -92,6 +92,19 @@ export class CartService {
       .pipe(this.apply());
   }
 
+  /** Pay part of the order with coins (the server checks and caps the amount). 0 removes them. */
+  setCoins(coins: number): Observable<CartQuote> {
+    return this.http
+      .put<ApiResponse<CartQuote>>(`${this.url}/coins`, { coins }, { params: this.addressParams() })
+      .pipe(this.apply());
+  }
+
+  removeCoins(): Observable<CartQuote> {
+    return this.http
+      .delete<ApiResponse<CartQuote>>(`${this.url}/coins`, { params: this.addressParams() })
+      .pipe(this.apply());
+  }
+
   removeCoupon(): Observable<CartQuote> {
     return this.http
       .delete<ApiResponse<CartQuote>>(`${this.url}/coupon`, { params: this.addressParams() })

@@ -1,0 +1,75 @@
+<h2 mat-dialog-title>{{ data()?.customer?.name ?? 'Wallet' }}</h2>
+<mat-dialog-content>
+  @if (error(); as message) {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ message }}</span>
+    </div>
+  }
+  @if (data(); as d) {
+    <p class="bb-muted">{{ d.customer.email }}{{ d.customer.referralCode ? ' · ' + d.customer.referralCode : '' }}</p>
+    @if (d.integrity.ok) {
+      <p class="check ok"><np-icon name="circle-check" class="mat-icon" matButtonIcon /> Balances match the ledger ({{ d.integrity.rows }} rows)</p>
+    } @else {
+      <div class="bb-alert error" role="alert">
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+        <span>The wallet does not match its ledger: {{ d.integrity.issues.join('; ') }}</span>
+      </div>
+    }
+    <section class="bb-grid cols-3 tiles" aria-label="Balances">
+      <bb-stat-tile icon="coins" label="Available" [value]="d.wallet.available" />
+      <bb-stat-tile icon="hourglass" label="Held" [value]="d.wallet.reserved" />
+      <bb-stat-tile icon="trending-up" label="Earned" [value]="d.wallet.totalEarned" />
+      <bb-stat-tile icon="shopping-bag" label="Redeemed" [value]="d.wallet.totalRedeemed" />
+      <bb-stat-tile icon="clock" label="Expired" [value]="d.wallet.totalExpired" />
+      <bb-stat-tile icon="undo-2" label="Reversed" [value]="d.wallet.totalReversed" [hint]="d.wallet.uncollectedReversal ? d.wallet.uncollectedReversal + ' could not be collected' : ''" />
+    </section>
+
+    <h3>Coin batches</h3>
+    @if (!d.batches.length) {
+      <p class="bb-muted">No unspent coins.</p>
+    } @else {
+      <div class="bb-table-scroll">
+        <table class="bb-table">
+          <thead>
+            <tr><th scope="col">From</th><th scope="col" class="num">Left</th><th scope="col">Earned</th><th scope="col">Expires</th></tr>
+          </thead>
+          <tbody>
+            @for (b of d.batches; track $index) {
+              <tr>
+                <td>{{ sourceLabel[b.source] }}</td>
+                <td class="num">{{ b.remaining }} / {{ b.original }}</td>
+                <td>{{ b.earnedAt | date: 'd MMM y' }}</td>
+                <td>{{ b.expiresAt ? (b.expiresAt | date: 'd MMM y') : 'Never' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <h3>Recent activity</h3>
+    <div class="bb-table-scroll">
+      <table class="bb-table">
+        <thead>
+          <tr><th scope="col">#</th><th scope="col">What</th><th scope="col" class="num">Change</th><th scope="col" class="num">Balance</th><th scope="col">When</th></tr>
+        </thead>
+        <tbody>
+          @for (t of d.recent; track t.id) {
+            <tr>
+              <td>{{ t.seq }}</td>
+              <td>{{ typeLabel[t.type] }} <span class="sub">{{ t.description }}</span></td>
+              <td class="num">{{ t.availableChange > 0 ? '+' : '' }}{{ t.availableChange }}{{ t.reservedChange ? ' (held ' + (t.reservedChange > 0 ? '+' : '') + t.reservedChange + ')' : '' }}</td>
+              <td class="num">{{ t.balanceAfter }}</td>
+              <td>{{ t.createdAt | date: 'd MMM, h:mm a' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else if (!error()) {
+    <span class="bb-skeleton" style="height: 280px"></span>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Close</button>
+</mat-dialog-actions>

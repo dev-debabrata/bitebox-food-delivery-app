@@ -1,0 +1,94 @@
+<bb-page-header title="Campaigns" subtitle="Festival and promotional rewards. Birthday and welcome rewards are in Settings.">
+  @if (canManage) {
+    <button mat-flat-button (click)="open()"><np-icon name="plus" class="mat-icon" matButtonIcon />New campaign</button>
+  }
+</bb-page-header>
+
+<div class="bb-filters">
+  <np-text-input [formField]="filters.search" placeholder="Search by name" ariaLabel="Search campaigns" icon="search" clearable />
+  <np-select [formField]="filters.status" ariaLabel="Status" [options]="statusOptions" />
+  <np-select [formField]="filters.type" ariaLabel="Type" [options]="typeOptions" />
+</div>
+
+@if (list.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+  </div>
+}
+
+<div class="bb-card bb-list-card" [attr.aria-busy]="list.loading()">
+  @if (list.showSkeleton()) {
+    @for (i of [1, 2, 3, 4]; track i) {
+      <span class="bb-skeleton row"></span>
+    }
+  } @else if (list.empty()) {
+    <bb-empty-state icon="party-popper" title="No campaigns here" message="Create a festival or promotional campaign to reward customers.">
+      @if (canManage) {
+        <button mat-flat-button (click)="open()">Create a campaign</button>
+      }
+    </bb-empty-state>
+  } @else {
+    <div class="bb-table-scroll" [class.bb-dim]="list.loading()">
+      <table class="bb-table">
+        <thead>
+          <tr>
+            <th scope="col">Campaign</th>
+            <th scope="col">Runs</th>
+            <th scope="col" class="num">Reward</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="num">Given</th>
+            <th scope="col" class="actions"><span class="bb-sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of list.data()!.items; track c.id) {
+            <tr>
+              <td>
+                <button type="button" class="bb-link-button" (click)="details(c)">{{ c.name }}</button>
+                <span class="sub">{{ typeLabel[c.type] }} · {{ c.trigger === 'CLAIM' ? 'claimed' : 'on orders' }}</span>
+              </td>
+              <td>
+                {{ c.startAt | date: 'd MMM y' }} – {{ c.endAt | date: 'd MMM y' }}
+                <span class="sub">{{ c.startAt | date: 'h:mm a' }} – {{ c.endAt | date: 'h:mm a' }}</span>
+              </td>
+              <td class="num">{{ c.rewardCoins }}</td>
+              <td><span class="bb-badge {{ tone(c.status) }}">{{ statusLabel[c.status] }}</span></td>
+              <td class="num">
+                {{ c.stats.claims }}
+                <span class="sub">{{ c.stats.coins.toLocaleString('en-IN') }} coins</span>
+              </td>
+              <td class="actions">
+                @if (canManage && (actions(c).length || c.status !== 'EXPIRED')) {
+                  <button mat-icon-button type="button" [matMenuTriggerFor]="menu" [disabled]="busy() === c.id" [attr.aria-label]="'Actions for ' + c.name">
+                    <np-icon name="ellipsis-vertical" class="mat-icon" />
+                  </button>
+                  <mat-menu #menu="matMenu" xPosition="before">
+                    @if (c.status !== 'EXPIRED' && c.status !== 'COMPLETED') {
+                      <button mat-menu-item (click)="open(c)"><np-icon name="pencil" class="mat-icon" matButtonIcon />Edit</button>
+                    }
+                    @for (a of actions(c); track a) {
+                      <button mat-menu-item (click)="act(c, a)">
+                        <np-icon [name]="a === 'activate' ? 'play' : a === 'pause' ? 'pause' : 'square'" class="mat-icon" matButtonIcon />
+                        {{ actionLabel[a] }}
+                      </button>
+                    }
+                    <button mat-menu-item (click)="details(c)"><np-icon name="chart-column" class="mat-icon" matButtonIcon />Performance</button>
+                  </mat-menu>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <mat-paginator
+      [length]="list.data()!.pagination.total"
+      [pageIndex]="list.data()!.pagination.page - 1"
+      [pageSize]="list.data()!.pagination.limit"
+      [pageSizeOptions]="[20, 50, 100]"
+      (page)="list.onPage($event)"
+      aria-label="Campaign pages"
+    />
+  }
+</div>

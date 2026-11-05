@@ -61,7 +61,11 @@
     }
   } @else {
     @for (card of stats(); track card.role) {
-      <a class="bb-card stat" [routerLink]="'/admin/users'" [queryParams]="{ role: card.role }">
+      <a
+        class="bb-card stat"
+        [routerLink]="card.role === 'admin' ? '/admin/admins' : '/admin/users'"
+        [queryParams]="card.role === 'admin' ? null : { role: card.role }"
+      >
         <span class="stat-icon"><np-icon [name]="(card.icon) | npIcon" class="mat-icon" matButtonIcon /></span>
         <span class="stat-value">{{ card.value }}</span>
         <span class="stat-label">{{ card.label }}</span>

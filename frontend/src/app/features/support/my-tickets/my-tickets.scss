@@ -1,0 +1,40 @@
+.page.bb-container {
+  padding-block: var(--bb-space-5);
+}
+
+.narrow {
+  max-width: 280px;
+}
+
+.tickets {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li + li {
+    border-top: 1px solid var(--bb-border);
+  }
+  a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--bb-space-3);
+    padding: var(--bb-space-3) var(--bb-space-4);
+    color: inherit;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--bb-surface-alt);
+    }
+  }
+  .main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+
+    .bb-muted {
+      font-size: 0.85rem;
+    }
+  }
+}

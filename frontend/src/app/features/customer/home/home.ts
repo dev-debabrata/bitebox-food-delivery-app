@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   PLATFORM_ID,
+  computed,
   effect,
   inject,
   signal,
@@ -93,6 +94,14 @@ export class Home {
     });
   }
 
+  /** The home page shows the first few categories; "View all" reveals the rest. */
+  protected readonly categoryLimit = 8;
+  protected readonly showAllCategories = signal(false);
+  protected readonly visibleCategories = computed(() => {
+    const all = this.categories() ?? [];
+    return this.showAllCategories() ? all : all.slice(0, this.categoryLimit);
+  });
+
   protected chooseLocation(): void {
     this.dialog.open(LocationPickerDialog, {
       width: '520px',
@@ -132,4 +141,14 @@ export class Home {
   ];
 
   protected readonly heroIcons = ['local_pizza', 'ramen_dining', 'lunch_dining', 'icecream'];
+
+  /** What BiteBox really offers (shown under the hero search). */
+  protected readonly perks = [
+    { icon: 'map-pin', text: 'Live order tracking' },
+    { icon: 'wallet', text: 'Pay online or cash' },
+    { icon: 'coins', text: 'Earn coins on every order' },
+  ];
+
+  /** A few categories as one-tap searches under the hero search box. */
+  protected readonly quickPicks = computed(() => (this.categories() ?? []).slice(0, 5));
 }

@@ -103,7 +103,7 @@
         @if (o.note) {
           <p class="note"><strong>Note:</strong> {{ o.note }}</p>
         }
-        <bb-bill-summary class="bill" [pricing]="o.pricing" [couponCode]="o.coupon?.code" [distanceMeters]="o.distanceMeters" />
+        <bb-bill-summary class="bill" [pricing]="o.pricing" [couponCode]="o.coupon?.code" [distanceMeters]="o.distanceMeters" [coinsRedeemed]="o.coins?.redeemed" />
       </section>
       <section class="panel">
         <h3>History</h3>
@@ -122,10 +122,10 @@
     </div>
   </mat-dialog-content>
   <mat-dialog-actions align="end">
-    @if (o.status === 'assigned') {
+    @if (canManage && o.status === 'assigned') {
       <button mat-stroked-button [disabled]="busy()" (click)="unassign(o)">Unassign rider</button>
     }
-    @if (canCancel(o)) {
+    @if (canManage && canCancel(o)) {
       <button mat-stroked-button class="danger" [disabled]="busy()" (click)="cancel(o)">Cancel order</button>
     }
     <button mat-flat-button [mat-dialog-close]="changed()">Close</button>

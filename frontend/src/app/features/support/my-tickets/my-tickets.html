@@ -1,0 +1,59 @@
+<section class="page" [class.bb-container]="base.isCustomer()">
+  <bb-page-header title="Help & support" subtitle="Questions or problems with an order, a payment or your account? We reply here.">
+    <button mat-flat-button type="button" (click)="create()">
+      <np-icon name="plus" class="mat-icon" matButtonIcon />
+      New ticket
+    </button>
+  </bb-page-header>
+
+  <div class="bb-filters narrow">
+    <np-select [formField]="filters.status" ariaLabel="Show" [options]="statusOptions" />
+  </div>
+
+  @if (list.error(); as message) {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+    </div>
+  }
+
+  <div class="bb-card bb-list-card" [attr.aria-busy]="list.loading()">
+    @if (list.showSkeleton()) {
+      @for (i of [1, 2, 3]; track i) {
+        <span class="bb-skeleton row"></span>
+      }
+    } @else if (list.empty()) {
+      <bb-empty-state icon="life-buoy" title="No tickets here" message="Open a ticket and our support team will get back to you." />
+    } @else {
+      <ul class="tickets" [class.bb-dim]="list.loading()">
+        @for (t of list.data()!.items; track t.id) {
+          <li>
+            <a [routerLink]="[base.path(), t.id]">
+              <span class="main">
+                <strong>{{ t.subject }}</strong>
+                <span class="bb-muted">
+                  {{ t.number }} · {{ typeLabel[t.type] }}
+                  @if (t.orderNumber) {
+                    · {{ t.orderNumber }}
+                  }
+                  · {{ t.lastActivityAt | date: 'd MMM, h:mm a' }}
+                </span>
+              </span>
+              <span class="bb-badge tone-{{ statusTone[t.status] }}">
+                {{ t.status === 'waiting_for_response' ? 'Waiting for your reply' : statusLabel[t.status] }}
+              </span>
+            </a>
+          </li>
+        }
+      </ul>
+      <mat-paginator
+        [length]="list.data()!.pagination.total"
+        [pageIndex]="list.data()!.pagination.page - 1"
+        [pageSize]="list.data()!.pagination.limit"
+        [pageSizeOptions]="[20, 50]"
+        (page)="list.onPage($event)"
+        aria-label="Ticket pages"
+      />
+    }
+  </div>
+</section>

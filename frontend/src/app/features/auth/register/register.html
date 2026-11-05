@@ -57,6 +57,18 @@
     [error]="shownError(form.confirmPassword)"
   />
 
+  @if (role() === 'customer') {
+    <np-text-input
+      [formField]="form.referralCode"
+      label="Referral code (optional)"
+      icon="gift"
+      placeholder="e.g. BITEBOX-RIYA7K2Q"
+      autocapitalize="characters"
+      hint="Got an invite? You both earn coins after your first order."
+      [error]="shownError(form.referralCode)"
+    />
+  }
+
   <div class="bb-form-actions">
     <button mat-flat-button type="submit" [disabled]="form().submitting()">
       @if (form().submitting()) {

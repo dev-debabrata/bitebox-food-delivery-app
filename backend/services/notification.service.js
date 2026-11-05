@@ -1,7 +1,8 @@
 import { logger } from "../config/logger.js";
 import { Notification } from "../models/notification.model.js";
 import { Restaurant } from "../models/restaurant.model.js";
-import { ROLES, USER_STATUS, User } from "../models/user.model.js";
+import { hasPermission } from "../config/permissions.js";
+import { ADMIN_ROLES, ROLES, USER_STATUS, User } from "../models/user.model.js";
 import { emitToUsers } from "../sockets/events.js";
 import { ApiError } from "../utils/api-error.js";
 import { paginationMeta } from "../utils/pagination.js";
@@ -26,10 +27,16 @@ export async function notify(userIds, { type, title, body, link, order }) {
   }
 }
 
-/** Every active admin gets the notification (e.g. a restaurant waiting for review). */
-export async function notifyAdmins(payload) {
+/**
+ * Every active admin whose role has `permission` gets the notification (the super admin always
+ * does), e.g. operations admins for a restaurant waiting for review.
+ */
+export async function notifyAdmins(payload, permission) {
+  const roles = ADMIN_ROLES.filter(
+    (role) => role === ROLES.ADMIN || hasPermission(role, permission),
+  );
   const admins = await User.find({
-    role: ROLES.ADMIN,
+    role: { $in: roles },
     status: USER_STATUS.ACTIVE,
   }).select("_id");
   await notify(

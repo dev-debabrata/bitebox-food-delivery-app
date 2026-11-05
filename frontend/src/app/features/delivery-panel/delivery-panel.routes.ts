@@ -33,4 +33,14 @@ export const DELIVERY_ROUTES: Routes = [
     title: 'Profile | BiteBox Delivery',
     loadComponent: () => import('../profile/profile').then((m) => m.Profile),
   },
+  {
+    path: 'support',
+    title: 'Help & support | BiteBox Delivery',
+    loadComponent: () => import('../support/my-tickets/my-tickets').then((m) => m.MyTickets),
+  },
+  {
+    path: 'support/:id',
+    title: 'Support ticket | BiteBox Delivery',
+    loadComponent: () => import('../support/my-ticket/my-ticket').then((m) => m.MyTicket),
+  },
 ];

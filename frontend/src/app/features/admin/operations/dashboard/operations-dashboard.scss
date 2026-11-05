@@ -1,0 +1,41 @@
+.panels {
+  margin-top: var(--bb-space-4);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--bb-space-2);
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.facts {
+  margin: 0;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--bb-border);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+  dt {
+    color: var(--bb-ink-muted);
+  }
+  dd {
+    margin: 0;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .attention {
+    color: var(--bb-warning);
+  }
+}
+

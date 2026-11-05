@@ -1,0 +1,94 @@
+@use 'breakpoints' as bp;
+
+.title {
+  margin-bottom: var(--bb-space-4);
+
+  h1 {
+    margin: 0;
+  }
+  p {
+    margin: 4px 0 var(--bb-space-2);
+  }
+  .badges {
+    display: flex;
+    gap: var(--bb-space-2);
+  }
+}
+
+.layout {
+  display: grid;
+  gap: var(--bb-space-4);
+  align-items: start;
+
+  @include bp.desktop-up {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+}
+
+.reply {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-2);
+}
+
+.reply-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bb-space-2);
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-3);
+
+  h2 {
+    margin: 0 0 var(--bb-space-2);
+  }
+  p {
+    margin: 2px 0;
+  }
+  .strong {
+    font-weight: 700;
+  }
+}
+
+.side-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-2);
+  margin-top: var(--bb-space-3);
+}
+
+.history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--bb-border);
+    font-size: 0.85rem;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+  .note {
+    font-style: italic;
+  }
+}
+
+.block {
+  display: block;
+  height: 320px;
+}

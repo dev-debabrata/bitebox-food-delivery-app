@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { IconComponent } from 'nexprime';
+import { ReviewReply } from '../../../../shared/components/review-reply/review-reply';
 import { Stars } from '../../../../shared/components/stars/stars';
 import {
   AdminReviewDetail,
@@ -24,7 +25,7 @@ const ACTION_LABEL: Record<string, string> = {
  */
 @Component({
   selector: 'bb-admin-review-dialog',
-  imports: [DatePipe, MatDialogModule, MatButtonModule, IconComponent, Stars],
+  imports: [DatePipe, MatDialogModule, MatButtonModule, IconComponent, Stars, ReviewReply],
   templateUrl: './admin-review-dialog.html',
   styleUrl: './admin-review-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

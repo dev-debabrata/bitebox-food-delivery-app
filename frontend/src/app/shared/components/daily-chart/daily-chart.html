@@ -27,7 +27,10 @@
   }
 
   <details class="table-view">
-    <summary>Show as table</summary>
+    <summary>
+      <np-icon name="chevron-right" class="chevron" [size]="14" />
+      Show as table
+    </summary>
     <div class="table-scroll">
       <table>
         <thead>
@@ -43,11 +46,21 @@
             <tr>
               <th scope="row">{{ row.date }}</th>
               @for (v of row.values; track $index) {
-                <td>{{ format()(v) }}</td>
+                <td [class.zero]="!v">{{ format()(v) }}</td>
               }
             </tr>
           }
         </tbody>
+        @if (showTotal()) {
+          <tfoot>
+            <tr>
+              <th scope="row">Total</th>
+              @for (v of totals(); track $index) {
+                <td>{{ format()(v) }}</td>
+              }
+            </tr>
+          </tfoot>
+        }
       </table>
     </div>
   </details>

@@ -1,0 +1,155 @@
+<section class="bb-container page">
+  <bb-page-header title="My coins" subtitle="Earn coins on every delivered order and spend them at checkout." />
+  <bb-rewards-nav />
+
+  @if (summaryError(); as message) {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>{{ message }} <button class="bb-link-button" (click)="summary.reload()">Retry</button></span>
+    </div>
+  }
+
+  @if (data(); as d) {
+    @let w = d.wallet;
+    <div class="hero bb-card">
+      <np-icon name="coins" class="mat-icon hero-icon" matButtonIcon />
+      <div>
+        <p class="bb-muted label">Available coins</p>
+        <p class="balance">{{ w.available }}</p>
+        <p class="bb-muted">Worth about {{ w.valuePaise | inr }} at checkout</p>
+      </div>
+      <a class="spend" routerLink="/restaurants">Order now</a>
+    </div>
+
+    <section class="bb-grid cols-4 tiles" aria-label="Coin totals">
+      <bb-stat-tile icon="hourglass" label="Held for orders" [value]="w.reserved" hint="Used on orders awaiting payment" />
+      <bb-stat-tile icon="trending-up" label="Total earned" [value]="w.totalEarned" />
+      <bb-stat-tile icon="shopping-bag" label="Total redeemed" [value]="w.totalRedeemed" />
+      <bb-stat-tile icon="clock" label="Expired" [value]="w.totalExpired" />
+    </section>
+
+    <div class="bb-grid cols-2 below">
+      <section class="bb-card" aria-labelledby="expiry-title">
+        <h2 class="bb-h3" id="expiry-title">Expiring coins</h2>
+        @if (!w.expiring.enabled) {
+          <p class="bb-muted">Your coins don't expire right now.</p>
+        } @else if (!w.expiring.upcoming.length) {
+          <p class="bb-muted">Nothing is due to expire.</p>
+        } @else {
+          @if (w.expiring.coins) {
+            <div class="bb-alert info" role="status">
+              <np-icon name="clock" class="mat-icon" matButtonIcon />
+              <span>{{ w.expiring.coins }} coins expire in the next {{ w.expiring.withinDays }} days. Use them first.</span>
+            </div>
+          }
+          <ul class="expiry">
+            @for (e of w.expiring.upcoming; track e.date) {
+              <li>
+                <span>{{ e.date | date: 'd MMM y' }}</span>
+                <strong>{{ e.coins }} coins</strong>
+              </li>
+            }
+          </ul>
+          <p class="bb-muted small">Coins are used oldest-expiry first.</p>
+        }
+      </section>
+
+      <section class="bb-card" aria-labelledby="earn-title">
+        <h2 class="bb-h3" id="earn-title">How to earn</h2>
+        @let r = d.rules;
+        <ul class="earn">
+          @if (r.earningEnabled) {
+            <li>
+              <np-icon name="shopping-bag" class="mat-icon" matButtonIcon />
+              <span><strong>{{ r.order.coinsPerUnit }} coins</strong> for every {{ r.order.unitPaise | inr }} of food on delivered orders</span>
+            </li>
+          }
+          @if (r.reviewCoins) {
+            <li>
+              <np-icon name="star" class="mat-icon" matButtonIcon />
+              <span><strong>{{ r.reviewCoins }} coins</strong> for rating a delivered order</span>
+            </li>
+          }
+          <li>
+            <np-icon name="user-plus" class="mat-icon" matButtonIcon />
+            <span><a routerLink="/account/refer">Invite friends</a> and earn when they order</span>
+          </li>
+          <li>
+            <np-icon name="gift" class="mat-icon" matButtonIcon />
+            <span>Birthday and festival rewards in <a routerLink="/account/rewards">Rewards</a></span>
+          </li>
+        </ul>
+        @if (r.enabled) {
+          <p class="bb-muted small">
+            {{ r.coinValueCoins }} coins = {{ r.coinValuePaise | inr }}. Use at least {{ r.minCoins }} coins, up to
+            {{ r.maxPercentOfOrder }}% of the food value, on orders from {{ r.minOrderPaise | inr }}.
+          </p>
+        } @else {
+          <p class="bb-muted small">Using coins at checkout is paused right now.</p>
+        }
+      </section>
+    </div>
+  } @else if (!summaryError()) {
+    <span class="bb-skeleton" style="height: 140px"></span>
+    <section class="bb-grid cols-4 tiles">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <span class="bb-skeleton tile"></span>
+      }
+    </section>
+  }
+
+  <section class="history" aria-labelledby="history-title">
+    <div class="history-head">
+      <h2 class="bb-h3" id="history-title">Coin history</h2>
+      <np-select class="type-filter" [formField]="filters.type" ariaLabel="Show" [options]="typeOptions" />
+    </div>
+
+    @if (list.error(); as message) {
+      <div class="bb-alert error" role="alert">
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+        <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+      </div>
+    }
+
+    <div class="bb-card bb-list-card" [attr.aria-busy]="list.loading()">
+      @if (list.showSkeleton()) {
+        @for (i of [1, 2, 3, 4]; track i) {
+          <span class="bb-skeleton row"></span>
+        }
+      } @else if (list.empty()) {
+        <bb-empty-state icon="coins" title="No coin activity yet" message="Coins you earn and spend will show up here." />
+      } @else {
+        <ul class="txns" [class.bb-dim]="list.loading()">
+          @for (t of list.data()!.items; track t.id) {
+            <li>
+              <span class="dot {{ tone(t) }}" aria-hidden="true">
+                <np-icon [name]="tone(t) === 'up' ? 'plus' : tone(t) === 'down' ? 'minus' : 'check'" class="mat-icon" matButtonIcon />
+              </span>
+              <div class="what">
+                <strong>{{ t.description ?? sourceLabel[t.source] }}</strong>
+                <span class="bb-muted small">
+                  {{ typeLabel[t.type] }} · {{ t.createdAt | date: 'd MMM y, h:mm a' }}
+                  @if (t.orderId) {
+                    · <a [routerLink]="['/orders', t.orderId]">View order</a>
+                  }
+                  @if (t.expiresAt) {
+                    · expires {{ t.expiresAt | date: 'd MMM y' }}
+                  }
+                </span>
+              </div>
+              <span class="amount {{ tone(t) }}">{{ change(t) }}</span>
+            </li>
+          }
+        </ul>
+        <mat-paginator
+          [length]="list.data()!.pagination.total"
+          [pageIndex]="list.data()!.pagination.page - 1"
+          [pageSize]="list.data()!.pagination.limit"
+          [pageSizeOptions]="[20, 50]"
+          (page)="list.onPage($event)"
+          aria-label="Coin history pages"
+        />
+      }
+    </div>
+  </section>
+</section>

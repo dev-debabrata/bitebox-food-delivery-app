@@ -1,0 +1,119 @@
+<bb-page-header [title]="copy().title" [subtitle]="copy().subtitle" />
+
+<section class="bb-card bb-list-card block" aria-labelledby="due-title">
+  <div class="block-head">
+    <h2 class="bb-h3" id="due-title">Owed now</h2>
+    @if (due.hasValue() && due.value().length) {
+      <span class="total">{{ dueTotal() | inr }} to {{ due.value().length }} {{ due.value().length === 1 ? 'payee' : 'payees' }}</span>
+    }
+  </div>
+  @if (dueError(); as message) {
+    <div class="bb-alert error inset" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>{{ message }} <button class="bb-link-button" (click)="due.reload()">Retry</button></span>
+    </div>
+  } @else if (!due.hasValue()) {
+    @for (i of [1, 2, 3]; track i) {
+      <span class="bb-skeleton row"></span>
+    }
+  } @else if (due.value().length === 0) {
+    <bb-empty-state icon="hand-coins" title="Nothing owed right now" message="Earnings from new deliveries appear here." />
+  } @else {
+    <div class="bb-table-scroll" [class.bb-dim]="due.isLoading()">
+      <table class="bb-table">
+        <thead>
+          <tr>
+            <th scope="col">{{ copy().payee }}</th>
+            <th scope="col" class="num">Orders</th>
+            <th scope="col">Delivered</th>
+            <th scope="col" class="num">Amount</th>
+            <th scope="col" class="actions"><span class="bb-sr-only">Action</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of due.value(); track r.payeeId) {
+            <tr>
+              <td><strong>{{ r.name }}</strong></td>
+              <td class="num">{{ r.orders }}</td>
+              <td>{{ r.from | date: 'd MMM' }} – {{ r.to | date: 'd MMM' }}</td>
+              <td class="num"><strong>{{ r.amountPaise | inr }}</strong></td>
+              <td class="actions">
+                <button mat-flat-button type="button" [disabled]="busy() === r.payeeId" (click)="payOut(r)">Pay out</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<section class="bb-card bb-list-card block" aria-labelledby="history-title" [attr.aria-busy]="history.loading()">
+  <div class="block-head">
+    <h2 class="bb-h3" id="history-title">Payout history</h2>
+    <div class="status-filter">
+      <np-select [formField]="filters.status" ariaLabel="Payout status" [options]="statusOptions" />
+    </div>
+  </div>
+  @if (history.error(); as message) {
+    <div class="bb-alert error inset" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>{{ message }} <button class="bb-link-button" (click)="history.load(1)">Retry</button></span>
+    </div>
+  }
+  @if (history.showSkeleton()) {
+    @for (i of [1, 2, 3]; track i) {
+      <span class="bb-skeleton row"></span>
+    }
+  } @else if (history.empty()) {
+    <bb-empty-state icon="history" title="No payouts yet" />
+  } @else {
+    <div class="bb-table-scroll" [class.bb-dim]="history.loading()">
+      <table class="bb-table">
+        <thead>
+          <tr>
+            <th scope="col">{{ copy().payee }}</th>
+            <th scope="col">Created</th>
+            <th scope="col" class="num">Amount</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="actions"><span class="bb-sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of history.data()!.items; track p.id) {
+            <tr>
+              <td>
+                <strong>{{ p.payeeName }}</strong>
+                <span class="sub">{{ p.orders }} orders · {{ p.periodFrom | date: 'd MMM' }} – {{ p.periodTo | date: 'd MMM' }}</span>
+              </td>
+              <td>{{ p.createdAt | date: 'd MMM y' }}</td>
+              <td class="num">{{ p.amountPaise | inr }}</td>
+              <td>
+                <span class="bb-badge tone-{{ statusTone[p.status] }}">{{ statusLabel[p.status] }}</span>
+                @if (p.reference) {
+                  <span class="sub">Ref {{ p.reference }} · {{ p.paidAt | date: 'd MMM' }}</span>
+                } @else if (p.note) {
+                  <span class="sub">{{ p.note }}</span>
+                }
+              </td>
+              <td class="actions">
+                @if (p.status === 'pending') {
+                  <button mat-flat-button type="button" [disabled]="busy() === p.id" (click)="markPaid(p)">Mark paid</button>
+                  <button mat-button type="button" [disabled]="busy() === p.id" (click)="cancel(p)">Cancel</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <mat-paginator
+      [length]="history.data()!.pagination.total"
+      [pageIndex]="history.data()!.pagination.page - 1"
+      [pageSize]="history.data()!.pagination.limit"
+      [pageSizeOptions]="[20, 50, 100]"
+      (page)="history.onPage($event)"
+      aria-label="Payout pages"
+    />
+  }
+</section>

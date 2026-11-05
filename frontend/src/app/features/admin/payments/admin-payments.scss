@@ -6,7 +6,7 @@
   margin-bottom: var(--bb-space-4);
 
   @include bp.tablet-up {
-    grid-template-columns: 220px 220px;
+    grid-template-columns: minmax(0, 1fr) 200px 200px;
   }
 }
 

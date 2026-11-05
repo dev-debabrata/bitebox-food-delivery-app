@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { Signal, computed } from '@angular/core';
 import { ApiErrorBody, ApiFieldError } from '../../shared/models/api.models';
 
 /** Human-readable message for any HTTP error. */
@@ -26,4 +27,14 @@ export function fieldErrors(error: unknown): ApiFieldError[] {
 export function errorCode(error: unknown): string | undefined {
   if (error instanceof HttpErrorResponse) return (error.error as ApiErrorBody | null)?.error?.code;
   return undefined;
+}
+
+/** A resource's value, or null until it has one (while loading the first time, or after an error). */
+export function resourceValue<T>(resource: { hasValue: () => boolean; value: () => T }): Signal<T | null> {
+  return computed(() => (resource.hasValue() ? resource.value() : null));
+}
+
+/** A resource's error as a message (null while loading or once it succeeds). */
+export function resourceError(resource: { error: () => unknown }, fallback: string): Signal<string | null> {
+  return computed(() => (resource.error() ? errorMessage(resource.error(), fallback) : null));
 }

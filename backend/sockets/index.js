@@ -1,5 +1,5 @@
+import { PERMISSIONS, hasPermission } from "../config/permissions.js";
 import { Server } from "socket.io";
-import { env } from "../config/env.js";
 import { logger } from "../config/logger.js";
 import { isAllowedOrigin } from "../middleware/security.middleware.js";
 import { Restaurant } from "../models/restaurant.model.js";
@@ -52,7 +52,8 @@ export function attachRealtime(httpServer) {
     const { id, role } = socket.data.user;
     registerTracking(io, socket);
     const joined = [rooms.user(id)];
-    if (role === ROLES.ADMIN) joined.push(rooms.admins);
+    // Live order events for every admin role that can see orders.
+    if (hasPermission(role, PERMISSIONS.ORDERS_VIEW)) joined.push(rooms.admins);
     if (role === ROLES.RESTAURANT) {
       const restaurant = await Restaurant.findOne({ owner: id }).select("_id");
       if (restaurant) joined.push(rooms.restaurant(restaurant._id));

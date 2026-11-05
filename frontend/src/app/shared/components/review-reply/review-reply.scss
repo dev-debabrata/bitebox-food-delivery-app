@@ -1,0 +1,34 @@
+// Plum tint with a solid plum edge: stands out on white cards and on tinted dialogs alike.
+:host {
+  display: block;
+  margin-top: var(--bb-space-2);
+  padding: var(--bb-space-2) var(--bb-space-3);
+  border-left: 3px solid var(--bb-plum-500);
+  border-radius: 0 var(--bb-radius-sm) var(--bb-radius-sm) 0;
+  background: var(--bb-plum-100);
+  color: var(--bb-ink);
+}
+
+p {
+  margin: 0;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  font-size: 0.85rem;
+  color: var(--bb-plum);
+  --bb-icon-size: 16px;
+}
+
+.meta {
+  color: var(--bb-ink-muted);
+}
+
+.text {
+  margin-top: 4px;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

@@ -27,6 +27,7 @@ export function computePricing({
   subtotalPaise,
   coupon = null,
   distanceMeters = null,
+  coinDiscountPaise = 0,
 }) {
   const discountPaise = couponDiscount(coupon, subtotalPaise);
   const discounted = subtotalPaise - discountPaise;
@@ -36,12 +37,16 @@ export function computePricing({
     (discounted * PRICING.foodTaxBasisPoints) / 10_000,
   );
   const platformFeePaise = subtotalPaise > 0 ? PRICING.platformFeePaise : 0;
+  const beforeCoins = discounted + deliveryFeePaise + platformFeePaise + taxPaise;
+  // Coins pay part of the bill; they never change the tax, fees or the free-delivery threshold.
+  const coins = Math.max(0, Math.min(coinDiscountPaise, beforeCoins));
   return {
     subtotalPaise,
     discountPaise,
     deliveryFeePaise,
     platformFeePaise,
     taxPaise,
-    totalPaise: discounted + deliveryFeePaise + platformFeePaise + taxPaise,
+    coinDiscountPaise: coins,
+    totalPaise: beforeCoins - coins,
   };
 }

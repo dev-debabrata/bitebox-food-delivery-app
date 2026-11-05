@@ -1,0 +1,12 @@
+.tiles {
+  margin-bottom: var(--bb-space-3);
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-1);
+  --bb-icon-size: 18px;
+  &.ok {
+    color: var(--bb-success);
+  }
+}

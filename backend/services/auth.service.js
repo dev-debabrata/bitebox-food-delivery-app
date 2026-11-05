@@ -1,3 +1,4 @@
+import { PERMISSIONS } from "../config/permissions.js";
 import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { env } from "../config/env.js";
@@ -13,13 +14,15 @@ import { ApiError } from "../utils/api-error.js";
 import { hashToken, randomToken, signAccessToken } from "../utils/tokens.js";
 import { sendMail } from "./mail.service.js";
 import { notifyAdmins } from "./notification.service.js";
+import * as referralService from "./referral.service.js";
+import * as rewardEvents from "./reward-events.js";
 
 const ROTATION_GRACE_MS = 15_000;
 
 // Used to keep login timing similar whether or not the email exists.
 const DUMMY_HASH = bcrypt.hashSync("bitebox-timing-equaliser", 4);
 
-const hashPassword = (password) => bcrypt.hash(password, env.bcryptRounds);
+export const hashPassword = (password) => bcrypt.hash(password, env.bcryptRounds);
 
 async function createSession(user, meta, family = crypto.randomUUID()) {
   const refreshToken = randomToken();
@@ -52,20 +55,30 @@ async function revokeAllSessions(userId, reason) {
 
 /** Partner sign-ups admins are told about (customers sign up too often to notify). */
 const PARTNER_SIGNUP = {
-  [ROLES.RESTAURANT]: { what: "restaurant partner", link: "/admin/users" },
+  [ROLES.RESTAURANT]: {
+    what: "restaurant partner",
+    link: "/admin/users",
+    permission: PERMISSIONS.USERS_MANAGE,
+  },
   [ROLES.DELIVERY]: {
     what: "delivery partner",
     link: "/admin/delivery-partners",
+    permission: PERMISSIONS.RIDERS_MANAGE,
   },
 };
 
 export async function register(
-  { name, email, phone, password, role = ROLES.CUSTOMER },
+  { name, email, phone, password, role = ROLES.CUSTOMER, referralCode },
   meta,
 ) {
   if (!SELF_REGISTER_ROLES.includes(role)) {
     throw ApiError.forbidden("This role cannot be self-registered");
   }
+  // Referral codes are for customers; check the code before creating the account.
+  const referral =
+    referralCode && role === ROLES.CUSTOMER
+      ? await referralService.resolveCode(referralCode)
+      : null;
 
   const existing = await User.exists({ email });
   if (existing)
@@ -82,6 +95,8 @@ export async function register(
     passwordHash: await hashPassword(password),
   });
   logger.info({ userId: user.id, role }, "User registered");
+  if (role === ROLES.CUSTOMER)
+    await rewardEvents.customerRegistered(user, { referral, ip: meta?.ip });
   const signup = PARTNER_SIGNUP[role];
   if (signup)
     await notifyAdmins({
@@ -89,7 +104,7 @@ export async function register(
       title: `New ${signup.what}: ${name}`,
       body: email,
       link: signup.link,
-    });
+    }, signup.permission);
   return issueTokens(user, meta);
 }
 

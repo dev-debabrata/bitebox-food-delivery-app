@@ -1,6 +1,6 @@
 import { IconComponent } from 'nexprime';
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
-import { FormRoot, TreeValidationResult, form } from '@angular/forms/signals';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { FormRoot, TreeValidationResult, form, pattern } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -41,8 +41,10 @@ export class Register {
 
   readonly role = input<SelfRegisterRole>('customer');
   readonly heading = input('Create your account');
+  /** ?ref=CODE from a friend's invite link (customers only). */
+  readonly ref = input<string>();
 
-  protected readonly model = signal({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
+  protected readonly model = signal({ name: '', email: '', phone: '', password: '', confirmPassword: '', referralCode: '' });
   protected readonly form = form(
     this.model,
     (path) => {
@@ -51,6 +53,7 @@ export class Register {
       phoneRules(path.phone, { optional: true });
       passwordRules(path.password);
       matchesField(path.confirmPassword, path.password);
+      pattern(path.referralCode, /^\s*([A-Za-z0-9-]{4,40})?\s*$/, { message: 'Enter a valid referral code' });
     },
     { submission: { action: () => this.createAccount() } },
   );
@@ -60,11 +63,28 @@ export class Register {
   protected readonly intro = computed(() => INTRO[this.role()]);
   protected readonly shownError = shownError;
 
+  constructor() {
+    // Prefill the code from an invite link.
+    effect(() => {
+      const ref = this.ref()?.trim().toUpperCase();
+      if (ref && /^[A-Z0-9-]{4,40}$/.test(ref))
+        untracked(() => this.model.update((m) => (m.referralCode ? m : { ...m, referralCode: ref })));
+    });
+  }
+
   private async createAccount(): Promise<TreeValidationResult> {
     this.error.set(null);
-    const { confirmPassword: _confirm, phone, ...rest } = this.model();
+    const { confirmPassword: _confirm, phone, referralCode, ...rest } = this.model();
+    const code = this.role() === 'customer' ? referralCode.trim().toUpperCase() : '';
     try {
-      const user = await firstValueFrom(this.auth.register({ ...rest, ...(phone.trim() ? { phone: phone.trim() } : {}), role: this.role() }));
+      const user = await firstValueFrom(
+        this.auth.register({
+          ...rest,
+          ...(phone.trim() ? { phone: phone.trim() } : {}),
+          ...(code ? { referralCode: code } : {}),
+          role: this.role(),
+        }),
+      );
       this.notify.success(`Welcome to BiteBox, ${user.name.split(' ')[0]}!`);
       void this.router.navigateByUrl(ROLE_META[user.role].home);
       return undefined;

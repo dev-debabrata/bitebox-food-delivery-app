@@ -1,0 +1,21 @@
+.tab-body {
+  padding-top: var(--bb-space-4);
+}
+
+.late-count {
+  margin-left: var(--bb-space-2);
+}
+
+tr.late td:first-child {
+  box-shadow: inset 3px 0 0 var(--bb-danger);
+}
+
+.late-text {
+  color: var(--bb-danger);
+  font-weight: 600;
+}
+
+.updated {
+  margin: var(--bb-space-2) 0 0;
+  font-size: 0.8rem;
+}

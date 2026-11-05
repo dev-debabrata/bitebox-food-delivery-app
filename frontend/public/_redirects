@@ -1,0 +1,4 @@
+# Netlify-style hosts: proxy the API on the same origin (keeps the refresh cookie first-party)
+# and serve the SPA for every other path so deep links survive a page refresh.
+/api/*  https://bitebox-backend-opal.vercel.app/api/:splat  200
+/*      /index.html  200

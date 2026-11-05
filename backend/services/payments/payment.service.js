@@ -7,9 +7,11 @@ import {
   PAYMENT_STATUS,
   Payment,
 } from "../../models/order.model.js";
+import { User } from "../../models/user.model.js";
 import { ApiError } from "../../utils/api-error.js";
-import { paginationMeta } from "../../utils/pagination.js";
+import { escapeRegex, paginationMeta } from "../../utils/pagination.js";
 import { notifyNewOrder, notifyRefund } from "../order-notifications.js";
+import * as rewardEvents from "../reward-events.js";
 import { mockProvider } from "./mock.provider.js";
 import { razorpayFromEnv } from "./razorpay.provider.js";
 
@@ -273,6 +275,7 @@ async function markPaid(paymentId, providerPaymentId) {
       { orderId: order.id },
       "Online payment received; order sent to the restaurant",
     );
+    await rewardEvents.orderPaid(order);
     await notifyNewOrder(order, "paid online");
   } else {
     // Paid after the order closed: refund straight away.
@@ -383,18 +386,39 @@ export function paymentView(payment) {
 // Admin
 // ---------------------------------------------------------------------------
 
-/** All payments, newest first, filterable by status, method and provider, with the order number. */
-export async function adminList({ status, method, provider }, pagination) {
+/**
+ * All payments, newest first, filterable by status, method, provider, date and a search over the
+ * order number and the customer's name, email or phone. Includes the order number and customer.
+ */
+export async function adminList(
+  { status, method, provider, search, from, to },
+  pagination,
+) {
   const filter = {};
   if (status) filter.status = status;
   if (method) filter.method = method;
   if (provider) filter.provider = provider;
+  if (from || to)
+    filter.createdAt = { ...(from && { $gte: from }), ...(to && { $lte: to }) };
+  if (search) {
+    const pattern = new RegExp(escapeRegex(search), "i");
+    const ids = (docs) => docs.map((d) => d._id);
+    const [orders, users] = await Promise.all([
+      Order.find({ orderNumber: pattern }).select("_id").limit(200).lean(),
+      User.find({ $or: [{ name: pattern }, { email: pattern }, { phone: pattern }] })
+        .select("_id")
+        .limit(200)
+        .lean(),
+    ]);
+    filter.$or = [{ order: { $in: ids(orders) } }, { user: { $in: ids(users) } }];
+  }
   const [items, total] = await Promise.all([
     Payment.find(filter)
       .sort({ createdAt: -1 })
       .skip(pagination.skip)
       .limit(pagination.limit)
-      .populate("order", "orderNumber status"),
+      .populate("order", "orderNumber status")
+      .populate("user", "name email"),
     Payment.countDocuments(filter),
   ]);
   return {
@@ -404,6 +428,7 @@ export async function adminList({ status, method, provider }, pagination) {
       providerOrderId: p.providerOrderId ?? null,
       providerPaymentId: p.providerPaymentId ?? null,
       createdAt: p.createdAt,
+      customer: p.user?.name ? { id: String(p.user._id), name: p.user.name, email: p.user.email } : null,
       order: p.order
         ? {
             id: String(p.order._id),

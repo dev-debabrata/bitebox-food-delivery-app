@@ -1,0 +1,42 @@
+<bb-page-header title="Support" subtitle="Tickets from customers, restaurants and delivery partners.">
+  <a mat-flat-button routerLink="/admin/support/queue/mine">
+    <np-icon name="inbox" class="mat-icon" matButtonIcon />
+    My tickets
+  </a>
+</bb-page-header>
+
+@if (error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="stats.reload()">Retry</button></span>
+  </div>
+}
+
+@if (stats.hasValue()) {
+  @let s = stats.value();
+  <section class="bb-grid cols-3" aria-label="Ticket counts" [class.bb-dim]="stats.isLoading()">
+    <bb-stat-tile icon="ticket" label="Total tickets" [value]="s.total" [hint]="s.closed + ' closed'" />
+    <bb-stat-tile icon="inbox" label="Open tickets" [value]="s.open" [hint]="s.unassigned + ' not assigned yet'" />
+    <bb-stat-tile icon="activity" label="In progress" [value]="s.inProgress" />
+    <bb-stat-tile icon="task_alt" label="Resolved" [value]="s.resolved" />
+    <bb-stat-tile icon="message-square" label="Pending" [value]="s.pending" hint="Waiting for the customer, restaurant or rider" />
+    <bb-stat-tile icon="siren" label="High priority" [value]="s.highPriority" hint="High or urgent, still open" />
+  </section>
+
+  <section class="bb-card queues" aria-labelledby="queues-title">
+    <h2 class="bb-h3" id="queues-title">Open tickets by queue</h2>
+    <nav class="queue-links" aria-label="Ticket queues">
+      <a routerLink="/admin/support/queue/customer"><span>Customer complaints</span><strong>{{ s.openByRequester.customer }}</strong></a>
+      <a routerLink="/admin/support/queue/restaurant"><span>Restaurant complaints</span><strong>{{ s.openByRequester.restaurant }}</strong></a>
+      <a routerLink="/admin/support/queue/delivery"><span>Delivery partner complaints</span><strong>{{ s.openByRequester.delivery }}</strong></a>
+      <a routerLink="/admin/support/queue/refunds"><span>Refund requests</span><strong>{{ s.openRefundRequests }}</strong></a>
+      <a routerLink="/admin/support/queue/unassigned"><span>Not assigned</span><strong>{{ s.unassigned }}</strong></a>
+    </nav>
+  </section>
+} @else if (!error()) {
+  <section class="bb-grid cols-3">
+    @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+      <span class="bb-skeleton tile"></span>
+    }
+  </section>
+}

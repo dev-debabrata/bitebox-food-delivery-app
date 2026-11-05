@@ -11,7 +11,7 @@
 }
 
 .sidebar {
-  width: 264px;
+  width: 280px;
   border-right: 0;
   border-radius: 0;
   background: var(--bb-plum);
@@ -86,6 +86,8 @@
   position: sticky;
   top: 0;
   z-index: 5;
+  // The content column is a flex box: without this, long pages (e.g. the dashboard) squash the bar.
+  flex-shrink: 0;
   gap: var(--bb-space-2);
   background: rgb(255 255 255 / 92%);
   backdrop-filter: blur(8px);
@@ -155,6 +157,54 @@
   max-width: var(--bb-content-max);
   margin-inline: auto;
   padding: var(--bb-space-5) var(--bb-page-gutter) var(--bb-space-7);
+}
+
+// Long labels ("Delivery partner complaints") wrap onto a second line instead of being cut off.
+.nav .mat-mdc-list-item {
+  height: auto;
+  min-height: 48px;
+  padding-block: 6px;
+
+  ::ng-deep .mdc-list-item__primary-text {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.3;
+  }
+}
+
+// Expandable group (super admin: Operations, Finance, Support) and its indented sub-links.
+.nav .group {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  margin-bottom: 2px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+
+  .chevron {
+    --bb-icon-size: 18px;
+    color: #cdb8dc;
+    transition: transform 0.15s;
+  }
+  &.open .chevron {
+    transform: rotate(180deg);
+  }
+}
+
+.subnav {
+  position: relative;
+  margin: 2px 0 6px 26px;
+  padding-left: 10px;
+  border-left: 1px solid rgb(255 255 255 / 14%);
+
+  .mat-mdc-list-item {
+    min-height: 40px;
+    --mat-list-list-item-label-text-size: 0.9rem;
+    --bb-icon-size: 18px;
+  }
 }
 
 // Count next to a nav label (e.g. new orders waiting for the restaurant).

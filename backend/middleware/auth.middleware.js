@@ -1,3 +1,4 @@
+import { hasPermission } from "../config/permissions.js";
 import { User, USER_STATUS } from "../models/user.model.js";
 import { ApiError } from "../utils/api-error.js";
 import { verifyAccessToken } from "../utils/tokens.js";
@@ -41,5 +42,15 @@ export const authorize =
   (req, _res, next) => {
     if (!req.user) return next(ApiError.unauthorized());
     if (!roles.includes(req.user.role)) return next(ApiError.forbidden());
+    next();
+  };
+
+/** Allows the request when the signed-in user's role has any of the given permissions. */
+export const can =
+  (...permissions) =>
+  (req, _res, next) => {
+    if (!req.user) return next(ApiError.unauthorized());
+    if (!permissions.some((p) => hasPermission(req.user.role, p)))
+      return next(ApiError.forbidden("You do not have access to this area"));
     next();
   };

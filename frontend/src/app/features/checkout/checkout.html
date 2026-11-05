@@ -171,10 +171,28 @@
           }
         </section>
 
+        <!-- Coins -->
+        @if (q.coins; as coins) {
+          @if (coins.enabled && (coins.available > 0 || coins.applied > 0)) {
+            <bb-checkout-coins
+              [coins]="coins"
+              [paymentMethod]="paymentMethod()"
+              [busy]="cart.busy()"
+              (apply)="applyCoins($event)"
+              (remove)="removeCoins()"
+            />
+          }
+        }
+
         <!-- Bill -->
         <section class="bb-card" aria-labelledby="bill-title">
           <h2 id="bill-title">Bill details</h2>
-          <bb-bill-summary [pricing]="q.pricing" [couponCode]="q.coupon?.code" [distanceMeters]="q.delivery?.distanceMeters ?? null" />
+          <bb-bill-summary
+            [pricing]="q.pricing"
+            [couponCode]="q.coupon?.code"
+            [distanceMeters]="q.delivery?.distanceMeters ?? null"
+            [coinsRedeemed]="q.coins?.applied"
+          />
           @if (q.delivery && !q.delivery.freeDelivery && q.pricing.subtotalPaise - q.pricing.discountPaise < q.delivery.freeDeliveryThresholdPaise) {
             <p class="hint small">
               Add {{ q.delivery.freeDeliveryThresholdPaise - (q.pricing.subtotalPaise - q.pricing.discountPaise) | inr }} more for free delivery
@@ -199,7 +217,7 @@
           @if (placing()) {
             <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Placing order" />
           } @else {
-            {{ paymentMethod() === 'online' ? 'Place order & pay' : 'Place order' }} · {{ q.pricing.totalPaise | inr }}
+            {{ paymentMethod() === 'online' ? 'Place order & pay' : 'Place order' }} {{ q.pricing.totalPaise | inr }}
           }
         </button>
         @if (!selectedAddressId()) {

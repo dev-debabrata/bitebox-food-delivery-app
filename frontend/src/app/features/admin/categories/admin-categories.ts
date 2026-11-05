@@ -15,6 +15,7 @@ import {
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { FoodCategory } from '../../../shared/models/catalog.models';
+import { ImageFallback, UsableImagePipe } from '../../../shared/images/broken-images';
 import { CategoryFormDialog } from './category-form-dialog/category-form-dialog';
 
 @Component({
@@ -27,6 +28,8 @@ import { CategoryFormDialog } from './category-form-dialog/category-form-dialog'
     MatTooltipModule,
     EmptyState,
     PageHeader,
+    ImageFallback,
+    UsableImagePipe,
   ],
   templateUrl: './admin-categories.html',
   styleUrl: './admin-categories.scss',

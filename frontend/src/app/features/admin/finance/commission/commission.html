@@ -1,0 +1,63 @@
+<bb-page-header title="Commission management" subtitle="BiteBox's commission on delivered orders, per restaurant, in the selected period.">
+  <np-select class="bb-period" [formField]="report.filters.days" ariaLabel="Period" [options]="report.periods" />
+</bb-page-header>
+
+@if (report.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="report.resource.reload()">Retry</button></span>
+  </div>
+}
+
+@if (report.data(); as d) {
+  <section class="rates bb-card" aria-labelledby="rates-title">
+    <h2 class="bb-h3" id="rates-title">Current rates</h2>
+    <ul>
+      <li><strong>{{ d.rates.restaurantCommissionPercent }}%</strong> of each order's food value (after coupons)</li>
+      <li>Riders earn <strong>{{ money(d.rates.riderBasePaise) }}</strong> per delivery plus <strong>{{ money(d.rates.riderPerKmPaise) }}</strong> per km (straight line, rounded up)</li>
+      <li>BiteBox keeps the commission plus the delivery and platform fees, minus rider pay</li>
+    </ul>
+    <p class="bb-muted note">Rates are set in the API's earnings configuration and apply to orders delivered after a change.</p>
+  </section>
+
+  <section class="bb-grid cols-4" aria-label="Totals" [class.bb-dim]="report.resource.isLoading()">
+    <bb-stat-tile icon="task_alt" label="Delivered orders" [value]="d.totals.orders" />
+    <bb-stat-tile icon="restaurant" label="Food value" [value]="money(d.totals.foodPaise)" />
+    <bb-stat-tile icon="percent" label="Commission earned" [value]="money(d.totals.commissionPaise)" />
+    <bb-stat-tile icon="landmark" label="BiteBox net" [value]="money(d.totals.platformPaise)" hint="Commission and fees, after rider pay" />
+  </section>
+
+  <section class="bb-card bb-list-card table-card" aria-labelledby="by-restaurant-title">
+    <h2 class="bb-h3" id="by-restaurant-title">By restaurant</h2>
+    @if (d.items.length) {
+      <div class="bb-table-scroll">
+        <table class="bb-table">
+          <thead>
+            <tr>
+              <th scope="col">Restaurant</th>
+              <th scope="col" class="num">Orders</th>
+              <th scope="col" class="num">Food value</th>
+              <th scope="col" class="num">Commission</th>
+              <th scope="col" class="num">Restaurant's share</th>
+              <th scope="col" class="num">BiteBox net</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of d.items; track r.restaurantId) {
+              <tr>
+                <td><strong>{{ r.name }}</strong></td>
+                <td class="num">{{ r.orders }}</td>
+                <td class="num">{{ r.foodPaise | inr }}</td>
+                <td class="num">{{ r.commissionPaise | inr }}</td>
+                <td class="num">{{ r.restaurantPaise | inr }}</td>
+                <td class="num"><strong>{{ r.platformPaise | inr }}</strong></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="bb-muted empty">No delivered orders in this period.</p>
+    }
+  </section>
+}

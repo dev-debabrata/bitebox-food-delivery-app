@@ -1,26 +1,40 @@
 @use 'breakpoints' as bp;
 
+// ---------------------------------------------------------------------------
+// Hero
+// ---------------------------------------------------------------------------
+
 .hero {
+  position: relative;
   color: #fff6e5;
   background:
-    radial-gradient(circle at 90% 0%, rgb(255 181 46 / 30%) 0, transparent 45%),
-    radial-gradient(circle at 0% 100%, rgb(109 85 124 / 60%) 0, transparent 50%),
-    var(--bb-plum);
+    radial-gradient(circle at 88% 8%, rgb(255 181 46 / 32%) 0, transparent 42%),
+    radial-gradient(circle at 0% 100%, rgb(109 85 124 / 65%) 0, transparent 52%),
+    linear-gradient(135deg, var(--bb-plum) 0%, #3a2350 100%);
   overflow: hidden;
 }
 
 .hero-inner {
   display: grid;
   gap: var(--bb-space-6);
-  padding-block: var(--bb-space-7);
+  padding-block: var(--bb-space-7) 72px;
   align-items: center;
 
   @include bp.tablet-up {
     grid-template-columns: 3fr 2fr;
   }
   @include bp.desktop-up {
-    padding-block: 88px;
+    padding-block: 80px 104px;
   }
+}
+
+// Soft curve into the page below.
+.hero-wave {
+  position: absolute;
+  inset: auto 0 -1px;
+  width: 100%;
+  height: 48px;
+  fill: var(--bb-bg);
 }
 
 .eyebrow {
@@ -38,22 +52,112 @@
   np-icon {
     --bb-icon-size: 18px;
   }
+  &.dark {
+    background: rgb(46 26 61 / 10%);
+    color: var(--bb-plum);
+  }
 }
 
 h1 {
   color: #fff6e5;
-  font-size: clamp(2rem, 1.4rem + 3vw, 3.4rem);
+  font-size: clamp(2.1rem, 1.4rem + 3.2vw, 3.6rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
   margin-bottom: var(--bb-space-4);
 }
 
 .highlight {
   color: var(--bb-amber);
+  position: relative;
+  white-space: nowrap;
+
+  // A hand-drawn style underline.
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.02em;
+    height: 0.14em;
+    border-radius: 999px;
+    background: rgb(255 181 46 / 35%);
+  }
 }
 
-.hero-copy p {
+.lead {
   font-size: 1.1rem;
+  line-height: 1.6;
   opacity: 0.88;
   max-width: 540px;
+  margin: 0;
+}
+
+.hero-search {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-2);
+  margin-top: var(--bb-space-5);
+  max-width: 580px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 6px;
+  box-shadow: 0 18px 40px rgb(0 0 0 / 25%);
+
+  np-text-input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  // The pill is the field here: drop the NexPrime input's own border and ring.
+  ::ng-deep np-text-input .ui-control {
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    font-size: 1rem;
+    // The input inherits its colour; the hero's text is light, so set it explicitly.
+    color: var(--bb-ink);
+  }
+
+  button {
+    min-height: 44px;
+    padding-inline: var(--bb-space-5);
+  }
+
+  &:focus-within {
+    outline: 3px solid var(--bb-amber);
+  }
+}
+
+.quick-picks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bb-space-2);
+  margin-top: var(--bb-space-3);
+  font-size: 0.85rem;
+
+  span {
+    opacity: 0.7;
+  }
+  a {
+    padding: 4px 12px;
+    border: 1px solid rgb(255 246 229 / 28%);
+    border-radius: 999px;
+    color: #fff6e5;
+    text-decoration: none;
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease;
+
+    &:hover {
+      background: rgb(255 246 229 / 12%);
+      border-color: rgb(255 246 229 / 55%);
+    }
+    &:focus-visible {
+      outline: 2px solid var(--bb-amber);
+      outline-offset: 2px;
+    }
+  }
 }
 
 .hero-actions {
@@ -79,21 +183,65 @@ h1 {
 }
 
 .greeting {
+  flex-basis: 100%;
   font-size: 1.2rem;
   font-weight: 700;
   color: var(--bb-amber);
+
+  @include bp.tablet-up {
+    flex-basis: auto;
+    margin-right: var(--bb-space-2);
+  }
+}
+
+.perks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bb-space-2) var(--bb-space-5);
+  list-style: none;
+  margin: var(--bb-space-5) 0 0;
+  padding: 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    --bb-icon-size: 18px;
+  }
+  np-icon {
+    color: var(--bb-amber);
+  }
 }
 
 // Illustration made from CSS shapes (no third-party imagery).
 .hero-art {
   position: relative;
-  height: 240px;
   display: none;
 
   @include bp.tablet-up {
     display: block;
-    height: 300px;
+    height: 340px;
   }
+}
+
+.glow,
+.ring {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.glow {
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgb(255 181 46 / 35%) 0, transparent 70%);
+}
+.ring {
+  width: 300px;
+  height: 300px;
+  border: 2px dashed rgb(255 246 229 / 18%);
 }
 
 .box {
@@ -101,6 +249,7 @@ h1 {
   inset: 50% auto auto 50%;
   transform: translate(-50%, -45%);
   width: 180px;
+  filter: drop-shadow(0 20px 30px rgb(0 0 0 / 30%));
 
   .lid {
     height: 42px;
@@ -113,7 +262,7 @@ h1 {
     height: 130px;
     margin-top: 8px;
     border-radius: 18px;
-    background: var(--bb-amber);
+    background: linear-gradient(180deg, var(--bb-amber) 0%, var(--bb-amber-600) 100%);
     display: grid;
     place-items: center;
   }
@@ -140,23 +289,53 @@ h1 {
   animation: bob 4s ease-in-out infinite;
 
   &.float-0 {
-    top: 6%;
-    left: 8%;
+    top: 4%;
+    left: 10%;
   }
   &.float-1 {
-    top: 2%;
-    right: 10%;
+    top: 0;
+    right: 12%;
     animation-delay: -1s;
   }
   &.float-2 {
-    bottom: 6%;
-    left: 4%;
+    bottom: 10%;
+    left: 2%;
     animation-delay: -2s;
   }
   &.float-3 {
-    bottom: 10%;
-    right: 4%;
+    bottom: 4%;
+    right: 6%;
     animation-delay: -3s;
+  }
+}
+
+// Little "app" chips around the box.
+.badge {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--bb-plum);
+  font-weight: 700;
+  font-size: 0.85rem;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 22%);
+  animation: bob 5s ease-in-out infinite;
+  --bb-icon-size: 18px;
+
+  np-icon {
+    color: var(--bb-amber-600);
+  }
+  &.badge-track {
+    top: 38%;
+    left: -4%;
+    animation-delay: -2.5s;
+  }
+  &.badge-coins {
+    top: 30%;
+    right: -2%;
   }
 }
 
@@ -166,20 +345,81 @@ h1 {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Sections
+// ---------------------------------------------------------------------------
+
 .section {
   padding-block: var(--bb-space-7) 0;
+
+  &.last {
+    padding-bottom: var(--bb-space-7);
+  }
 }
 
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--bb-space-3);
+  margin-bottom: var(--bb-space-4);
+
+  h2 {
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+}
+
+// A row of buttons (no-results card, rewards banner, partner cards).
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bb-space-2);
+
+  &.spaced {
+    margin-top: var(--bb-space-4);
+  }
+}
+
+// Round, centred icon holders (coins, step icons and numbers).
+%disc {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.subtitle {
+  margin: var(--bb-space-1) 0 0;
+  color: var(--bb-ink-muted);
+}
+
+.see-all {
+  flex: none;
+}
+
+.location-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: var(--bb-space-1);
+  font-size: 0.9rem;
+  text-align: left;
+  --bb-icon-size: 16px;
+}
+
+// Categories: a grid of photo tiles, 8 per row on desktop and 4 on smaller screens.
 .cravings {
   list-style: none;
-  padding: 0;
   margin: 0;
+  padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--bb-space-3);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--bb-space-4) var(--bb-space-3);
 
-  @include bp.tablet-up {
-    grid-template-columns: repeat(6, 1fr);
+  @include bp.desktop-up {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: var(--bb-space-5) var(--bb-space-4);
   }
 
   li a {
@@ -193,25 +433,60 @@ h1 {
     text-decoration: none;
     text-align: center;
 
-    &:hover .craving-icon {
-      background: var(--bb-amber);
-      transform: translateY(-2px);
+    &:hover .craving-tile {
+      transform: translateY(-3px);
+      box-shadow: var(--bb-shadow);
+    }
+    &:hover img {
+      transform: scale(1.06);
+    }
+    &:focus-visible {
+      outline: none;
+
+      .craving-tile {
+        outline: 3px solid var(--bb-amber);
+        outline-offset: 2px;
+      }
     }
   }
 }
 
-.craving-skeleton {
-  width: 72px;
-  height: 96px;
-  margin-inline: auto;
+.craving-tile {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  max-width: 120px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #efece6;
+  color: var(--bb-plum);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  --bb-icon-size: 44px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
 }
 
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--bb-space-3);
+.craving-name {
+  line-height: 1.2;
 }
+
+.craving-skeleton {
+  display: block;
+  width: 100%;
+  max-width: 120px;
+  aspect-ratio: 1;
+  margin-inline: auto;
+  border-radius: 50%;
+}
+
 
 .popular {
   display: grid;
@@ -231,145 +506,6 @@ h1 {
   border-radius: var(--bb-radius);
 }
 
-.hero-search {
-  display: flex;
-  align-items: center;
-  gap: var(--bb-space-2);
-  margin-top: var(--bb-space-5);
-  max-width: 560px;
-  background: #fff;
-  border-radius: 16px;
-  padding: 6px;
-  box-shadow: var(--bb-shadow);
-
-  np-text-input {
-    flex: 1;
-    min-width: 0;
-  }
-
-  // The pill is the field here: drop the NexPrime input's own border and ring.
-  ::ng-deep np-text-input .ui-control {
-    border: 0;
-    box-shadow: none;
-    background: transparent;
-    font-size: 1rem;
-    // The input inherits its colour; the hero's text is light, so set it explicitly.
-    color: var(--bb-ink);
-  }
-
-  &:focus-within {
-    outline: 3px solid var(--bb-amber);
-  }
-}
-
-.craving-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--bb-amber-100);
-  color: var(--bb-plum);
-  transition:
-    background 0.15s ease,
-    transform 0.15s ease;
-
-  np-icon {
-    --bb-icon-size: 34px;
-  }
-}
-
-.steps {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: var(--bb-space-4);
-
-  @include bp.tablet-up {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  li {
-    position: relative;
-  }
-
-  np-icon {
-    --bb-icon-size: 40px;
-    color: var(--bb-amber-600);
-    margin-bottom: var(--bb-space-3);
-  }
-
-  p {
-    margin: 0;
-  }
-}
-
-.step-num {
-  position: absolute;
-  top: var(--bb-space-4);
-  right: var(--bb-space-4);
-  font-weight: 800;
-  font-size: 2rem;
-  color: var(--bb-plum-100);
-}
-
-.partners {
-  display: grid;
-  gap: var(--bb-space-4);
-  padding-bottom: var(--bb-space-7);
-
-  @include bp.tablet-up {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.partner {
-  border-radius: var(--bb-radius-lg);
-  padding: var(--bb-space-6) var(--bb-space-5);
-
-  np-icon {
-    --bb-icon-size: 44px;
-    margin-bottom: var(--bb-space-3);
-  }
-
-  &.restaurant {
-    background: var(--bb-plum);
-    color: #fff6e5;
-
-    h3 {
-      color: #fff6e5;
-    }
-    np-icon {
-      color: var(--bb-amber);
-    }
-    .light {
-      --mat-button-text-label-text-color: #fff6e5;
-    }
-  }
-
-  &.rider {
-    background: var(--bb-amber-100);
-
-    np-icon {
-      color: var(--bb-plum);
-    }
-  }
-}
-
-.partner-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--bb-space-2);
-  margin-top: var(--bb-space-4);
-}
-
-.section-head .bb-link-button {
-  font-size: 0.9rem;
-  margin-bottom: var(--bb-space-3);
-  text-align: left;
-}
-
 .no-nearby {
   display: flex;
   gap: var(--bb-space-4);
@@ -385,8 +521,235 @@ h1 {
   }
 }
 
-.no-nearby-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--bb-space-2);
+// Rewards banner
+.rewards-banner {
+  position: relative;
+  display: grid;
+  gap: var(--bb-space-5);
+  align-items: center;
+  padding: var(--bb-space-6) var(--bb-space-5);
+  border-radius: var(--bb-radius-lg);
+  background:
+    radial-gradient(circle at 100% 0%, rgb(255 255 255 / 55%) 0, transparent 40%),
+    linear-gradient(120deg, var(--bb-amber) 0%, #ffd27a 100%);
+  color: var(--bb-plum);
+  overflow: hidden;
+
+  @include bp.tablet-up {
+    grid-template-columns: 1.6fr 1fr;
+    padding: var(--bb-space-6);
+  }
+
+  h2 {
+    margin: 0 0 var(--bb-space-2);
+    color: var(--bb-plum);
+    font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+  }
+  p {
+    margin: 0;
+    max-width: 520px;
+    color: rgb(46 26 61 / 85%);
+  }
+}
+.rewards-art {
+  position: relative;
+  height: 150px;
+  display: none;
+
+  @include bp.tablet-up {
+    display: block;
+  }
+}
+.coin {
+  @extend %disc;
+  position: absolute;
+  background: var(--bb-plum);
+  color: var(--bb-amber);
+  box-shadow: 0 12px 24px rgb(46 26 61 / 30%);
+  animation: bob 4.5s ease-in-out infinite;
+
+  &.c1 {
+    width: 96px;
+    height: 96px;
+    top: 10%;
+    left: 30%;
+    --bb-icon-size: 44px;
+  }
+  &.c2 {
+    width: 60px;
+    height: 60px;
+    top: 0;
+    right: 6%;
+    --bb-icon-size: 28px;
+    animation-delay: -1.5s;
+  }
+  &.c3 {
+    width: 56px;
+    height: 56px;
+    bottom: 0;
+    left: 8%;
+    --bb-icon-size: 26px;
+    animation-delay: -3s;
+  }
+}
+
+// How it works: icon circles joined by a dashed line on wide screens.
+.steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--bb-space-4);
+  position: relative;
+
+  @include bp.tablet-up {
+    grid-template-columns: repeat(3, 1fr);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 36px;
+      left: 16%;
+      right: 16%;
+      border-top: 2px dashed var(--bb-border);
+    }
+  }
+
+  li {
+    position: relative;
+    text-align: center;
+    padding: var(--bb-space-2) var(--bb-space-4);
+  }
+
+  h3 {
+    margin: var(--bb-space-3) 0 var(--bb-space-1);
+  }
+  p {
+    margin: 0 auto;
+    max-width: 280px;
+  }
+}
+
+.step-icon {
+  @extend %disc;
+  position: relative;
+  display: inline-grid;
+  width: 72px;
+  height: 72px;
+  background: var(--bb-surface);
+  border: 1px solid var(--bb-border);
+  box-shadow: var(--bb-shadow-sm);
+  color: var(--bb-amber-600);
+  --bb-icon-size: 32px;
+}
+
+.step-num {
+  @extend %disc;
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 26px;
+  height: 26px;
+  background: var(--bb-plum);
+  color: #fff6e5;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+// Partners
+.partners {
+  display: grid;
+  gap: var(--bb-space-4);
+
+  @include bp.tablet-up {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.partner {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--bb-radius-lg);
+  padding: var(--bb-space-6) var(--bb-space-5);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  // Decorative circle in the corner.
+  &::after {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    opacity: 0.18;
+  }
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--bb-shadow);
+  }
+
+  h3 {
+    margin: var(--bb-space-3) 0 var(--bb-space-2);
+    font-size: 1.25rem;
+  }
+  p {
+    margin: 0;
+    max-width: 440px;
+  }
+
+  &.restaurant {
+    background: linear-gradient(135deg, var(--bb-plum) 0%, #43295a 100%);
+    color: #fff6e5;
+
+    &::after {
+      background: var(--bb-amber);
+    }
+    h3 {
+      color: #fff6e5;
+    }
+    .partner-icon {
+      background: var(--bb-amber);
+      color: var(--bb-plum);
+    }
+    .light {
+      --mat-button-text-label-text-color: #fff6e5;
+    }
+  }
+
+  &.rider {
+    background: linear-gradient(135deg, var(--bb-amber-100) 0%, #ffe6b8 100%);
+
+    &::after {
+      background: var(--bb-plum);
+    }
+    .partner-icon {
+      background: var(--bb-plum);
+      color: var(--bb-amber);
+    }
+  }
+}
+
+.partner-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  --bb-icon-size: 28px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float,
+  .badge,
+  .coin {
+    animation: none;
+  }
+  .craving-tile,
+  .craving-tile img,
+  .partner {
+    transition: none;
+  }
 }

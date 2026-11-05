@@ -11,14 +11,15 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DatePipe, DecimalPipe, formatDate } from '@angular/common';
 import { ConfettiComponent, IconComponent, TimelineComponent, type TimelineEvent } from 'nexprime';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { EMPTY, catchError, firstValueFrom } from 'rxjs';
+import { EMPTY, catchError, firstValueFrom, map } from 'rxjs';
 import { errorMessage } from '../../../core/services/api-error';
 import { OrderService } from '../../../core/services/checkout-api.service';
 import { PaymentService } from '../../../core/services/payment.service';
@@ -109,9 +110,18 @@ export class OrderDetail {
   private readonly confetti = viewChild(ConfettiComponent);
   private celebrated = false;
 
+  /** Steps in a row from tablet width up; a phone is too narrow for seven columns. */
+  protected readonly timelineLayout = toSignal(
+    inject(BreakpointObserver)
+      .observe('(min-width: 600px)')
+      .pipe(map((s): 'horizontal' | 'vertical' => (s.matches ? 'horizontal' : 'vertical'))),
+    { initialValue: 'horizontal' },
+  );
+
   protected readonly activeStep = computed(() => {
     const status = this.order()?.status;
     if (!status) return -1;
+    if (status === 'delivered') return JOURNEY.length; // every step done, none pulsing
     return JOURNEY.findIndex(
       (s) => s.status === (status === 'assigned' ? 'ready_for_pickup' : status),
     );

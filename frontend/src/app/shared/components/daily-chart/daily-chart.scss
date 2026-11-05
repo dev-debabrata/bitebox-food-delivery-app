@@ -48,32 +48,107 @@ figcaption {
 }
 
 .table-view summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px 4px 4px;
+  margin-left: -4px;
+  border-radius: var(--bb-radius-sm);
   cursor: pointer;
+  list-style: none;
   font-size: 0.85rem;
+  font-weight: 500;
   color: var(--bb-ink-muted);
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+  &:hover {
+    background: var(--bb-surface-alt);
+    color: var(--bb-ink);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--bb-amber);
+  }
+
+  .chevron {
+    transition: transform 0.15s;
+  }
+}
+
+.table-view[open] .chevron {
+  transform: rotate(90deg);
 }
 
 .table-scroll {
-  max-height: 260px;
+  max-height: 280px;
   overflow: auto;
   margin-top: var(--bb-space-2);
+  border: 1px solid var(--bb-border);
+  border-radius: var(--bb-radius-sm);
+  scrollbar-width: thin;
+  scrollbar-color: var(--bb-border) transparent;
 }
 
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
 
   th,
   td {
-    padding: 4px 8px;
+    padding: 8px 14px;
     text-align: right;
-    border-bottom: 1px solid var(--bb-border);
+    white-space: nowrap;
   }
 
   th:first-child {
     text-align: left;
-    font-weight: 500;
+  }
+
+  // Header and total stay visible while the days scroll.
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bb-surface-alt);
+    border-bottom: 1px solid var(--bb-border);
+    color: var(--bb-ink-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  tbody {
+    th {
+      font-weight: 500;
+      color: var(--bb-ink);
+    }
+    td {
+      font-weight: 600;
+      color: var(--bb-ink);
+    }
+    td.zero {
+      font-weight: 400;
+      color: var(--bb-ink-muted);
+    }
+    tr:nth-child(even) {
+      background: color-mix(in srgb, var(--bb-surface-alt) 60%, transparent);
+    }
+    tr:hover {
+      background: var(--bb-plum-100);
+    }
+  }
+
+  tfoot :is(th, td) {
+    position: sticky;
+    bottom: 0;
+    background: var(--bb-surface);
+    border-top: 1px solid var(--bb-border);
+    font-weight: 700;
+    color: var(--bb-plum);
   }
 }

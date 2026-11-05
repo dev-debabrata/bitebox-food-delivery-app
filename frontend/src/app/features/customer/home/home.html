@@ -6,7 +6,7 @@
         Hot food, fast
       </span>
       <h1>Your favourite food, <span class="highlight">boxed</span> and on its way.</h1>
-      <p>
+      <p class="lead">
         BiteBox connects you with the best local restaurants and riders nearby. Order in a few taps and
         follow your delivery live on the map.
       </p>
@@ -20,19 +20,43 @@
         />
         <button mat-flat-button class="bb-btn-accent" type="submit">Search</button>
       </form>
+
+      @if (quickPicks().length) {
+        <div class="quick-picks" aria-label="Popular searches">
+          <span>Popular:</span>
+          @for (c of quickPicks(); track c.id) {
+            <a [routerLink]="['/restaurants']" [queryParams]="{ category: c.id }">{{ c.name }}</a>
+          }
+        </div>
+      }
+
       <!-- Signed-in (or remembered) users get the greeting at once; guests' buttons wait for the
            session check, so they never flash for someone who is signed in. Same height either way. -->
       <div class="hero-actions">
         @if (user(); as u) {
           <span class="greeting">Welcome back, {{ u.name.split(' ')[0] }}! 👋</span>
+          <a mat-stroked-button routerLink="/orders" class="ghost">
+            <np-icon name="receipt" class="mat-icon" matButtonIcon />My orders
+          </a>
+          <a mat-stroked-button routerLink="/account/coins" class="ghost">
+            <np-icon name="coins" class="mat-icon" matButtonIcon />My coins
+          </a>
         } @else if (sessionChecked()) {
           <a mat-flat-button routerLink="/register" class="bb-btn-accent">Get started</a>
           <a mat-stroked-button routerLink="/login" class="ghost">I have an account</a>
         }
       </div>
+
+      <ul class="perks">
+        @for (p of perks; track p.text) {
+          <li><np-icon [name]="p.icon" class="mat-icon" matButtonIcon />{{ p.text }}</li>
+        }
+      </ul>
     </div>
 
     <div class="hero-art" aria-hidden="true">
+      <span class="glow"></span>
+      <span class="ring"></span>
       <div class="box">
         <div class="lid"></div>
         <div class="body">
@@ -42,25 +66,54 @@
       @for (icon of heroIcons; track icon; let i = $index) {
         <span class="float float-{{ i }}"><np-icon [name]="(icon) | npIcon" class="mat-icon" matButtonIcon /></span>
       }
+      <span class="badge badge-track"><np-icon name="bike" class="mat-icon" matButtonIcon />Live tracking</span>
+      <span class="badge badge-coins"><np-icon name="coins" class="mat-icon" matButtonIcon />Earn coins</span>
     </div>
   </div>
+  <svg class="hero-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 60V30C240 0 480 0 720 22s480 38 720 8v30z" />
+  </svg>
 </section>
 
 <section class="bb-container section" aria-labelledby="cravings-title">
-  <h2 id="cravings-title">What are you craving?</h2>
+  <div class="section-head">
+    <div>
+      <h2 id="cravings-title">What are you craving?</h2>
+      <p class="subtitle">Pick a category to see the restaurants that serve it.</p>
+    </div>
+    @if ((categories()?.length ?? 0) > categoryLimit) {
+      <button
+        type="button"
+        mat-stroked-button
+        class="see-all"
+        aria-controls="cravings-list"
+        [attr.aria-expanded]="showAllCategories()"
+        (click)="showAllCategories.set(!showAllCategories())"
+      >
+        {{ showAllCategories() ? 'Show less' : 'View all' }}
+        <np-icon [name]="showAllCategories() ? 'chevron-up' : 'arrow-right'" class="mat-icon" iconPositionEnd matButtonIcon />
+      </button>
+    }
+  </div>
   @if (categories() === null) {
     <ul class="cravings" aria-busy="true">
-      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+      @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
         <li><span class="bb-skeleton craving-skeleton"></span></li>
       }
     </ul>
   } @else if (categories()!.length) {
-    <ul class="cravings">
-      @for (c of categories(); track c.id) {
+    <ul class="cravings" id="cravings-list">
+      @for (c of visibleCategories(); track c.id) {
         <li>
           <a [routerLink]="['/restaurants']" [queryParams]="{ category: c.id }">
-            <span class="craving-icon"><np-icon [name]="(c.icon) | npIcon: 'utensils'" class="mat-icon" matButtonIcon /></span>
-            <span>{{ c.name }}</span>
+            <span class="craving-tile">
+              @if (c.imageUrl) {
+                <img [src]="c.imageUrl" alt="" loading="lazy" decoding="async" width="112" height="112" />
+              } @else {
+                <np-icon [name]="(c.icon) | npIcon: 'utensils'" class="mat-icon" matButtonIcon />
+              }
+            </span>
+            <span class="craving-name">{{ c.name }}</span>
           </a>
         </li>
       }
@@ -78,13 +131,14 @@
           Popular on BiteBox
         }
       </h2>
-      @if (deliveryLocation()) {
-        <button type="button" class="bb-link-button" (click)="chooseLocation()">Change location</button>
-      } @else {
-        <button type="button" class="bb-link-button" (click)="chooseLocation()">Set your location to see restaurants that deliver to you</button>
-      }
+      <button type="button" class="bb-link-button location-link" (click)="chooseLocation()">
+        <np-icon name="map-pin" class="mat-icon" matButtonIcon />
+        {{ deliveryLocation() ? 'Change location' : 'Set your location to see restaurants that deliver to you' }}
+      </button>
     </div>
-    <a mat-button routerLink="/restaurants">See all <np-icon name="arrow-right" class="mat-icon" iconPositionEnd matButtonIcon /></a>
+    <a mat-stroked-button routerLink="/restaurants" class="see-all">
+      See all <np-icon name="arrow-right" class="mat-icon" iconPositionEnd matButtonIcon />
+    </a>
   </div>
   @if (loaded() === null) {
     <div class="popular" aria-busy="true">
@@ -106,7 +160,7 @@
       <div>
         <h3>No restaurants deliver to {{ loc.label }} yet</h3>
         <p class="bb-muted">We're growing fast. Try another location, or browse every restaurant on BiteBox.</p>
-        <div class="no-nearby-actions">
+        <div class="actions">
           <button mat-flat-button type="button" (click)="chooseLocation()">Change location</button>
           <a mat-button routerLink="/restaurants" [queryParams]="{ all: 'true' }">Browse all restaurants</a>
         </div>
@@ -117,44 +171,86 @@
   }
 </section>
 
+<!-- Coins & referrals -->
+<section class="bb-container section" aria-labelledby="rewards-title">
+  <div class="rewards-banner">
+    <div class="rewards-copy">
+      <span class="eyebrow dark"><np-icon name="gift" class="mat-icon" matButtonIcon />BiteBox rewards</span>
+      <h2 id="rewards-title">Every order earns you coins</h2>
+      <p>Collect coins on delivered orders and reviews, spend them at checkout, and earn more when friends join with your code.</p>
+      <div class="actions spaced">
+        @if (user()) {
+          <a mat-flat-button routerLink="/account/coins">View my coins</a>
+          <a mat-button routerLink="/account/refer">Refer & earn</a>
+        } @else {
+          <a mat-flat-button routerLink="/register">Sign up & start earning</a>
+          <a mat-button routerLink="/login">Sign in</a>
+        }
+      </div>
+    </div>
+    <div class="rewards-art" aria-hidden="true">
+      <span class="coin c1"><np-icon name="coins" class="mat-icon" matButtonIcon /></span>
+      <span class="coin c2"><np-icon name="gift" class="mat-icon" matButtonIcon /></span>
+      <span class="coin c3"><np-icon name="user-plus" class="mat-icon" matButtonIcon /></span>
+    </div>
+  </div>
+</section>
+
 <section class="bb-container section" aria-labelledby="how-title">
   <np-animate-on-scroll animation="fade-up" [stagger]="90">
-  <h2 id="how-title">How BiteBox works</h2>
-  <ol class="steps">
-    @for (step of steps; track step.icon; let i = $index) {
-      <li class="bb-card">
-        <span class="step-num">{{ i + 1 }}</span>
-        <np-icon [name]="(step.icon) | npIcon" class="mat-icon" matButtonIcon />
-        <h3>{{ step.title }}</h3>
-        <p class="bb-muted">{{ step.text }}</p>
-      </li>
-    }
-  </ol>
+    <div class="section-head">
+      <div>
+        <h2 id="how-title">How BiteBox works</h2>
+        <p class="subtitle">From craving to doorstep in three steps.</p>
+      </div>
+    </div>
+    <ol class="steps">
+      @for (step of steps; track step.icon; let i = $index) {
+        <li>
+          <span class="step-icon">
+            <np-icon [name]="(step.icon) | npIcon" class="mat-icon" matButtonIcon />
+            <span class="step-num">{{ i + 1 }}</span>
+          </span>
+          <h3>{{ step.title }}</h3>
+          <p class="bb-muted">{{ step.text }}</p>
+        </li>
+      }
+    </ol>
   </np-animate-on-scroll>
 </section>
 
-<section id="partners" class="bb-container section" aria-labelledby="partners-title">
-  <np-animate-on-scroll animation="fade-up" [stagger]="90">
-  <h2 id="partners-title">Grow with BiteBox</h2>
-  <div class="partners">
-    <article class="partner restaurant">
-      <np-icon name="store" class="mat-icon" matButtonIcon />
-      <h3>Add your restaurant</h3>
-      <p>Reach more hungry customers, manage your menu and orders from one simple dashboard.</p>
-      <div class="partner-actions">
-        <a mat-flat-button routerLink="/restaurant/register" class="bb-btn-accent">Register restaurant</a>
-        <a mat-button routerLink="/login" class="light">Partner sign in</a>
+<!-- Partner sign-up is for visitors (display only; the routes check roles themselves). -->
+@if (!user()) {
+  <section id="partners" class="bb-container section last" aria-labelledby="partners-title">
+    <np-animate-on-scroll animation="fade-up" [stagger]="90">
+      <div class="section-head">
+        <div>
+          <h2 id="partners-title">Grow with BiteBox</h2>
+          <p class="subtitle">Cook for more people, or earn on your own schedule.</p>
+        </div>
       </div>
-    </article>
-    <article class="partner rider">
-      <np-icon name="bike" class="mat-icon" matButtonIcon />
-      <h3>Ride with us</h3>
-      <p>Choose when you go online, accept deliveries near you and track your earnings.</p>
-      <div class="partner-actions">
-        <a mat-flat-button routerLink="/delivery/register">Become a rider</a>
-        <a mat-button routerLink="/login">Rider sign in</a>
+      <div class="partners">
+        <article class="partner restaurant">
+          <span class="partner-icon"><np-icon name="store" class="mat-icon" matButtonIcon /></span>
+          <h3>Add your restaurant</h3>
+          <p>Reach more hungry customers, manage your menu and orders from one simple dashboard.</p>
+          <div class="actions spaced">
+            <a mat-flat-button routerLink="/restaurant/register" class="bb-btn-accent">Register restaurant</a>
+            <a mat-button routerLink="/login" class="light">Partner sign in</a>
+          </div>
+        </article>
+        <article class="partner rider">
+          <span class="partner-icon"><np-icon name="bike" class="mat-icon" matButtonIcon /></span>
+          <h3>Ride with us</h3>
+          <p>Choose when you go online, accept deliveries near you and track your earnings.</p>
+          <div class="actions spaced">
+            <a mat-flat-button routerLink="/delivery/register">Become a rider</a>
+            <a mat-button routerLink="/login">Rider sign in</a>
+          </div>
+        </article>
       </div>
-    </article>
-  </div>
-  </np-animate-on-scroll>
-</section>
+    </np-animate-on-scroll>
+  </section>
+} @else {
+  <div class="section last" aria-hidden="true"></div>
+}

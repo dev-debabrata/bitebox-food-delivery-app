@@ -8,13 +8,17 @@ import {
   UrlTree,
 } from '@angular/router';
 import { firstValueFrom, isObservable, Observable } from 'rxjs';
-import { Role } from '../../shared/models/user.models';
+import { ADMIN_ROLES, Permission, Role } from '../../shared/models/user.models';
 import { AuthService } from '../auth/auth.service';
-import { customerSiteGuard, guestGuard, roleGuard } from './auth.guards';
+import { customerSiteGuard, guestGuard, permissionGuard, roleGuard } from './auth.guards';
 
 class FakeAuth {
   readonly initialised = signal(true);
   readonly role = signal<Role | null>(null);
+  readonly permissions = signal<Permission[]>([]);
+  can(p: Permission): boolean {
+    return this.permissions().includes(p);
+  }
 }
 
 async function run(guard: typeof guestGuard, url = '/admin/users', path = ''): Promise<boolean | UrlTree> {
@@ -93,6 +97,34 @@ describe('auth guards', () => {
     it('still shows staff the error pages', async () => {
       auth.role.set('admin');
       expect(await run(customerSiteGuard, '/forbidden', 'forbidden')).toBe(true);
+    });
+  });
+
+  describe('permissionGuard', () => {
+    it('lets every admin role into the admin panel shell', async () => {
+      for (const role of ADMIN_ROLES) {
+        auth.role.set(role);
+        expect(await run(roleGuard(...ADMIN_ROLES))).toBe(true);
+      }
+    });
+
+    it('allows an admin with the permission', async () => {
+      auth.role.set('finance_admin');
+      auth.permissions.set(['finance:view', 'payouts:manage']);
+      expect(await run(permissionGuard('payouts:manage'))).toBe(true);
+    });
+
+    it("sends an admin without the permission to their own dashboard", async () => {
+      auth.role.set('support_admin');
+      auth.permissions.set(['support:manage', 'orders:view']);
+      expect(serialize(await run(permissionGuard('finance:view')))).toBe('/admin/support');
+      auth.role.set('operations_admin');
+      auth.permissions.set(['operations:view']);
+      expect(serialize(await run(permissionGuard('admins:manage')))).toBe('/admin/operations');
+    });
+
+    it('sends signed-out visitors to the login page', async () => {
+      expect(serialize(await run(permissionGuard('orders:view')))).toBe('/login');
     });
   });
 });

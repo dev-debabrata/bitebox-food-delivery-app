@@ -42,10 +42,7 @@
       <np-icon name="lock" class="mat-icon" matButtonIcon />Admins can hide, remove or restore a review, never edit its words.
     </p>
     @if (r.response?.text) {
-      <div class="reply">
-        <strong>Restaurant reply</strong>
-        <p>{{ r.response!.text }}</p>
-      </div>
+      <bb-review-reply [reply]="r.response!" [responder]="r.restaurant?.name ?? 'The restaurant'" />
     }
   </section>
 

@@ -15,24 +15,51 @@
     </div>
 
     <mat-nav-list class="nav">
-      @for (item of navItems(); track item.link) {
-        <a
-          mat-list-item
-          [routerLink]="item.link"
-          routerLinkActive="active"
-          #rla="routerLinkActive"
-          [routerLinkActiveOptions]="{ exact: !!item.exact }"
-          [activated]="rla.isActive"
-          [attr.aria-current]="rla.isActive ? 'page' : null"
-        >
-          <np-icon [name]="(item.icon) | npIcon" class="mat-icon" matListItemIcon />
-          <span matListItemTitle>{{ item.label }}</span>
-          @if (item.badge?.(); as count) {
-            <span matListItemMeta class="nav-badge" [attr.aria-label]="count + ' new'">{{ count }}</span>
+      @for (item of navItems(); track item.label) {
+        @if (item.children; as children) {
+          @let open = openGroups().has(item.label);
+          <button
+            mat-list-item
+            type="button"
+            class="group"
+            [class.open]="open"
+            [attr.aria-expanded]="open"
+            (click)="toggleGroup(item.label)"
+          >
+            <np-icon [name]="item.icon | npIcon" class="mat-icon" matListItemIcon />
+            <span matListItemTitle>{{ item.label }}</span>
+            <np-icon matListItemMeta name="chevron-down" class="mat-icon chevron" />
+          </button>
+          @if (open) {
+            <div class="subnav" role="group" [attr.aria-label]="item.label">
+              @for (child of children; track child.link) {
+                <ng-container *ngTemplateOutlet="link; context: { $implicit: child }" />
+              }
+            </div>
           }
-        </a>
+        } @else {
+          <ng-container *ngTemplateOutlet="link; context: { $implicit: item }" />
+        }
       }
     </mat-nav-list>
+
+    <ng-template #link let-item>
+      <a
+        mat-list-item
+        [routerLink]="item.link"
+        routerLinkActive="active"
+        #rla="routerLinkActive"
+        [routerLinkActiveOptions]="{ exact: !!item.exact }"
+        [activated]="rla.isActive"
+        [attr.aria-current]="rla.isActive ? 'page' : null"
+      >
+        <np-icon [name]="item.icon | npIcon" class="mat-icon" matListItemIcon />
+        <span matListItemTitle>{{ item.label }}</span>
+        @if (item.badge?.(); as count) {
+          <span matListItemMeta class="nav-badge" [attr.aria-label]="count + ' new'">{{ count }}</span>
+        }
+      </a>
+    </ng-template>
 
     <div class="sidebar-footer">
       <button mat-button class="signout" (click)="logout()">

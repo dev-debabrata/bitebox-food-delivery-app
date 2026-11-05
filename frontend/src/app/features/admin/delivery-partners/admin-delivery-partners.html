@@ -23,11 +23,11 @@
 }
 
 <div class="bb-card list-card" [attr.aria-busy]="list.loading()">
-  @if (!list.data()) {
+  @if (list.showSkeleton()) {
     @for (i of [1, 2, 3]; track i) {
       <span class="bb-skeleton row-skeleton"></span>
     }
-  } @else if (list.data()!.items.length === 0) {
+  } @else if (list.empty()) {
     <bb-empty-state icon="two_wheeler" title="No delivery partners match these filters" />
   } @else {
     <ul class="rows" [class.dim]="list.loading()">

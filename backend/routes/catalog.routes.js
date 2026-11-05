@@ -3,6 +3,7 @@ import { param } from "express-validator";
 import * as categories from "../controllers/category.controller.js";
 import * as foods from "../controllers/food.controller.js";
 import * as restaurants from "../controllers/restaurant.controller.js";
+import { publicCache } from "../middleware/security.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { getPublicBySlugOrId } from "../services/restaurant.service.js";
 import * as reviews from "../services/review.service.js";
@@ -23,6 +24,7 @@ const slugOrId = param("slugOrId")
   .matches(/^[a-z0-9-]+$/i);
 
 export const restaurantsRouter = Router()
+  .use(publicCache)
   .get("/", validate(publicListRules), restaurants.listPublic)
   .get("/cuisines", restaurants.listCuisines)
   .get("/:slugOrId", validate([slugOrId]), restaurants.getPublic)
@@ -40,9 +42,12 @@ export const restaurantsRouter = Router()
     }),
   );
 
-export const categoriesRouter = Router().get("/", categories.listActive);
+export const categoriesRouter = Router()
+  .use(publicCache)
+  .get("/", categories.listActive);
 
 export const foodsRouter = Router()
+  .use(publicCache)
   .get("/", validate(publicSearchRules), foods.publicSearch)
   .get("/:id", validate([mongoIdParam()]), foods.publicGet)
   .get(

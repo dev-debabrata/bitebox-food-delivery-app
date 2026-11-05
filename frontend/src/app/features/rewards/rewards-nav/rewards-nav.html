@@ -1,0 +1,8 @@
+<nav class="tabs" aria-label="Coins and rewards">
+  @for (l of links; track l.link) {
+    <a [routerLink]="l.link" routerLinkActive="active" ariaCurrentWhenActive="page">
+      <np-icon [name]="l.icon" class="mat-icon" matButtonIcon />
+      {{ l.label }}
+    </a>
+  }
+</nav>

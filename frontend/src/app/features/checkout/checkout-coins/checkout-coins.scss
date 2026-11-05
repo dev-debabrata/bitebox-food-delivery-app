@@ -1,0 +1,50 @@
+.coins {
+  border-left: 4px solid var(--bb-amber);
+}
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--bb-space-2);
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: var(--bb-space-1);
+    margin: 0;
+    // Same size as the other checkout card titles ("Offers", "Bill details").
+    font-size: 1.1rem;
+    --bb-icon-size: 20px;
+  }
+}
+.balance {
+  font-weight: 700;
+  white-space: nowrap;
+}
+.applied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bb-space-2);
+  margin-top: var(--bb-space-2);
+  div {
+    display: flex;
+    flex-direction: column;
+  }
+}
+.coins-form {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--bb-space-2);
+  .bb-field {
+    flex: 1;
+  }
+  button {
+    margin-top: 2px;
+  }
+}
+.small {
+  font-size: 0.85rem;
+}
+.message {
+  margin-bottom: 0;
+}

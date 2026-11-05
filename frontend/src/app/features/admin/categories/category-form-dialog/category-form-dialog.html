@@ -44,6 +44,8 @@
         </button>
       }
     </div>
+    <bb-image-upload [(url)]="imageUrl" label="Add a category photo" aspectRatio="1 / 1" />
+    <p class="hint">A square photo of the food looks best on the home page. Without one, the icon is shown.</p>
     <np-toggle [formField]="form.isActive" label="Active (visible to restaurants and customers)" />
   </mat-dialog-content>
   <mat-dialog-actions align="end">

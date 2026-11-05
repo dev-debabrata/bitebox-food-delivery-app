@@ -33,14 +33,7 @@
     }
   </p>
   @if (r.response; as reply) {
-    <div class="reply">
-      <p class="reply-head">
-        <np-icon name="message-square-reply" class="mat-icon" matButtonIcon />
-        <strong>{{ responder() }} replied</strong>
-        <span class="bb-muted">· {{ reply.updatedAt | date: 'd MMM y' }}</span>
-      </p>
-      <p class="reply-text">{{ reply.text }}</p>
-    </div>
+    <bb-review-reply [reply]="reply" [responder]="responder()" />
   }
   <ng-content />
 </article>

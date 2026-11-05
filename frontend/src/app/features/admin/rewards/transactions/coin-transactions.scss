@@ -1,0 +1,15 @@
+.sub.warn {
+  color: var(--bb-warning);
+}
+.change {
+  font-weight: 700;
+  &.up {
+    color: var(--bb-success);
+  }
+  &.down {
+    color: var(--bb-danger);
+  }
+}
+.one-customer {
+  margin: 0 0 var(--bb-space-3);
+}

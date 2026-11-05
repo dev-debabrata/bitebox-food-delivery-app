@@ -1,0 +1,85 @@
+<bb-page-header title="Coin transactions" subtitle="Every coin earned, held, spent, expired or reversed. Rows are never edited or deleted." />
+
+<div class="bb-filters">
+  <np-text-input [formField]="filters.search" placeholder="Customer name, email or phone" ariaLabel="Search customers" icon="search" clearable />
+  <np-select [formField]="filters.type" ariaLabel="Type" [options]="typeOptions" />
+  <np-select [formField]="filters.source" ariaLabel="Source" [options]="sourceOptions" />
+</div>
+@if (filterModel().userId) {
+  <p class="one-customer">
+    Showing one customer's history.
+    <button class="bb-link-button" type="button" (click)="clearCustomer()">Show everyone</button>
+  </p>
+}
+
+@if (list.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+  </div>
+}
+
+<div class="bb-card bb-list-card" [attr.aria-busy]="list.loading()">
+  @if (list.showSkeleton()) {
+    @for (i of [1, 2, 3, 4, 5]; track i) {
+      <span class="bb-skeleton row"></span>
+    }
+  } @else if (list.empty()) {
+    <bb-empty-state icon="coins" title="No transactions match" message="Try other filters." />
+  } @else {
+    <div class="bb-table-scroll" [class.bb-dim]="list.loading()">
+      <table class="bb-table">
+        <thead>
+          <tr>
+            <th scope="col">When</th>
+            <th scope="col">Customer</th>
+            <th scope="col">What</th>
+            <th scope="col" class="num">Coins</th>
+            <th scope="col" class="num">Balance</th>
+            <th scope="col" class="actions"><span class="bb-sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of list.data()!.items; track t.id) {
+            <tr>
+              <td>{{ t.createdAt | date: 'd MMM y, h:mm a' }}</td>
+              <td>
+                @if (t.customer) {
+                  <button type="button" class="bb-link-button" (click)="wallet(t)">{{ t.customer.name }}</button>
+                  <span class="sub">{{ t.customer.email }}</span>
+                } @else {
+                  –
+                }
+              </td>
+              <td>
+                {{ typeLabel[t.type] }} · {{ sourceLabel[t.source] }}
+                <span class="sub">{{ t.description }}</span>
+                @if (t.note) {
+                  <span class="sub note">Note: {{ t.note }}</span>
+                }
+                @if (t.shortfall) {
+                  <span class="sub warn">{{ t.shortfall }} of {{ t.requestedCoins }} could not be collected</span>
+                }
+              </td>
+              <td class="num change" [class.up]="t.availableChange > 0" [class.down]="t.availableChange < 0">{{ change(t) }}</td>
+              <td class="num">{{ t.balanceAfter }}</td>
+              <td class="actions">
+                @if (canManage && t.type === 'CREDIT') {
+                  <button mat-button type="button" (click)="reverse(t)">Reverse</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <mat-paginator
+      [length]="list.data()!.pagination.total"
+      [pageIndex]="list.data()!.pagination.page - 1"
+      [pageSize]="list.data()!.pagination.limit"
+      [pageSizeOptions]="[20, 50, 100]"
+      (page)="list.onPage($event)"
+      aria-label="Transaction pages"
+    />
+  }
+</div>

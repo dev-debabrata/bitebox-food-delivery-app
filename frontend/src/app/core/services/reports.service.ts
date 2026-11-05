@@ -38,6 +38,10 @@ export class ReportsService {
     status?: PaymentStatus;
     method?: PaymentMethod;
     provider?: PaymentProvider;
+    /** Order number, or the customer's name, email or phone. */
+    search?: string;
+    from?: string;
+    to?: string;
     page?: number;
     limit?: number;
   }): Observable<Paginated<AdminPayment>> {

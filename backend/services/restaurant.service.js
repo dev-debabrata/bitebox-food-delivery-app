@@ -6,6 +6,7 @@ import {
   Restaurant,
 } from "../models/restaurant.model.js";
 import { ApiError } from "../utils/api-error.js";
+import { PERMISSIONS } from "../config/permissions.js";
 import { notify, notifyAdmins } from "./notification.service.js";
 import { escapeRegex, paginationMeta } from "../utils/pagination.js";
 import { toPoint } from "../utils/geo.js";
@@ -86,6 +87,7 @@ export async function createOwnRestaurant(ownerId, input) {
       "New restaurant application",
       "Review it to put it live on BiteBox.",
     ),
+    PERMISSIONS.RESTAURANTS_MANAGE,
   );
   return restaurant;
 }
@@ -111,6 +113,7 @@ export async function updateOwnRestaurant(ownerId, input) {
         "Restaurant resubmitted",
         "The owner updated a rejected application.",
       ),
+      PERMISSIONS.RESTAURANTS_MANAGE,
     );
   return saved;
 }

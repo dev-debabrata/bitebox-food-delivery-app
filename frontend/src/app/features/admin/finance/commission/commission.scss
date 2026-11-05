@@ -1,0 +1,30 @@
+.rates {
+  margin-bottom: var(--bb-space-4);
+
+  h2 {
+    margin: 0 0 var(--bb-space-2);
+  }
+  ul {
+    margin: 0;
+    padding-left: 1.2rem;
+    line-height: 1.7;
+  }
+  .note {
+    margin: var(--bb-space-2) 0 0;
+    font-size: 0.85rem;
+  }
+}
+
+.table-card {
+  margin-top: var(--bb-space-4);
+
+  h2 {
+    margin: 0;
+    padding: var(--bb-space-4) var(--bb-space-4) var(--bb-space-2);
+  }
+}
+
+.empty {
+  margin: 0;
+  padding: 0 var(--bb-space-4) var(--bb-space-4);
+}

@@ -33,6 +33,8 @@ const cartSchema = new mongoose.Schema(
       },
     },
     couponCode: { type: String, trim: true, uppercase: true, maxlength: 30 },
+    // Coins the customer asked to redeem; the quote works out how many actually apply.
+    coinsToRedeem: { type: Number, min: 0, default: 0, validate: Number.isInteger },
   },
 
   { timestamps: true, optimisticConcurrency: true },

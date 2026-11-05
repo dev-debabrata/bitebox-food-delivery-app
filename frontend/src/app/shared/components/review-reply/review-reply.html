@@ -1,0 +1,13 @@
+<p class="head">
+  <np-icon name="message-square-reply" class="mat-icon" />
+  <strong>{{ responder() }} replied</strong>
+  <span class="meta">
+    @if (about()) {
+      to {{ about() }}
+    }
+    @if (reply().updatedAt; as at) {
+      · {{ at | date: 'd MMM y' }}
+    }
+  </span>
+</p>
+<p class="text">{{ reply().text }}</p>

@@ -1,3 +1,4 @@
+import { PERMISSIONS, hasPermission } from "../config/permissions.js";
 import mongoose from "mongoose";
 import { logger } from "../config/logger.js";
 import { DeliveryPartner } from "../models/delivery-partner.model.js";
@@ -27,7 +28,7 @@ const ack = (callback, value) =>
 const isId = (v) => typeof v === "string" && mongoose.isValidObjectId(v);
 
 async function canTrack(user, order) {
-  if (user.role === ROLES.ADMIN) return true;
+  if (hasPermission(user.role, PERMISSIONS.ORDERS_VIEW)) return true;
   if (user.role === ROLES.CUSTOMER) return String(order.customer) === user.id;
   if (user.role === ROLES.DELIVERY)
     return String(order.deliveryPartner) === user.id;

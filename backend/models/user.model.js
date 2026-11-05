@@ -1,13 +1,14 @@
 import mongoose from "mongoose";
+import {
+  ADMIN_ROLES,
+  ALL_ROLES,
+  MEMBER_ROLES,
+  ROLES,
+  STAFF_ADMIN_ROLES,
+} from "../config/roles.js";
+import { permissionsFor } from "../config/permissions.js";
 
-export const ROLES = Object.freeze({
-  CUSTOMER: "customer",
-  ADMIN: "admin",
-  RESTAURANT: "restaurant",
-  DELIVERY: "delivery",
-});
-
-export const ALL_ROLES = Object.values(ROLES);
+export { ADMIN_ROLES, ALL_ROLES, MEMBER_ROLES, ROLES, STAFF_ADMIN_ROLES };
 
 export const SELF_REGISTER_ROLES = [
   ROLES.CUSTOMER,
@@ -61,6 +62,11 @@ const userSchema = new mongoose.Schema(
     passwordResetExpiresAt: { type: Date, select: false },
 
     lastLoginAt: { type: Date },
+
+    // Customers: their own invite code (BITEBOX-NAME7K2Q), made on sign-up or first use.
+    referralCode: { type: String, trim: true, uppercase: true, maxlength: 40 },
+    // Customers: date of birth (UTC midnight of the day) for birthday rewards. Set once.
+    birthDate: { type: Date, default: undefined },
   },
   {
     timestamps: true,
@@ -73,6 +79,8 @@ const userSchema = new mongoose.Schema(
         delete ret.tokenVersion;
         delete ret.passwordResetTokenHash;
         delete ret.passwordResetExpiresAt;
+        // Admin roles carry their permissions so the web app can shape its menu (the API still checks).
+        if (ADMIN_ROLES.includes(ret.role)) ret.permissions = permissionsFor(ret.role);
         return ret;
       },
     },
@@ -85,6 +93,10 @@ userSchema.index(
   { unique: true, partialFilterExpression: { phone: { $type: "string" } } },
 );
 userSchema.index({ role: 1, status: 1, createdAt: -1 });
+userSchema.index(
+  { referralCode: 1 },
+  { unique: true, partialFilterExpression: { referralCode: { $type: "string" } } },
+);
 userSchema.index({ passwordResetTokenHash: 1 }, { sparse: true });
 
 export const User = mongoose.model("User", userSchema);

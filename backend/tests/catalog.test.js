@@ -71,6 +71,16 @@ describe("Restaurants, categories and food", () => {
     return { token, restaurant: created.body.data.restaurant };
   }
 
+  it("lets the CDN cache public catalogue reads but never errors", async () => {
+    const list = await request(app).get("/api/v1/categories");
+    assert.equal(list.status, 200);
+    assert.match(list.headers["cache-control"], /public.*s-maxage=60/);
+
+    const missing = await request(app).get("/api/v1/restaurants/no-such-place");
+    assert.equal(missing.status, 404);
+    assert.equal(missing.headers["cache-control"], "no-store");
+  });
+
   describe("restaurant onboarding (owner)", () => {
     it("creates a pending restaurant that is hidden from customers", async () => {
       const { token } = await registerUser(app, { role: "restaurant" });

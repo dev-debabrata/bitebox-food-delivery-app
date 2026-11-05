@@ -1,0 +1,145 @@
+@use 'breakpoints' as bp;
+
+.page {
+  padding-block: var(--bb-space-5);
+}
+.hero {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-4);
+  background: linear-gradient(135deg, var(--bb-amber-100), var(--bb-surface));
+  border-left: 6px solid var(--bb-amber);
+  p {
+    margin: 0;
+  }
+}
+.hero-icon {
+  --bb-icon-size: 48px;
+  color: var(--bb-amber-600);
+}
+.label {
+  font-weight: 600;
+}
+.balance {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.spend {
+  margin-left: auto;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.tiles,
+.below {
+  margin-top: var(--bb-space-4);
+}
+.tile {
+  height: 92px;
+}
+h2 {
+  margin-top: 0;
+}
+.expiry,
+.earn {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.expiry li {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--bb-space-2) 0;
+  border-bottom: 1px solid var(--bb-border);
+}
+.earn li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--bb-space-2);
+  padding: var(--bb-space-2) 0;
+  --bb-icon-size: 20px;
+  np-icon {
+    color: var(--bb-plum-500);
+    flex: none;
+  }
+}
+.small {
+  font-size: 0.85rem;
+}
+.history {
+  margin-top: var(--bb-space-6);
+}
+.history-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bb-space-3);
+  margin-bottom: var(--bb-space-3);
+  h2 {
+    margin: 0;
+  }
+}
+.type-filter {
+  min-width: 220px;
+}
+.txns {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  li {
+    display: flex;
+    align-items: center;
+    gap: var(--bb-space-3);
+    padding: var(--bb-space-3) var(--bb-space-4);
+  }
+  li + li {
+    border-top: 1px solid var(--bb-border);
+  }
+}
+.what {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.dot {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex: none;
+  --bb-icon-size: 16px;
+  background: var(--bb-surface-alt);
+  &.up {
+    background: #e6f5ec;
+    color: var(--bb-success);
+  }
+  &.down {
+    background: #fdecee;
+    color: var(--bb-danger);
+  }
+}
+.amount {
+  font-weight: 800;
+  white-space: nowrap;
+  &.up {
+    color: var(--bb-success);
+  }
+  &.down {
+    color: var(--bb-danger);
+  }
+  &.flat {
+    color: var(--bb-ink-muted);
+    font-weight: 600;
+  }
+}
+@include bp.phone-only {
+  .hero {
+    flex-wrap: wrap;
+  }
+  .spend {
+    margin-left: 0;
+  }
+}

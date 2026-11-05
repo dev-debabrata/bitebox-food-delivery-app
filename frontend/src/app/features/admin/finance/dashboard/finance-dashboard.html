@@ -1,0 +1,53 @@
+<bb-page-header title="Finance" subtitle="Payments, refunds, commission and money owed to partners in the selected period.">
+  <np-select class="bb-period" [formField]="report.filters.days" ariaLabel="Period" [options]="report.periods" />
+</bb-page-header>
+
+@if (report.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="report.resource.reload()">Retry</button></span>
+  </div>
+}
+
+@if (report.data(); as d) {
+  <section class="bb-grid cols-4" aria-label="Totals" [class.bb-dim]="report.resource.isLoading()">
+    <bb-stat-tile icon="payments" label="Total revenue" [value]="money(d.totals.revenuePaise)" hint="Collected, after refunds" />
+    <bb-stat-tile icon="receipt-text" label="Total transactions" [value]="d.totals.transactions" [hint]="d.totals.pendingPayments + ' awaiting payment'" />
+    <bb-stat-tile icon="task_alt" label="Successful payments" [value]="d.totals.successfulPayments" />
+    <bb-stat-tile icon="cancel" label="Failed payments" [value]="d.totals.failedPayments" />
+    <bb-stat-tile
+      icon="hand-coins"
+      label="Pending payouts"
+      [value]="money(d.totals.pendingPayoutPaise)"
+      hint="Owed to restaurants and riders"
+    />
+    <bb-stat-tile icon="undo-2" label="Total refunds" [value]="money(d.totals.refundedPaise)" [hint]="d.totals.refunds + ' refunded payments'" />
+    <bb-stat-tile icon="percent" label="Platform commission" [value]="money(d.totals.platformCommissionPaise)" hint="From delivered orders" />
+  </section>
+
+  <div class="bb-grid cols-2 below">
+    <bb-daily-chart title="Revenue by day" [dates]="dates()" [series]="revenueSeries()" [format]="money" />
+
+    <section class="bb-card" aria-labelledby="split-title">
+      <h2 class="bb-h3" id="split-title">Where the money went</h2>
+      <p class="bb-muted note">Settled on delivery. Amounts owed are paid out from the payout pages.</p>
+      @for (r of split(); track r.label) {
+        <div class="bb-bar-row">
+          <span>{{ r.label }}</span>
+          <span class="num">{{ money(r.paise) }}</span>
+          <span class="track"><span class="fill" [style.width.%]="r.share * 100"></span></span>
+        </div>
+      }
+      <div class="links">
+        <a mat-stroked-button routerLink="/admin/finance/payouts/restaurant">Restaurant payouts</a>
+        <a mat-stroked-button routerLink="/admin/finance/payouts/rider">Rider payments</a>
+      </div>
+    </section>
+  </div>
+} @else if (!report.error()) {
+  <section class="bb-grid cols-4">
+    @for (i of [1, 2, 3, 4, 5, 6, 7]; track i) {
+      <span class="bb-skeleton tile"></span>
+    }
+  </section>
+}

@@ -7,7 +7,7 @@
   <mat-tab>
     <ng-template mat-tab-label>
       Reported
-      @if (list.data()?.counts?.reported; as n) {
+      @if (reportedCount(); as n) {
         <span class="count alert">{{ n }}</span>
       }
     </ng-template>
@@ -36,11 +36,11 @@
   }
 
   <div class="bb-card list-card" [attr.aria-busy]="list.loading()">
-    @if (!list.data()) {
+    @if (list.showSkeleton()) {
       @for (i of [1, 2, 3, 4]; track i) {
         <span class="bb-skeleton row-skeleton"></span>
       }
-    } @else if (list.data()!.items.length === 0) {
+    } @else if (list.empty()) {
       <bb-empty-state
         [icon]="tab() === 'reported' ? 'verified_user' : 'star'"
         [title]="tab() === 'reported' ? 'No reported reviews' : 'No reviews match these filters'"

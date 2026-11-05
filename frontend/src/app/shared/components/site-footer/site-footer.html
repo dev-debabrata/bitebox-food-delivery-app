@@ -1,0 +1,130 @@
+<ng-template #linkTpl let-link>
+  @if (link.href) {
+    <a [href]="link.href" target="_blank" rel="noopener noreferrer">{{ link.label }}</a>
+  } @else {
+    <a [routerLink]="link.route" [queryParams]="link.queryParams" [fragment]="link.fragment">{{ link.label }}</a>
+  }
+</ng-template>
+
+<footer class="site-footer" [class.compact]="compact()">
+  @if (!compact()) {
+    <div class="bb-container">
+      <!-- Newsletter (and app badges once the apps exist) -->
+      <section class="newsletter" aria-labelledby="newsletter-title">
+        <div class="newsletter-text">
+          <h2 id="newsletter-title">Get delicious updates!</h2>
+          <p>Subscribe to receive exclusive offers, new restaurant updates, and special rewards.</p>
+        </div>
+        <bb-newsletter-signup class="newsletter-form" />
+        @if (apps.length) {
+          <div class="apps">
+            <h3>Enjoy BiteBox on the go!</h3>
+            @for (app of apps; track app.label) {
+              <a class="app-badge" [href]="app.href" target="_blank" rel="noopener noreferrer">
+                <np-icon [name]="app.icon!" class="mat-icon" matButtonIcon />{{ app.label }}
+              </a>
+            }
+          </div>
+        }
+      </section>
+
+      <div class="main">
+        <!-- Brand -->
+        <section class="brand" aria-label="About BiteBox">
+          <a routerLink="/" class="logo" aria-label="BiteBox home"><bb-brand-logo variant="light" [height]="34" /></a>
+          <p>
+            Discover your favourite meals and get delicious food delivered straight to your doorstep. Fresh food, great
+            restaurants, and fast delivery — all in one place.
+          </p>
+          @if (social.length) {
+            <ul class="social" aria-label="Follow us">
+              @for (s of social; track s.label) {
+                <li>
+                  <a [href]="s.href" target="_blank" rel="noopener noreferrer" [attr.aria-label]="s.label + ' (opens in a new tab)'">
+                    <np-icon [name]="s.icon!" class="mat-icon" matButtonIcon />
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
+        <!-- Link groups: columns on wider screens, an accordion on phones -->
+        <div class="groups">
+          @for (g of groups(); track g.title; let i = $index) {
+            <nav class="group" [attr.aria-labelledby]="'footer-group-' + i">
+              @if (phone()) {
+                <h2 class="group-title">
+                  <button
+                    type="button"
+                    class="group-toggle"
+                    [id]="'footer-group-' + i"
+                    [attr.aria-expanded]="openGroup() === g.title"
+                    [attr.aria-controls]="'footer-links-' + i"
+                    (click)="toggle(g.title)"
+                  >
+                    {{ g.title }}
+                    <np-icon name="chevron-down" class="mat-icon chevron" aria-hidden="true" />
+                  </button>
+                </h2>
+              } @else {
+                <h2 class="group-title" [id]="'footer-group-' + i">{{ g.title }}</h2>
+              }
+              <ul class="links" [id]="'footer-links-' + i" [hidden]="phone() && openGroup() !== g.title">
+                @for (link of g.links; track link.label) {
+                  <li><ng-container *ngTemplateOutlet="linkTpl; context: { $implicit: link }" /></li>
+                }
+              </ul>
+            </nav>
+          }
+        </div>
+      </div>
+
+      <!-- Partners (visitors only) -->
+      @if (!signedIn()) {
+        <section class="partners" aria-label="Partner with BiteBox">
+          @for (p of partners; track p.title) {
+            <article class="partner">
+              <span class="partner-icon"><np-icon [name]="p.icon" class="mat-icon" matButtonIcon /></span>
+              <div>
+                <h2>{{ p.title }}</h2>
+                <p>{{ p.text }}</p>
+                <div class="partner-links">
+                  @for (link of p.links; track link.label; let first = $first) {
+                    <a [routerLink]="link.route" [class.primary]="first">{{ link.label }}</a>
+                  }
+                </div>
+              </div>
+            </article>
+          }
+        </section>
+      }
+
+      <!-- Payment methods accepted at checkout -->
+      @if (payments().length) {
+        <section class="payments" aria-labelledby="payments-title">
+          <h2 id="payments-title">We accept</h2>
+          <ul>
+            @for (p of payments(); track p.label) {
+              <li><np-icon [name]="p.icon" class="mat-icon" matButtonIcon />{{ p.label }}</li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+  }
+
+  <!-- Bottom bar -->
+  <div class="bottom">
+    <div class="bb-container bottom-inner">
+      <p>&copy; {{ year }} BiteBox. All rights reserved.</p>
+      @if (bottomLinks.length) {
+        <ul class="bottom-links" aria-label="Legal and help">
+          @for (link of bottomLinks; track link.label) {
+            <li><ng-container *ngTemplateOutlet="linkTpl; context: { $implicit: link }" /></li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+</footer>

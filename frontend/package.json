@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "NG_BUILD_SASS_EMBEDDED=0 ng serve",
-    "build": "node build.mjs",
+    "build": "NG_BUILD_SASS_EMBEDDED=0 ng build && cp dist/frontend/browser/index.csr.html dist/frontend/browser/index.html",
     "watch": "NG_BUILD_SASS_EMBEDDED=0 ng build --watch --configuration development",
     "test": "NG_BUILD_SASS_EMBEDDED=0 ng test",
     "serve:ssr:frontend": "node dist/frontend/server/server.mjs"

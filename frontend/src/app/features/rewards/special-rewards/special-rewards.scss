@@ -1,0 +1,100 @@
+.page {
+  padding-block: var(--bb-space-5);
+}
+.perk {
+  h2 {
+    margin: var(--bb-space-2) 0;
+  }
+  p {
+    margin: var(--bb-space-1) 0;
+  }
+}
+.perk-icon {
+  --bb-icon-size: 32px;
+  color: var(--bb-amber-600);
+}
+// Stacked: the narrow card has no room to line a button up beside a labelled field,
+// and an error line under the field must not push the button out of place.
+.birthday-form {
+  display: grid;
+  gap: var(--bb-space-2);
+  margin-top: var(--bb-space-2);
+  button {
+    width: 100%;
+  }
+}
+.offers,
+.history {
+  margin-top: var(--bb-space-6);
+}
+.offers h2 {
+  margin-top: 0;
+}
+.campaign {
+  display: flex;
+  flex-direction: column;
+  border-top: 4px solid var(--bb-info);
+  &.festival {
+    border-top-color: var(--bb-amber);
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  h3 {
+    margin: var(--bb-space-2) 0 var(--bb-space-1);
+  }
+  footer {
+    margin-top: auto;
+    padding-top: var(--bb-space-3);
+  }
+}
+.reward {
+  color: var(--bb-success);
+}
+.terms {
+  margin: var(--bb-space-2) 0 0;
+  padding-left: 1.1em;
+  color: var(--bb-ink-muted);
+}
+.history-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bb-space-3);
+  margin-bottom: var(--bb-space-3);
+  h2 {
+    margin: 0;
+  }
+}
+.type-filter {
+  min-width: 200px;
+}
+.claims {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  li {
+    display: flex;
+    align-items: center;
+    gap: var(--bb-space-3);
+    padding: var(--bb-space-3) var(--bb-space-4);
+    div {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+  }
+  li + li {
+    border-top: 1px solid var(--bb-border);
+  }
+}
+.coins {
+  font-weight: 800;
+  color: var(--bb-success);
+}
+.small {
+  font-size: 0.85rem;
+}

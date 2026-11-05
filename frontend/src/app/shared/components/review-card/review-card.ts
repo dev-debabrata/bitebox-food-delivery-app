@@ -4,6 +4,7 @@ import { DatePipe } from '@angular/common';
 import { IconComponent } from 'nexprime';
 import { RATING_WORDS, ReviewResponse } from '../../models/review.models';
 import { Stars } from '../stars/stars';
+import { ReviewReply } from '../review-reply/review-reply';
 import { openPhotoViewer } from '../photo-viewer/photo-viewer';
 
 export interface ReviewCardData {
@@ -21,7 +22,7 @@ export interface ReviewCardData {
 /** One review: stars, words, author and date, and the restaurant's reply. Actions are projected. */
 @Component({
   selector: 'bb-review-card',
-  imports: [DatePipe, IconComponent, Stars],
+  imports: [DatePipe, IconComponent, Stars, ReviewReply],
   templateUrl: './review-card.html',
   styleUrl: './review-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

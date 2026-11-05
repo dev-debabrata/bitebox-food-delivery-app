@@ -15,6 +15,7 @@ import { ApiError } from "../utils/api-error.js";
 import { settlementFor } from "./earnings.service.js";
 import { notifyStatusChange } from "./order-notifications.js";
 import { settleCancelledPayment } from "./payments/payment.service.js";
+import * as rewardEvents from "./reward-events.js";
 
 const S = ORDER_STATUS;
 
@@ -156,6 +157,7 @@ async function afterTransition(order) {
       releaseCoupon(order),
       settleCancelledPayment(order),
       releaseRider(order),
+      rewardEvents.orderClosed(order),
     );
   }
   if (order.status === S.DELIVERED) {
@@ -172,6 +174,7 @@ async function afterTransition(order) {
         { user: order.deliveryPartner, activeOrder: order._id },
         { $set: { activeOrder: null }, $inc: { completedDeliveries: 1 } },
       ),
+      rewardEvents.orderDelivered(order),
     );
   }
   const results = await Promise.allSettled(tasks);

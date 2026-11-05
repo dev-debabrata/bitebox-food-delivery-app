@@ -12,6 +12,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, filter, firstValueFrom, of } from 'rxjs';
 import { errorCode, errorMessage } from '../../core/services/api-error';
 import { CartActions } from '../../core/services/cart-actions.service';
+import { newIdempotencyKey } from '../../core/services/idempotency';
 import { CartService } from '../../core/services/cart.service';
 import { DeliveryLocationService } from '../../core/services/delivery-location.service';
 import { AddressService, OrderService } from '../../core/services/checkout-api.service';
@@ -20,18 +21,13 @@ import { PaymentService } from '../../core/services/payment.service';
 import { CheckoutSession, PaymentMethod } from '../../shared/models/payment.models';
 import { AddressFormDialog } from '../../shared/components/address-form-dialog/address-form-dialog';
 import { BillSummary } from '../../shared/components/bill-summary/bill-summary';
+import { CheckoutCoins } from './checkout-coins/checkout-coins';
 import { EmptyState } from '../../shared/components/empty-state/empty-state';
 import { QtyStepper } from '../../shared/components/qty-stepper/qty-stepper';
 import { VegBadge } from '../../shared/components/veg-badge/veg-badge';
 import { CouponOffer, DeliveryAddress } from '../../shared/models/checkout.models';
-import { InrPipe } from '../../shared/pipes/money.pipes';
+import { InrPipe, formatPaise } from '../../shared/pipes/money.pipes';
 
-function newIdempotencyKey(): string {
-  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
-  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) =>
-    b.toString(16).padStart(2, '0'),
-  ).join('');
-}
 
 import { shownError } from '../../shared/forms/form-errors';
 import { NP_FORM_FIELDS } from '../../shared/forms/np-form-fields';
@@ -48,6 +44,7 @@ import { NP_FORM_FIELDS } from '../../shared/forms/np-form-fields';
     MatProgressSpinnerModule,
     MatRadioModule,
     BillSummary,
+    CheckoutCoins,
     EmptyState,
     QtyStepper,
     VegBadge,
@@ -150,6 +147,20 @@ export class Checkout {
     });
   }
 
+  protected applyCoins(coins: number): void {
+    this.cart.setCoins(coins).subscribe({
+      next: (quote) => {
+        if (quote.coins?.applied)
+          this.notify.success(`${quote.coins.applied} coins applied — you save ${formatPaise(quote.coins.discountPaise)}`);
+      },
+      error: (err: unknown) => this.notify.error(errorMessage(err)),
+    });
+  }
+
+  protected removeCoins(): void {
+    this.cart.removeCoins().subscribe({ error: (err: unknown) => this.notify.error(errorMessage(err)) });
+  }
+
   protected removeCoupon(): void {
     this.cart
       .removeCoupon()
@@ -217,7 +228,10 @@ export class Checkout {
             code === 'CART_CHANGED' ||
             code === 'CHECKOUT_BLOCKED' ||
             code === 'COUPON_INVALID' ||
-            code === 'COUPON_EXHAUSTED'
+            code === 'COUPON_EXHAUSTED' ||
+            // The coin balance changed (spent elsewhere, expired): re-price with what is left.
+            code === 'INSUFFICIENT_COINS' ||
+            code === 'COINS_NOT_ALLOWED'
           ) {
             this.idempotencyKey = newIdempotencyKey();
             this.cart.refresh().subscribe();

@@ -19,10 +19,14 @@
     opacity: 0.6;
   }
 }
-.icon {
-  width: 44px;
-  height: 44px;
+.thumb {
+  width: 56px;
+  height: 56px;
   border-radius: 12px;
+  object-fit: cover;
+  background: var(--bb-amber-100);
+}
+.icon {
   display: grid;
   place-items: center;
   background: var(--bb-amber-100);

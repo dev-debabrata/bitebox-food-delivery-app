@@ -1,0 +1,32 @@
+// Top progress bar shown while API calls are in flight (see core/services/page-loader.ts).
+.page-loader {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 10000; // above toolbars, dialogs and Leaflet panes
+  height: 3px;
+  overflow: hidden;
+  background: var(--bb-amber-100);
+  pointer-events: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0 60% 0 0;
+    background: var(--bb-amber);
+    animation: page-loader 1.1s ease-in-out infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+      right: 0;
+      animation: none;
+    }
+  }
+}
+
+@keyframes page-loader {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}

@@ -57,6 +57,37 @@ export const CUSTOMER_ROUTES: Routes = [
     loadComponent: () => import('./addresses/addresses').then((m) => m.Addresses),
   },
   {
+    path: 'account/coins',
+    title: 'My coins | BiteBox',
+    canActivate: [roleGuard('customer')],
+    loadComponent: () => import('../rewards/coins-wallet/coins-wallet').then((m) => m.CoinsWallet),
+  },
+  {
+    path: 'account/refer',
+    title: 'Refer & earn | BiteBox',
+    canActivate: [roleGuard('customer')],
+    loadComponent: () => import('../rewards/refer-earn/refer-earn').then((m) => m.ReferEarn),
+  },
+  {
+    path: 'account/rewards',
+    title: 'Rewards | BiteBox',
+    canActivate: [roleGuard('customer')],
+    loadComponent: () =>
+      import('../rewards/special-rewards/special-rewards').then((m) => m.SpecialRewards),
+  },
+  {
+    path: 'support',
+    title: 'Help & support | BiteBox',
+    canActivate: [roleGuard('customer')],
+    loadComponent: () => import('../support/my-tickets/my-tickets').then((m) => m.MyTickets),
+  },
+  {
+    path: 'support/:id',
+    title: 'Support ticket | BiteBox',
+    canActivate: [roleGuard('customer')],
+    loadComponent: () => import('../support/my-ticket/my-ticket').then((m) => m.MyTicket),
+  },
+  {
     path: 'forbidden',
     title: 'Access denied | BiteBox',
     loadComponent: () => import('../errors/forbidden/forbidden').then((m) => m.Forbidden),

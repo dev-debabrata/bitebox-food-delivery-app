@@ -1,3 +1,4 @@
+import { PERMISSIONS } from "../config/permissions.js";
 import { ORDER_STATUS } from "../models/order.model.js";
 import { emitOrderUpdated } from "../sockets/events.js";
 import {
@@ -8,7 +9,7 @@ import {
 
 const S = ORDER_STATUS;
 const ref = (order) => `Order ${order.orderNumber}`;
-const rupees = (paise) => `₹${(paise / 100).toFixed(2).replace(/\.00$/, "")}`;
+export const rupees = (paise) => `₹${(paise / 100).toFixed(2).replace(/\.00$/, "")}`;
 const dishes = (order) =>
   `${order.items.length} dish${order.items.length === 1 ? "" : "es"}`;
 
@@ -40,7 +41,11 @@ const toAdmins = (
   title,
   body,
   { type = `order.${order.status}`, link = "/admin/orders" } = {},
-) => notifyAdmins({ type, title, body, link, order: order._id });
+) =>
+  notifyAdmins(
+    { type, title, body, link, order: order._id },
+    PERMISSIONS.ORDERS_MANAGE,
+  );
 
 /** The order has just reached the restaurant (cash: when placed; online: once paid). */
 export async function notifyNewOrder(order, how) {

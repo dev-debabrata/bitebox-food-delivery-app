@@ -1,7 +1,7 @@
 import { body } from "express-validator";
 import { ALL_ROLES, SELF_REGISTER_ROLES } from "../models/user.model.js";
 
-const email = () =>
+export const email = () =>
   body("email")
     .isString()
     .withMessage("Email is required")
@@ -16,7 +16,7 @@ const email = () =>
       gmail_remove_subaddress: false,
     });
 
-const newPassword = (field = "password") =>
+export const newPassword = (field = "password") =>
   body(field)
     .isString()
     .withMessage("Password is required")
@@ -30,7 +30,7 @@ const newPassword = (field = "password") =>
     .matches(/[0-9]/)
     .withMessage("Password must contain a number");
 
-const name = () =>
+export const name = () =>
   body("name")
     .isString()
     .withMessage("Name is required")
@@ -39,7 +39,7 @@ const name = () =>
     .isLength({ min: 2, max: 80 })
     .withMessage("Name must be 2-80 characters");
 
-const phone = () =>
+export const phone = () =>
   body("phone")
     .optional({ values: "falsy" })
     .isString()
@@ -54,6 +54,13 @@ export const registerRules = [
   phone(),
   newPassword(),
   body("role").optional().isIn(SELF_REGISTER_ROLES).withMessage("Invalid role"),
+  body("referralCode")
+    .optional({ values: "falsy" })
+    .isString()
+    .trim()
+    .toUpperCase()
+    .matches(/^[A-Z0-9-]{4,40}$/)
+    .withMessage("Enter a valid referral code"),
 ];
 
 export const loginRules = [

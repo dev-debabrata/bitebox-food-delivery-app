@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -12,6 +12,7 @@ import { ReviewOrderRow } from '../../../shared/components/review-order-row/revi
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { pagedList } from '../../../shared/list/paged-list';
 import {
+  AdminOrderReviewPage,
   AdminOrderReviews,
   ReviewStatus,
   ReviewTarget,
@@ -85,7 +86,15 @@ export class AdminReviews {
     },
   );
 
+  /** Tab badge; keeps the last count while the list is cleared for a tab switch. */
+  protected readonly reportedCount = linkedSignal<AdminOrderReviewPage | null, number | undefined>({
+    source: this.list.data,
+    computation: (page, previous) => (page ? page.counts?.reported : previous?.value),
+  });
+
   protected selectTab(index: number): void {
+    if (index === this.activeTab()) return;
+    this.list.clear(); // the other tab's rows would otherwise show, dimmed, until the new list loads
     this.activeTab.set(index);
   }
 

@@ -11,6 +11,7 @@ import {
   switchMap,
   timer,
 } from 'rxjs';
+import { inBackground } from './page-loader';
 import { OrderEvent, RealtimeService } from './realtime.service';
 
 export function pollWhileVisible<T>(
@@ -20,12 +21,13 @@ export function pollWhileVisible<T>(
 ): Observable<T> {
   const visible = () => document.visibilityState !== 'hidden';
   const becameVisible = fromEvent(document, 'visibilitychange').pipe(filter(visible));
+  // Only the first load shows the page loader; repeat polls refresh quietly.
   return merge(
-    becameVisible.pipe(map(() => 'now')),
-    timer(intervalMs, intervalMs).pipe(filter(visible)),
+    becameVisible.pipe(map(() => false)),
+    timer(intervalMs, intervalMs).pipe(map(() => false), filter(visible)),
   ).pipe(
-    startWith('now'),
-    switchMap(() => request()),
+    startWith(true),
+    switchMap((first) => (first ? request() : inBackground(request()))),
   );
 }
 
@@ -41,7 +43,7 @@ export function liveRefresh<T>(
     inject(RealtimeService).orderUpdates$.pipe(
       filter(when),
       debounceTime(debounceMs),
-      switchMap(request),
+      switchMap(() => inBackground(request())),
     ),
     pollWhileVisible(request, pollMs),
   );

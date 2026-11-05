@@ -1,6 +1,7 @@
-<bb-page-header title="Payments" subtitle="Cash, online and test payments. Failed refunds are flagged for a retry." />
+<bb-page-header title="Transactions" subtitle="Every customer payment: cash, online and test. Search by order number or customer to see a payment history." />
 
 <div class="filters">
+  <np-text-input [formField]="filters.search" ariaLabel="Search transactions" placeholder="Order number, customer name, email or phone" icon="search" clearable />
   <np-select [formField]="filters.status" ariaLabel="Payment status" [options]="statusOptions" />
   <np-select [formField]="filters.method" ariaLabel="Payment method" [options]="methodOptions" />
 </div>
@@ -13,11 +14,11 @@
 }
 
 <div class="bb-card list-card" [attr.aria-busy]="list.loading()">
-  @if (!list.data()) {
+  @if (list.showSkeleton()) {
     @for (i of [1, 2, 3, 4, 5]; track i) {
       <span class="bb-skeleton row-skeleton"></span>
     }
-  } @else if (list.data()!.items.length === 0) {
+  } @else if (list.empty()) {
     <bb-empty-state icon="payments" title="No payments match these filters" />
   } @else {
     <ul class="rows" [class.bb-dim]="list.loading()">
@@ -25,11 +26,14 @@
         <li class="row">
           <div class="main">
             @if (p.order; as o) {
-              <button type="button" class="bb-link-button order" (click)="openOrder(p)">{{ o.orderNumber }}</button>
+              <button type="button" class="bb-link-button order" (click)="details(p)">{{ o.orderNumber }}</button>
             } @else {
               <strong>Order removed</strong>
             }
             <span class="bb-muted">
+              @if (p.customer) {
+                {{ p.customer.name }} ·
+              }
               {{ providerLabel[p.provider] }} · {{ p.createdAt | date: 'd MMM, h:mm a' }}
               @if (p.providerPaymentId) {
                 · <span class="ref">{{ p.providerPaymentId }}</span>
@@ -42,7 +46,7 @@
           <span class="amount">{{ p.amountPaise | inr }}</span>
           <span class="pay-status pay-{{ p.status }}">{{ statusLabel[p.status] }}</span>
           <div class="action">
-            @if (p.refundNeeded) {
+            @if (p.refundNeeded && canRefund) {
               <button mat-stroked-button type="button" [disabled]="refunding() === p.id" (click)="retryRefund(p)">
                 <np-icon name="rotate-ccw" class="mat-icon" matButtonIcon />
                 Retry refund

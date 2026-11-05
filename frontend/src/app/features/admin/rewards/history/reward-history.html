@@ -1,0 +1,57 @@
+<bb-page-header title="Reward history" subtitle="Welcome, birthday, festival and promotional rewards given to customers." />
+
+<div class="bb-filters">
+  <np-select [formField]="filters.rewardType" ariaLabel="Reward type" [options]="typeOptions" />
+</div>
+
+@if (list.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+  </div>
+}
+
+<div class="bb-card bb-list-card" [attr.aria-busy]="list.loading()">
+  @if (list.showSkeleton()) {
+    @for (i of [1, 2, 3, 4]; track i) {
+      <span class="bb-skeleton row"></span>
+    }
+  } @else if (list.empty()) {
+    <bb-empty-state icon="gift" title="No rewards given yet" />
+  } @else {
+    <div class="bb-table-scroll" [class.bb-dim]="list.loading()">
+      <table class="bb-table">
+        <thead>
+          <tr>
+            <th scope="col">When</th>
+            <th scope="col">Customer</th>
+            <th scope="col">Reward</th>
+            <th scope="col" class="num">Coins</th>
+            <th scope="col">State</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of list.data()!.items; track r.id) {
+            <tr>
+              <td>{{ r.claimedAt | date: 'd MMM y, h:mm a' }}</td>
+              <td>{{ r.customer?.name ?? '–' }} <span class="sub">{{ r.customer?.email }}</span></td>
+              <td>{{ r.campaign?.name ?? typeLabel[r.rewardType] + ' bonus' }} <span class="sub">{{ typeLabel[r.rewardType] }}</span></td>
+              <td class="num">{{ r.coins }}</td>
+              <td>
+                <span class="bb-badge {{ r.status === 'ISSUED' ? 'tone-good' : 'tone-warn' }}">{{ r.status === 'ISSUED' ? 'Paid' : 'Paying' }}</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <mat-paginator
+      [length]="list.data()!.pagination.total"
+      [pageIndex]="list.data()!.pagination.page - 1"
+      [pageSize]="list.data()!.pagination.limit"
+      [pageSizeOptions]="[20, 50, 100]"
+      (page)="list.onPage($event)"
+      aria-label="Reward history pages"
+    />
+  }
+</div>

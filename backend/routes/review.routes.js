@@ -1,5 +1,7 @@
 import { Router } from "express";
-import { authenticate, authorize } from "../middleware/auth.middleware.js";
+import { PERMISSIONS } from "../config/permissions.js";
+import { authenticate, authorize, can } from "../middleware/auth.middleware.js";
+import { audited } from "../services/audit.service.js";
 import { createRateLimiter } from "../middleware/security.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { env } from "../config/env.js";
@@ -84,7 +86,7 @@ export const reviewsRouter = Router()
 
 /** /api/v1/admin/reviews: the moderation queue, decisions and rating analytics. */
 export const adminReviewsRouter = Router()
-  .use(authenticate, authorize(ROLES.ADMIN))
+  .use(authenticate, can(PERMISSIONS.REVIEWS_MODERATE))
   .get(
     "/orders",
     validate(rules.adminListRules),
@@ -113,6 +115,9 @@ export const adminReviewsRouter = Router()
   .post(
     "/:id/moderation",
     validate(rules.moderateRules),
+    audited("review.moderate", "review", (req) =>
+      `Review ${moderation.PAST[req.body.action]}: ${req.body.reason}`,
+    ),
     respond(
       asReview((req) =>
         moderation.moderate(req.user._id, req.params.id, req.body),

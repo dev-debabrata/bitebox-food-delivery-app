@@ -52,7 +52,8 @@ export class AdminUsers implements OnInit {
 
   protected readonly roleMeta = ROLE_META;
   protected readonly roleLabel = (role: Role) => ROLE_META[role].label;
-  protected readonly roles = Object.keys(ROLE_META) as Role[];
+  /** Admin accounts are managed in Admin management, not here. */
+  protected readonly roles: Role[] = ['customer', 'restaurant', 'delivery'];
   protected readonly columns = ['name', 'phone', 'role', 'status', 'createdAt', 'actions'];
 
   protected readonly currentUserId = computed(() => this.auth.user()?.id);

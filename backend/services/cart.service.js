@@ -6,8 +6,9 @@ import { FoodItem } from "../models/food-item.model.js";
 import { RESTAURANT_STATUS, Restaurant } from "../models/restaurant.model.js";
 import { ApiError } from "../utils/api-error.js";
 import { haversineMeters } from "../utils/geo.js";
+import * as coinsService from "./coins.service.js";
 import * as couponService from "./coupon.service.js";
-import { computePricing } from "./pricing.service.js";
+import { computePricing, couponDiscount } from "./pricing.service.js";
 
 /** Retries a load-modify-save once if a concurrent edit bumped the cart version. */
 async function mutateCart(userId, mutate) {
@@ -20,6 +21,7 @@ async function mutateCart(userId, mutate) {
       if (cart.items.length === 0) {
         cart.restaurant = undefined;
         cart.couponCode = undefined;
+        cart.coinsToRedeem = 0;
       }
       return await cart.save();
     } catch (error) {
@@ -135,6 +137,26 @@ export async function removeCoupon(userId) {
 }
 
 /**
+ * Asks to pay part of the order with coins. The amount must be usable on the current cart
+ * (minimum, caps); it is stored clamped to what can apply now and re-checked on every quote.
+ */
+export async function setCoins(userId, coins) {
+  if (coins === 0) return removeCoins(userId);
+  const quote = await buildQuote(userId);
+  if (!quote.cart) throw ApiError.badRequest("Add dishes to your cart first");
+  coinsService.assertRedeemable(quote.coins, coins);
+  await mutateCart(userId, async (cart) => {
+    cart.coinsToRedeem = Math.min(coins, quote.coins.maxRedeemable);
+  });
+}
+
+export async function removeCoins(userId) {
+  await mutateCart(userId, async (cart) => {
+    cart.coinsToRedeem = 0;
+  });
+}
+
+/**
  * Prices the customer's cart from current database values and reports
  * anything that blocks checkout. This is the single source of truth used by
  * both the cart page and order placement.
@@ -145,6 +167,7 @@ export async function buildQuote(userId, { addressId } = {}) {
     cart: null,
     coupon: null,
     couponError: null,
+    coins: null,
     address: null,
     delivery: null,
     pricing: computePricing({ subtotalPaise: 0 }),
@@ -245,7 +268,17 @@ export async function buildQuote(userId, { addressId } = {}) {
     }
   }
 
-  const pricing = computePricing({ subtotalPaise, coupon, distanceMeters });
+  // Coins: worked out on the food value after the coupon, then taken off the payable total.
+  const coins = await coinsService.quoteForCart(userId, {
+    requested: cart.coinsToRedeem ?? 0,
+    foodPaise: subtotalPaise - couponDiscount(coupon, subtotalPaise),
+  });
+  const pricing = computePricing({
+    subtotalPaise,
+    coupon,
+    distanceMeters,
+    coinDiscountPaise: coins.discountPaise,
+  });
 
   return {
     cart: {
@@ -273,6 +306,7 @@ export async function buildQuote(userId, { addressId } = {}) {
         }
       : null,
     couponError,
+    coins,
     address: address?.toJSON() ?? null,
     delivery:
       distanceMeters === null

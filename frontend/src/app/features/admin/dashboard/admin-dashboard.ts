@@ -5,9 +5,10 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { forkJoin } from 'rxjs';
+import { forkJoin, map } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AdminCatalogService } from '../../../core/services/admin/admin-catalog.service';
+import { AdminStaffService } from '../../../core/services/admin/admin-staff.service';
 import { AdminUsersService } from '../../../core/services/admin/admin-users.service';
 import { errorMessage } from '../../../core/services/api-error';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
@@ -34,6 +35,7 @@ interface StatCard {
 export class AdminDashboard {
   private readonly users = inject(AdminUsersService);
   private readonly catalog = inject(AdminCatalogService);
+  private readonly staff = inject(AdminStaffService);
   protected readonly user = inject(AuthService).user;
   protected readonly roleMeta = ROLE_META;
 
@@ -57,7 +59,7 @@ export class AdminDashboard {
       customer: this.users.countByRole('customer'),
       restaurant: this.users.countByRole('restaurant'),
       delivery: this.users.countByRole('delivery'),
-      admin: this.users.countByRole('admin'),
+      admin: this.staff.list({ limit: 1 }).pipe(map((page) => page.pagination.total)),
       recent: this.users.list({ limit: 5 }),
       restaurants: this.catalog.restaurantCounts(),
     }).subscribe({

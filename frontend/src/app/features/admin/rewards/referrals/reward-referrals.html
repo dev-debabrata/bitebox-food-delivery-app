@@ -1,0 +1,118 @@
+<bb-page-header title="Referrals" subtitle="Who invited whom, how far each friend got, and referrals held for a closer look.">
+  <button mat-stroked-button type="button" (click)="showHeld()">
+    <np-icon name="shield-alert" class="mat-icon" matButtonIcon />Held for review
+    @if (list.data()?.counts?.['HELD']; as held) {
+      <span class="bb-badge tone-bad count">{{ held }}</span>
+    }
+  </button>
+</bb-page-header>
+
+<div class="bb-filters">
+  <np-text-input [formField]="filters.search" placeholder="Name, email or code" ariaLabel="Search referrals" icon="search" clearable />
+  <np-select [formField]="filters.status" ariaLabel="Stage" [options]="statusOptions" />
+  <np-select [formField]="filters.rewardStatus" ariaLabel="Reward" [options]="rewardOptions" />
+  <np-toggle class="flagged" [formField]="filters.flagged" label="Only with risk signals" />
+</div>
+
+@if (list.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+  </div>
+}
+
+<div class="bb-card bb-list-card" [attr.aria-busy]="list.loading()">
+  @if (list.showSkeleton()) {
+    @for (i of [1, 2, 3, 4]; track i) {
+      <span class="bb-skeleton row"></span>
+    }
+  } @else if (list.empty()) {
+    <bb-empty-state icon="user-plus" title="No referrals here" message="Referrals appear when customers sign up with a friend's code." />
+  } @else {
+    <div class="bb-table-scroll" [class.bb-dim]="list.loading()">
+      <table class="bb-table">
+        <thead>
+          <tr>
+            <th scope="col">Referrer</th>
+            <th scope="col">Friend</th>
+            <th scope="col">Stage</th>
+            <th scope="col">Reward</th>
+            <th scope="col" class="num">Coins</th>
+            <th scope="col" class="actions"><span class="bb-sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of list.data()!.items; track r.id) {
+            <tr>
+              <td>
+                {{ r.referrer?.name ?? '–' }}
+                <span class="sub">{{ r.referrer?.email }} · {{ r.code }}</span>
+              </td>
+              <td>
+                {{ r.referred?.name ?? '–' }}
+                <span class="sub">Joined {{ r.createdAt | date: 'd MMM y' }}</span>
+              </td>
+              <td>
+                {{ statusLabel[r.status] }}
+                @if (orderNumber(r); as num) {
+                  <span class="sub">Order {{ num }}</span>
+                } @else if (r.status === 'REGISTERED' || r.status === 'FIRST_ORDER_PLACED') {
+                  <span class="sub">Until {{ r.attributionExpiresAt | date: 'd MMM y' }}</span>
+                }
+              </td>
+              <td>
+                <span class="bb-badge {{ tone(r) }}">{{ rewardLabel[r.rewardStatus] }}</span>
+                @if (r.riskFlags.length) {
+                  <button type="button" class="bb-link-button sub" (click)="toggle(r)" [attr.aria-expanded]="expanded() === r.id">
+                    {{ r.riskFlags.length }} risk signal{{ r.riskFlags.length > 1 ? 's' : '' }}
+                  </button>
+                }
+              </td>
+              <td class="num">
+                {{ r.referrerCoins + r.referredCoins }}
+                @if (r.rewardedAt) {
+                  <span class="sub">{{ r.referrerCoins }} + {{ r.referredCoins }}</span>
+                }
+              </td>
+              <td class="actions">
+                @if (canManage && r.rewardStatus === 'HELD') {
+                  <button mat-stroked-button type="button" [disabled]="busy() === r.id" (click)="approve(r)">Approve</button>
+                }
+                @if (canManage && (r.rewardStatus === 'HELD' || r.rewardStatus === 'NONE') && r.status !== 'EXPIRED' && r.status !== 'REJECTED') {
+                  <button mat-button type="button" [disabled]="busy() === r.id" (click)="reject(r)">Reject</button>
+                }
+              </td>
+            </tr>
+            @if (expanded() === r.id) {
+              <tr class="details">
+                <td colspan="6">
+                  <ul class="flags">
+                    @for (f of r.riskFlags; track f) {
+                      <li><np-icon name="flag" class="mat-icon" matButtonIcon />{{ riskLabel[f] ?? f }}</li>
+                    }
+                  </ul>
+                  <ol class="timeline">
+                    @for (h of r.history; track $index) {
+                      <li>{{ h.at | date: 'd MMM y, h:mm a' }} · {{ statusLabel[h.status] }}{{ h.note ? ': ' + h.note : '' }}</li>
+                    }
+                  </ol>
+                  @if (r.referrer) {
+                    <a class="small" [routerLink]="['/admin/rewards/transactions']" [queryParams]="{ userId: r.referrer.id }">Referrer's coin history</a>
+                  }
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+    <mat-paginator
+      [length]="list.data()!.pagination.total"
+      [pageIndex]="list.data()!.pagination.page - 1"
+      [pageSize]="list.data()!.pagination.limit"
+      [pageSizeOptions]="[20, 50, 100]"
+      (page)="list.onPage($event)"
+      aria-label="Referral pages"
+    />
+  }
+</div>

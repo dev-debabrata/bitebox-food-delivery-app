@@ -156,6 +156,8 @@ export async function abandonUnpaid(userId, orderId) {
         restaurant: order.restaurant,
         items,
         couponCode: order.coupon?.code,
+        // The coins came back to the wallet when the attempt was cancelled; ask for them again.
+        coinsToRedeem: order.coins?.redeemed ?? 0,
       },
     },
     { upsert: true },

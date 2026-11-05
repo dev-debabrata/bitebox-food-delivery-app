@@ -1,0 +1,33 @@
+.details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--bb-space-2);
+  margin: 0;
+  padding: var(--bb-space-3);
+  border-radius: var(--bb-radius-sm);
+  background: var(--bb-surface-alt);
+
+  dt {
+    color: var(--bb-ink-muted);
+    font-size: 0.75rem;
+  }
+  dd {
+    margin: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+}
+
+.role-summary {
+  display: flex;
+  gap: var(--bb-space-2);
+  margin: 0;
+  color: var(--bb-ink-muted);
+  font-size: 0.85rem;
+  --bb-icon-size: 18px;
+
+  np-icon {
+    flex-shrink: 0;
+    color: var(--bb-success);
+  }
+}

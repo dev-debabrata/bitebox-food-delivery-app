@@ -1,0 +1,63 @@
+<section class="page" [class.bb-container]="base.isCustomer()">
+  <a [routerLink]="base.path()" class="bb-back-link bb-link-button">
+    <np-icon name="arrow-left" class="mat-icon" /> Help & support
+  </a>
+
+  @if (error(); as message) {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>{{ message }} <button class="bb-link-button" (click)="ticket.reload()">Retry</button></span>
+    </div>
+  } @else if (ticket.hasValue()) {
+    @let t = ticket.value();
+    <header class="title">
+      <h1 class="bb-h2">{{ t.subject }}</h1>
+      <p class="bb-muted">
+        {{ t.number }} · {{ typeLabel[t.type] }}
+        @if (t.orderNumber) {
+          · Order {{ t.orderNumber }}
+        }
+      </p>
+      <span class="bb-badge tone-{{ statusTone[t.status] }}">
+        {{ t.status === 'waiting_for_response' ? 'Waiting for your reply' : statusLabel[t.status] }}
+      </span>
+    </header>
+
+    <ol class="bb-thread" aria-label="Conversation">
+      @for (m of t.messages; track m.id) {
+        <li [class.support]="m.fromSupport">
+          <div class="meta">
+            <strong>{{ m.fromSupport ? m.authorName : 'You' }}</strong>
+            <time class="bb-muted">{{ m.at | date: 'd MMM, h:mm a' }}</time>
+          </div>
+          <p class="body">{{ m.body }}</p>
+        </li>
+      }
+    </ol>
+
+    @if (t.status === 'closed') {
+      <p class="bb-alert info">
+        <np-icon name="info" class="mat-icon" matButtonIcon />
+        <span>This ticket is closed. <a [routerLink]="base.path()">Open a new ticket</a> if you still need help.</span>
+      </p>
+    } @else {
+      <form [formRoot]="replyForm" class="bb-card reply">
+        <div class="bb-field">
+          <np-textarea [formField]="replyForm.body" label="Your reply" rows="4" autoResize />
+          <bb-field-error [field]="replyForm.body" />
+        </div>
+        @if (t.status === 'resolved') {
+          <p class="bb-muted hint">Marked as resolved. Replying reopens the ticket.</p>
+        }
+        <div class="actions">
+          <button mat-flat-button type="submit" [disabled]="replyForm().submitting()">
+            <np-icon name="send" class="mat-icon" matButtonIcon />
+            Send
+          </button>
+        </div>
+      </form>
+    }
+  } @else {
+    <span class="bb-skeleton block"></span>
+  }
+</section>

@@ -1,0 +1,32 @@
+.block + .block {
+  margin-top: var(--bb-space-5);
+}
+
+.block-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bb-space-2);
+  padding: var(--bb-space-4) var(--bb-space-4) var(--bb-space-3);
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.total {
+  font-weight: 700;
+}
+
+.status-filter {
+  width: 200px;
+}
+
+.inset {
+  margin: 0 var(--bb-space-4) var(--bb-space-3);
+}
+
+.actions button + button {
+  margin-left: var(--bb-space-1);
+}

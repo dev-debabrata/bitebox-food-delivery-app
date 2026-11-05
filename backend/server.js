@@ -6,6 +6,7 @@ import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import { Order } from "./models/order.model.js";
 import { startDispatchLoop } from "./services/dispatch.service.js";
+import { startRewardsLoop } from "./services/rewards-jobs.service.js";
 import { attachRealtime } from "./sockets/index.js";
 
 const app = createApp();
@@ -36,9 +37,11 @@ async function start() {
     `Images are stored ${cloudinaryEnabled ? "in Cloudinary" : "on local disk (set CLOUDINARY_* to use Cloudinary)"}`,
   );
   stopDispatch = startDispatchLoop();
+  stopRewards = startRewardsLoop();
 }
 
 let stopDispatch = () => {};
+let stopRewards = () => {};
 
 let shuttingDown = false;
 async function shutdown(signal) {
@@ -46,6 +49,7 @@ async function shutdown(signal) {
   shuttingDown = true;
   logger.info(`${signal} received, shutting down gracefully`);
   stopDispatch();
+  stopRewards();
   if (io) io.close();
 
   const forceExit = setTimeout(() => {

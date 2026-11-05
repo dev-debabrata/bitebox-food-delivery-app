@@ -22,6 +22,8 @@ export const removeItem = thenQuote((req) => cartService.removeItem(req.user._id
 export const clearCart = thenQuote((req) => cartService.clear(req.user._id), "Cart cleared");
 export const applyCoupon = thenQuote((req) => cartService.applyCoupon(req.user._id, req.body.code), "Coupon applied");
 export const removeCoupon = thenQuote((req) => cartService.removeCoupon(req.user._id), "Coupon removed");
+export const setCoins = thenQuote((req) => cartService.setCoins(req.user._id, req.body.coins), "Coins applied");
+export const removeCoins = thenQuote((req) => cartService.removeCoins(req.user._id), "Coins removed");
 
 // Addresses
 export const listAddresses = respond(async (req) => ({ addresses: await addressService.list(req.user._id) }));

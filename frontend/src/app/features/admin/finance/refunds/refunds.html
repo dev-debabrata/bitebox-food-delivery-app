@@ -1,0 +1,80 @@
+<bb-page-header title="Refund management" subtitle="Paid online orders that were cancelled or rejected. A failed automatic refund shows here for a retry." />
+
+<div class="bb-filters">
+  <np-select [formField]="filters.state" ariaLabel="Refund state" [options]="stateOptions" />
+</div>
+
+@if (list.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+  </div>
+}
+
+<div class="bb-card bb-list-card" [attr.aria-busy]="list.loading()">
+  @if (list.showSkeleton()) {
+    @for (i of [1, 2, 3, 4]; track i) {
+      <span class="bb-skeleton row"></span>
+    }
+  } @else if (list.empty()) {
+    <bb-empty-state icon="undo-2" title="No refunds here" message="Refunds for cancelled online orders appear here." />
+  } @else {
+    <div class="bb-table-scroll" [class.bb-dim]="list.loading()">
+      <table class="bb-table">
+        <thead>
+          <tr>
+            <th scope="col">Order</th>
+            <th scope="col">Customer</th>
+            <th scope="col" class="num">Amount</th>
+            <th scope="col">Refund</th>
+            <th scope="col" class="actions"><span class="bb-sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of list.data()!.items; track r.id) {
+            <tr>
+              <td>
+                <button type="button" class="bb-link-button" (click)="details(r)">{{ r.order?.orderNumber ?? 'Order removed' }}</button>
+                @if (r.order?.reason) {
+                  <span class="sub">{{ r.order!.reason }}</span>
+                }
+              </td>
+              <td>
+                {{ r.customer?.name ?? '–' }}
+                <span class="sub">{{ r.customer?.email }}</span>
+              </td>
+              <td class="num">{{ r.amountPaise | inr }}</td>
+              <td>
+                @if (r.refundNeeded) {
+                  <span class="bb-badge tone-bad">Needs a refund</span>
+                  @if (r.failureReason) {
+                    <span class="sub">{{ r.failureReason }}</span>
+                  }
+                } @else {
+                  <span class="bb-badge tone-good">Refunded</span>
+                  <span class="sub">{{ r.refundedAt | date: 'd MMM y, h:mm a' }}</span>
+                }
+              </td>
+              <td class="actions">
+                @if (r.refundNeeded && canRefund) {
+                  <button mat-stroked-button type="button" [disabled]="busy() === r.id" (click)="retry(r)">
+                    <np-icon name="rotate-ccw" class="mat-icon" matButtonIcon />
+                    Retry refund
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <mat-paginator
+      [length]="list.data()!.pagination.total"
+      [pageIndex]="list.data()!.pagination.page - 1"
+      [pageSize]="list.data()!.pagination.limit"
+      [pageSizeOptions]="[20, 50, 100]"
+      (page)="list.onPage($event)"
+      aria-label="Refund pages"
+    />
+  }
+</div>

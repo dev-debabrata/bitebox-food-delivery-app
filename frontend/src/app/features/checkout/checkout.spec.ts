@@ -18,6 +18,7 @@ const quote = (overrides: Partial<CartQuote> = {}): CartQuote => ({
   },
   coupon: null,
   couponError: null,
+  coins: null,
   address: { id: 'a1' } as CartQuote['address'],
   delivery: { distanceMeters: 4000, distanceKind: 'straight_line', freeDelivery: true, freeDeliveryThresholdPaise: 49900 },
   pricing: { subtotalPaise: 69800, discountPaise: 0, deliveryFeePaise: 0, platformFeePaise: 500, taxPaise: 3490, totalPaise: 73790 },
@@ -36,6 +37,8 @@ describe('Checkout', () => {
     selectedAddressId: signal<string | null>(null),
     reset: vi.fn(),
     selectAddress: vi.fn(),
+    setCoins: vi.fn(),
+    removeCoins: vi.fn(),
   };
   const orders = { place: vi.fn(), availableCoupons: vi.fn(() => of([])) };
   const payments = {
@@ -69,6 +72,59 @@ describe('Checkout', () => {
   });
 
   const placeButton = () => (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('button.place')!;
+  const coinQuote = (overrides: Partial<NonNullable<CartQuote['coins']>> = {}): CartQuote['coins'] => ({
+    enabled: true,
+    available: 500,
+    requested: 0,
+    applied: 0,
+    discountPaise: 0,
+    maxRedeemable: 500,
+    minCoins: 100,
+    coinValueCoins: 100,
+    coinValuePaise: 1000,
+    paymentMethods: ['cod', 'online'],
+    message: null,
+    ...overrides,
+  });
+
+  it('hides the coins card when the customer has no coins', () => {
+    expect((fixture.nativeElement as HTMLElement).querySelector('bb-checkout-coins')).toBeNull();
+  });
+
+  it('offers coins and asks the server to apply the most usable amount', async () => {
+    cart.setCoins.mockReturnValue(of(quoteSignal()));
+    quoteSignal.set(quote({ coins: coinQuote() }));
+    await fixture.whenStable();
+    const card = (fixture.nativeElement as HTMLElement).querySelector('bb-checkout-coins')!;
+    expect(card.textContent).toContain('500 available');
+    const useMax = Array.from(card.querySelectorAll('button')).find((b) => b.textContent?.includes('Use maximum'))!;
+    useMax.click();
+    expect(cart.setCoins).toHaveBeenCalledWith(500);
+  });
+
+  it('shows applied coins in the bill and lets the customer remove them', async () => {
+    cart.removeCoins.mockReturnValue(of(quoteSignal()));
+    quoteSignal.set(
+      quote({
+        coins: coinQuote({ applied: 200, requested: 200, discountPaise: 2000 }),
+        pricing: { subtotalPaise: 69800, discountPaise: 0, deliveryFeePaise: 0, platformFeePaise: 500, taxPaise: 3490, coinDiscountPaise: 2000, totalPaise: 71790 },
+      }),
+    );
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('200 coins applied');
+    expect(el.textContent).toContain('Paid with coins (200 coins)');
+    expect(placeButton().textContent).toContain('₹717.90');
+    const remove = Array.from(el.querySelectorAll('bb-checkout-coins button')).find((b) => b.textContent?.includes('Remove')) as HTMLButtonElement;
+    remove.click();
+    expect(cart.removeCoins).toHaveBeenCalled();
+  });
+
+  it('warns when the chosen payment method cannot be used with coins', async () => {
+    quoteSignal.set(quote({ coins: coinQuote({ applied: 200, discountPaise: 2000, paymentMethods: ['online'] }) }));
+    await fixture.whenStable();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain("Coins can't be used with this payment method");
+  });
 
   it('shows the server total on the place-order button', () => {
     expect(placeButton().textContent).toContain('₹737.90');

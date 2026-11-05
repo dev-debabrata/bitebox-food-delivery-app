@@ -1,0 +1,137 @@
+<section class="bb-container page">
+  <bb-page-header title="Refer & earn" subtitle="Invite friends to BiteBox. You both earn coins when their first order is delivered." />
+  <bb-rewards-nav />
+
+  @if (error(); as message) {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>{{ message }} <button class="bb-link-button" (click)="referral.reload()">Retry</button></span>
+    </div>
+  }
+
+  @if (data(); as d) {
+    @if (!d.rules.enabled) {
+      <div class="bb-alert info" role="status">
+        <np-icon name="info" class="mat-icon" matButtonIcon />
+        <span>Referral rewards are paused right now. Friends can still join with your code.</span>
+      </div>
+    }
+
+    <div class="share bb-card">
+      <div class="offer">
+        <np-icon name="party-popper" class="mat-icon offer-icon" matButtonIcon />
+        <div>
+          <h2>You get {{ d.rules.referrerCoins }} coins, your friend gets {{ d.rules.referredCoins }}</h2>
+          <p class="bb-muted">
+            When a friend signs up with your code and their first order of {{ d.rules.minOrderPaise | inr }} or more is delivered
+            within {{ d.rules.attributionDays }} days.
+          </p>
+        </div>
+      </div>
+
+      <div class="code-row">
+        <span class="code" aria-label="Your referral code">{{ d.code }}</span>
+        <button mat-stroked-button type="button" (click)="copy(d.code, 'Code')">
+          <np-icon name="copy" class="mat-icon" matButtonIcon />Copy code
+        </button>
+      </div>
+      <div class="actions">
+        <button mat-flat-button type="button" (click)="copy(d.link, 'Link')">
+          <np-icon name="link" class="mat-icon" matButtonIcon />Copy invite link
+        </button>
+        @if (canShare) {
+          <button mat-stroked-button type="button" (click)="share()">
+            <np-icon name="share-2" class="mat-icon" matButtonIcon />Share
+          </button>
+        }
+        <a mat-stroked-button [href]="whatsappUrl()" target="_blank" rel="noopener">
+          <np-icon name="send" class="mat-icon" matButtonIcon />WhatsApp
+        </a>
+      </div>
+    </div>
+
+    <section class="bb-grid cols-4 tiles" aria-label="Referral statistics">
+      <bb-stat-tile icon="users-round" label="Friends invited" [value]="d.stats.invited" [hint]="d.stats.remaining + ' invites left'" />
+      <bb-stat-tile icon="hourglass" label="Pending" [value]="d.stats.pending" hint="Signed up, first order not delivered yet" />
+      <bb-stat-tile icon="circle-check" label="Successful" [value]="d.stats.successful" />
+      <bb-stat-tile icon="coins" label="Coins earned" [value]="d.stats.coinsEarned" />
+    </section>
+
+    @if (d.referredBy; as rb) {
+      <div class="bb-alert info referred" role="status">
+        <np-icon name="gift" class="mat-icon" matButtonIcon />
+        <span>
+          You joined with a friend's code:
+          @if (rb.status === 'REWARD_CREDITED') {
+            you received {{ rb.coins }} bonus coins.
+          } @else if (rb.status === 'REGISTERED' || rb.status === 'FIRST_ORDER_PLACED') {
+            your bonus arrives when your first qualifying order is delivered (by {{ rb.expiresAt | date: 'd MMM y' }}).
+          } @else {
+            {{ statusLabel[rb.status] }}.
+          }
+        </span>
+      </div>
+    }
+
+    <ol class="how bb-card" aria-label="How it works">
+      <li><strong>1.</strong> Share your code or link</li>
+      <li><strong>2.</strong> Your friend signs up with it</li>
+      <li><strong>3.</strong> Their first order is delivered</li>
+      <li><strong>4.</strong> You both get coins</li>
+    </ol>
+  } @else if (!error()) {
+    <span class="bb-skeleton" style="height: 220px"></span>
+  }
+
+  <section class="friends" aria-labelledby="friends-title">
+    <div class="friends-head">
+      <h2 class="bb-h3" id="friends-title">Invited friends</h2>
+      <np-select class="status-filter" [formField]="filters.status" ariaLabel="Show" [options]="statusOptions" />
+    </div>
+    @if (list.error(); as message) {
+      <div class="bb-alert error" role="alert">
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+        <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+      </div>
+    }
+    <div class="bb-card bb-list-card" [attr.aria-busy]="list.loading()">
+      @if (list.showSkeleton()) {
+        @for (i of [1, 2, 3]; track i) {
+          <span class="bb-skeleton row"></span>
+        }
+      } @else if (list.empty()) {
+        <bb-empty-state icon="user-plus" title="No friends here yet" message="Friends who sign up with your code appear here." />
+      } @else {
+        <ul class="friend-list" [class.bb-dim]="list.loading()">
+          @for (f of list.data()!.items; track f.id) {
+            <li>
+              <div class="who">
+                <strong>{{ f.friend }}</strong>
+                <span class="bb-muted small">Joined {{ f.joinedAt | date: 'd MMM y' }}</span>
+              </div>
+              @if (step(f.status) >= 0) {
+                <ol class="progress" [attr.aria-label]="'Progress: ' + statusLabel[f.status]">
+                  @for (s of steps; track s; let i = $index) {
+                    <li [class.done]="i <= step(f.status)" [attr.aria-current]="i === step(f.status) ? 'step' : null">
+                      <span class="bb-sr-only">{{ statusLabel[s] }}</span>
+                    </li>
+                  }
+                </ol>
+              }
+              <span class="bb-badge {{ tone(f.status) }}">{{ statusLabel[f.status] }}</span>
+              <span class="coins">{{ f.coins ? '+' + f.coins : '' }}</span>
+            </li>
+          }
+        </ul>
+        <mat-paginator
+          [length]="list.data()!.pagination.total"
+          [pageIndex]="list.data()!.pagination.page - 1"
+          [pageSize]="list.data()!.pagination.limit"
+          [pageSizeOptions]="[20, 50]"
+          (page)="list.onPage($event)"
+          aria-label="Friend pages"
+        />
+      }
+    </div>
+  </section>
+</section>

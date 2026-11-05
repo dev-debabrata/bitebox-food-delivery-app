@@ -4,10 +4,8 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
-import mongoose from "mongoose";
 import { pinoHttp } from "pino-http";
 import swaggerUi from "swagger-ui-express";
-import { connectDB } from "./config/db.js";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import { openApiDocument } from "./docs/openapi.js";
@@ -51,6 +49,15 @@ import {
   reviewsRouter,
 } from "./routes/review.routes.js";
 import uploadsRoutes from "./routes/uploads.routes.js";
+import { coinsRouter } from "./routes/coins.routes.js";
+import { referralsRouter } from "./routes/referral.routes.js";
+import { rewardsRouter } from "./routes/rewards.routes.js";
+import { adminRewardsRouter } from "./routes/admin-rewards.routes.js";
+import { newsletterRouter } from "./routes/newsletter.routes.js";
+import { adminFinanceRouter } from "./routes/admin-finance.routes.js";
+import { adminOperationsRouter } from "./routes/admin-operations.routes.js";
+import { adminAuditRouter, adminStaffRouter } from "./routes/admin-staff.routes.js";
+import { adminSupportRouter, supportRouter } from "./routes/support.routes.js";
 
 export function createApp(options = {}) {
   const app = express();
@@ -114,27 +121,6 @@ export function createApp(options = {}) {
     swaggerUi.setup(openApiDocument, { customSiteTitle: "BiteBox API Docs" }),
   );
 
-  let dbPromise = null;
-  app.use(async (_req, _res, next) => {
-    if (mongoose.connection.readyState === 1) return next();
-    try {
-      if (!dbPromise) {
-        dbPromise = connectDB(env.mongoUri)
-          .then(() => {
-            dbPromise = null;
-          })
-          .catch((err) => {
-            dbPromise = null;
-            throw err;
-          });
-      }
-      await dbPromise;
-      next();
-    } catch (err) {
-      next(err);
-    }
-  });
-
   app.use("/api/v1/health", healthRoutes);
   app.use("/api/v1/auth", createAuthRouter(options.rateLimits));
   app.use("/api/v1/admin/users", adminUsersRoutes);
@@ -144,6 +130,12 @@ export function createApp(options = {}) {
   app.use("/api/v1/admin/payments", adminPaymentsRouter);
   app.use("/api/v1/admin/reports", adminReportsRouter);
   app.use("/api/v1/admin/reviews", adminReviewsRouter);
+  app.use("/api/v1/admin/admins", adminStaffRouter);
+  app.use("/api/v1/admin/audit-logs", adminAuditRouter);
+  app.use("/api/v1/admin/operations", adminOperationsRouter);
+  app.use("/api/v1/admin/finance", adminFinanceRouter);
+  app.use("/api/v1/admin/support", adminSupportRouter);
+  app.use("/api/v1/admin/rewards", adminRewardsRouter);
   app.use("/api/v1/admin", adminCatalogRoutes);
   app.use("/api/v1/restaurants", restaurantsRouter);
   app.use("/api/v1/categories", categoriesRouter);
@@ -158,6 +150,11 @@ export function createApp(options = {}) {
   app.use("/api/v1/payments", paymentsRouter);
   app.use("/api/v1/notifications", notificationRoutes);
   app.use("/api/v1/reviews", reviewsRouter);
+  app.use("/api/v1/support", supportRouter);
+  app.use("/api/v1/coins", coinsRouter);
+  app.use("/api/v1/referrals", referralsRouter);
+  app.use("/api/v1/rewards", rewardsRouter);
+  app.use("/api/v1/newsletter", newsletterRouter);
   app.use("/api/v1/geo", geoRoutes);
 
   app.use(notFound);

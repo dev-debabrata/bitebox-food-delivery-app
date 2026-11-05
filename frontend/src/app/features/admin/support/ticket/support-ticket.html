@@ -1,0 +1,132 @@
+<a routerLink="/admin/support/queue/all" class="bb-back-link bb-link-button">
+  <np-icon name="arrow-left" class="mat-icon" /> All tickets
+</a>
+
+@if (error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="ticket.reload()">Retry</button></span>
+  </div>
+} @else if (ticket.hasValue()) {
+  @let t = ticket.value();
+  <header class="title">
+    <h1 class="bb-h2">{{ t.subject }}</h1>
+    <p class="bb-muted">
+      {{ t.number }} · {{ typeLabel[t.type] }} · opened {{ t.createdAt | date: 'd MMM y, h:mm a' }}
+    </p>
+    <div class="badges">
+      <span class="bb-badge tone-{{ statusTone[t.status] }}">{{ statusLabel[t.status] }}</span>
+      <span class="bb-badge tone-{{ priorityTone[t.priority] }}">{{ priorityLabel[t.priority] }} priority</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="conversation" aria-label="Conversation">
+      <ol class="bb-thread">
+        @for (m of t.messages; track m.id) {
+          <li [class.support]="m.fromSupport" [class.note]="m.internal">
+            <div class="meta">
+              <strong>{{ m.authorName }}</strong>
+              @if (m.internal) {
+                <span class="bb-badge tone-warn">Internal note</span>
+              } @else if (m.fromSupport) {
+                <span class="bb-badge tone-info">Support</span>
+              } @else {
+                <span class="bb-badge">{{ requesterLabel[t.requesterRole] }}</span>
+              }
+              <time class="bb-muted">{{ m.at | date: 'd MMM, h:mm a' }}</time>
+            </div>
+            <p class="body">{{ m.body }}</p>
+          </li>
+        }
+      </ol>
+
+      <form [formRoot]="replyForm" class="bb-card reply">
+        <div class="bb-field">
+          <np-textarea
+            [formField]="replyForm.body"
+            [label]="reply().internal ? 'Internal note (only support staff see it)' : 'Reply to ' + t.requesterName"
+            rows="4"
+            autoResize
+          />
+          <bb-field-error [field]="replyForm.body" />
+        </div>
+        <div class="reply-actions">
+          <np-toggle [formField]="replyForm.internal" label="Internal note" />
+          <button mat-flat-button type="submit" [disabled]="replyForm().submitting()">
+            <np-icon [name]="reply().internal ? 'sticky-note' : 'send'" class="mat-icon" matButtonIcon />
+            {{ reply().internal ? 'Add note' : 'Send reply' }}
+          </button>
+        </div>
+        @if (!reply().internal && t.status !== 'resolved') {
+          <p class="bb-muted hint">Sending a reply sets the ticket to "Waiting for response".</p>
+        }
+      </form>
+    </section>
+
+    <aside class="side">
+      <section class="bb-card">
+        <h2 class="bb-h3">Ticket</h2>
+        <div class="bb-form">
+          <np-select [formField]="metaForm.status" label="Status" [options]="statusOptions" />
+          <np-select [formField]="metaForm.priority" label="Priority" [options]="priorityOptions" />
+          <np-select [formField]="metaForm.assigneeId" label="Assigned to" [options]="assigneeOptions()" />
+        </div>
+        <div class="side-actions">
+          <button mat-flat-button type="button" [disabled]="!metaChanged() || busy()" (click)="saveMeta()">Update ticket</button>
+          @if (t.type === 'refund' || t.type === 'payment') {
+            <button mat-stroked-button type="button" [disabled]="busy()" (click)="escalate()">
+              <np-icon name="arrow-up-right" class="mat-icon" matButtonIcon />
+              Escalate to finance
+            </button>
+          }
+        </div>
+      </section>
+
+      @if (t.requester; as r) {
+        <section class="bb-card">
+          <h2 class="bb-h3">{{ requesterLabel[t.requesterRole] }}</h2>
+          <p class="strong">{{ r.name }}</p>
+          <p class="bb-muted">{{ r.email }}</p>
+          @if (r.phone) {
+            <p class="bb-muted">{{ r.phone }}</p>
+          }
+        </section>
+      }
+
+      @if (t.order; as o) {
+        <section class="bb-card">
+          <h2 class="bb-h3">Order {{ o.orderNumber }}</h2>
+          <p>{{ o.restaurantName }}</p>
+          <p class="bb-muted">
+            {{ orderStatus[o.status] }} · {{ o.totalPaise | inr }} · {{ o.paymentMethod === 'cod' ? 'Cash' : 'Online' }}
+            ({{ o.paymentStatus }})
+          </p>
+          <p class="bb-muted">Placed {{ o.createdAt | date: 'd MMM y, h:mm a' }}</p>
+        </section>
+      }
+
+      <section class="bb-card">
+        <h2 class="bb-h3">History</h2>
+        <ol class="history">
+          @for (h of t.history; track $index) {
+            <li>
+              <span>
+                {{ historyLabel(h.action) }}
+                @if (h.to) {
+                  : {{ historyValue(h.to) }}
+                }
+              </span>
+              <span class="bb-muted">{{ h.byName }} · {{ h.at | date: 'd MMM, h:mm a' }}</span>
+              @if (h.note) {
+                <span class="bb-muted note">{{ h.note }}</span>
+              }
+            </li>
+          }
+        </ol>
+      </section>
+    </aside>
+  </div>
+} @else {
+  <span class="bb-skeleton block"></span>
+}

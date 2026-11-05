@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { RedirectFunction, Route, Router, Routes } from '@angular/router';
 import { customerSiteGuard, guestGuard, roleGuard } from './core/guards/auth.guards';
-import { SelfRegisterRole } from './shared/models/user.models';
+import { ADMIN_ROLES, SelfRegisterRole } from './shared/models/user.models';
 
 const authPage = (
   path: string,
@@ -76,7 +76,7 @@ export const routes: Routes = [
   // Admin panel
   {
     path: 'admin',
-    canActivate: [roleGuard('admin')],
+    canActivate: [roleGuard(...ADMIN_ROLES)],
     loadComponent: () => import('./layout/admin-layout/admin-layout').then((m) => m.AdminLayout),
     loadChildren: () => import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
   },

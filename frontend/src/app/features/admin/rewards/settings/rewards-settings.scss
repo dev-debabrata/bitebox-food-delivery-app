@@ -1,0 +1,58 @@
+@use 'breakpoints' as bp;
+
+.settings {
+  display: grid;
+  gap: var(--bb-space-4);
+  max-width: 880px;
+}
+h2 {
+  margin: 0 0 var(--bb-space-3);
+}
+.small {
+  font-size: 0.85rem;
+}
+.methods {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bb-space-4);
+}
+.days {
+  display: grid;
+  gap: 0 var(--bb-space-3);
+  @include bp.tablet-up {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @include bp.desktop-up {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.stack {
+  display: grid;
+  gap: var(--bb-space-2);
+  align-content: start;
+}
+.actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--bb-space-2);
+  padding: var(--bb-space-3) 0;
+  background: var(--bb-bg);
+  // Above the toggles (NexPrime draws their knobs at z-index 1) and fields scrolling underneath.
+  z-index: 10;
+  border-top: 1px solid var(--bb-border);
+
+  // The global form rule makes submit buttons full width; here it sits beside "Discard".
+  button[type='submit'] {
+    width: auto;
+  }
+}
+.block {
+  display: block;
+  height: 200px;
+  margin-bottom: var(--bb-space-4);
+}

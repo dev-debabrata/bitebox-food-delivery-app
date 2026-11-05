@@ -75,4 +75,18 @@ describe('OrderReviews', () => {
     });
     expect(buttons(el)).toEqual(['View']);
   });
+
+  it("shows the restaurant's replies under the ratings", async () => {
+    const reply = { text: 'Thanks, see you again!', respondedAt: '2026-11-05T10:00:00Z', updatedAt: '2026-11-05T10:00:00Z' };
+    const el = await render({
+      ...base,
+      restaurant: { ...base.restaurant, review: mine('r1', 5, { response: reply }) },
+      items: [{ foodItem: 'f1', name: 'Garlic Naan', review: mine('r2', 3, { target: 'food', foodName: 'Garlic Naan' }) }],
+    });
+    const replies = el.querySelectorAll('bb-review-reply');
+    expect(replies.length).toBe(1);
+    expect(replies[0].textContent).toContain('Spice Route Kitchen replied');
+    expect(replies[0].textContent).toContain('to your review');
+    expect(replies[0].textContent).toContain('Thanks, see you again!');
+  });
 });

@@ -7,10 +7,12 @@ import { MatMenuModule } from '@angular/material/menu';
 import { IconComponent, ScrollTopComponent } from 'nexprime';
 import { AuthService } from '../../core/auth/auth.service';
 import { CartService } from '../../core/services/cart.service';
+import { currentUrl } from '../../core/services/current-url';
 import { DeliveryLocationService } from '../../core/services/delivery-location.service';
 import { LocationPickerDialog } from '../../shared/components/location-picker/location-picker-dialog';
 import { NotificationBell } from '../../shared/components/notification-bell/notification-bell';
 import { BrandLogo } from '../../shared/components/brand-logo/brand-logo';
+import { SiteFooter } from '../../shared/components/site-footer/site-footer';
 import { ROLE_META } from '../../shared/models/user.models';
 
 import { initialsOf } from '../../shared/models/user.models';
@@ -28,6 +30,7 @@ import { initialsOf } from '../../shared/models/user.models';
     BrandLogo,
     ScrollTopComponent,
     NotificationBell,
+    SiteFooter,
   ],
   templateUrl: './customer-layout.html',
   styleUrl: './customer-layout.scss',
@@ -50,7 +53,9 @@ export class CustomerLayout {
   );
   protected readonly firstName = computed(() => this.shown()?.name.split(' ')[0] ?? '');
   protected readonly initials = computed(() => initialsOf(this.shown()?.name));
-  protected readonly year = new Date().getFullYear();
+  private readonly url = currentUrl();
+  /** Checkout gets the compact footer (no links pulling the customer away from paying). */
+  protected readonly onCheckout = computed(() => this.url().startsWith('/checkout'));
 
   protected chooseLocation(): void {
     this.dialog.open(LocationPickerDialog, {

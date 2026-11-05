@@ -3,7 +3,7 @@ import { isPlatformServer } from '@angular/common';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { CanActivateFn, Router } from '@angular/router';
 import { filter, map, take } from 'rxjs';
-import { ROLE_META, Role } from '../../shared/models/user.models';
+import { Permission, ROLE_META, Role } from '../../shared/models/user.models';
 import { AuthService } from '../auth/auth.service';
 
 function whenReady<T>(decide: () => T) {
@@ -47,3 +47,16 @@ const OPEN_TO_ALL = new Set(['forbidden', '**']);
 
 export const customerSiteGuard: CanActivateFn = (route) =>
   OPEN_TO_ALL.has(route.routeConfig?.path ?? '') || homeUnless((role) => role === 'customer');
+
+/** Admin routes: needs any of the permissions; otherwise back to the user's own dashboard. */
+export const permissionGuard =
+  (...permissions: Permission[]): CanActivateFn =>
+  () => {
+    const auth = inject(AuthService);
+    const router = inject(Router);
+    return whenReady(() => {
+      const role = auth.role();
+      if (!role) return router.createUrlTree(['/login']);
+      return permissions.some((p) => auth.can(p)) || router.createUrlTree([ROLE_META[role].home]);
+    });
+  };

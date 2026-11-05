@@ -20,7 +20,8 @@ import {
   PaymentMethod,
 } from '../../../shared/models/payment.models';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
-import { openAdminOrder } from '../orders/admin-order-dialog/admin-order-dialog';
+import { AuthService } from '../../../core/auth/auth.service';
+import { openTransaction } from '../finance/transaction-dialog/transaction-dialog';
 
 @Component({
   selector: 'bb-admin-payments',
@@ -45,7 +46,8 @@ export class AdminPayments {
 
   protected readonly statusLabel = PAYMENT_STATUS_LABEL;
   protected readonly providerLabel = PROVIDER_LABEL;
-  protected readonly filterModel = signal({ status: '', method: '' });
+  protected readonly canRefund = inject(AuthService).can('refunds:manage');
+  protected readonly filterModel = signal({ status: '', method: '', search: '' });
   protected readonly filters = form(this.filterModel);
   protected readonly statusOptions: SelectOption[] = [
     { value: '', label: 'Any status' },
@@ -63,23 +65,24 @@ export class AdminPayments {
 
   protected readonly list = pagedList(
     (page, limit) => {
-      const { status, method } = this.filterModel();
+      const { status, method, search } = this.filterModel();
       return this.api.payments({
         status: (status || undefined) as PaymentStatus | undefined,
         method: (method || undefined) as PaymentMethod | undefined,
+        search: search.trim() || undefined,
         page,
         limit,
       });
     },
     {
-      filterKey: () => `${this.filterModel().status}|${this.filterModel().method}`,
+      filterKey: () => JSON.stringify(this.filterModel()),
       pollMs: 60_000,
       errorText: 'Could not load payments.',
     },
   );
 
-  protected openOrder(p: AdminPayment): void {
-    if (p.order) openAdminOrder(this.dialog, p.order.id).subscribe(() => this.list.reload());
+  protected details(p: AdminPayment): void {
+    openTransaction(this.dialog, p.id).subscribe();
   }
 
   protected retryRefund(p: AdminPayment): void {

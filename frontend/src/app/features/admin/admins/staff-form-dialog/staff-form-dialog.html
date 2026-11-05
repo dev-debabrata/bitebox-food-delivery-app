@@ -1,0 +1,64 @@
+<h2 mat-dialog-title>{{ editing ? 'Edit admin' : 'New admin' }}</h2>
+<form [formRoot]="form">
+  <mat-dialog-content class="bb-form">
+    @if (error()) {
+      <div class="bb-alert error" role="alert">
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ error() }}</span>
+      </div>
+    }
+
+    @if (user; as u) {
+      <dl class="details">
+        <div><dt>Email</dt><dd>{{ u.email }}</dd></div>
+        <div><dt>Joined</dt><dd>{{ u.createdAt | date: 'mediumDate' }}</dd></div>
+        <div>
+          <dt>Last sign-in</dt>
+          <dd>{{ u.lastLoginAt ? (u.lastLoginAt | date: 'd MMM y, h:mm a') : 'Never' }}</dd>
+        </div>
+      </dl>
+    }
+
+    <np-text-input [formField]="form.name" label="Full name" cdkFocusInitial [error]="shownError(form.name)" />
+    @if (!editing) {
+      <np-text-input
+        [formField]="form.email"
+        label="Work email"
+        type="email"
+        autocomplete="off"
+        [error]="shownError(form.email)"
+      />
+    }
+    <bb-phone-input [formField]="form.phone" label="Mobile number (optional)" [error]="shownError(form.phone)" />
+    @if (!editing) {
+      <np-text-input
+        [formField]="form.password"
+        label="Temporary password"
+        type="password"
+        autocomplete="new-password"
+        hint="At least 8 characters with a letter and a number. Ask them to change it after signing in."
+        [error]="shownError(form.password)"
+      />
+    }
+
+    <div class="bb-field">
+      <np-select [formField]="form.role" label="Role" [options]="roleOptions" />
+      <bb-field-error [field]="form.role" />
+    </div>
+    <p class="role-summary">
+      <np-icon name="shield-check" class="mat-icon" />
+      <span>{{ roleSummary() }}</span>
+    </p>
+    @if (roleChanged()) {
+      <p class="bb-alert info">
+        <np-icon name="info" class="mat-icon" matButtonIcon />
+        <span>Changing the role signs this admin out, so their next sign-in gets the new access.</span>
+      </p>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="form().submitting()">
+      {{ editing ? 'Save' : 'Create admin' }}
+    </button>
+  </mat-dialog-actions>
+</form>

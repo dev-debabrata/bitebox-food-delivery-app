@@ -1,0 +1,86 @@
+<h2 mat-dialog-title>{{ data ? 'Edit campaign' : 'New campaign' }}</h2>
+<form [formRoot]="form">
+  <mat-dialog-content class="bb-form">
+    @if (error()) {
+      <div class="bb-alert error" role="alert">
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ error() }}</span>
+      </div>
+    }
+    @if (running) {
+      <div class="bb-alert info" role="status">
+        <np-icon name="info" class="mat-icon" matButtonIcon />
+        <span>This campaign is running. Pause it to change the reward, start or rules.</span>
+      </div>
+    }
+    <np-text-input [formField]="form.name" label="Name" placeholder="e.g. Diwali Dhamaka" cdkFocusInitial [error]="shownError(form.name)" />
+    <np-textarea [formField]="form.description" label="Description shown to customers" rows="2" autoResize />
+    <bb-field-error [field]="form.description" />
+    <div class="bb-form-row">
+      <div class="bb-field">
+        <np-select [formField]="form.type" label="Type" [options]="typeOptions" />
+      </div>
+      <div class="bb-field">
+        <np-input-number [formField]="form.rewardCoins" label="Reward" suffix=" coins" [maxFractionDigits]="0" />
+        <bb-field-error [field]="form.rewardCoins" />
+      </div>
+    </div>
+    <div class="bb-field">
+      <np-select [formField]="form.trigger" label="How customers get it" [options]="triggerOptions" />
+    </div>
+    <div class="bb-form-row">
+      <div class="bb-field">
+        <np-calendar [formField]="form.startAt" label="Starts" dateFormat="dd M yy" showTime hourFormat="12" showIcon />
+        <bb-field-error [field]="form.startAt" />
+      </div>
+      <div class="bb-field">
+        <np-calendar [formField]="form.endAt" label="Ends" dateFormat="dd M yy" showTime hourFormat="12" [minDate]="model().startAt" showIcon />
+        <bb-field-error [field]="form.endAt" />
+      </div>
+    </div>
+
+    <h3 class="group-title">Who can get it</h3>
+    <div class="bb-form-row">
+      <div class="bb-field">
+        <np-select [formField]="form.customerGroup" label="Customers" [options]="groupOptions" />
+      </div>
+      @if (model().customerGroup === 'INACTIVE') {
+        <div class="bb-field">
+          <np-input-number [formField]="form.inactiveDays" label="No order for at least" suffix=" days" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.inactiveDays" />
+        </div>
+      }
+    </div>
+    @if (model().trigger === 'ORDER') {
+      <div class="bb-form-row">
+        <div class="bb-field">
+          <np-input-number [formField]="form.minOrder" label="Minimum food value" prefix="₹ " [maxFractionDigits]="2" />
+          <bb-field-error [field]="form.minOrder" />
+        </div>
+        <np-toggle class="toggle" [formField]="form.firstOrderOnly" label="First order only" />
+      </div>
+    }
+
+    <h3 class="group-title">Limits</h3>
+    <div class="bb-form-row">
+      <div class="bb-field">
+        <np-input-number [formField]="form.maxClaimsPerCustomer" label="Per customer" [maxFractionDigits]="0" />
+        <bb-field-error [field]="form.maxClaimsPerCustomer" />
+      </div>
+      <div class="bb-field">
+        <np-input-number [formField]="form.maxTotalClaims" label="Total rewards" placeholder="Unlimited" [maxFractionDigits]="0" />
+        <bb-field-error [field]="form.maxTotalClaims" />
+      </div>
+    </div>
+    <div class="bb-field">
+      <np-input-number [formField]="form.maxTotalCoins" label="Coin budget" placeholder="Unlimited" suffix=" coins" [maxFractionDigits]="0" />
+      <bb-field-error [field]="form.maxTotalCoins" />
+    </div>
+    @if (!data) {
+      <p class="bb-muted small">New campaigns start as drafts. Activate one from the list when it is ready.</p>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="form().submitting()">{{ data ? 'Save' : 'Create draft' }}</button>
+  </mat-dialog-actions>
+</form>

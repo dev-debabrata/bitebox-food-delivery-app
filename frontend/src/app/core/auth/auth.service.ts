@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import {
   Injectable,
   Injector,
@@ -20,7 +20,7 @@ import {
   tap,
   throwError,
   timer,
-  switchMap,
+  retry,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../../shared/models/api.models';
@@ -28,6 +28,7 @@ import {
   AuthSession,
   ChangePasswordRequest,
   LoginRequest,
+  Permission,
   ROLE_META,
   RegisterRequest,
   Role,
@@ -65,6 +66,12 @@ export class AuthService {
   readonly initialised = this._initialised.asReadonly();
   readonly isAuthenticated = computed(() => this._user() !== null);
   readonly role = computed(() => this._user()?.role ?? null);
+  private readonly permissions = computed(() => new Set(this._user()?.permissions ?? []));
+
+  /** Admin permission check for menus and guards (the API enforces the real rule). */
+  can(permission: Permission): boolean {
+    return this.permissions().has(permission);
+  }
 
   constructor() {
     if (!this.isBrowser) return;
@@ -100,24 +107,24 @@ export class AuthService {
     if (!this.refreshInFlight$) {
       const attempt = () =>
         this.http
-          .post<ApiResponse<AuthSession>>(`${this.baseUrl}/refresh`, {
-            refreshToken: this.isBrowser ? (readRefreshToken() ?? undefined) : undefined,
-          })
-          .pipe(
-            map((res) => {
-              this.applySession(res.data);
-              return res.data.accessToken;
-            }),
-          );
+          .post<ApiResponse<AuthSession>>(`${this.baseUrl}/refresh`, {})
+          .pipe(map((res) => (this.applySession(res.data), res.data.accessToken)));
 
       this.refreshInFlight$ = attempt().pipe(
-        catchError((error: unknown) =>
-          errorCode(error) === 'REFRESH_RACE'
-            ? timer(300).pipe(switchMap(attempt))
-            : throwError(() => error),
-        ),
+        // A serverless API can answer the first request after a cold start with a 5xx or
+        // drop it; retry those before deciding the user is signed out.
+        retry({
+          count: 3,
+          delay: (error: unknown, n) =>
+            errorCode(error) === 'REFRESH_RACE'
+              ? timer(300)
+              : isTransient(error)
+                ? timer(500 * n)
+                : throwError(() => error),
+        }),
+        // Only a definite "no valid session" answer ends the session, not a network blip.
         catchError((error: unknown) => {
-          this.clearSession();
+          if (!isTransient(error)) this.clearSession();
           return throwError(() => error);
         }),
         finalize(() => (this.refreshInFlight$ = null)),
@@ -129,18 +136,14 @@ export class AuthService {
 
   logout(): Observable<void> {
     const role = this._user()?.role ?? 'customer';
-    return this.http
-      .post<ApiResponse<null>>(`${this.baseUrl}/logout`, {
-        refreshToken: this.isBrowser ? (readRefreshToken() ?? undefined) : undefined,
-      })
-      .pipe(
-        catchError(() => of(null)),
-        map(() => undefined),
-        tap(() => {
-          this.clearSession();
-          void this.router.navigateByUrl(ROLE_META[role].login);
-        }),
-      );
+    return this.http.post<ApiResponse<null>>(`${this.baseUrl}/logout`, {}).pipe(
+      catchError(() => of(null)),
+      map(() => undefined),
+      tap(() => {
+        this.clearSession();
+        void this.router.navigateByUrl(ROLE_META[role].login);
+      }),
+    );
   }
 
   forgotPassword(email: string): Observable<string> {
@@ -189,27 +192,20 @@ export class AuthService {
     this._user.set(null);
     this._accessToken.set(null);
     this._hint.set(null);
-    if (this.isBrowser) {
-      localStorage.removeItem(HINT_KEY);
-      writeRefreshToken(undefined);
-    }
+    if (this.isBrowser) localStorage.removeItem(HINT_KEY);
   }
 
   private applySession(session: AuthSession): User {
     this._accessToken.set(session.accessToken);
     this._user.set(session.user);
-    if (this.isBrowser) {
-      writeHint(session.user);
-      if (session.refreshToken) writeRefreshToken(session.refreshToken);
-    }
+    if (this.isBrowser) writeHint(session.user);
     return session.user;
   }
 }
 
-const REFRESH_KEY = 'bb.refresh-token';
-const readRefreshToken = () => localStorage.getItem(REFRESH_KEY);
-const writeRefreshToken = (t?: string) =>
-  t ? localStorage.setItem(REFRESH_KEY, t) : localStorage.removeItem(REFRESH_KEY);
+/** Network failure or a gateway/server error, as opposed to the API rejecting the session. */
+const isTransient = (error: unknown) =>
+  error instanceof HttpErrorResponse && (error.status === 0 || error.status >= 500);
 
 function readHint(): SessionHint | null {
   try {

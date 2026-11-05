@@ -1,47 +1,26 @@
-import mongoose from "mongoose";
+// Vercel serverless entry. A warm function reuses the app and its MongoDB connection;
+// a cold one connects on its first request (server.js does this at start-up elsewhere).
 import { createApp } from "../app.js";
 import { connectDB } from "../config/db.js";
 import { env } from "../config/env.js";
+import { logger } from "../config/logger.js";
 
 const app = createApp();
-
-let isConnecting = null;
-
-async function ensureConnected() {
-  if (mongoose.connection.readyState === 1) {
-    return mongoose.connection;
-  }
-
-  if (!isConnecting) {
-    isConnecting = connectDB(env.mongoUri)
-      .then((conn) => {
-        isConnecting = null;
-        return conn;
-      })
-      .catch((err) => {
-        isConnecting = null;
-        throw err;
-      });
-  }
-
-  return isConnecting;
-}
+let connecting = null;
 
 export default async function handler(req, res) {
   try {
-    await ensureConnected();
+    await (connecting ??= connectDB(env.mongoUri).catch((err) => {
+      connecting = null; // let the next request try again
+      throw err;
+    }));
   } catch (err) {
-    console.error("Vercel DB Connection Error:", err);
+    logger.error({ err }, "MongoDB connection failed");
     return res.status(503).json({
       success: false,
-      message:
-        "Database connection failed. Please ensure MongoDB Atlas Network Access allows 0.0.0.0/0.",
-      error: {
-        code: "DATABASE_CONNECTION_ERROR",
-        details: err?.message || String(err),
-      },
+      message: "Service temporarily unavailable, please retry",
+      error: { code: "DATABASE_UNAVAILABLE" },
     });
   }
-
   return app(req, res);
 }

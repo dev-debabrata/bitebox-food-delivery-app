@@ -93,6 +93,7 @@ export interface AdminPayment extends PaymentInfo {
   providerPaymentId: string | null;
   createdAt: string;
   order: { id: string; orderNumber: string; status: OrderStatus } | null;
+  customer: { id: string; name: string; email: string } | null;
   refundNeeded: boolean;
 }
 

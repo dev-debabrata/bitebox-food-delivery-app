@@ -16,6 +16,7 @@ import { errorMessage } from '../../../core/services/api-error';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ReviewService } from '../../../core/services/review.service';
 import { ReviewOrderRow } from '../../../shared/components/review-order-row/review-order-row';
+import { ReviewReply } from '../../../shared/components/review-reply/review-reply';
 import { MyReview, OrderReviewState, isEditable } from '../../../shared/models/review.models';
 import { openRateOrder } from '../rate-order-dialog/rate-order-dialog';
 
@@ -25,7 +26,7 @@ import { openRateOrder } from '../rate-order-dialog/rate-order-dialog';
  */
 @Component({
   selector: 'bb-order-reviews',
-  imports: [DatePipe, MatButtonModule, IconComponent, ReviewOrderRow],
+  imports: [DatePipe, MatButtonModule, IconComponent, ReviewOrderRow, ReviewReply],
   templateUrl: './order-reviews.html',
   styleUrl: './order-reviews.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -67,6 +68,16 @@ export class OrderReviews {
   protected readonly canRate = computed(() => !!this.state()?.canReview && this.unrated() > 0);
   protected readonly canEdit = computed(() => this.rated().some(isEditable));
   protected readonly moderated = computed(() => this.rated().filter((r) => r.status !== 'published'));
+  /** The restaurant's public replies to these reviews, labelled with what was reviewed. */
+  protected readonly replies = computed(() =>
+    this.rated()
+      .filter((r) => r.response)
+      .map((r) => ({
+        id: r.id,
+        reply: r.response!,
+        about: r.target === 'food' ? (r.foodName ?? 'a dish') : 'your review',
+      })),
+  );
 
   constructor() {
     effect(() => {

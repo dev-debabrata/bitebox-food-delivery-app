@@ -1,0 +1,30 @@
+<h2 mat-dialog-title>Contact support</h2>
+<form [formRoot]="form">
+  <mat-dialog-content class="bb-form">
+    @if (error()) {
+      <div class="bb-alert error" role="alert">
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ error() }}</span>
+      </div>
+    }
+    <div class="bb-field">
+      <np-select [formField]="form.type" label="What is it about?" placeholder="Choose one" [options]="typeOptions" />
+      <bb-field-error [field]="form.type" />
+    </div>
+    <np-text-input
+      [formField]="form.orderNumber"
+      label="Order number (optional)"
+      placeholder="BB-261105-ABC123"
+      autocapitalize="characters"
+      [error]="shownError(form.orderNumber)"
+    />
+    <np-text-input [formField]="form.subject" label="Subject" [error]="shownError(form.subject)" />
+    <div class="bb-field">
+      <np-textarea [formField]="form.message" label="Tell us what happened" rows="5" autoResize />
+      <bb-field-error [field]="form.message" />
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="form().submitting()">Send</button>
+  </mat-dialog-actions>
+</form>

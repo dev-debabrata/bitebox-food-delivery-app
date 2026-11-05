@@ -1,0 +1,208 @@
+<bb-page-header title="Coins configuration" subtitle="How customers earn and spend coins. Changes apply at once and are recorded in the audit log." />
+
+@if (loadError(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="load()">Retry</button></span>
+  </div>
+}
+
+@if (loaded(); as c) {
+  @if (!canManage) {
+    <div class="bb-alert info" role="status">
+      <np-icon name="info" class="mat-icon" matButtonIcon />
+      <span>Only the super admin can change these settings.</span>
+    </div>
+  }
+  <form class="bb-form settings" [formRoot]="form">
+    @if (saveError(); as e) {
+      <div class="bb-alert error" role="alert">
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+        <span>{{ e }} <button class="bb-link-button" type="button" (click)="load()">Reload</button></span>
+      </div>
+    }
+
+    <section class="bb-card" aria-labelledby="general-title">
+      <h2 class="bb-h3" id="general-title">Coins programme</h2>
+      <np-toggle [formField]="form.coinsEnabled" label="Coins are on (earning and redeeming)" />
+      <p class="bb-muted small">Turning this off stops all earning and redeeming. Balances and history are kept.</p>
+    </section>
+
+    <section class="bb-card" aria-labelledby="earn-title">
+      <h2 class="bb-h3" id="earn-title">Earning</h2>
+      <np-toggle [formField]="form.earning.order.enabled" label="Reward delivered orders" />
+      <div class="bb-form-row">
+        <div class="bb-field">
+          <np-input-number [formField]="form.earning.order.coinsPerUnit" label="Coins" suffix=" coins" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.earning.order.coinsPerUnit" />
+        </div>
+        <div class="bb-field">
+          <np-input-number [formField]="form.earning.order.unitPaise" label="For every" prefix="₹ " [maxFractionDigits]="2" />
+          <bb-field-error [field]="form.earning.order.unitPaise" />
+        </div>
+      </div>
+      <div class="bb-form-row">
+        <div class="bb-field">
+          <np-input-number [formField]="form.earning.order.minOrderPaise" label="Minimum food value" prefix="₹ " [maxFractionDigits]="2" />
+          <bb-field-error [field]="form.earning.order.minOrderPaise" />
+        </div>
+        <div class="bb-field">
+          <np-input-number [formField]="form.earning.order.maxCoinsPerOrder" label="Most coins per order" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.earning.order.maxCoinsPerOrder" />
+        </div>
+      </div>
+      <p class="bb-muted small">Counted on the food value after coupon and coin discounts. Delivery fee, platform fee and tax never earn coins.</p>
+
+      <np-toggle [formField]="form.earning.review.enabled" label="Reward reviews of delivered orders" />
+      <div class="bb-form-row">
+        <div class="bb-field">
+          <np-input-number [formField]="form.earning.review.coins" label="Coins per review" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.earning.review.coins" />
+        </div>
+        <div class="bb-field">
+          <np-input-number [formField]="form.earning.review.minCommentLength" label="Minimum comment length" suffix=" characters" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.earning.review.minCommentLength" />
+        </div>
+      </div>
+      <p class="bb-muted small">Once per order. Taken back if the review is removed or deleted.</p>
+    </section>
+
+    <section class="bb-card" aria-labelledby="redeem-title">
+      <h2 class="bb-h3" id="redeem-title">Redemption</h2>
+      <np-toggle [formField]="form.redemption.enabled" label="Customers can pay with coins" />
+      <div class="bb-form-row">
+        <div class="bb-field">
+          <np-input-number [formField]="form.redemption.coinValueCoins" label="Coins" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.redemption.coinValueCoins" />
+        </div>
+        <div class="bb-field">
+          <np-input-number [formField]="form.redemption.coinValuePaise" label="Are worth" prefix="₹ " [maxFractionDigits]="2" />
+          <bb-field-error [field]="form.redemption.coinValuePaise" />
+        </div>
+      </div>
+      <div class="bb-form-row">
+        <div class="bb-field">
+          <np-input-number [formField]="form.redemption.minCoins" label="Minimum coins per redemption" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.redemption.minCoins" />
+        </div>
+        <div class="bb-field">
+          <np-input-number [formField]="form.redemption.maxCoinsPerOrder" label="Maximum coins per order" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.redemption.maxCoinsPerOrder" />
+        </div>
+      </div>
+      <div class="bb-form-row">
+        <div class="bb-field">
+          <np-input-number [formField]="form.redemption.maxPercentOfOrder" label="Up to this share of the food value" suffix=" %" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.redemption.maxPercentOfOrder" />
+        </div>
+        <div class="bb-field">
+          <np-input-number [formField]="form.redemption.minOrderPaise" label="Minimum food value" prefix="₹ " [maxFractionDigits]="2" />
+          <bb-field-error [field]="form.redemption.minOrderPaise" />
+        </div>
+      </div>
+      <div class="methods">
+        <span class="bb-muted small">Allowed with</span>
+        <np-toggle [formField]="form.redemption.cod" label="Cash on delivery" />
+        <np-toggle [formField]="form.redemption.online" label="Online payment" />
+      </div>
+      <bb-field-error [field]="form.redemption.online" />
+    </section>
+
+    <section class="bb-card" aria-labelledby="expiry-title">
+      <h2 class="bb-h3" id="expiry-title">Expiry</h2>
+      <np-toggle [formField]="form.expiry.enabled" label="Coins expire" />
+      <p class="bb-muted small">Days until coins from each reward expire. 0 means they never expire. Applies to coins earned from now on.</p>
+      <div class="days">
+        @for (s of sources; track s) {
+          <div class="bb-field">
+            <np-input-number [formField]="form.expiry.days[s]" [label]="sourceLabel[s]" suffix=" days" [maxFractionDigits]="0" />
+            <bb-field-error [field]="form.expiry.days[s]" />
+          </div>
+        }
+      </div>
+      <div class="bb-form-row">
+        <div class="bb-field">
+          <np-input-number [formField]="form.expiry.restoreGraceDays" label="Returned coins stay valid at least" suffix=" days" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.expiry.restoreGraceDays" />
+        </div>
+        <div class="bb-field">
+          <np-input-number [formField]="form.expiry.expiringSoonDays" label="Warn customers this early" suffix=" days" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.expiry.expiringSoonDays" />
+        </div>
+      </div>
+    </section>
+
+    <section class="bb-card" aria-labelledby="referral-title">
+      <h2 class="bb-h3" id="referral-title">Referrals</h2>
+      <np-toggle [formField]="form.referral.enabled" label="Refer & earn is on" />
+      <div class="bb-form-row">
+        <div class="bb-field">
+          <np-input-number [formField]="form.referral.referrerCoins" label="Referrer earns" suffix=" coins" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.referral.referrerCoins" />
+        </div>
+        <div class="bb-field">
+          <np-input-number [formField]="form.referral.referredCoins" label="Friend earns" suffix=" coins" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.referral.referredCoins" />
+        </div>
+      </div>
+      <div class="bb-form-row">
+        <div class="bb-field">
+          <np-input-number [formField]="form.referral.minOrderPaise" label="Friend's first order at least" prefix="₹ " [maxFractionDigits]="2" />
+          <bb-field-error [field]="form.referral.minOrderPaise" />
+        </div>
+        <div class="bb-field">
+          <np-input-number [formField]="form.referral.attributionDays" label="Days to place it" suffix=" days" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.referral.attributionDays" />
+        </div>
+      </div>
+      <div class="bb-form-row">
+        <div class="bb-field">
+          <np-input-number [formField]="form.referral.maxReferralsPerCustomer" label="Most referrals per customer" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.referral.maxReferralsPerCustomer" />
+        </div>
+        <div class="bb-field">
+          <np-input-number [formField]="form.referral.maxRewardsPerMonth" label="Most referrer rewards per month" [maxFractionDigits]="0" />
+          <bb-field-error [field]="form.referral.maxRewardsPerMonth" />
+        </div>
+      </div>
+    </section>
+
+    <section class="bb-card" aria-labelledby="special-title">
+      <h2 class="bb-h3" id="special-title">Birthday and welcome</h2>
+      <div class="bb-form-row">
+        <div class="stack">
+          <np-toggle [formField]="form.birthday.enabled" label="Birthday reward" />
+          <div class="bb-field">
+            <np-input-number [formField]="form.birthday.coins" label="Birthday coins" [maxFractionDigits]="0" />
+            <bb-field-error [field]="form.birthday.coins" />
+          </div>
+        </div>
+        <div class="stack">
+          <np-toggle [formField]="form.welcome.enabled" label="Welcome reward" />
+          <div class="bb-field">
+            <np-input-number [formField]="form.welcome.coins" label="Welcome coins" [maxFractionDigits]="0" />
+            <bb-field-error [field]="form.welcome.coins" />
+          </div>
+          <div class="bb-field">
+            <np-select [formField]="form.welcome.trigger" label="Give it" [options]="triggerOptions" />
+          </div>
+        </div>
+      </div>
+      <p class="bb-muted small">Birthdays follow the {{ c.timezone }} calendar and pay once a year. Festival and promotional rewards are set up as campaigns.</p>
+    </section>
+
+    @if (canManage) {
+      <div class="actions">
+        @if (c.updatedAt) {
+          <span class="bb-muted small">Last saved {{ c.updatedAt | date: 'd MMM y, h:mm a' }}</span>
+        }
+        <button mat-button type="button" (click)="discard()" [disabled]="form().submitting()">Discard changes</button>
+        <button mat-flat-button type="submit" [disabled]="form().submitting()">Save settings</button>
+      </div>
+    }
+  </form>
+} @else if (!loadError()) {
+  @for (i of [1, 2, 3]; track i) {
+    <span class="bb-skeleton block"></span>
+  }
+}

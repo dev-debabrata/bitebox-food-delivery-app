@@ -1,0 +1,117 @@
+<bb-page-header title="Coins & rewards" subtitle="Coins issued and redeemed, what the platform owes in coins, and activity worth a look.">
+  <np-select class="bb-period" [formField]="report.filters.days" ariaLabel="Period" [options]="report.periods" />
+</bb-page-header>
+
+@if (report.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="report.resource.reload()">Retry</button></span>
+  </div>
+}
+
+@if (report.data(); as d) {
+  <section class="bb-grid cols-4" aria-label="Totals" [class.bb-dim]="report.resource.isLoading()">
+    <bb-stat-tile icon="coins" label="Coins issued" [value]="coins(d.period.issued)" [hint]="coins(d.allTime.issued) + ' all time'" />
+    <bb-stat-tile icon="shopping-bag" label="Coins redeemed" [value]="coins(d.period.netRedeemed)" [hint]="coins(d.allTime.netRedeemed) + ' all time'" />
+    <bb-stat-tile
+      icon="landmark"
+      label="Outstanding liability"
+      [value]="money(d.liability.paise)"
+      [hint]="coins(d.liability.coins) + ' unspent (' + d.liability.reservedCoins + ' held)'"
+    />
+    <bb-stat-tile icon="wallet" label="Active wallets" [value]="d.wallets.active" [hint]="d.wallets.total + (d.wallets.total === 1 ? ' wallet' : ' wallets') + ' in total'" />
+    <bb-stat-tile icon="user-plus" label="Referral rewards" [value]="coins(d.period.referralRewards)" [hint]="d.referrals.total + ' referrals all time'" />
+    <bb-stat-tile icon="party-popper" label="Promotional rewards" [value]="coins(d.period.promotionalRewards)" [hint]="d.campaigns.active + ' active campaigns'" />
+    <bb-stat-tile icon="clock" label="Expired coins" [value]="coins(d.period.expired)" [hint]="coins(d.allTime.expired) + ' all time'" />
+    <bb-stat-tile icon="undo-2" label="Reversed coins" [value]="coins(d.period.reversed)" [hint]="coins(d.allTime.reversed) + ' all time'" />
+  </section>
+
+  <div class="bb-grid cols-2 below">
+    <bb-daily-chart title="Coins by day" [dates]="dates()" [series]="series()" [format]="coins" />
+
+    <section class="bb-card" aria-labelledby="source-title">
+      <h2 class="bb-h3" id="source-title">Where coins came from</h2>
+      <p class="bb-muted note">Coins issued in the selected period, by reward.</p>
+      @for (r of sources(); track r.label) {
+        <div class="bb-bar-row">
+          <span>{{ r.label }}</span>
+          <span class="num">{{ r.coins.toLocaleString('en-IN') }}</span>
+          <span class="track"><span class="fill" [style.width.%]="r.share * 100"></span></span>
+        </div>
+      }
+    </section>
+  </div>
+
+  <div class="bb-grid cols-2 below">
+    <section class="bb-card" aria-labelledby="campaign-title">
+      <div class="card-head">
+        <h2 class="bb-h3" id="campaign-title">Campaign performance</h2>
+        <a mat-button routerLink="/admin/rewards/campaigns">All campaigns</a>
+      </div>
+      @if (!d.campaigns.top.length) {
+        <p class="bb-muted">No campaign has paid out yet.</p>
+      } @else {
+        <table class="bb-table">
+          <thead>
+            <tr>
+              <th scope="col">Campaign</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="num">Claims</th>
+              <th scope="col" class="num">Coins</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of d.campaigns.top; track c.id) {
+              <tr>
+                <td>{{ c.name }}</td>
+                <td>{{ statusLabel[c.status] }}</td>
+                <td class="num">{{ c.claims }}</td>
+                <td class="num">{{ c.coins.toLocaleString('en-IN') }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+
+    <section class="bb-card" aria-labelledby="risk-title">
+      <div class="card-head">
+        <h2 class="bb-h3" id="risk-title">Suspicious activity</h2>
+        <a mat-button routerLink="/admin/rewards/referrals">Review referrals</a>
+      </div>
+      <ul class="risk">
+        <li>
+          <span><np-icon name="shield-alert" class="mat-icon" matButtonIcon /> Referrals held for review</span>
+          <strong [class.alert]="d.suspicious.heldReferrals > 0">{{ d.suspicious.heldReferrals }}</strong>
+        </li>
+        <li>
+          <span><np-icon name="flag" class="mat-icon" matButtonIcon /> Referrals with risk signals</span>
+          <strong>{{ d.suspicious.flaggedReferrals }}</strong>
+        </li>
+        <li>
+          <span><np-icon name="undo-2" class="mat-icon" matButtonIcon /> Reversals that found coins spent</span>
+          <strong>{{ d.suspicious.uncollectedReversals.wallets }} wallets · {{ coins(d.suspicious.uncollectedReversals.coins) }}</strong>
+        </li>
+      </ul>
+      <h3 class="sub-title">Top non-order earners, last 7 days</h3>
+      @if (!d.suspicious.topEarners.length) {
+        <p class="bb-muted">Nobody yet.</p>
+      } @else {
+        <ul class="earners">
+          @for (e of d.suspicious.topEarners; track $index) {
+            <li>
+              <span>{{ e.customer?.name ?? 'Deleted account' }} <span class="bb-muted small">{{ e.customer?.email }}</span></span>
+              <a [routerLink]="['/admin/rewards/transactions']" [queryParams]="{ userId: e.customer?.id }">{{ coins(e.coins) }}</a>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+} @else if (!report.error()) {
+  <section class="bb-grid cols-4">
+    @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+      <span class="bb-skeleton tile"></span>
+    }
+  </section>
+}

@@ -1,9 +1,9 @@
-import crypto from "node:crypto";
 import { logger } from "../config/logger.js";
 import { Cart } from "../models/cart.model.js";
 import { Coupon, CouponRedemption } from "../models/coupon.model.js";
 import { FoodItem } from "../models/food-item.model.js";
 import {
+  ORDER_COIN_STATES,
   ORDER_STATUS,
   Order,
   PAYMENT_METHODS,
@@ -16,25 +16,18 @@ import {
   REVIEW_TARGETS,
   Review,
 } from "../models/review.model.js";
+import { randomCode } from "../utils/codes.js";
 import { ApiError } from "../utils/api-error.js";
 import { paginationMeta } from "../utils/pagination.js";
 import { withTransaction } from "../utils/transaction.js";
 import * as addressService from "./address.service.js";
 import * as cartService from "./cart.service.js";
+import * as coinsService from "./coins.service.js";
 import * as couponService from "./coupon.service.js";
+import * as rewardEvents from "./reward-events.js";
 import { notifyNewOrder } from "./order-notifications.js";
 import { providerFor } from "./payments/payment.service.js";
 
-/** e.g. BB-261102-7KQ4XZ (date + 6 random base32 characters). */
-function newOrderNumber() {
-  const date = new Date().toISOString().slice(2, 10).replaceAll("-", "");
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const random = Array.from(
-    crypto.randomBytes(6),
-    (b) => alphabet[b % alphabet.length],
-  ).join("");
-  return `BB-${date}-${random}`;
-}
 
 const conflict = (message, code, details) =>
   new ApiError(409, message, { code, details });
@@ -76,6 +69,14 @@ export async function placeOrder(
     );
   }
 
+  const coinsRedeemed = quote.coins?.applied ?? 0;
+  if (coinsRedeemed && !quote.coins.paymentMethods.includes(paymentMethod)) {
+    throw conflict(
+      "Coins can't be used with this payment method. Remove the coins or pay another way.",
+      "COINS_NOT_ALLOWED",
+    );
+  }
+
   const restaurant = await Restaurant.findById(quote.cart.restaurant.id);
   const foods = await FoodItem.find({
     _id: { $in: quote.cart.items.map((l) => l.foodItemId) },
@@ -83,7 +84,7 @@ export async function placeOrder(
   if (foods.length !== quote.cart.items.length)
     throw conflict("Some dishes are no longer available", "CHECKOUT_BLOCKED");
 
-  const orderNumber = newOrderNumber();
+  const orderNumber = randomCode("BB");
   const now = new Date();
   const orderDoc = {
     orderNumber,
@@ -127,6 +128,17 @@ export async function placeOrder(
     coupon: quote.coupon
       ? { code: quote.coupon.code, discountPaise: quote.pricing.discountPaise }
       : undefined,
+    coins: coinsRedeemed
+      ? {
+          redeemed: coinsRedeemed,
+          discountPaise: quote.pricing.coinDiscountPaise,
+          // Cash orders spend the coins now; online orders hold them until paid.
+          state:
+            paymentMethod === PAYMENT_METHODS.COD
+              ? ORDER_COIN_STATES.COMMITTED
+              : ORDER_COIN_STATES.RESERVED,
+        }
+      : undefined,
     distanceMeters: quote.delivery.distanceMeters,
     note: note || undefined,
     status: ORDER_STATUS.PENDING,
@@ -149,6 +161,7 @@ export async function placeOrder(
       { orderId: order.id, orderNumber, userId: String(userId) },
       "Order placed",
     );
+    await rewardEvents.orderPlaced(order);
     if (order.submittedAt) await notifyNewOrder(order, "cash on delivery");
     return { order, created: true };
   } catch (error) {
@@ -256,6 +269,15 @@ async function commitOrder(
         { session },
       );
     }
+
+    // 4. Hold the redeemed coins (cash orders spend them straight away).
+    await coinsService.reserveForOrder(
+      userId,
+      order,
+      { cash: paymentMethod === PAYMENT_METHODS.COD },
+      session,
+      undo,
+    );
     return order;
   } catch (error) {
     if (!session) {

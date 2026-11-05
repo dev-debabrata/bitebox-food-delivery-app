@@ -1,0 +1,193 @@
+<section class="bb-container page">
+  <bb-page-header title="Rewards" subtitle="Birthday treats, festival offers and promotions that add coins to your wallet." />
+  <bb-rewards-nav />
+
+  @if (overviewError(); as message) {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>{{ message }} <button class="bb-link-button" (click)="overview.reload()">Retry</button></span>
+    </div>
+  }
+
+  @if (info(); as o) {
+    @if (!o.enabled) {
+      <div class="bb-alert info" role="status">
+        <np-icon name="info" class="mat-icon" matButtonIcon />
+        <span>Rewards are paused right now. Coins you already have are safe.</span>
+      </div>
+    }
+    <div class="bb-grid cols-3 cards">
+      <section class="bb-card perk" aria-labelledby="birthday-title">
+        <np-icon name="cake" class="mat-icon perk-icon" matButtonIcon />
+        <h2 class="bb-h3" id="birthday-title">Birthday treat</h2>
+        @if (!o.birthday.enabled) {
+          <p class="bb-muted">Birthday rewards are not running right now.</p>
+        } @else if (o.birthday.saved) {
+          <p><strong>{{ o.birthday.coins }} coins</strong> on your birthday, every year.</p>
+          <p class="bb-muted small">
+            Next: {{ o.birthday.next | date: 'd MMMM y' }}
+            @if (o.birthday.claimedThisYear) {
+              · this year's treat is in your wallet
+            }
+          </p>
+        } @else {
+          <p>Add your birthday and get <strong>{{ o.birthday.coins }} coins</strong> on the day.</p>
+          @if (birthdayError(); as e) {
+            <div class="bb-alert error" role="alert">
+              <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ e }}</span>
+            </div>
+          }
+          <form class="birthday-form" [formRoot]="birthdayForm">
+            <div class="bb-field">
+              <np-calendar
+                [formField]="birthdayForm.birthDate"
+                label="Date of birth"
+                dateFormat="dd M yy"
+                [maxDate]="latestBirthDate"
+                [minDate]="earliestBirthDate"
+                showIcon
+              />
+              <bb-field-error [field]="birthdayForm.birthDate" />
+            </div>
+            <button mat-flat-button type="submit" [disabled]="birthdayForm().submitting()">Save</button>
+          </form>
+          <p class="bb-muted small">You can set it once. Contact support to correct it.</p>
+        }
+      </section>
+
+      <section class="bb-card perk" aria-labelledby="welcome-title">
+        <np-icon name="sparkles" class="mat-icon perk-icon" matButtonIcon />
+        <h2 class="bb-h3" id="welcome-title">Welcome bonus</h2>
+        @if (o.welcome.claimed) {
+          <p><span class="bb-badge tone-good">Received</span> {{ o.welcome.coins }} coins for joining BiteBox.</p>
+        } @else if (o.welcome.enabled) {
+          <p>
+            <strong>{{ o.welcome.coins }} coins</strong>
+            {{ o.welcome.trigger === 'first_order' ? 'when your first order is delivered.' : 'for new customers.' }}
+          </p>
+        } @else {
+          <p class="bb-muted">No welcome bonus is running right now.</p>
+        }
+      </section>
+
+      <bb-stat-tile icon="gift" label="Rewards received" [value]="o.totals.claims" [hint]="o.totals.coins + ' coins in total'" />
+    </div>
+  } @else if (!overviewError()) {
+    <div class="bb-grid cols-3 cards">
+      @for (i of [1, 2, 3]; track i) {
+        <span class="bb-skeleton" style="height: 180px"></span>
+      }
+    </div>
+  }
+
+  <section class="offers" aria-labelledby="offers-title">
+    <h2 class="bb-h3" id="offers-title">Offers for you</h2>
+    @if (campaignsError(); as message) {
+      <div class="bb-alert error" role="alert">
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+        <span>{{ message }} <button class="bb-link-button" (click)="campaignsRes.reload()">Retry</button></span>
+      </div>
+    }
+    @if (campaigns(); as items) {
+      @if (!items.length) {
+        <bb-empty-state icon="party-popper" title="No offers right now" message="Festival and promotional rewards will appear here." />
+      } @else {
+        <div class="bb-grid cols-3">
+          @for (c of items; track c.id) {
+            <article class="bb-card campaign" [class.festival]="c.type === 'FESTIVAL'">
+              <header>
+                <span class="bb-badge {{ c.type === 'FESTIVAL' ? 'tone-warn' : 'tone-info' }}">{{ c.type === 'FESTIVAL' ? 'Festival' : 'Promotion' }}</span>
+                <strong class="reward">+{{ c.rewardCoins }} coins</strong>
+              </header>
+              <h3>{{ c.name }}</h3>
+              @if (c.description) {
+                <p class="bb-muted small">{{ c.description }}</p>
+              }
+              <ul class="terms small">
+                @if (c.trigger === 'ORDER') {
+                  <li>Earned automatically on a delivered order{{ c.conditions.minOrderPaise ? ' of ' : '' }}{{ c.conditions.minOrderPaise ? (c.conditions.minOrderPaise | inr) : '' }}{{ c.conditions.minOrderPaise ? '+' : '' }}</li>
+                }
+                @if (c.conditions.firstOrderOnly) {
+                  <li>First order only</li>
+                }
+                @if (c.conditions.restaurantOnly) {
+                  <li>At selected restaurants</li>
+                }
+                @if (c.maxClaimsPerCustomer > 1) {
+                  <li>Up to {{ c.maxClaimsPerCustomer }} times (you: {{ c.claimedTimes }})</li>
+                }
+                <li>
+                  @if (upcoming(c)) {
+                    Starts {{ c.startAt | date: 'd MMM, h:mm a' }}
+                  } @else {
+                    Valid until {{ c.endAt | date: 'd MMM y, h:mm a' }}
+                  }
+                </li>
+              </ul>
+              <footer>
+                @if (c.canClaim) {
+                  <button mat-flat-button type="button" class="bb-btn-accent" (click)="claim(c)" [disabled]="claiming() === c.id">
+                    <np-icon name="gift" class="mat-icon" matButtonIcon />Claim
+                  </button>
+                } @else {
+                  <span class="bb-muted small">{{ c.reason }}</span>
+                }
+              </footer>
+            </article>
+          }
+        </div>
+      }
+    } @else if (!campaignsError()) {
+      <div class="bb-grid cols-3">
+        @for (i of [1, 2, 3]; track i) {
+          <span class="bb-skeleton" style="height: 160px"></span>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="history" aria-labelledby="history-title">
+    <div class="history-head">
+      <h2 class="bb-h3" id="history-title">Reward history</h2>
+      <np-select class="type-filter" [formField]="filters.rewardType" ariaLabel="Show" [options]="typeOptions" />
+    </div>
+    @if (history.error(); as message) {
+      <div class="bb-alert error" role="alert">
+        <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+        <span>{{ message }} <button class="bb-link-button" (click)="history.load(1)">Retry</button></span>
+      </div>
+    }
+    <div class="bb-card bb-list-card" [attr.aria-busy]="history.loading()">
+      @if (history.showSkeleton()) {
+        @for (i of [1, 2, 3]; track i) {
+          <span class="bb-skeleton row"></span>
+        }
+      } @else if (history.empty()) {
+        <bb-empty-state icon="gift" title="No rewards yet" message="Rewards you receive will be listed here." />
+      } @else {
+        <ul class="claims" [class.bb-dim]="history.loading()">
+          @for (r of history.data()!.items; track r.id) {
+            <li>
+              <div>
+                <strong>{{ r.campaign?.name ?? typeLabel[r.rewardType] + ' bonus' }}</strong>
+                <span class="bb-muted small">{{ typeLabel[r.rewardType] }} · {{ r.claimedAt | date: 'd MMM y' }}</span>
+              </div>
+              @if (r.status === 'PENDING') {
+                <span class="bb-badge tone-warn">Adding…</span>
+              }
+              <span class="coins">+{{ r.coins }}</span>
+            </li>
+          }
+        </ul>
+        <mat-paginator
+          [length]="history.data()!.pagination.total"
+          [pageIndex]="history.data()!.pagination.page - 1"
+          [pageSize]="history.data()!.pagination.limit"
+          [pageSizeOptions]="[20, 50]"
+          (page)="history.onPage($event)"
+          aria-label="Reward history pages"
+        />
+      }
+    </div>
+  </section>
+</section>

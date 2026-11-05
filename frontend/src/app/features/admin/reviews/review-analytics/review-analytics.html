@@ -22,7 +22,7 @@
 
   <div class="bb-grid cols-2">
     <bb-daily-chart title="Reviews by day" [dates]="dates()" [series]="volume()" [format]="count" />
-    <bb-daily-chart title="Average rating by day" [dates]="dates()" [series]="trend()" [format]="stars" />
+    <bb-daily-chart title="Average rating by day" [dates]="dates()" [series]="trend()" [format]="stars" [showTotal]="false" />
   </div>
 
   <div class="bb-grid cols-3">

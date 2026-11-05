@@ -10,6 +10,7 @@ import { errorMessage, fieldErrors } from '../../../../core/services/api-error';
 import { FoodCategory } from '../../../../shared/models/catalog.models';
 import { serverErrors, shownError } from '../../../../shared/forms/form-errors';
 import { NP_FORM_FIELDS } from '../../../../shared/forms/np-form-fields';
+import { ImageUpload } from '../../../../shared/components/image-upload/image-upload';
 import { numberRange, requiredText } from '../../../../shared/forms/form-rules';
 
 const ICON_SUGGESTIONS = [
@@ -41,6 +42,7 @@ const ICON_SUGGESTIONS = [
     MatButtonModule,
     IconComponent,
     NpIconPipe,
+    ImageUpload,
   ],
   templateUrl: './category-form-dialog.html',
   styleUrl: './category-form-dialog.scss',
@@ -75,10 +77,14 @@ export class CategoryFormDialog {
     { submission: { action: () => this.save() } },
   );
 
+  protected readonly imageUrl = signal(this.data?.imageUrl ?? '');
+
   private async save(): Promise<TreeValidationResult> {
     const v = this.model();
     const input = {
       ...v,
+      // Shown on the home page "What are you craving?" tiles ('' removes it).
+      imageUrl: this.imageUrl(),
       name: v.name.trim(),
       description: v.description.trim(),
       sortOrder: Number(v.sortOrder ?? 0),

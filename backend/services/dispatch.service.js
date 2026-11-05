@@ -6,6 +6,7 @@ import { USER_STATUS } from "../models/user.model.js";
 import { emitOrderUpdated } from "../sockets/events.js";
 import { ApiError } from "../utils/api-error.js";
 import { ACTORS, transition } from "./order-workflow.service.js";
+import { startSweepLoop } from "../utils/sweep-loop.js";
 import { notifyOffer } from "./order-notifications.js";
 
 const S = ORDER_STATUS;
@@ -289,21 +290,5 @@ export async function sweep(now = new Date()) {
 }
 
 /** Runs the sweep on an interval; returns a stop function (used on shutdown). */
-export function startDispatchLoop(intervalMs = DISPATCH.sweepIntervalMs) {
-  let running = false;
-  const timer = setInterval(async () => {
-    if (running) return; // never overlap two sweeps
-    running = true;
-    try {
-      const summary = await sweep();
-      if (Object.values(summary).some(Boolean))
-        logger.info(summary, "Dispatch sweep");
-    } catch (error) {
-      logger.error({ err: error }, "Dispatch sweep failed");
-    } finally {
-      running = false;
-    }
-  }, intervalMs);
-  timer.unref();
-  return () => clearInterval(timer);
-}
+export const startDispatchLoop = (intervalMs = DISPATCH.sweepIntervalMs) =>
+  startSweepLoop("Dispatch", () => sweep(), intervalMs, (s) => Object.values(s).some(Boolean));

@@ -35,6 +35,24 @@ export const SEED_USERS = [
     phone: "9000000004",
     role: ROLES.DELIVERY,
   },
+  {
+    name: "Omar Operations",
+    email: "operations@bitebox.test",
+    phone: "9000000005",
+    role: ROLES.OPERATIONS_ADMIN,
+  },
+  {
+    name: "Farah Finance",
+    email: "finance@bitebox.test",
+    phone: "9000000006",
+    role: ROLES.FINANCE_ADMIN,
+  },
+  {
+    name: "Sana Support",
+    email: "support@bitebox.test",
+    phone: "9000000007",
+    role: ROLES.SUPPORT_ADMIN,
+  },
 ];
 
 export async function seedUsers(password, { resetPasswords = false } = {}) {

@@ -23,6 +23,7 @@ export class RestaurantLayout {
     { label: 'Menu', icon: 'menu_book', link: '/restaurant/menu' },
     { label: 'Reviews', icon: 'star', link: '/restaurant/reviews' },
     { label: 'Earnings', icon: 'account_balance_wallet', link: '/restaurant/earnings' },
+    { label: 'Help & support', icon: 'life-buoy', link: '/restaurant/support' },
     { label: 'Profile', icon: 'manage_accounts', link: '/restaurant/profile' },
   ];
 

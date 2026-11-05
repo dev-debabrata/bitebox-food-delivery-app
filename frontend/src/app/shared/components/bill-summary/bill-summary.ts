@@ -13,4 +13,6 @@ export class BillSummary {
   readonly pricing = input.required<Pricing>();
   readonly couponCode = input<string | undefined>();
   readonly distanceMeters = input<number | null | undefined>();
+  /** Coins used for the coin discount line. */
+  readonly coinsRedeemed = input<number | null | undefined>();
 }

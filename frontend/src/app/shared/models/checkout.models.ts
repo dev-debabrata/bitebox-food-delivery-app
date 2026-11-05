@@ -1,3 +1,4 @@
+import { CoinQuote, OrderCoins } from './rewards.models';
 import type { PaymentInfo } from './payment.models';
 
 export interface Pricing {
@@ -6,6 +7,8 @@ export interface Pricing {
   deliveryFeePaise: number;
   platformFeePaise: number;
   taxPaise: number;
+  /** Paid with BiteBox coins (comes off the payable total). */
+  coinDiscountPaise?: number;
   totalPaise: number;
 }
 
@@ -45,6 +48,8 @@ export interface CartQuote {
   } | null;
   coupon: { code: string; description?: string; discountPaise: number } | null;
   couponError: { code: string; message: string } | null;
+  /** Coins the customer can use on this cart (null for an empty cart). */
+  coins: CoinQuote | null;
   address: DeliveryAddress | null;
   delivery: {
     distanceMeters: number;
@@ -154,6 +159,8 @@ export interface Order {
   deliveryAddress: Omit<DeliveryAddress, 'id' | 'isDefault'>;
   pricing: Pricing;
   coupon?: { code: string; discountPaise: number };
+  /** Coins redeemed on (and earned by) this order. */
+  coins?: OrderCoins;
   distanceMeters: number;
   note?: string;
   status: OrderStatus;

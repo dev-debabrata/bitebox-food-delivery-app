@@ -32,27 +32,19 @@ function normalise(err) {
       code: "PAYLOAD_TOO_LARGE",
     });
 
-  if (
-    err?.name === "MongoServerSelectionError" ||
-    err?.name === "MongooseServerSelectionError" ||
-    err?.name === "MongoNetworkError" ||
-    err?.name === "MongoTimeoutError"
-  ) {
-    return new ApiError(
-      503,
-      "Database connection failed. Please ensure MongoDB Atlas Network Access allows connections from anywhere (0.0.0.0/0).",
-      { code: "DATABASE_UNAVAILABLE", details: err?.message },
-    );
-  }
+  if (/^Mongo(ose)?(ServerSelection|Network|Timeout)Error$/.test(err?.name))
+    return new ApiError(503, "Service temporarily unavailable, please retry", {
+      code: "DATABASE_UNAVAILABLE",
+    });
 
   return null;
 }
 
 export function errorHandler(err, req, res, _next) {
   const apiError = normalise(err);
+  res.set("Cache-Control", "no-store"); // never let a CDN keep an error for a cached route
 
   if (!apiError) {
-    console.error("Unhandled API Error:", err);
     req.log?.error({ err }, "Unhandled error");
     return res.status(500).json({
       success: false,

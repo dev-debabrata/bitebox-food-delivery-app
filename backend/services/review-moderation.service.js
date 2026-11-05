@@ -16,6 +16,7 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/api-error.js";
 import { escapeRegex } from "../utils/pagination.js";
 import { notify } from "./notification.service.js";
+import * as rewardEvents from "./reward-events.js";
 import { day, fillDays, since } from "./reports.service.js";
 import {
   groupReviews,
@@ -231,6 +232,7 @@ export async function moderate(adminId, id, { action, reason }) {
   if (!updated) throw reviewChanged();
 
   await Promise.all([
+    move.to === S.REMOVED && rewardEvents.reviewWithdrawn(updated, "review removed by moderation"),
     hiding && closeReports(updated._id, adminId, REPORT_STATUS.ACTIONED),
     // hidden -> removed changes no rating: neither counted.
     (review.status === S.PUBLISHED || move.to === S.PUBLISHED) && refreshFor(updated),

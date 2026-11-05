@@ -742,6 +742,222 @@ np-time-picker .time-picker-field {
     background: #e3f1ff;
     color: #12457a;
   }
+  &.role-operations_admin {
+    background: #e6f5ec;
+    color: var(--bb-success);
+  }
+  &.role-finance_admin {
+    background: var(--bb-amber-100);
+    color: #7a4b00;
+  }
+  &.role-support_admin {
+    background: #e3f1ff;
+    color: #12457a;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Admin lists (operations, finance, support, admin management)
+// ---------------------------------------------------------------------------
+// Filter bar above a list: stacked on phones, one row from tablet width.
+.bb-filters {
+  display: grid;
+  gap: var(--bb-space-3);
+  margin-bottom: var(--bb-space-4);
+
+  @media (min-width: 600px) {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+// A card holding a list or table edge to edge, with a paginator at the bottom.
+.bb-list-card {
+  padding: 0;
+  overflow: hidden;
+  --mat-paginator-container-background-color: var(--bb-surface);
+
+  .bb-skeleton.row {
+    display: block;
+    height: 52px;
+    margin: var(--bb-space-3) var(--bb-space-4);
+  }
+}
+
+// Plain data table: scrolls sideways on narrow screens, light dividers, muted headings.
+.bb-table-scroll {
+  overflow-x: auto;
+}
+.bb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 12px 16px;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--bb-border);
+  }
+  thead th {
+    background: var(--bb-surface-alt);
+    color: var(--bb-ink-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  tbody tr.clickable {
+    cursor: pointer;
+    &:hover {
+      background: var(--bb-surface-alt);
+    }
+  }
+  .num {
+    text-align: right;
+    white-space: nowrap;
+  }
+  .actions {
+    text-align: right;
+    white-space: nowrap;
+  }
+  .sub {
+    display: block;
+    color: var(--bb-ink-muted);
+    font-size: 0.8rem;
+  }
+}
+
+// Small rounded action in a table row (suspend, activate): green, or red with .danger.
+.bb-pill-action {
+  --tone: var(--bb-success);
+  --bb-icon-size: 16px;
+  --mat-button-outlined-container-height: 32px;
+  --mat-button-outlined-container-shape: 999px;
+  --mat-button-outlined-horizontal-padding: 12px;
+  --mat-button-outlined-label-text-size: 0.8rem;
+  --mat-button-outlined-label-text-color: var(--tone);
+  --mat-button-outlined-outline-color: color-mix(in srgb, var(--tone) 40%, transparent);
+  --mat-button-outlined-state-layer-color: var(--tone);
+  min-width: 104px;
+
+  &.danger {
+    --tone: var(--bb-danger);
+  }
+}
+
+// Dashboard bar: label and value on one line, a track filled to the share below.
+.bb-bar-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px var(--bb-space-2);
+  padding: 6px 0;
+
+  .num {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .track {
+    grid-column: 1 / -1;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--bb-surface-alt);
+    overflow: hidden;
+  }
+  .fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--bb-amber);
+  }
+}
+
+// Placeholder for a stat tile while a dashboard loads.
+.bb-skeleton.tile {
+  display: block;
+  height: 104px;
+  border-radius: var(--bb-radius);
+}
+
+// "← Back" link above a detail page.
+.bb-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: var(--bb-space-3);
+  --bb-icon-size: 18px;
+}
+
+// A support conversation: requester messages plain, support tinted, internal notes amber.
+.bb-thread {
+  list-style: none;
+  margin: 0 0 var(--bb-space-4);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-3);
+
+  > li {
+    padding: var(--bb-space-3) var(--bb-space-4);
+    border: 1px solid var(--bb-border);
+    border-radius: var(--bb-radius);
+    background: var(--bb-surface);
+
+    &.support {
+      background: var(--bb-plum-100);
+      border-color: transparent;
+    }
+    &.note {
+      background: var(--bb-amber-100);
+      border: 1px dashed var(--bb-amber-600);
+    }
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--bb-space-2);
+    font-size: 0.85rem;
+  }
+  .body {
+    margin: var(--bb-space-2) 0 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
+
+// Small coloured status badge: .tone-good / -warn / -bad / -info (neutral by default).
+.bb-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--bb-surface-alt);
+  color: var(--bb-ink-muted);
+
+  &.tone-good {
+    background: #e6f5ec;
+    color: var(--bb-success);
+  }
+  &.tone-warn {
+    background: var(--bb-amber-100);
+    color: #7a4b00;
+  }
+  &.tone-bad {
+    background: #fdecee;
+    color: var(--bb-danger);
+  }
+  &.tone-info {
+    background: #e3f1ff;
+    color: #12457a;
+  }
 }
 
 // Text prefixes/suffixes (₹, "min") only make sense next to a value. While the
@@ -752,4 +968,10 @@ np-time-picker .time-picker-field {
   .mat-mdc-form-field-text-suffix {
     visibility: hidden;
   }
+}
+
+// The customer account menu (header avatar). The panel lives in an overlay, so it is styled here.
+.mat-mdc-menu-panel.bb-account-menu {
+  width: 300px;
+  max-width: calc(100vw - 32px);
 }
