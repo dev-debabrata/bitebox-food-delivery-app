@@ -258,15 +258,17 @@ describe("Authentication", () => {
       assert.equal((await refreshWith(app, second)).status, 401);
     });
 
-    it("treats a near-simultaneous reuse as a race, not theft", async () => {
+    it("treats a near-simultaneous reuse as a race and reissues tokens", async () => {
       const { cookie } = await registerUser(app);
       const first = refreshCookie(cookie);
       const rotated = await refreshWith(app, first);
+      assert.equal(rotated.status, 200);
       const race = await refreshWith(app, first);
-      assert.equal(race.status, 401);
-      assert.equal(race.body.error.code, "REFRESH_RACE");
+      assert.equal(race.status, 200);
+      assert.ok(race.body.data.accessToken);
+      assert.ok(refreshCookie(race.headers["set-cookie"]));
       assert.equal(
-        (await refreshWith(app, refreshCookie(rotated.headers["set-cookie"])))
+        (await refreshWith(app, refreshCookie(race.headers["set-cookie"])))
           .status,
         200,
       );

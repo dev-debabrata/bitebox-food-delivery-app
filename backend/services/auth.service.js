@@ -136,39 +136,35 @@ export async function refresh(rawToken, meta) {
   if (!rawToken) throw ApiError.unauthorized("No session");
   const tokenHash = hashToken(rawToken);
 
-  // Atomic compare-and-set prevents the same token being rotated twice.
-  const session = await Session.findOneAndUpdate(
+  // Atomically rotate valid token.
+  let session = await Session.findOneAndUpdate(
     { tokenHash, revokedAt: null, expiresAt: { $gt: new Date() } },
     { revokedAt: new Date(), revokedReason: "rotated" },
   );
 
   if (!session) {
     const stale = await Session.findOne({ tokenHash });
-    if (
-      stale?.revokedReason === "rotated" &&
-      Date.now() - stale.revokedAt.getTime() < ROTATION_GRACE_MS
-    ) {
-      throw new ApiError(401, "Session was just refreshed, retry", {
-        code: "REFRESH_RACE",
-      });
+    if (stale?.revokedReason === "rotated") {
+      if (Date.now() - stale.revokedAt.getTime() < ROTATION_GRACE_MS) {
+        session = stale; // Grace-period race: continue and reissue tokens for the active family.
+      } else {
+        await Session.updateMany(
+          { family: stale.family, revokedAt: null },
+          { revokedAt: new Date(), revokedReason: "reuse" },
+        );
+        logger.warn(
+          { userId: String(stale.user) },
+          "Refresh token reuse detected; session family revoked",
+        );
+      }
     }
-    if (stale && stale.revokedReason === "rotated") {
-      // A token from this family was replayed: assume it was stolen and kill the family.
-      await Session.updateMany(
-        { family: stale.family, revokedAt: null },
-        { revokedAt: new Date(), revokedReason: "reuse" },
-      );
-      logger.warn(
-        { userId: String(stale.user) },
-        "Refresh token reuse detected; session family revoked",
-      );
-    }
-    throw ApiError.unauthorized("Session expired, please sign in again");
+    if (!session) throw ApiError.unauthorized("Session expired, please sign in again");
   }
 
   const user = await User.findById(session.user).select("+tokenVersion");
-  if (!user || user.status !== USER_STATUS.ACTIVE)
+  if (!user || user.status !== USER_STATUS.ACTIVE) {
     throw ApiError.unauthorized("Session expired, please sign in again");
+  }
 
   return issueTokens(user, meta, session.family);
 }

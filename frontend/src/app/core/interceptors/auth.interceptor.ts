@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ROLE_META } from '../../shared/models/user.models';
-import { AuthService } from '../auth/auth.service';
+import { AuthService, isTransient } from '../auth/auth.service';
 
 const NO_RETRY = [
   '/auth/login',
@@ -62,9 +62,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       return auth.refresh().pipe(
         switchMap((token) => next(withAuth(token))),
         catchError((refreshError: unknown) => {
-          void router.navigate([ROLE_META[role].login], {
-            queryParams: { returnUrl: router.url, reason: 'expired' },
-          });
+          if (!isTransient(refreshError)) {
+            void router.navigate([ROLE_META[role].login], {
+              queryParams: { returnUrl: router.url, reason: 'expired' },
+            });
+          }
           return throwError(() => refreshError);
         }),
       );

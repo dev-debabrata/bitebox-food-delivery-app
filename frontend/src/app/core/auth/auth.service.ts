@@ -111,18 +111,14 @@ export class AuthService {
           .pipe(map((res) => (this.applySession(res.data), res.data.accessToken)));
 
       this.refreshInFlight$ = attempt().pipe(
-        // A serverless API can answer the first request after a cold start with a 5xx or
-        // drop it; retry those before deciding the user is signed out.
+        // A serverless API can answer the first request after a cold start with a 5xx,
+        // or a concurrent race might occur; retry those before deciding the user is signed out.
         retry({
           count: 3,
           delay: (error: unknown, n) =>
-            errorCode(error) === 'REFRESH_RACE'
-              ? timer(300)
-              : isTransient(error)
-                ? timer(500 * n)
-                : throwError(() => error),
+            isTransient(error) ? timer(500 * n) : throwError(() => error),
         }),
-        // Only a definite "no valid session" answer ends the session, not a network blip.
+        // Only a definite "no valid session" answer ends the session, not a network blip or race.
         catchError((error: unknown) => {
           if (!isTransient(error)) this.clearSession();
           return throwError(() => error);
@@ -203,9 +199,10 @@ export class AuthService {
   }
 }
 
-/** Network failure or a gateway/server error, as opposed to the API rejecting the session. */
-const isTransient = (error: unknown) =>
-  error instanceof HttpErrorResponse && (error.status === 0 || error.status >= 500);
+/** Network failure, server cold-start, or concurrent refresh race. */
+export const isTransient = (error: unknown) =>
+  error instanceof HttpErrorResponse &&
+  (error.status === 0 || error.status >= 500 || errorCode(error) === 'REFRESH_RACE');
 
 function readHint(): SessionHint | null {
   try {

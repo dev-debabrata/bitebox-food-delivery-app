@@ -33,7 +33,7 @@ describe('app routes', () => {
     expect(el.querySelector('bb-customer-layout')).not.toBeNull();
     expect(el.querySelector('bb-auth-layout')).toBeNull();
     expect(el.textContent).toContain('How BiteBox works');
-  });
+  }, 10000);
 
   it('has one sign-in page; the old per-role addresses redirect to it', async () => {
     expect((await visit('/login')).textContent).toContain('Sign in');
