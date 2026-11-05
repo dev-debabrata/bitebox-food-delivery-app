@@ -32,6 +32,19 @@ function normalise(err) {
       code: "PAYLOAD_TOO_LARGE",
     });
 
+  if (
+    err?.name === "MongoServerSelectionError" ||
+    err?.name === "MongooseServerSelectionError" ||
+    err?.name === "MongoNetworkError" ||
+    err?.name === "MongoTimeoutError"
+  ) {
+    return new ApiError(
+      503,
+      "Database connection failed. Please ensure MongoDB Atlas Network Access allows connections from anywhere (0.0.0.0/0).",
+      { code: "DATABASE_UNAVAILABLE", details: err?.message },
+    );
+  }
+
   return null;
 }
 
@@ -39,6 +52,7 @@ export function errorHandler(err, req, res, _next) {
   const apiError = normalise(err);
 
   if (!apiError) {
+    console.error("Unhandled API Error:", err);
     req.log?.error({ err }, "Unhandled error");
     return res.status(500).json({
       success: false,

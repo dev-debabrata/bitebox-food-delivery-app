@@ -1,9 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "angular",
-  "buildCommand": "NG_BUILD_SASS_EMBEDDED=0 npm run build",
+  "buildCommand": "node build.mjs",
   "outputDirectory": "dist/frontend/browser",
-  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/:match*",
@@ -11,8 +9,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/index.csr.html"
+      "destination": "/index.html"
     }
   ]
 }
-

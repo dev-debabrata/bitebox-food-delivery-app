@@ -4,8 +4,10 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
+import mongoose from "mongoose";
 import { pinoHttp } from "pino-http";
 import swaggerUi from "swagger-ui-express";
+import { connectDB } from "./config/db.js";
 import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import { openApiDocument } from "./docs/openapi.js";
@@ -111,6 +113,27 @@ export function createApp(options = {}) {
     swaggerUi.serve,
     swaggerUi.setup(openApiDocument, { customSiteTitle: "BiteBox API Docs" }),
   );
+
+  let dbPromise = null;
+  app.use(async (_req, _res, next) => {
+    if (mongoose.connection.readyState === 1) return next();
+    try {
+      if (!dbPromise) {
+        dbPromise = connectDB(env.mongoUri)
+          .then(() => {
+            dbPromise = null;
+          })
+          .catch((err) => {
+            dbPromise = null;
+            throw err;
+          });
+      }
+      await dbPromise;
+      next();
+    } catch (err) {
+      next(err);
+    }
+  });
 
   app.use("/api/v1/health", healthRoutes);
   app.use("/api/v1/auth", createAuthRouter(options.rateLimits));
