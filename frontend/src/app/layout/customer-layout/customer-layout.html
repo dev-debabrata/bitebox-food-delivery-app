@@ -34,7 +34,7 @@
       >
       <a routerLink="/restaurants" routerLinkActive="active">Restaurants</a>
       <!-- Partner sign-up is shown to visitors only (the home page hides it once signed in). -->
-      @if (!shown()) {
+      @if (ready() && !shown()) {
         <a routerLink="/" fragment="partners">Partner with us</a>
       }
     </nav>
