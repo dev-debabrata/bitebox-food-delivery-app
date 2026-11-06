@@ -148,6 +148,16 @@
   }
 }
 
+// The cart bag lives in the bottom tab bar on mobile and tablet; the navbar displays it
+// only on desktop where the bottom tab bar is hidden.
+.cart-button {
+  display: none !important;
+
+  @include bp.desktop-up {
+    display: inline-flex !important;
+  }
+}
+
 // Bottom bar: a plain icon, so the badge sits further out to keep the icon visible.
 .tab-bar .bb-count-badge {
   top: -8px;
