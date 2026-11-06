@@ -1,3 +1,4 @@
+import { TableLabels } from '../../../shared/list/table-labels';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
@@ -33,7 +34,8 @@ const ACTIONS: Record<string, string> = {
 
 @Component({
   selector: 'bb-audit-log',
-  imports: [DatePipe, NP_FORM_FIELDS, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
+  imports: [
+    TableLabels,DatePipe, NP_FORM_FIELDS, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
   templateUrl: './audit-log.html',
   styleUrl: './audit-log.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

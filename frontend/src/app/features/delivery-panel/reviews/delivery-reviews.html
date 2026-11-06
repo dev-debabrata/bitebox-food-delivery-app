@@ -39,8 +39,8 @@
       @for (r of list.data()!.items; track r.id) {
         <li>
           <bb-review-card [review]="r">
-            <span badge class="order-no">Order {{ r.orderNumber }}</span>
             <div class="actions">
+              <span class="order-no">Order {{ r.orderNumber }}</span>
               @if (r.reportedByYou) {
                 <span class="bb-muted">Reported</span>
               } @else {

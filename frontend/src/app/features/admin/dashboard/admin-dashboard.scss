@@ -69,14 +69,14 @@
 
   li {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: var(--bb-space-3);
     padding: var(--bb-space-3) 0;
     border-top: 1px solid var(--bb-border);
 
     @include bp.tablet-up {
-      grid-template-columns: auto 1fr auto 120px;
+      grid-template-columns: auto minmax(0, 1fr) auto 120px;
     }
   }
 }
@@ -156,5 +156,12 @@
   h2 {
     margin: 0;
     font-size: 1rem;
+  }
+}
+
+// Phones: the Review button spans the card under the text.
+@include bp.phone-only {
+  .approvals > a {
+    flex: 1 1 100%;
   }
 }

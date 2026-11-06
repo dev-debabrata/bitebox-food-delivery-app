@@ -22,6 +22,15 @@
       icon="search"
       clearable
     />
+    @if (categories().length) {
+      <np-select
+        class="category-select"
+        ariaLabel="Category"
+        [options]="categoryOptions()"
+        [value]="category() ?? ''"
+        (valueChange)="setParams({ category: $event || null })"
+      />
+    }
     <np-select
       ariaLabel="Cuisine"
       [options]="cuisineOptions()"
@@ -42,14 +51,17 @@
         <np-icon name="map-pin" class="mat-icon" matButtonIcon />
         <span class="chip-label">{{ c.label }}</span>
       </button>
-      <button mat-button (click)="showAll()">Show all restaurants</button>
+      <button mat-button (click)="showAll()">
+        <np-icon name="list" class="mat-icon" matButtonIcon />
+        Show all restaurants
+      </button>
     } @else {
       <button mat-stroked-button (click)="chooseLocation()">
         <np-icon name="locate-fixed" class="mat-icon" matButtonIcon />
         {{ deliveryLocation() ? 'Only near ' + deliveryLocation()!.label : 'Set delivery location' }}
       </button>
     }
-    <np-toggle label="Pure veg" [checked]="vegOnly()" (checkedChange)="setParams({ veg: $event || null })" />
+    <np-toggle class="veg-toggle" label="Pure veg" [checked]="vegOnly()" (checkedChange)="setParams({ veg: $event || null })" />
     @if (hasFilters()) {
       <button mat-button (click)="clearFilters()">Clear all</button>
     }

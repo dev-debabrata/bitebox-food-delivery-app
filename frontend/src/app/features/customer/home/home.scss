@@ -20,10 +20,10 @@
   padding-block: var(--bb-space-7) 72px;
   align-items: center;
 
-  @include bp.tablet-up {
-    grid-template-columns: 3fr 2fr;
-  }
+  // Text and illustration side by side only on desktop; on tablets the text gets the full
+  // width so the greeting, its buttons and the perks each fit on one line.
   @include bp.desktop-up {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
     padding-block: 80px 104px;
   }
 }
@@ -139,6 +139,12 @@ h1 {
   span {
     opacity: 0.7;
   }
+  // Phones: one row of the top three; the rest are a tap away on the restaurants page.
+  @include bp.phone-only {
+    a:nth-of-type(n + 4) {
+      display: none;
+    }
+  }
   a {
     padding: 4px 12px;
     border: 1px solid rgb(255 246 229 / 28%);
@@ -213,6 +219,19 @@ h1 {
   np-icon {
     color: var(--bb-amber);
   }
+
+  // Phones: three even columns, icon above the label.
+  @include bp.phone-only {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    font-size: 0.8rem;
+    text-align: center;
+
+    li {
+      flex-direction: column;
+      line-height: 1.25;
+    }
+  }
 }
 
 // Illustration made from CSS shapes (no third-party imagery).
@@ -220,7 +239,7 @@ h1 {
   position: relative;
   display: none;
 
-  @include bp.tablet-up {
+  @include bp.desktop-up {
     display: block;
     height: 340px;
   }
@@ -369,6 +388,17 @@ h1 {
     margin: 0;
     letter-spacing: -0.01em;
   }
+
+  // Phones: keep the action beside the title instead of on a row of its own.
+  @include bp.phone-only {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+
+    > div {
+      flex: 1;
+      min-width: 0;
+    }
+  }
 }
 
 // A row of buttons (no-results card, rewards banner, partner cards).
@@ -396,6 +426,14 @@ h1 {
 
 .see-all {
   flex: none;
+
+  // Phones: a compact pill so it fits beside the heading.
+  @include bp.phone-only {
+    min-height: 36px;
+    height: 36px;
+    padding-inline: 12px;
+    font-size: 0.85rem;
+  }
 }
 
 .location-link {
@@ -491,7 +529,7 @@ h1 {
 .popular {
   display: grid;
   gap: var(--bb-space-4);
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 
   @include bp.tablet-up {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -536,7 +574,7 @@ h1 {
   overflow: hidden;
 
   @include bp.tablet-up {
-    grid-template-columns: 1.6fr 1fr;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
     padding: var(--bb-space-6);
   }
 
@@ -603,7 +641,7 @@ h1 {
   position: relative;
 
   @include bp.tablet-up {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 
     &::before {
       content: '';
@@ -662,7 +700,7 @@ h1 {
   gap: var(--bb-space-4);
 
   @include bp.tablet-up {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 

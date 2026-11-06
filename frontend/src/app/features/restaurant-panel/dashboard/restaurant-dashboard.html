@@ -42,9 +42,11 @@
       }
       <div>
         <h2 id="restaurant-name">{{ r.name }}</h2>
-        <p class="bb-muted">{{ r.cuisines.join(' · ') }} · {{ r.address.city }}</p>
-        <p class="bb-muted">
-          {{ r.openingTime | clockTime }} – {{ r.closingTime | clockTime }} · {{ r.costForTwoPaise | inr }} for two
+        <p class="bb-muted cuisines">{{ r.cuisines.join(' · ') }}</p>
+        <p class="bb-muted meta">
+          <span><np-icon name="map-pin" class="mat-icon" />{{ r.address.city }}</span>
+          <span><np-icon name="clock" class="mat-icon" />{{ r.openingTime | clockTime }} – {{ r.closingTime | clockTime }}</span>
+          <span><np-icon name="wallet" class="mat-icon" />{{ r.costForTwoPaise | inr }} for two</span>
         </p>
       </div>
     </div>

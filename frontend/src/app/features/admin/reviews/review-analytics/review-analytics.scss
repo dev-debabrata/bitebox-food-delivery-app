@@ -17,7 +17,7 @@ h3 {
 // Label and value on one line, the bar underneath.
 .share-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 4px var(--bb-space-2);
   margin-bottom: var(--bb-space-3);
   font-size: 0.9rem;

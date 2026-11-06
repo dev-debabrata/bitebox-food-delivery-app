@@ -48,21 +48,29 @@ async function riderCard(userId) {
   };
 }
 
+/** The order without internal finance: how the money is split, and which payouts settled it. */
+function orderJson(order) {
+  const json = order.toJSON();
+  delete json.settlement;
+  delete json.payouts;
+  delete json.offer;
+  return json;
+}
+
 /** Customer and admin: the full order plus the rider's card and the payment's state. */
 export async function presentWithRider(order) {
-  const json = order.toJSON();
+  const json = orderJson(order);
   const [rider, payment] = await Promise.all([
     riderCard(order.deliveryPartner),
     Payment.findOne({ order: order._id }),
   ]);
   json.rider = rider;
   json.payment = payment ? paymentView(payment) : null;
-  delete json.offer;
   return json;
 }
 
 export function presentForRestaurant(order) {
-  const json = order.toJSON();
+  const json = orderJson(order);
   const a = json.deliveryAddress;
   json.deliveryAddress = {
     recipientName: a.recipientName,
@@ -82,13 +90,12 @@ export function presentForRestaurant(order) {
     order.statusHistory.find((h) => h.status === S.READY_FOR_PICKUP)?.at;
   if (readyAt)
     json.pickupBy = plusMinutes(readyAt, DISPATCH.pickupWindowMinutes);
-  delete json.offer;
   return json;
 }
 
 /** Rider: pickup and drop details. The customer's phone only once they carry the order. */
 export function presentForRider(order, userId) {
-  const json = order.toJSON();
+  const json = orderJson(order);
   const carrying = String(order.deliveryPartner) === String(userId);
   if (!carrying) {
     const a = json.deliveryAddress;
@@ -96,7 +103,6 @@ export function presentForRider(order, userId) {
   }
   json.offerExpiresAt = order.offer?.expiresAt ?? null;
   json.offerWindowSeconds = DISPATCH.offerTimeoutSeconds;
-  delete json.offer;
   delete json.cancellation;
   return json;
 }

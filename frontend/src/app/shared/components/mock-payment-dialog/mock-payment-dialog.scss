@@ -8,7 +8,7 @@
 // Merchant row, then the amount, on the brand colour.
 .gateway-head {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--bb-space-3);
   padding: var(--bb-space-4) var(--bb-space-3) var(--bb-space-3) var(--bb-space-5);

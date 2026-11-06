@@ -1,13 +1,16 @@
 @use 'breakpoints' as bp;
 
+// Desktop: brand panel on the left, form on the right. Phones and tablets: a short banner on
+// top (as tall as its content) with the form card overlapping its bottom edge.
 .auth-shell {
   min-height: 100dvh;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(380px, 5fr) minmax(0, 7fr);
   background: var(--bb-bg);
 
-  @include bp.desktop-up {
-    grid-template-columns: minmax(380px, 5fr) 7fr;
+  @include bp.below-desktop {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
   }
 }
 
@@ -19,43 +22,22 @@
     radial-gradient(circle at 85% 10%, rgb(255 181 46 / 35%) 0, transparent 40%),
     radial-gradient(circle at 10% 90%, rgb(255 181 46 / 18%) 0, transparent 45%),
     var(--bb-plum);
-  padding: var(--bb-space-4) var(--bb-page-gutter);
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: space-between;
+  padding: var(--bb-space-7);
 
-  .pitch,
-  .copyright {
-    display: none;
+  .pitch {
+    max-width: 420px;
   }
-
-  @include bp.desktop-up {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: var(--bb-space-7);
-
-    .pitch {
-      display: block;
-      max-width: 420px;
-    }
-    .copyright {
-      display: block;
-      opacity: 0.6;
-      font-size: 0.85rem;
-      margin: 0;
-    }
-  }
-
   h2 {
     color: #fff6e5;
     font-size: 2.2rem;
-    margin-bottom: var(--bb-space-3);
+    margin: 0 0 var(--bb-space-3);
   }
-
   p {
     opacity: 0.85;
   }
-
   ul {
     list-style: none;
     padding: 0;
@@ -63,13 +45,11 @@
     display: grid;
     gap: var(--bb-space-4);
   }
-
   li {
     display: flex;
     align-items: center;
     gap: var(--bb-space-3);
   }
-
   np-icon {
     --bb-icon-size: 40px;
     color: var(--bb-plum);
@@ -77,6 +57,55 @@
     border-radius: 12px;
     padding: 8px;
     flex-shrink: 0;
+  }
+  .copyright {
+    opacity: 0.6;
+    font-size: 0.85rem;
+    margin: 0;
+  }
+
+  // Phones: logo and headline only. Tablets add the description and the perks as a row of three.
+  @include bp.below-desktop {
+    align-items: center;
+    gap: var(--bb-space-2);
+    text-align: center;
+    padding: var(--bb-space-5) var(--bb-page-gutter) calc(var(--bb-space-7) + var(--bb-space-4));
+
+    .pitch {
+      max-width: 640px;
+    }
+    .pitch > :not(h2),
+    .copyright {
+      display: none;
+    }
+    h2 {
+      font-size: 1.25rem;
+      margin: 0;
+    }
+
+    @include bp.tablet-up {
+      padding-top: var(--bb-space-6);
+
+      h2 {
+        font-size: 1.8rem;
+        margin-bottom: var(--bb-space-2);
+      }
+      .pitch > p {
+        display: block;
+        margin: 0;
+      }
+      .pitch > ul {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: var(--bb-space-5);
+      }
+      li {
+        flex-direction: column;
+        gap: var(--bb-space-2);
+        font-size: 0.85rem;
+        line-height: 1.3;
+      }
+    }
   }
 }
 
@@ -87,12 +116,14 @@
 .form-panel {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding: var(--bb-space-5) var(--bb-page-gutter) var(--bb-space-7);
+  align-items: center;
+  padding: var(--bb-space-7) var(--bb-page-gutter);
 
-  @include bp.tablet-up {
-    align-items: center;
-    padding-block: var(--bb-space-7);
+  @include bp.below-desktop {
+    position: relative; // paints above the (positioned) banner it overlaps
+    align-items: flex-start;
+    margin-top: calc(-1 * var(--bb-space-7));
+    padding-top: 0;
   }
 }
 

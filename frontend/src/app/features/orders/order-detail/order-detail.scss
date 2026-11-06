@@ -80,7 +80,7 @@
   gap: var(--bb-space-4);
 
   @include bp.desktop-up {
-    grid-template-columns: 1fr 360px;
+    grid-template-columns: minmax(0, 1fr) 360px;
     align-items: start;
   }
 }
@@ -150,7 +150,7 @@
 
   li {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: var(--bb-space-3);
     padding: var(--bb-space-2) 0;

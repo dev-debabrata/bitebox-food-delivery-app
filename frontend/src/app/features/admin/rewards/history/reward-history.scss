@@ -1,3 +1,8 @@
+@use 'breakpoints' as bp;
+
 .bb-filters {
-  max-width: 280px;
+  // Phones: full width, lined up with the buttons above.
+  @include bp.tablet-up {
+    max-width: 280px;
+  }
 }

@@ -30,11 +30,11 @@
             } @else {
               <strong>Order removed</strong>
             }
-            <span class="bb-muted">
+            <span class="bb-muted meta">
               @if (p.customer) {
                 {{ p.customer.name }} ·
               }
-              {{ providerLabel[p.provider] }} · {{ p.createdAt | date: 'd MMM, h:mm a' }}
+              {{ providerLabel[p.provider] }} · <span class="when">{{ p.createdAt | date: 'd MMM, h:mm a' }}</span>
               @if (p.providerPaymentId) {
                 · <span class="ref">{{ p.providerPaymentId }}</span>
               }

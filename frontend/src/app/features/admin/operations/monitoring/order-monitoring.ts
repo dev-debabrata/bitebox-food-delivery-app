@@ -1,3 +1,4 @@
+import { TableLabels } from '../../../../shared/list/table-labels';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -28,6 +29,7 @@ const failed = <T>(err: unknown, text: string): Loaded<T> => ({
 @Component({
   selector: 'bb-order-monitoring',
   imports: [
+    TableLabels,
     DatePipe,
     NP_FORM_FIELDS,
     ToggleComponent,

@@ -57,6 +57,7 @@ export class RealtimeService {
 
   private connect(): void {
     if (this.socket$.value) return;
+    this.retries = 0;
     const origin = new URL(environment.apiUrl, window.location.origin).origin;
     const socket = io(origin, {
       path: '/socket.io',
@@ -83,11 +84,17 @@ export class RealtimeService {
 
   private reconnectWithFreshToken(): void {
     const socket = this.socket$.value;
-    if (!socket || this.retries >= 5) return;
+    if (!socket) return;
+    // Out of retries: drop the dead socket, so the next session change (sign-in or a token
+    // refresh made by any API call) starts a fresh one instead of finding this one in place.
+    if (this.retries >= 5) return this.disconnect();
     const delay = Math.min(30_000, 1000 * 2 ** this.retries++);
     setTimeout(() => {
       if (this.socket$.value !== socket || !this.auth.user()) return;
-      this.auth.refresh().subscribe({ next: () => socket.connect(), error: () => undefined });
+      this.auth.refresh().subscribe({
+        next: () => socket.connect(),
+        error: () => this.reconnectWithFreshToken(), // e.g. a network blip: back off and retry
+      });
     }, delay);
   }
 

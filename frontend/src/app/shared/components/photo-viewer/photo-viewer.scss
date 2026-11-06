@@ -14,6 +14,10 @@
   justify-content: space-between;
   gap: var(--bb-space-2);
   padding: var(--bb-space-2) var(--bb-space-2) var(--bb-space-2) var(--bb-space-4);
+  // viewport-fit=cover: keep the close and zoom buttons clear of the notch and status bar.
+  padding-top: max(var(--bb-space-2), env(safe-area-inset-top));
+  padding-left: max(var(--bb-space-4), env(safe-area-inset-left));
+  padding-right: max(var(--bb-space-2), env(safe-area-inset-right));
 }
 
 .count {
@@ -104,7 +108,7 @@
 .strip {
   list-style: none;
   margin: 0;
-  padding: var(--bb-space-2) var(--bb-space-4) var(--bb-space-3);
+  padding: var(--bb-space-2) var(--bb-space-4) calc(var(--bb-space-3) + env(safe-area-inset-bottom));
   display: flex;
   justify-content: center;
   gap: var(--bb-space-2);

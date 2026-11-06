@@ -3,6 +3,7 @@ import {
   DestroyRef,
   Injectable,
   PLATFORM_ID,
+  computed,
   effect,
   inject,
   signal,
@@ -11,7 +12,7 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, Subscription, map, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth/auth.service';
 import { ApiResponse, Paginated } from '../../shared/models/api.models';
@@ -29,13 +30,16 @@ export class InboxService {
   readonly items = signal<AppNotification[]>([]);
   readonly unread = signal(0);
   readonly loaded = signal(false);
+  private loading?: Subscription;
 
   constructor() {
     if (!isPlatformBrowser(inject(PLATFORM_ID))) return;
     const auth = inject(AuthService);
+    // By id: a token refresh replaces the user object but not the person, so no reload.
+    const userId = computed(() => auth.user()?.id);
     effect(() => {
-      const userId = auth.user()?.id;
-      untracked(() => (userId ? this.load() : this.clear()));
+      const id = userId();
+      untracked(() => (id ? this.load() : this.clear()));
     });
     inject(RealtimeService)
       .notifications$.pipe(takeUntilDestroyed(inject(DestroyRef)))
@@ -47,7 +51,8 @@ export class InboxService {
   }
 
   load(): void {
-    this.http
+    this.loading?.unsubscribe();
+    this.loading = this.http
       .get<ApiResponse<NotificationPage>>(this.url, { params: { limit: PAGE_SIZE } })
       .pipe(map((r) => r.data))
       .subscribe({
@@ -106,6 +111,7 @@ export class InboxService {
   }
 
   private clear(): void {
+    this.loading?.unsubscribe(); // a load still running must not refill the signed-out bell
     this.items.set([]);
     this.unread.set(0);
     this.loaded.set(false);

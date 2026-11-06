@@ -6,7 +6,7 @@
   margin-bottom: var(--bb-space-4);
 
   @include bp.tablet-up {
-    grid-template-columns: 1fr 260px;
+    grid-template-columns: minmax(0, 1fr) 260px;
   }
 }
 
@@ -42,6 +42,7 @@
   grid-template-columns: minmax(0, 1fr) auto auto;
   grid-template-areas:
     'main amount chev'
+    'meta meta chev'
     'status status chev';
   align-items: center;
   gap: var(--bb-space-1) var(--bb-space-3);
@@ -64,15 +65,32 @@
   }
 }
 
+// Phones: order number and amount share the top line and the details run full width
+// below them; from tablet up the two lines stack in their own column.
 .main {
-  grid-area: main;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  display: contents;
 
-  span {
+  strong {
+    grid-area: main;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .meta {
+    grid-area: meta;
     font-size: 0.85rem;
+  }
+  .when {
+    white-space: nowrap;
+  }
+
+  @include bp.tablet-up {
+    grid-area: main;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
   }
 }
 

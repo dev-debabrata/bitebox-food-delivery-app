@@ -3,10 +3,10 @@
 .layout {
   display: grid;
   gap: var(--bb-space-4);
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 
   @include bp.desktop-up {
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 300px minmax(0, 1fr);
     align-items: start;
   }
 }

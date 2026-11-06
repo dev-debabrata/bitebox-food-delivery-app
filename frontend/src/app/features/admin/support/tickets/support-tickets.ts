@@ -1,3 +1,4 @@
+import { TableLabels } from '../../../../shared/list/table-labels';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
@@ -56,7 +57,8 @@ const VIEWS: Record<View, { title: string; subtitle: string; query: TicketQuery 
 
 @Component({
   selector: 'bb-support-tickets',
-  imports: [DatePipe, NP_FORM_FIELDS, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
+  imports: [
+    TableLabels,DatePipe, NP_FORM_FIELDS, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
   templateUrl: './support-tickets.html',
   styleUrl: './support-tickets.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

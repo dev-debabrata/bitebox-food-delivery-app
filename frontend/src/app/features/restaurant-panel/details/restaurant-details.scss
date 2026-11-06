@@ -8,10 +8,10 @@
 .layout {
   display: grid;
   gap: var(--bb-space-4);
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 
   @include bp.desktop-up {
-    grid-template-columns: 1fr 340px;
+    grid-template-columns: minmax(0, 1fr) 340px;
     align-items: start;
   }
 }
@@ -38,10 +38,10 @@
 .row-3 {
   display: grid;
   gap: 0 var(--bb-space-3);
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 
   @include bp.tablet-up {
-    grid-template-columns: 3fr 3fr 2fr;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 3fr) minmax(0, 2fr);
   }
 
   > * {

@@ -17,6 +17,11 @@ h2 {
   justify-content: space-between;
   gap: var(--bb-space-2);
   margin-bottom: var(--bb-space-2);
+
+  a {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
 }
 .risk,
 .earners {
@@ -48,4 +53,32 @@ h2 {
 }
 .small {
   font-size: 0.8rem;
+}
+
+// Icon stays beside its label and the figure never breaks; when both don't fit on one
+// line, the figure drops to its own line on the right instead of squeezing the label.
+.risk {
+  li {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+  span {
+    flex-wrap: nowrap;
+  }
+  strong {
+    margin-left: auto;
+    white-space: nowrap;
+  }
+}
+
+// Top earners: name and email stack on the left; the coin link never breaks.
+.earners {
+  span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  a {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
 }

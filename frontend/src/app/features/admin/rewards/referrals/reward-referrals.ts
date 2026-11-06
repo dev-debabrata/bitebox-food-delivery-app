@@ -1,3 +1,4 @@
+import { TableLabels } from '../../../../shared/list/table-labels';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
@@ -28,7 +29,8 @@ import {
 /** Referral management: every referral, its risk signals, and approving or rejecting held ones. */
 @Component({
   selector: 'bb-reward-referrals',
-  imports: [DatePipe, RouterLink, NP_FORM_FIELDS, ToggleComponent, MatButtonModule, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
+  imports: [
+    TableLabels,DatePipe, RouterLink, NP_FORM_FIELDS, ToggleComponent, MatButtonModule, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
   templateUrl: './reward-referrals.html',
   styleUrl: './reward-referrals.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

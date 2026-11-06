@@ -37,7 +37,7 @@
 .grid {
   display: grid;
   gap: var(--bb-space-4);
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 
   @include bp.tablet-up {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -217,4 +217,23 @@
 .pickup-by {
   margin: 4px 0 0;
   font-size: 0.8rem;
+}
+
+// Phones: every stage stays visible as wrapping pills instead of a clipped scroll strip.
+@include bp.phone-only {
+  .tabs-scroll {
+    overflow: visible;
+  }
+  .tabs {
+    flex-wrap: wrap;
+    gap: var(--bb-space-2);
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+
+    ::ng-deep .mat-button-toggle {
+      border: 1px solid var(--bb-border) !important;
+      border-radius: 999px;
+    }
+  }
 }

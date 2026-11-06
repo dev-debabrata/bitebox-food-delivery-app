@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host {
   display: flex;
   flex-wrap: wrap;
@@ -16,4 +18,13 @@ p {
   display: flex;
   gap: var(--bb-space-2);
   flex-wrap: wrap;
+
+  // Phones: the actions get their own full-width row, buttons sharing it evenly.
+  @include bp.phone-only {
+    width: 100%;
+
+    > ::ng-deep * {
+      flex: 1 1 auto;
+    }
+  }
 }

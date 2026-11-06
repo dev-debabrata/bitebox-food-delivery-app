@@ -1,3 +1,4 @@
+import { TableLabels } from '../../../../shared/list/table-labels';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
@@ -41,6 +42,7 @@ const COPY: Record<PayoutType, { title: string; subtitle: string; payee: string 
 @Component({
   selector: 'bb-payouts',
   imports: [
+    TableLabels,
     DatePipe,
     NP_FORM_FIELDS,
     MatButtonModule,

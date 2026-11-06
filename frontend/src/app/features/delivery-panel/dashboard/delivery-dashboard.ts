@@ -12,13 +12,13 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
-import { FormRoot, form, required } from '@angular/forms/signals';
+import { FormRoot, TreeValidationResult, form, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { IconComponent, SelectOption, ToggleComponent } from 'nexprime';
 import { EMPTY, catchError, firstValueFrom, interval, of, switchMap } from 'rxjs';
-import { errorMessage } from '../../../core/services/api-error';
+import { errorMessage, fieldErrors } from '../../../core/services/api-error';
 import {
   GeolocationService,
   ImpreciseLocationError,
@@ -33,7 +33,7 @@ import { TrackingMap } from '../../../shared/components/tracking-map/tracking-ma
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { OrderStatusChip } from '../../../shared/components/order-status-chip/order-status-chip';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
-import { shownError } from '../../../shared/forms/form-errors';
+import { serverErrors, shownError } from '../../../shared/forms/form-errors';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { VEHICLE_LABEL, VehicleType } from '../../../shared/models/checkout.models';
 import {
@@ -229,7 +229,7 @@ export class DeliveryDashboard {
     this.editingVehicle.set(true);
   }
 
-  private async saveVehicle(): Promise<undefined> {
+  private async saveVehicle(): Promise<TreeValidationResult> {
     const { vehicleType, vehicleNumber } = this.vehicleModel();
     try {
       const profile = await firstValueFrom(
@@ -238,10 +238,13 @@ export class DeliveryDashboard {
       this.data.update((d) => (d ? { ...d, profile } : d));
       this.editingVehicle.set(false);
       this.notify.success('Vehicle saved');
+      return undefined;
     } catch (err) {
-      this.notify.error(errorMessage(err));
+      // Field errors (422) show under their fields; anything else as a message.
+      const details = fieldErrors(err);
+      if (!details.length) this.notify.error(errorMessage(err));
+      return serverErrors(this.vehicleForm, details);
     }
-    return undefined;
   }
 
   protected async setOnline(online: boolean): Promise<void> {

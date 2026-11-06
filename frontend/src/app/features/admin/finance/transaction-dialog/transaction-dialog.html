@@ -33,7 +33,7 @@
         <div><dt>Gateway refund</dt><dd class="ref">{{ t.providerRefundId }}</dd></div>
       }
       @if (t.customer; as c) {
-        <div><dt>Customer</dt><dd>{{ c.name }}<span class="sub">{{ c.email }}{{ c.phone ? ' · ' + c.phone : '' }}</span></dd></div>
+        <div><dt>Customer</dt><dd>{{ c.name }}<span class="sub">{{ c.email }}</span>@if (c.phone) {<span class="sub">{{ c.phone }}</span>}</dd></div>
       }
     </dl>
 

@@ -1,9 +1,14 @@
+@use 'breakpoints' as bp;
+
 .page.bb-container {
   padding-block: var(--bb-space-5);
 }
 
 .narrow {
-  max-width: 280px;
+  // Phones: full width, lined up with the buttons above.
+  @include bp.tablet-up {
+    max-width: 280px;
+  }
 }
 
 .tickets {

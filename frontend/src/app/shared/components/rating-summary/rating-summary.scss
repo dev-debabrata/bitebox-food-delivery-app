@@ -1,12 +1,13 @@
 @use 'breakpoints' as bp;
 
 :host {
+  // Score on the left, bars on the right on every screen size (tighter on phones).
   display: grid;
-  gap: var(--bb-space-4);
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--bb-space-3);
   align-items: center;
 
   @include bp.tablet-up {
-    grid-template-columns: auto minmax(0, 1fr);
     gap: var(--bb-space-6);
   }
 }
@@ -14,11 +15,11 @@
 .overall {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 4px;
+  min-width: 84px;
 
   @include bp.tablet-up {
-    align-items: center;
     min-width: 120px;
   }
 }
@@ -49,7 +50,7 @@
 
 .bar-row {
   display: grid;
-  grid-template-columns: 2.4em minmax(0, 1fr) 2.5em;
+  grid-template-columns: 2.4em minmax(0, 1fr) 2em;
   align-items: center;
   gap: var(--bb-space-2);
   width: 100%;

@@ -235,13 +235,23 @@ export async function handleRazorpayWebhook(rawBody, signature, eventId) {
     );
     return { ignored: true };
   }
-  if (
-    event.event === "payment.captured" ||
-    event.event === "payment.authorized"
-  )
-    await markPaid(payment._id, entity.id);
-  else if (event.event === "payment.failed")
-    await markFailed(payment._id, entity.error_description);
+  try {
+    if (
+      event.event === "payment.captured" ||
+      event.event === "payment.authorized"
+    )
+      await markPaid(payment._id, entity.id);
+    else if (event.event === "payment.failed")
+      await markFailed(payment._id, entity.error_description);
+  } catch (error) {
+    // Not applied: release the claim so Razorpay's retry of this event is processed, not
+    // acknowledged as a duplicate (markPaid/markFailed are safe to run again).
+    await Payment.updateOne(
+      { _id: payment._id },
+      { $pull: { processedEvents: id } },
+    ).catch((err) => logger.error({ err }, "Could not release webhook event"));
+    throw error;
+  }
   return { processed: true };
 }
 

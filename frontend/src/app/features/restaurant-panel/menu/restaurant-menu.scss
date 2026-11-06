@@ -3,7 +3,7 @@
 .filters {
   display: grid;
   gap: var(--bb-space-3);
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   margin-bottom: var(--bb-space-3);
 
   .search {
@@ -11,7 +11,7 @@
   }
 
   @include bp.desktop-up {
-    grid-template-columns: 1fr 220px 180px;
+    grid-template-columns: minmax(0, 1fr) 220px 180px;
 
     .search {
       grid-column: auto;
@@ -30,7 +30,7 @@
 
   li {
     display: grid;
-    grid-template-columns: auto 1fr auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     align-items: center;
     gap: var(--bb-space-3);
     padding: var(--bb-space-3) var(--bb-space-4);

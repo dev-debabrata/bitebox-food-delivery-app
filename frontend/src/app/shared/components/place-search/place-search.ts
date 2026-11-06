@@ -45,6 +45,7 @@ export class PlaceSearch {
         switchMap((q) => {
           if (q.trim().length < 3) {
             this.results.set([]);
+            this.searching.set(false); // a search this replaces may still have been running
             return EMPTY;
           }
           this.searching.set(true);

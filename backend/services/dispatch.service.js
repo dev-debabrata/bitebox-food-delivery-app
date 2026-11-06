@@ -254,6 +254,8 @@ export async function sweep(now = new Date()) {
       to: S.CANCELLED,
       reason: "Payment was not completed in time",
       key: "unpaidCancelled",
+      // Re-checked atomically: a payment landing after the find must not be cancelled.
+      where: { submittedAt: null },
     },
     // Ready, but no rider picked it up in time (none found, or the assigned rider never came).
     {
@@ -271,13 +273,14 @@ export async function sweep(now = new Date()) {
       key: "pickupExpired",
     },
   ];
-  for (const { filter, to, reason, key } of timeouts) {
+  for (const { filter, to, reason, key, where } of timeouts) {
     for (const order of await Order.find(filter).select("_id").limit(100)) {
       try {
         const { changed } = await transition(order._id, {
           to,
           actor: ACTORS.SYSTEM,
           reason,
+          where,
         });
         if (changed) summary[key]++;
       } catch (error) {

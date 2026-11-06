@@ -1,3 +1,4 @@
+import { TableLabels } from '../../../../shared/list/table-labels';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
@@ -14,7 +15,8 @@ import { formatPaise } from '../../../../shared/pipes/money.pipes';
 /** Coins & Rewards reports: issued, redeemed, liability, programmes and suspicious activity. */
 @Component({
   selector: 'bb-rewards-overview',
-  imports: [RouterLink, MatButtonModule, IconComponent, NP_FORM_FIELDS, PageHeader, StatTile, DailyChart],
+  imports: [
+    TableLabels,RouterLink, MatButtonModule, IconComponent, NP_FORM_FIELDS, PageHeader, StatTile, DailyChart],
   templateUrl: './rewards-overview.html',
   styleUrl: './rewards-overview.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

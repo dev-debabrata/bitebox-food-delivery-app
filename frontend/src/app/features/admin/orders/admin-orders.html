@@ -40,9 +40,9 @@
           >
             <div class="main">
               <strong>{{ o.orderNumber }}</strong>
-              <span class="bb-muted"
+              <span class="bb-muted meta"
                 >{{ o.restaurantSnapshot.name }} · {{ o | itemCount }} ·
-                {{ o.createdAt | date: 'd MMM, h:mm a' }}</span
+                <span class="when">{{ o.createdAt | date: 'd MMM, h:mm a' }}</span></span
               >
             </div>
             <span class="amount">{{ o.pricing.totalPaise | inr }}</span>

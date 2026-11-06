@@ -1,3 +1,4 @@
+import { TableLabels } from '../../../../shared/list/table-labels';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
@@ -31,7 +32,8 @@ type Action = 'activate' | 'pause' | 'end';
 /** Festival and promotional campaigns: create, schedule, pause, end and follow them. */
 @Component({
   selector: 'bb-reward-campaigns',
-  imports: [DatePipe, NP_FORM_FIELDS, MatButtonModule, MatMenuModule, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
+  imports: [
+    TableLabels,DatePipe, NP_FORM_FIELDS, MatButtonModule, MatMenuModule, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
   templateUrl: './reward-campaigns.html',
   styleUrl: './reward-campaigns.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,3 +1,4 @@
+import { TableLabels } from '../../../../shared/list/table-labels';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { form } from '@angular/forms/signals';
@@ -26,7 +27,8 @@ import { WalletDialog } from '../wallet-dialog/wallet-dialog';
 /** The coin ledger across all customers, with wallet details and reward reversals. */
 @Component({
   selector: 'bb-coin-transactions',
-  imports: [DatePipe, NP_FORM_FIELDS, MatButtonModule, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
+  imports: [
+    TableLabels,DatePipe, NP_FORM_FIELDS, MatButtonModule, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
   templateUrl: './coin-transactions.html',
   styleUrl: './coin-transactions.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -52,9 +52,10 @@ export const updateTicketRules = [
   mongoIdParam(),
   body("status").optional().isIn(Object.values(TICKET_STATUS)),
   body("priority").optional().isIn(Object.values(TICKET_PRIORITY)),
+  // null or "" unassigns, so it must not be treated as "not sent" (validate drops those).
   body("assigneeId")
-    .optional({ values: "null" })
-    .custom((v) => v === "" || /^[a-f\d]{24}$/i.test(v))
+    .optional()
+    .custom((v) => v === null || v === "" || /^[a-f\d]{24}$/i.test(v))
     .withMessage("Invalid assignee"),
   body("note").optional().isString().trim().isLength({ max: 500 }),
 ];

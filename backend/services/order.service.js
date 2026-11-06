@@ -268,6 +268,8 @@ async function commitOrder(
         ],
         { session },
       );
+      // Without this, a later failure would leave the coupon counted as used by this customer.
+      undo.push(() => CouponRedemption.deleteOne({ order: order._id }));
     }
 
     // 4. Hold the redeemed coins (cash orders spend them straight away).

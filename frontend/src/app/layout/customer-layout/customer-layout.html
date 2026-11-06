@@ -3,7 +3,9 @@
 <header class="site-header">
   <div class="bb-container header-inner">
     <a routerLink="/" class="logo" aria-label="BiteBox home">
-      <bb-brand-logo [height]="34" />
+      <bb-brand-logo class="logo-full" [height]="34" />
+      <!-- Narrow phones: the box mark alone, so the delivery location has room. -->
+      <img class="logo-mark" src="/bitebox-favicon.svg" alt="" width="36" height="36" />
     </a>
 
     <button

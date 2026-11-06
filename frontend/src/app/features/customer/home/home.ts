@@ -48,7 +48,8 @@ export class Home {
   protected readonly sessionChecked = this.auth.initialised;
 
   private readonly dialog = inject(MatDialog);
-  protected readonly deliveryLocation = inject(DeliveryLocationService).location;
+  private readonly locations = inject(DeliveryLocationService);
+  protected readonly deliveryLocation = this.locations.location;
 
   protected readonly searchForm = form(
     signal({ search: '' }),
@@ -73,6 +74,7 @@ export class Home {
     if (!browser) return;
 
     effect(() => {
+      if (!this.locations.ready()) return; // wait for the saved location: one request, not two
       const location = this.deliveryLocation();
       untracked(() => {
         this.restaurantsRequest?.unsubscribe();

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, type HttpErrorResponse } from '@angular/common/http';
 import {
   Injectable,
   PLATFORM_ID,
@@ -9,17 +9,19 @@ import {
   untracked,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { Observable, finalize, map, tap } from 'rxjs';
+import { Observable, catchError, finalize, map, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../../shared/models/api.models';
 import { CartQuote } from '../../shared/models/checkout.models';
 import { AuthService } from '../auth/auth.service';
+import { DeliveryLocationService } from './delivery-location.service';
 import { toParams } from './http-params';
 
 @Injectable({ providedIn: 'root' })
 export class CartService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly deliveryLocation = inject(DeliveryLocationService);
   private readonly url = `${environment.apiUrl}/cart`;
 
   private readonly _quote = signal<CartQuote | null>(null);
@@ -51,6 +53,20 @@ export class CartService {
   }
 
   refresh(): Observable<CartQuote> {
+    const addressId = this.selectedAddressId();
+    return this.load().pipe(
+      // A remembered address that isn't on this account (deleted, another account in this
+      // browser, reseeded data) gets a 404: forget it and quote the default address instead.
+      catchError((err: unknown) => {
+        if (!addressId || (err as HttpErrorResponse).status !== 404) return throwError(() => err);
+        this.selectedAddressId.set(null);
+        this.deliveryLocation.forgetAddress(addressId);
+        return this.load();
+      }),
+    );
+  }
+
+  private load(): Observable<CartQuote> {
     return this.http
       .get<ApiResponse<CartQuote>>(this.url, { params: this.addressParams() })
       .pipe(this.apply());

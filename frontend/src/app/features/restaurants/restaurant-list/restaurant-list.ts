@@ -58,7 +58,8 @@ export class RestaurantList {
   private readonly catalog = inject(CatalogService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
-  protected readonly deliveryLocation = inject(DeliveryLocationService).location;
+  private readonly locations = inject(DeliveryLocationService);
+  protected readonly deliveryLocation = this.locations.location;
 
   readonly search = input<string>();
   readonly cuisine = input<string>();
@@ -79,6 +80,11 @@ export class RestaurantList {
   protected readonly cuisineOptions = computed<SelectOption[]>(() => [
     { value: '', label: 'All cuisines' },
     ...this.cuisines().map((c) => ({ value: c, label: c })),
+  ]);
+  /** Phones and tablets pick a category from this dropdown; desktop uses the chips. */
+  protected readonly categoryOptions = computed<SelectOption[]>(() => [
+    { value: '', label: 'All categories' },
+    ...this.categories().map((c) => ({ value: c.id, label: c.name })),
   ]);
   protected readonly sortOptions = computed(() =>
     (Object.keys(SORT_LABELS) as RestaurantSort[])
@@ -131,6 +137,7 @@ export class RestaurantList {
 
   constructor() {
     effect(() => {
+      if (!this.locations.ready()) return; // wait for the saved location: one request, not two
       const query = this.query();
       untracked(() => {
         const box = this.filters.search().value;

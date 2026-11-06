@@ -12,8 +12,9 @@ $line: rgb(255 255 255 / 12%);
 .site-footer {
   background: var(--bb-plum);
   color: $text;
+
   // Room for the phone tab bar under the page.
-  padding-bottom: 64px;
+  padding-bottom: calc(var(--bb-tab-bar, 0px) + 6px);
 
   @include bp.desktop-up {
     padding-bottom: 0;
@@ -66,7 +67,7 @@ ul {
   border-bottom: 1px solid $line;
 
   @include bp.desktop-up {
-    grid-template-columns: 1fr 1.2fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
     align-items: center;
   }
 
@@ -108,7 +109,7 @@ ul {
   padding: var(--bb-space-6) 0;
 
   @include bp.desktop-up {
-    grid-template-columns: minmax(240px, 1.3fr) 3fr;
+    grid-template-columns: minmax(240px, 1.3fr) minmax(0, 3fr);
   }
 }
 .brand {
@@ -151,7 +152,7 @@ ul {
 .groups {
   display: grid;
   gap: var(--bb-space-5);
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 
   @include bp.tablet-up {
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -225,7 +226,7 @@ ul {
   padding-bottom: var(--bb-space-6);
 
   @include bp.tablet-up {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 .partner {
@@ -305,6 +306,19 @@ ul {
     border-radius: 999px;
     font-size: 0.85rem;
     --bb-icon-size: 16px;
+  }
+
+  // Phones: pills stretch to fill each row, so every row is full width with no ragged gaps.
+  @include bp.phone-only {
+    ul {
+      width: 100%;
+    }
+    li {
+      flex: 1 1 auto;
+      justify-content: center;
+      padding-block: 6px;
+      white-space: nowrap;
+    }
   }
 }
 

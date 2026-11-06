@@ -159,11 +159,22 @@
               <ul class="offers">
                 @for (o of offers(); track o.code) {
                   <li>
+                    <np-icon name="ticket-percent" class="mat-icon offer-icon" />
                     <div>
                       <strong>{{ offerTitle(o) }}</strong>
                       <span class="bb-muted small">{{ o.description }}</span>
+                      <span class="code">{{ o.code }}</span>
                     </div>
-                    <button mat-button type="button" (click)="applyCoupon(o.code)" [disabled]="applyingCoupon()">{{ o.code }}</button>
+                    <button
+                      mat-flat-button
+                      class="bb-btn-accent"
+                      type="button"
+                      (click)="applyCoupon(o.code)"
+                      [disabled]="applyingCoupon()"
+                      [attr.aria-label]="'Apply coupon ' + o.code"
+                    >
+                      Apply
+                    </button>
                   </li>
                 }
               </ul>

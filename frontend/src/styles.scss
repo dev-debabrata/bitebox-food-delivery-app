@@ -185,7 +185,10 @@ img {
   width: 100%;
   max-width: var(--bb-content-max);
   margin-inline: auto;
-  padding-inline: var(--bb-page-gutter);
+  // viewport-fit=cover (index.html): content keeps clear of the notch on a sideways phone,
+  // while full-width backgrounds around the container still reach the screen edge.
+  padding-inline: max(var(--bb-page-gutter), env(safe-area-inset-left))
+    max(var(--bb-page-gutter), env(safe-area-inset-right));
 }
 
 .bb-card {
@@ -203,7 +206,7 @@ img {
 .bb-grid {
   display: grid;
   gap: var(--bb-space-4);
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 
   &.cols-2 {
     @include bp.tablet-up {
@@ -591,14 +594,14 @@ np-time-picker .time-picker-field {
   .bb-form-row {
     display: grid;
     gap: 0 var(--bb-space-3);
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
 
     // Let controls shrink to their column instead of overflowing it.
     > * {
       min-width: 0;
     }
     @include bp.tablet-up {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
   }
 
@@ -854,7 +857,7 @@ np-time-picker .time-picker-field {
 // Dashboard bar: label and value on one line, a track filled to the share below.
 .bb-bar-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 4px var(--bb-space-2);
   padding: 6px 0;
 
@@ -974,4 +977,155 @@ np-time-picker .time-picker-field {
 .mat-mdc-menu-panel.bb-account-menu {
   width: 300px;
   max-width: calc(100vw - 32px);
+}
+
+// Restaurant page on phones/tablets: the sticky "View cart" bar (~64px) sits on the tab bar, so
+// lift the back-to-top button above it instead of over its button. The layout's own rule is
+// component-scoped, hence the extra specificity here.
+@include bp.below-desktop {
+  body:has(.cart-bar) np-scroll-top.scroll-top {
+    bottom: calc(var(--bb-tab-bar) + 18px + 72px);
+  }
+}
+
+// Phones: the paginator drops "Items per page" so the range and arrows fit on one row.
+@include bp.phone-only {
+  .mat-mdc-paginator .mat-mdc-paginator-page-size {
+    display: none;
+  }
+  .mat-mdc-paginator .mat-mdc-paginator-range-actions {
+    flex: 1;
+  }
+  .mat-mdc-paginator .mat-mdc-paginator-range-label {
+    margin-right: auto;
+  }
+}
+
+// Phones: the notification panel is a full-width sheet under the header (8px from each edge)
+// instead of hanging off the bell, which sits left of the avatar. The overlay wrappers are
+// global, so this lives here rather than in the bell component.
+@include bp.phone-only {
+  .cdk-overlay-connected-position-bounding-box:has(.bb-inbox-menu) {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+  }
+  .cdk-overlay-pane:has(.bb-inbox-menu) {
+    left: 0 !important;
+    right: 0 !important;
+  }
+  .mat-mdc-menu-panel.bb-inbox-menu {
+    width: 100%;
+  }
+}
+
+// Stat tile grids are two per row on phones and tablets (narrow tiles stack their icon);
+// an odd last tile takes the full row.
+@include bp.phone-only {
+  .bb-grid:has(> bb-stat-tile, > .bb-skeleton.tile) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--bb-space-3);
+  }
+}
+@include bp.below-desktop {
+  .bb-grid > bb-stat-tile:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+// Phones: each `.bb-table` row becomes a card. The first cell is the title; every other
+// cell shows its column name (`data-label`, set by the TableLabels directive) on the left
+// and its value on the right. A single row action (menu, button or badge) sits in the
+// top-right corner beside the title; several actions form a right-aligned row at the foot.
+// (`mat-menu` stays in the DOM beside its trigger but takes no space, so it isn't counted.)
+$single-action: ':not(:has(> :nth-child(2):not(mat-menu)))';
+$text-button: '.mat-mdc-button-base:not(.mat-mdc-icon-button)';
+
+@include bp.phone-only {
+  .bb-table-scroll:has(> .bb-table) {
+    overflow-x: visible;
+  }
+  .bb-table {
+    thead {
+      display: none;
+    }
+    tbody tr {
+      display: block;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--bb-border);
+
+      &:last-child {
+        border-bottom: 0;
+      }
+      &:has(> td.actions) {
+        position: relative;
+      }
+      // The title keeps clear of a corner action: 44px for an icon button, 104px for a
+      // compact text button (and at least its height, so it never overlaps a value).
+      &:has(> td.actions > .mat-mdc-icon-button:only-child),
+      &:has(> td.actions > .mat-mdc-icon-button:first-child + mat-menu:last-child) {
+        > td:first-child {
+          padding-right: 44px;
+        }
+      }
+      &:has(> td.actions > #{$text-button}:only-child) > td:first-child {
+        padding-right: 104px;
+        min-height: 32px;
+        box-sizing: content-box;
+      }
+    }
+    tbody td {
+      display: flow-root;
+      padding: 3px 0;
+      border: 0;
+      text-align: right;
+      white-space: normal;
+
+      &::before {
+        content: attr(data-label);
+        float: left;
+        margin-right: 12px;
+        color: var(--bb-ink-muted);
+        font-size: 0.78rem;
+        font-weight: 400;
+        line-height: 1.6;
+      }
+      &:is(:first-child, [colspan], [data-label='']) {
+        text-align: left;
+      }
+      &:is(:first-child, [colspan], [data-label=''], :not([data-label]), .actions)::before {
+        content: none;
+      }
+      &:first-child {
+        font-weight: 600;
+        padding-bottom: 6px;
+
+        .sub {
+          font-weight: 400;
+        }
+      }
+    }
+    td.actions {
+      #{$text-button} {
+        height: 32px;
+      }
+      &#{$single-action} {
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        padding: 0;
+      }
+      &#{$single-action}:not(:has(.mat-mdc-icon-button)) {
+        top: 12px;
+        right: 16px;
+      }
+      &:not(#{$single-action}) {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--bb-space-2);
+        padding-top: var(--bb-space-2);
+      }
+    }
+  }
 }

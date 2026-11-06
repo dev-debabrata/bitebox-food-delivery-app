@@ -8,6 +8,8 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   templateUrl: './empty-state.html',
   styleUrl: './empty-state.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // `title` is an input; drop the static attribute so the host gets no browser tooltip.
+  host: { '[attr.title]': 'null' },
 })
 export class EmptyState {
   readonly icon = input('search_off');

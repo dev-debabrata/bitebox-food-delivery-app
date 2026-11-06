@@ -294,7 +294,7 @@
 // Desktop shows the cart panel beside the menu instead.
 .cart-bar {
   position: sticky;
-  bottom: calc(56px + env(safe-area-inset-bottom));
+  bottom: var(--bb-tab-bar);
   z-index: 5;
   background: var(--bb-success);
   color: #fff;

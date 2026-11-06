@@ -42,6 +42,24 @@ h2 {
   justify-content: space-between;
   align-items: center;
   gap: var(--bb-space-3);
+
+  // Phones: title and switch share the top line; the description runs full width below.
+  @include bp.phone-only {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 var(--bb-space-3);
+
+    > div {
+      display: contents;
+    }
+    p {
+      grid-column: 1 / -1;
+    }
+    np-toggle {
+      grid-row: 1;
+      grid-column: 2;
+    }
+  }
 }
 
 .stats,
@@ -248,5 +266,23 @@ h2 {
   np-icon {
     --bb-icon-size: 18px;
     color: var(--bb-plum-500);
+  }
+}
+
+// Phones: completed and rating side by side; the vehicle gets a full row with "Change" at its end.
+.stats {
+  @include bp.phone-only {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    .vehicle {
+      grid-column: 1 / -1;
+
+      dd {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: var(--bb-space-2);
+      }
+    }
   }
 }

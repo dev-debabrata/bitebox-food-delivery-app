@@ -1,3 +1,4 @@
+import { TableLabels } from '../../../../shared/list/table-labels';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
@@ -24,7 +25,8 @@ import { openTransaction } from '../transaction-dialog/transaction-dialog';
  */
 @Component({
   selector: 'bb-refunds',
-  imports: [DatePipe, NP_FORM_FIELDS, MatButtonModule, MatPaginatorModule, IconComponent, EmptyState, PageHeader, InrPipe],
+  imports: [
+    TableLabels,DatePipe, NP_FORM_FIELDS, MatButtonModule, MatPaginatorModule, IconComponent, EmptyState, PageHeader, InrPipe],
   templateUrl: './refunds.html',
   styleUrl: './refunds.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

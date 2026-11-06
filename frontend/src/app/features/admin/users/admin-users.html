@@ -91,7 +91,7 @@
             <strong>{{ u.name }}</strong>
             <span class="bb-role-chip role-{{ u.role }}">{{ roleLabel(u.role) }}</span>
           </div>
-          <span class="bb-muted small">{{ u.email }}</span>
+          <span class="bb-muted small email">{{ u.email }}</span>
           <div class="card-meta small">
             <span>{{ u.phone || 'No phone' }}</span>
             <span class="status status-{{ u.status }}">{{ u.status === 'suspended' ? 'Inactive' : 'Active' }}</span>

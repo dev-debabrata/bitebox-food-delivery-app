@@ -1,4 +1,3 @@
-import { Session } from "../models/session.model.js";
 import {
   ADMIN_ROLES,
   MEMBER_ROLES,
@@ -9,18 +8,8 @@ import {
 } from "../models/user.model.js";
 import { ApiError } from "../utils/api-error.js";
 import { escapeRegex, paginationMeta } from "../utils/pagination.js";
-import { hashPassword } from "./auth.service.js";
+import { endSessions, hashPassword } from "./auth.service.js";
 import { adminSetStatus as setRiderStatus } from "./delivery-partner.service.js";
-
-/** Signs the user out everywhere: old access tokens fail (`tokenVersion`) and refresh tokens are revoked. */
-async function endSessions(user, reason) {
-  user.tokenVersion = (user.tokenVersion || 0) + 1;
-  await user.save();
-  await Session.updateMany(
-    { user: user._id, revokedAt: null },
-    { revokedAt: new Date(), revokedReason: reason },
-  );
-}
 
 /**
  * Suspends or reactivates an account whose role is in `roles` (the Users page passes member roles,
