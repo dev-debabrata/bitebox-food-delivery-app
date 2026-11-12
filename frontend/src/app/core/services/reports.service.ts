@@ -6,7 +6,6 @@ import { ApiResponse, Paginated } from '../../shared/models/api.models';
 import { PaymentStatus } from '../../shared/models/checkout.models';
 import {
   AdminPayment,
-  AdminPaymentDetail,
   AdminReport,
   Earnings,
   PaymentInfo,
@@ -20,7 +19,7 @@ export type EarningsScope = 'restaurant' | 'rider';
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
   private readonly http = inject(HttpClient);
-  private readonly api = environment.baseUrl;
+  private readonly api = environment.apiUrl;
 
   earnings(scope: EarningsScope, days: number): Observable<Earnings> {
     const path = scope === 'restaurant' ? 'my/restaurant/earnings' : 'delivery/earnings';
@@ -60,35 +59,5 @@ export class ReportsService {
         {},
       )
       .pipe(map((r) => r.data.payment));
-  }
-
-  /** Django API: one payment with its refunds. */
-  payment(id: string): Observable<AdminPaymentDetail> {
-    return this.http
-      .get<ApiResponse<{ payment: AdminPaymentDetail }>>(`${this.paymentUrl(id)}`)
-      .pipe(map((r) => r.data.payment));
-  }
-
-  /** Django API: a full or partial refund. `key` makes a retried request safe. */
-  refund(id: string, body: { amountPaise: number; reason: string }, key: string) {
-    return this.http
-      .post<ApiResponse<{ payment: AdminPaymentDetail }>>(`${this.paymentUrl(id)}/refunds`, body, {
-        headers: { 'Idempotency-Key': key },
-      })
-      .pipe(map((r) => r.data.payment));
-  }
-
-  /** Django API: a cash refund was paid back by hand. */
-  markRefundPaid(refundId: string): Observable<AdminPaymentDetail> {
-    return this.http
-      .post<ApiResponse<{ payment: AdminPaymentDetail }>>(
-        `${this.api}/admin/refunds/${encodeURIComponent(refundId)}/paid`,
-        {},
-      )
-      .pipe(map((r) => r.data.payment));
-  }
-
-  private paymentUrl(id: string): string {
-    return `${this.api}/admin/payments/${encodeURIComponent(id)}`;
   }
 }

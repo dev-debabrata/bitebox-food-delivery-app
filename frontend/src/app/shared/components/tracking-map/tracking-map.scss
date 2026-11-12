@@ -40,11 +40,11 @@
   }
 
   &.bb-track-home {
-    background: var(--bb-brand);
+    background: var(--bb-plum);
   }
 
   &.bb-track-rider {
-    background: var(--bb-success-solid);
+    background: var(--bb-success);
     // A soft pulse so the moving rider stands out.
     animation: bb-rider-pulse 2s ease-out infinite;
 

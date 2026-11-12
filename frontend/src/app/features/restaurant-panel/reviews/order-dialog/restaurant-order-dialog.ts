@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { ButtonComponent, IconComponent } from 'nexprime';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { IconComponent } from 'nexprime';
 import { Observable, filter } from 'rxjs';
 import { errorMessage } from '../../../../core/services/api-error';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -14,26 +16,19 @@ import {
   subjectLabel,
 } from '../../../../shared/models/review.models';
 import { ReplyForm } from '../reply-form/reply-form';
-import {
-  BB_DIALOG_DATA,
-  BbDialog,
-  BbDialogRef,
-  BbDialogTitle,
-} from '../../../../shared/dialog/bb-dialog';
 
 /** Every review of one order: the restaurant's and each dish's, with replies and reporting. */
 @Component({
   selector: 'bb-restaurant-order-dialog',
-  imports: [DatePipe, BbDialogTitle, ButtonComponent, IconComponent, ReviewCard, ReplyForm],
+  imports: [DatePipe, MatDialogModule, MatButtonModule, IconComponent, ReviewCard, ReplyForm],
   templateUrl: './restaurant-order-dialog.html',
   styleUrl: './restaurant-order-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RestaurantOrderDialog {
-  private readonly orderId = inject<string>(BB_DIALOG_DATA);
-  protected readonly ref = inject<BbDialogRef<boolean>>(BbDialogRef);
+  private readonly orderId = inject<string>(MAT_DIALOG_DATA);
   private readonly reviews = inject(ReviewService);
-  private readonly bbDialog = inject(BbDialog);
+  private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
 
   protected readonly data = signal<RestaurantOrderReviews | null>(null);
@@ -72,7 +67,7 @@ export class RestaurantOrderDialog {
   }
 
   protected deleteReply(review: RestaurantReview): void {
-    confirmed(this.bbDialog, {
+    confirmed(this.dialog, {
       title: 'Remove your reply?',
       message: `Your public reply to ${review.authorName} will be removed. The review stays.`,
       confirmLabel: 'Remove reply',
@@ -90,7 +85,7 @@ export class RestaurantOrderDialog {
   }
 
   protected report(review: RestaurantReview): void {
-    reportReview(this.bbDialog, review.id).subscribe(() => {
+    reportReview(this.dialog, review.id).subscribe(() => {
       this.notify.success('Reported. The BiteBox team will review it.');
       this.patch(review.id, (r) => ({ ...r, reportedByYou: true }));
     });
@@ -98,12 +93,14 @@ export class RestaurantOrderDialog {
 }
 
 /** Emits when a reply changed, so the list and the summary can refresh. */
-export function openRestaurantOrderReviews(dialog: BbDialog, orderId: string): Observable<true> {
+export function openRestaurantOrderReviews(dialog: MatDialog, orderId: string): Observable<true> {
   return dialog
     .open<RestaurantOrderDialog, string, boolean>(RestaurantOrderDialog, {
       data: orderId,
       width: '720px',
+      maxWidth: '95vw',
+      autoFocus: 'dialog',
     })
-    .closed
+    .afterClosed()
     .pipe(filter((changed): changed is true => changed === true));
 }

@@ -1,10 +1,6 @@
 export const environment = {
   production: true,
-  baseUrl: '/api/v1', // same origin; nginx sends each path to Node or Django
-  djangoUrl: '/api/v1',
-  djangoRoutes: [] as string[],
-  // Live updates: 'node' until the switch-over, then 'django' (nginx sends /ws/ to Django).
-  realtime: 'node' as 'node' | 'django',
+  apiUrl: '/api/v1',
 
   map: {
     tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -13,7 +9,10 @@ export const environment = {
     maxZoom: 19,
   },
 
-  // Footer links; empty ones are hidden. No secrets in this file (it ships to the browser).
+  /**
+   * Public links shown in the site footer. Leave a value empty until the official URL exists:
+   * empty links are not shown. Never put secrets here (this file is bundled into the browser).
+   */
   links: {
     social: { facebook: '', instagram: '', youtube: '', linkedin: '', x: '' },
     apps: { googlePlay: '', appStore: '' },

@@ -13,20 +13,7 @@ export const mockProvider = {
     };
   },
 
-  /** `receipt` is our refund id, so each (partial) refund gets its own gateway id. */
-  async refund({ providerPaymentId, receipt }) {
-    return {
-      providerRefundId: `mock_refund_${receipt ?? providerPaymentId}`,
-      status: "processed",
-    };
-  },
-
-  async refundStatus() {
-    return "processed";
-  },
-
-  /** Simulated payments finish only through the test dialog: nothing to reconcile. */
-  async orderPayments() {
-    return [];
+  async refund({ providerPaymentId }) {
+    return { providerRefundId: `mock_refund_${providerPaymentId}` };
   },
 };

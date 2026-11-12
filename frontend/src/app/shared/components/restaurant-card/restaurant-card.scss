@@ -48,7 +48,7 @@
   place-items: center;
   background:
     radial-gradient(circle at 80% 20%, rgb(255 181 46 / 45%) 0, transparent 50%),
-    linear-gradient(135deg, var(--bb-brand) 0%, var(--bb-brand-500) 100%);
+    linear-gradient(135deg, var(--bb-plum) 0%, var(--bb-plum-500) 100%);
   color: #fff6e5;
 
   np-icon {
@@ -86,7 +86,7 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  background: var(--bb-success-bg);
+  background: #e6f5ec;
   color: var(--bb-success);
 
   np-icon {
@@ -123,7 +123,7 @@
   align-items: center;
   gap: 2px;
   flex-shrink: 0;
-  background: var(--bb-success-solid);
+  background: var(--bb-success);
   color: #fff;
   font-weight: 700;
   font-size: 0.8rem;

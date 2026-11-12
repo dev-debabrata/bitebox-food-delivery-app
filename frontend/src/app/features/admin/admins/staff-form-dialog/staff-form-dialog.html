@@ -1,6 +1,6 @@
-<h2 bbDialogTitle>{{ editing ? 'Edit admin' : 'New admin' }}</h2>
+<h2 mat-dialog-title>{{ editing ? 'Edit admin' : 'New admin' }}</h2>
 <form [formRoot]="form">
-  <div class="bb-dialog__content bb-form">
+  <mat-dialog-content class="bb-form">
     @if (error()) {
       <div class="bb-alert error" role="alert">
         <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ error() }}</span>
@@ -9,14 +9,8 @@
 
     @if (user; as u) {
       <dl class="details">
-        <div>
-          <dt>Email</dt>
-          <dd>{{ u.email }}</dd>
-        </div>
-        <div>
-          <dt>Joined</dt>
-          <dd>{{ u.createdAt | date: 'mediumDate' }}</dd>
-        </div>
+        <div><dt>Email</dt><dd>{{ u.email }}</dd></div>
+        <div><dt>Joined</dt><dd>{{ u.createdAt | date: 'mediumDate' }}</dd></div>
         <div>
           <dt>Last sign-in</dt>
           <dd>{{ u.lastLoginAt ? (u.lastLoginAt | date: 'd MMM y, h:mm a') : 'Never' }}</dd>
@@ -24,12 +18,7 @@
       </dl>
     }
 
-    <np-text-input
-      [formField]="form.name"
-      label="Full name"
-      cdkFocusInitial
-      [error]="shownError(form.name)"
-    />
+    <np-text-input [formField]="form.name" label="Full name" cdkFocusInitial [error]="shownError(form.name)" />
     @if (!editing) {
       <np-text-input
         [formField]="form.email"
@@ -39,11 +28,7 @@
         [error]="shownError(form.email)"
       />
     }
-    <bb-phone-input
-      [formField]="form.phone"
-      label="Mobile number (optional)"
-      [error]="shownError(form.phone)"
-    />
+    <bb-phone-input [formField]="form.phone" label="Mobile number (optional)" [error]="shownError(form.phone)" />
     @if (!editing) {
       <np-text-input
         [formField]="form.password"
@@ -66,16 +51,14 @@
     @if (roleChanged()) {
       <p class="bb-alert info">
         <np-icon name="info" class="mat-icon" matButtonIcon />
-        <span
-          >Changing the role signs this admin out, so their next sign-in gets the new access.</span
-        >
+        <span>Changing the role signs this admin out, so their next sign-in gets the new access.</span>
       </p>
     }
-  </div>
-  <div class="bb-dialog__actions">
-    <np-button variant="text" severity="secondary" label="Cancel" (clicked)="ref.close()" />
-    <button class="bb-btn" type="submit" [disabled]="form().submitting()">
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="form().submitting()">
       {{ editing ? 'Save' : 'Create admin' }}
     </button>
-  </div>
+  </mat-dialog-actions>
 </form>

@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { BbDialog } from '../../../shared/dialog/bb-dialog';
-import { ButtonComponent, IconComponent, PaginationComponent } from 'nexprime';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { IconComponent } from 'nexprime';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ReviewService } from '../../../core/services/review.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
@@ -15,8 +17,8 @@ import { RiderReview } from '../../../shared/models/review.models';
 @Component({
   selector: 'bb-delivery-reviews',
   imports: [
-    ButtonComponent,
-    PaginationComponent,
+    MatButtonModule,
+    MatPaginatorModule,
     IconComponent,
     EmptyState,
     PageHeader,
@@ -29,7 +31,7 @@ import { RiderReview } from '../../../shared/models/review.models';
 })
 export class DeliveryReviews {
   private readonly reviews = inject(ReviewService);
-  private readonly dialog = inject(BbDialog);
+  private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
 
   protected readonly rating = signal<number | null>(null);

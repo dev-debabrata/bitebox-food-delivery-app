@@ -1,28 +1,33 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { ButtonComponent, IconComponent, ToggleComponent } from 'nexprime';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { IconComponent, ToggleComponent } from 'nexprime';
+import { MatButtonModule } from '@angular/material/button';
 import { filter } from 'rxjs';
 import { errorMessage } from '../../../core/services/api-error';
 import { AdminCouponService } from '../../../core/services/checkout-api.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { confirmed } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import {
+  ConfirmDialog,
+  ConfirmDialogData,
+} from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { AdminCoupon } from '../../../shared/models/checkout.models';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
 import { CouponFormDialog } from './coupon-form-dialog/coupon-form-dialog';
-import { BbDialog } from '../../../shared/dialog/bb-dialog';
 
 @Component({
   selector: 'bb-admin-coupons',
   imports: [
     ToggleComponent,
     DatePipe,
+    MatButtonModule,
     IconComponent,
+    MatDialogModule,
     EmptyState,
     PageHeader,
     InrPipe,
-    ButtonComponent,
   ],
   templateUrl: './admin-coupons.html',
   styleUrl: './admin-coupons.scss',
@@ -30,7 +35,7 @@ import { BbDialog } from '../../../shared/dialog/bb-dialog';
 })
 export class AdminCoupons {
   private readonly service = inject(AdminCouponService);
-  private readonly bbDialog = inject(BbDialog);
+  private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
 
   protected readonly coupons = signal<AdminCoupon[]>([]);
@@ -59,12 +64,14 @@ export class AdminCoupons {
   }
 
   protected open(coupon?: AdminCoupon): void {
-    this.bbDialog
+    this.dialog
       .open<CouponFormDialog, AdminCoupon | null, AdminCoupon>(CouponFormDialog, {
         data: coupon ?? null,
         width: '560px',
+        maxWidth: '95vw',
       })
-      .closed.pipe(filter(Boolean))
+      .afterClosed()
+      .pipe(filter(Boolean))
       .subscribe(() => {
         this.notify.success(coupon ? 'Coupon saved' : 'Coupon created');
         this.load();
@@ -84,23 +91,26 @@ export class AdminCoupons {
   }
 
   protected remove(coupon: AdminCoupon): void {
-    confirmed(
-      this.bbDialog,
-      {
-        title: `Delete ${coupon.code}?`,
-        message: 'Customers will no longer be able to use it.',
-        confirmLabel: 'Delete',
-        danger: true,
-      },
-      '420px',
-    ).subscribe(() =>
-      this.service.remove(coupon.id).subscribe({
-        next: () => {
-          this.coupons.update((list) => list.filter((c) => c.id !== coupon.id));
-          this.notify.success('Coupon deleted');
+    this.dialog
+      .open<ConfirmDialog, ConfirmDialogData, true>(ConfirmDialog, {
+        data: {
+          title: `Delete ${coupon.code}?`,
+          message: 'Customers will no longer be able to use it.',
+          confirmLabel: 'Delete',
+          danger: true,
         },
-        error: (err: unknown) => this.notify.error(errorMessage(err)),
-      }),
-    );
+        width: '420px',
+      })
+      .afterClosed()
+      .pipe(filter(Boolean))
+      .subscribe(() =>
+        this.service.remove(coupon.id).subscribe({
+          next: () => {
+            this.coupons.update((list) => list.filter((c) => c.id !== coupon.id));
+            this.notify.success('Coupon deleted');
+          },
+          error: (err: unknown) => this.notify.error(errorMessage(err)),
+        }),
+      );
   }
 }

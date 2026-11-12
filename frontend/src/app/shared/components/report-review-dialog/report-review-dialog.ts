@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormRoot, TreeValidationResult, form, maxLength, required } from '@angular/forms/signals';
-import { ButtonComponent, IconComponent, SelectOption } from 'nexprime';
-import { BB_DIALOG_DATA, BbDialog, BbDialogRef, BbDialogTitle } from '../../dialog/bb-dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { IconComponent, SelectOption } from 'nexprime';
 import { Observable, filter, firstValueFrom } from 'rxjs';
 import { errorMessage, fieldErrors } from '../../../core/services/api-error';
 import { ReviewService } from '../../../core/services/review.service';
@@ -15,13 +16,13 @@ export interface ReportReviewData {
 
 @Component({
   selector: 'bb-report-review-dialog',
-  imports: [FormRoot, NP_FORM_FIELDS, BbDialogTitle, ButtonComponent, IconComponent],
+  imports: [FormRoot, NP_FORM_FIELDS, MatDialogModule, MatButtonModule, IconComponent],
   templateUrl: './report-review-dialog.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReportReviewDialog {
-  private readonly data = inject<ReportReviewData>(BB_DIALOG_DATA);
-  protected readonly ref = inject<BbDialogRef<true>>(BbDialogRef);
+  private readonly data = inject<ReportReviewData>(MAT_DIALOG_DATA);
+  private readonly ref = inject(MatDialogRef<ReportReviewDialog, true>);
   private readonly reviews = inject(ReviewService);
   protected readonly shownError = shownError;
   protected readonly error = signal<string | null>(null);
@@ -61,9 +62,13 @@ export class ReportReviewDialog {
 }
 
 /** Emits once the report is stored. */
-export function reportReview(dialog: BbDialog, reviewId: string): Observable<true> {
+export function reportReview(dialog: MatDialog, reviewId: string): Observable<true> {
   return dialog
-    .open<ReportReviewDialog, ReportReviewData, true>(ReportReviewDialog, { data: { reviewId } })
-    .closed
+    .open<ReportReviewDialog, ReportReviewData, true>(ReportReviewDialog, {
+      data: { reviewId },
+      width: '440px',
+      maxWidth: '95vw',
+    })
+    .afterClosed()
     .pipe(filter((r): r is true => r === true));
 }

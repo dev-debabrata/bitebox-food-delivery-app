@@ -6,7 +6,6 @@ import { validate } from "../middleware/validate.middleware.js";
 import { MEMBER_ROLES, USER_STATUS } from "../models/user.model.js";
 import {
   listMembers,
-  loginHistory,
   setAccountStatus,
 } from "../services/admin-staff.service.js";
 import { audited } from "../services/audit.service.js";
@@ -30,15 +29,6 @@ router.get(
   ]),
   respond((req) =>
     listMembers(req.validatedQuery, parsePagination(req.validatedQuery)),
-  ),
-);
-
-// Sign-ins of a customer, restaurant partner or rider.
-router.get(
-  "/:id/logins",
-  validate([mongoIdParam(), ...paginationRules]),
-  respond((req) =>
-    loginHistory(req.params.id, MEMBER_ROLES, parsePagination(req.validatedQuery)),
   ),
 );
 

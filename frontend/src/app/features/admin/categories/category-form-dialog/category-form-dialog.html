@@ -1,6 +1,6 @@
-<h2 bbDialogTitle>{{ data ? 'Edit category' : 'New category' }}</h2>
+<h2 mat-dialog-title>{{ data ? 'Edit category' : 'New category' }}</h2>
 <form [formRoot]="form">
-  <div class="bb-dialog__content bb-form">
+  <mat-dialog-content class="bb-form">
     @if (error()) {
       <div class="bb-alert error" role="alert">
         <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ error() }}</span>
@@ -18,35 +18,40 @@
       [error]="shownError(form.description)"
     />
     <div class="bb-form-row">
-      <np-text-input [formField]="form.icon" label="Icon" [error]="shownError(form.icon)" />
+      <np-text-input
+        [formField]="form.icon"
+        label="Icon"
+        [error]="shownError(form.icon)"
+      />
       <div class="bb-field">
-        <np-input-number [formField]="form.sortOrder" label="Sort order" />
+        <np-input-number
+          [formField]="form.sortOrder"
+          label="Sort order"
+        />
         <bb-field-error [field]="form.sortOrder" />
       </div>
     </div>
     <div class="icons" role="group" aria-label="Icon suggestions">
       @for (icon of icons; track icon) {
         <button
-          class="bb-btn bb-btn--text bb-btn--icon"
           type="button"
+          mat-icon-button
           [class.picked]="model().icon === icon"
           (click)="form.icon().value.set(icon)"
           [attr.aria-label]="icon"
         >
-          <np-icon [name]="icon | npIcon" />
+          <np-icon [name]="(icon) | npIcon" class="mat-icon" matButtonIcon />
         </button>
       }
     </div>
     <bb-image-upload [(url)]="imageUrl" label="Add a category photo" aspectRatio="1 / 1" />
-    <p class="hint">
-      A square photo of the food looks best on the home page. Without one, the icon is shown.
-    </p>
+    <p class="hint">A square photo of the food looks best on the home page. Without one, the icon is shown.</p>
     <np-toggle [formField]="form.isActive" label="Active (visible to restaurants and customers)" />
-  </div>
-  <div class="bb-dialog__actions">
-    <np-button variant="text" severity="secondary" label="Cancel" (clicked)="ref.close()" />
-    <button class="bb-btn" type="submit" [disabled]="form().submitting()">
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="form().submitting()">
       {{ data ? 'Save' : 'Create' }}
     </button>
-  </div>
+  </mat-dialog-actions>
 </form>

@@ -1,22 +1,16 @@
-<h2 bbDialogTitle>{{ data.title }}</h2>
+<h2 mat-dialog-title>{{ data.title }}</h2>
 <form [formRoot]="form">
-  <div class="bb-dialog__content">
+  <mat-dialog-content>
     <p>{{ data.message }}</p>
     @if (data.reasonLabel) {
-      <np-textarea
-        [formField]="form.reason"
-        [label]="data.reasonLabel"
-        rows="3"
-        autoResize
-        cdkFocusInitial
-      />
+      <np-textarea [formField]="form.reason" [label]="data.reasonLabel" rows="3" autoResize cdkFocusInitial />
       <bb-field-error [field]="form.reason" />
     }
-  </div>
-  <div class="bb-dialog__actions">
-    <np-button variant="text" severity="secondary" label="Cancel" (clicked)="ref.close()" />
-    <button type="submit" class="bb-btn" [class.bb-btn--danger]="data.danger">
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" [mat-dialog-close]="undefined">Cancel</button>
+    <button mat-flat-button type="submit" [class.danger]="data.danger">
       {{ data.confirmLabel ?? 'Confirm' }}
     </button>
-  </div>
+  </mat-dialog-actions>
 </form>

@@ -1,12 +1,10 @@
-<a routerLink="/admin/restaurants" class="bb-btn bb-btn--text back"
-  ><np-icon name="arrow-left" />All restaurants</a
->
+<a mat-button routerLink="/admin/restaurants" class="back"><np-icon name="arrow-left" class="mat-icon" matButtonIcon />All restaurants</a>
 
 @if (loading()) {
   <span class="bb-skeleton" style="height: 360px"></span>
 } @else if (notFound()) {
   <bb-empty-state icon="storefront" title="Restaurant not found">
-    <a class="bb-btn" routerLink="/admin/restaurants">Back to restaurants</a>
+    <a mat-flat-button routerLink="/admin/restaurants">Back to restaurants</a>
   </bb-empty-state>
 } @else if (error()) {
   <div class="bb-alert error" role="alert">
@@ -28,23 +26,13 @@
     </div>
     <div class="actions">
       @for (a of actions(); track a.status) {
-        <button
-          class="bb-btn"
-          [class.bb-btn--danger]="a.danger"
-          [disabled]="acting()"
-          (click)="act(a)"
-        >
-          <np-icon [name]="a.icon | npIcon" />{{ a.label }}
+        <button mat-flat-button [class.danger]="a.danger" [disabled]="acting()" (click)="act(a)">
+          <np-icon [name]="(a.icon) | npIcon" class="mat-icon" matButtonIcon />{{ a.label }}
         </button>
       }
       @if (r.status === 'approved') {
-        <a
-          class="bb-btn bb-btn--outlined"
-          [routerLink]="['/restaurants', r.slug]"
-          target="_blank"
-          rel="noopener"
-        >
-          <np-icon name="external-link" />Public page
+        <a mat-stroked-button [routerLink]="['/restaurants', r.slug]" target="_blank" rel="noopener">
+          <np-icon name="external-link" class="mat-icon" matButtonIcon />Public page
         </a>
       }
     </div>
@@ -61,44 +49,17 @@
     <section class="bb-card">
       <h3>Business</h3>
       <dl>
-        <div>
-          <dt>Cuisines</dt>
-          <dd>{{ r.cuisines.join(', ') }}</dd>
-        </div>
+        <div><dt>Cuisines</dt><dd>{{ r.cuisines.join(', ') }}</dd></div>
         @if (r.description) {
-          <div class="wide">
-            <dt>Description</dt>
-            <dd>{{ r.description }}</dd>
-          </div>
+          <div class="wide"><dt>Description</dt><dd>{{ r.description }}</dd></div>
         }
-        <div>
-          <dt>Phone</dt>
-          <dd>{{ r.phone }}</dd>
-        </div>
-        <div>
-          <dt>Email</dt>
-          <dd>{{ r.email || '—' }}</dd>
-        </div>
-        <div>
-          <dt>Hours</dt>
-          <dd>{{ r.openingTime | clockTime }} – {{ r.closingTime | clockTime }}</dd>
-        </div>
-        <div>
-          <dt>Pure veg</dt>
-          <dd>{{ r.isPureVeg ? 'Yes' : 'No' }}</dd>
-        </div>
-        <div>
-          <dt>Cost for two</dt>
-          <dd>{{ r.costForTwoPaise | inr }}</dd>
-        </div>
-        <div>
-          <dt>Minimum order</dt>
-          <dd>{{ r.minOrderPaise | inr }}</dd>
-        </div>
-        <div>
-          <dt>Avg. prep time</dt>
-          <dd>{{ r.avgPrepTimeMinutes }} min</dd>
-        </div>
+        <div><dt>Phone</dt><dd>{{ r.phone }}</dd></div>
+        <div><dt>Email</dt><dd>{{ r.email || '—' }}</dd></div>
+        <div><dt>Hours</dt><dd>{{ r.openingTime | clockTime }} – {{ r.closingTime | clockTime }}</dd></div>
+        <div><dt>Pure veg</dt><dd>{{ r.isPureVeg ? 'Yes' : 'No' }}</dd></div>
+        <div><dt>Cost for two</dt><dd>{{ r.costForTwoPaise | inr }}</dd></div>
+        <div><dt>Minimum order</dt><dd>{{ r.minOrderPaise | inr }}</dd></div>
+        <div><dt>Avg. prep time</dt><dd>{{ r.avgPrepTimeMinutes }} min</dd></div>
       </dl>
     </section>
 
@@ -125,22 +86,10 @@
     <section class="bb-card">
       <h3>Owner</h3>
       <dl>
-        <div>
-          <dt>Name</dt>
-          <dd>{{ r.owner.name }}</dd>
-        </div>
-        <div>
-          <dt>Email</dt>
-          <dd>{{ r.owner.email }}</dd>
-        </div>
-        <div>
-          <dt>Phone</dt>
-          <dd>{{ r.owner.phone || '—' }}</dd>
-        </div>
-        <div>
-          <dt>Account</dt>
-          <dd class="cap">{{ r.owner.status }}</dd>
-        </div>
+        <div><dt>Name</dt><dd>{{ r.owner.name }}</dd></div>
+        <div><dt>Email</dt><dd>{{ r.owner.email }}</dd></div>
+        <div><dt>Phone</dt><dd>{{ r.owner.phone || '—' }}</dd></div>
+        <div><dt>Account</dt><dd class="cap">{{ r.owner.status }}</dd></div>
       </dl>
     </section>
 
@@ -148,27 +97,13 @@
       <h3>Menu & history</h3>
       <dl>
         @if (stats(); as s) {
-          <div>
-            <dt>Menu items</dt>
-            <dd>{{ s.totalItems }} ({{ s.availableItems }} available)</dd>
-          </div>
-          <div>
-            <dt>Categories</dt>
-            <dd>{{ s.categoriesUsed }}</dd>
-          </div>
+          <div><dt>Menu items</dt><dd>{{ s.totalItems }} ({{ s.availableItems }} available)</dd></div>
+          <div><dt>Categories</dt><dd>{{ s.categoriesUsed }}</dd></div>
         }
-        <div>
-          <dt>Submitted</dt>
-          <dd>{{ r.createdAt | date: 'medium' }}</dd>
-        </div>
-        <div>
-          <dt>Last reviewed</dt>
-          <dd>{{ r.reviewedAt ? (r.reviewedAt | date: 'medium') : 'Not yet' }}</dd>
-        </div>
+        <div><dt>Submitted</dt><dd>{{ r.createdAt | date: 'medium' }}</dd></div>
+        <div><dt>Last reviewed</dt><dd>{{ r.reviewedAt ? (r.reviewedAt | date: 'medium') : 'Not yet' }}</dd></div>
       </dl>
-      <a class="bb-btn bb-btn--text" routerLink="/admin/foods" [queryParams]="{ restaurant: r.id }"
-        ><np-icon name="book-open" />View menu items</a
-      >
+      <a mat-button routerLink="/admin/foods" [queryParams]="{ restaurant: r.id }"><np-icon name="book-open" class="mat-icon" matButtonIcon />View menu items</a>
     </section>
   </div>
 }

@@ -47,7 +47,7 @@ const id = encodeURIComponent;
 @Injectable({ providedIn: 'root' })
 export class ReviewService {
   private readonly http = inject(HttpClient);
-  private readonly api = environment.baseUrl;
+  private readonly api = environment.apiUrl;
 
   private get<T>(path: string, query: object = {}, isPublic = false): Observable<T> {
     return this.http

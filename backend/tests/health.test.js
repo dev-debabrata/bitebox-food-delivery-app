@@ -83,16 +83,6 @@ describe("Health & app basics", () => {
     }
   });
 
-  it("answers the liveness and readiness probes", async () => {
-    const live = await request(app).get("/api/v1/health/live");
-    assert.equal(live.status, 200);
-    assert.equal(live.body.data.status, "alive");
-    const ready = await request(app).get("/api/v1/health/ready");
-    assert.equal(ready.status, 200);
-    assert.equal(ready.body.data.status, "ready");
-    assert.equal(ready.headers["cache-control"], "no-store");
-  });
-
   it("serves the OpenAPI document", async () => {
     const res = await request(app).get("/api/docs.json");
     assert.equal(res.status, 200);

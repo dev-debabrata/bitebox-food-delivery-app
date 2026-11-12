@@ -3,13 +3,18 @@
   subtitle="Moderate reported reviews against the review policy and follow rating trends. Every action needs a reason and is logged."
 />
 
-<np-tabs
-  class="bb-tab-strip"
-  variant="underline"
-  [tabs]="tabItems()"
-  [activeTab]="tab()"
-  (activeTabChange)="selectTabId($event)"
-/>
+<mat-tab-group [selectedIndex]="activeTab()" (selectedIndexChange)="selectTab($event)" mat-stretch-tabs="false" aria-label="Review views">
+  <mat-tab>
+    <ng-template mat-tab-label>
+      Reported
+      @if (reportedCount(); as n) {
+        <span class="count alert">{{ n }}</span>
+      }
+    </ng-template>
+  </mat-tab>
+  <mat-tab label="All reviews" />
+  <mat-tab label="Analytics" />
+</mat-tab-group>
 
 @if (tab() === 'analytics') {
   <bb-review-analytics />

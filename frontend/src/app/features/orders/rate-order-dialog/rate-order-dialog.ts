@@ -20,7 +20,6 @@ import {
   REVIEW_LIMITS,
   isEditable,
 } from '../../../shared/models/review.models';
-import { BbDialog } from '../../../shared/dialog/bb-dialog';
 
 export interface RateOrderData {
   state: OrderReviewState;
@@ -72,7 +71,7 @@ export class RateOrderDialog {
   protected readonly data = inject<RateOrderData>(MAT_DIALOG_DATA);
   private readonly ref = inject(MatDialogRef<RateOrderDialog, OrderReviewState>);
   private readonly reviews = inject(ReviewService);
-  private readonly dialog = inject(BbDialog);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly words = [...RATING_WORDS];
   protected readonly limits = REVIEW_LIMITS;

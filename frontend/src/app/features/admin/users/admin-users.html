@@ -9,27 +9,14 @@
     icon="search"
     clearable
   />
-  <np-select
-    class="role-select"
-    [formField]="filters.role"
-    ariaLabel="Role"
-    [options]="roleOptions"
-  />
-  <np-select
-    class="status-select"
-    [formField]="filters.status"
-    ariaLabel="Status"
-    [options]="statusOptions"
-  />
+  <np-select class="role-select" [formField]="filters.role" ariaLabel="Role" [options]="roleOptions" />
+  <np-select class="status-select" [formField]="filters.status" ariaLabel="Status" [options]="statusOptions" />
 </div>
 
 @if (error()) {
   <div class="bb-alert error" role="alert">
     <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
-    <span
-      >{{ error() }}
-      <button class="bb-link-button" (click)="load(pagination().page)">Retry</button></span
-    >
+    <span>{{ error() }} <button class="bb-link-button" (click)="load(pagination().page)">Retry</button></span>
   </div>
 }
 
@@ -45,53 +32,55 @@
     </div>
   } @else if (isDesktop()) {
     <div class="table-scroll" [class.dim]="loading()">
-      <table class="bb-table">
-        <thead>
-          <tr>
-            <th scope="col">User</th>
-            <th scope="col">Phone</th>
-            <th scope="col">Role</th>
-            <th scope="col">Status</th>
-            <th scope="col">Joined</th>
-            <th scope="col" class="th-actions">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (u of users(); track u.id) {
-            <tr>
-              <td>
-                <strong>{{ u.name }}</strong>
-                <div class="bb-muted small">{{ u.email }}</div>
-              </td>
-              <td>{{ u.phone || '—' }}</td>
-              <td>
-                <span class="bb-role-chip role-{{ u.role }}">{{ roleLabel(u.role) }}</span>
-              </td>
-              <td>
-                <span class="status status-{{ u.status }}">{{
-                  u.status === 'suspended' ? 'Inactive' : 'Active'
-                }}</span>
-              </td>
-              <td>{{ u.createdAt | date: 'mediumDate' }}</td>
-              <td class="td-actions">
-                @if (u.id === currentUserId()) {
-                  <span class="you-chip">You</span>
-                } @else {
-                  <button
-                    type="button"
-                    class="bb-btn bb-btn--outlined bb-pill-action"
-                    [class.danger]="u.status === 'active'"
-                    [disabled]="busyId() === u.id"
-                    (click)="toggleStatus(u)"
-                  >
-                    <np-icon [name]="u.status === 'active' ? 'user-x' : 'user-check'" />
-                    {{ u.status === 'active' ? 'Suspend' : 'Reactivate' }}
-                  </button>
-                }
-              </td>
-            </tr>
-          }
-        </tbody>
+      <table mat-table [dataSource]="users()">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>User</th>
+          <td mat-cell *matCellDef="let u">
+            <strong>{{ u.name }}</strong>
+            <div class="bb-muted small">{{ u.email }}</div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="phone">
+          <th mat-header-cell *matHeaderCellDef>Phone</th>
+          <td mat-cell *matCellDef="let u">{{ u.phone || '—' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="role">
+          <th mat-header-cell *matHeaderCellDef>Role</th>
+          <td mat-cell *matCellDef="let u">
+            <span class="bb-role-chip role-{{ u.role }}">{{ roleLabel(u.role) }}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let u">
+            <span class="status status-{{ u.status }}">{{ u.status === 'suspended' ? 'Inactive' : 'Active' }}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="createdAt">
+          <th mat-header-cell *matHeaderCellDef>Joined</th>
+          <td mat-cell *matCellDef="let u">{{ u.createdAt | date: 'mediumDate' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef class="th-actions">Actions</th>
+          <td mat-cell *matCellDef="let u" class="td-actions">
+            @if (u.id === currentUserId()) {
+              <span class="you-chip">You</span>
+            } @else {
+              <button
+                mat-stroked-button
+                class="bb-pill-action"
+                [class.danger]="u.status === 'active'"
+                [disabled]="busyId() === u.id"
+                (click)="toggleStatus(u)"
+              >
+                <np-icon [name]="u.status === 'active' ? 'user-x' : 'user-check'" class="mat-icon" matButtonIcon />
+                {{ u.status === 'active' ? 'Suspend' : 'Reactivate' }}
+              </button>
+            }
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
       </table>
     </div>
   } @else {
@@ -105,20 +94,19 @@
           <span class="bb-muted small email">{{ u.email }}</span>
           <div class="card-meta small">
             <span>{{ u.phone || 'No phone' }}</span>
-            <span class="status status-{{ u.status }}">{{
-              u.status === 'suspended' ? 'Inactive' : 'Active'
-            }}</span>
+            <span class="status status-{{ u.status }}">{{ u.status === 'suspended' ? 'Inactive' : 'Active' }}</span>
             <span class="bb-muted">Joined {{ u.createdAt | date: 'mediumDate' }}</span>
           </div>
           @if (u.id !== currentUserId()) {
             <div class="card-actions">
               <button
-                class="bb-btn bb-btn--outlined bb-pill-action"
+                mat-stroked-button
+                class="bb-pill-action"
                 [class.danger]="u.status === 'active'"
                 [disabled]="busyId() === u.id"
                 (click)="toggleStatus(u)"
               >
-                <np-icon [name]="u.status === 'active' ? 'user-x' : 'user-check'" />
+                <np-icon [name]="u.status === 'active' ? 'user-x' : 'user-check'" class="mat-icon" matButtonIcon />
                 {{ u.status === 'active' ? 'Suspend' : 'Reactivate' }}
               </button>
             </div>
@@ -128,13 +116,12 @@
     </ul>
   }
 
-  <np-pagination
-    variant="compact"
-    [page]="pagination().page"
-    [rows]="pagination().limit"
-    [totalRecords]="pagination().total"
-    [rowsOptions]="[10, 25, 50]"
-    (pageChange)="goTo($event)"
-    (rowsChange)="goTo(1, $event)"
+  <mat-paginator
+    [length]="pagination().total"
+    [pageIndex]="pagination().page - 1"
+    [pageSize]="pagination().limit"
+    [pageSizeOptions]="[10, 25, 50]"
+    (page)="onPage($event)"
+    aria-label="Select page of users"
   />
 </div>

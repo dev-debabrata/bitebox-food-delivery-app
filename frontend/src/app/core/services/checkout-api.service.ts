@@ -17,7 +17,7 @@ import { toParams } from './http-params';
 @Injectable({ providedIn: 'root' })
 export class AddressService {
   private readonly http = inject(HttpClient);
-  private readonly url = `${environment.baseUrl}/addresses`;
+  private readonly url = `${environment.apiUrl}/addresses`;
 
   list(): Observable<DeliveryAddress[]> {
     return this.http
@@ -58,7 +58,7 @@ export interface PlaceOrderRequest {
 @Injectable({ providedIn: 'root' })
 export class OrderService {
   private readonly http = inject(HttpClient);
-  private readonly api = environment.baseUrl;
+  private readonly api = environment.apiUrl;
 
   place(
     request: PlaceOrderRequest,
@@ -109,7 +109,7 @@ export class OrderService {
 @Injectable({ providedIn: 'root' })
 export class AdminCouponService {
   private readonly http = inject(HttpClient);
-  private readonly url = `${environment.baseUrl}/admin/coupons`;
+  private readonly url = `${environment.apiUrl}/admin/coupons`;
 
   list(query: {
     search?: string;

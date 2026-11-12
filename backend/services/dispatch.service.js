@@ -260,9 +260,7 @@ export async function sweep(now = new Date()) {
     // Ready, but no rider picked it up in time (none found, or the assigned rider never came).
     {
       filter: {
-        status: {
-          $in: [S.READY_FOR_PICKUP, S.ASSIGNED, S.ARRIVED_AT_RESTAURANT],
-        },
+        status: { $in: [S.READY_FOR_PICKUP, S.ASSIGNED] },
         statusHistory: {
           $elemMatch: {
             status: S.READY_FOR_PICKUP,

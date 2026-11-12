@@ -2,7 +2,7 @@
   title="Food categories"
   subtitle="Categories organise menus and power category browsing for customers."
 >
-  <np-button severity="primary" icon="plus" label="New category" (clicked)="open()" />
+  <button mat-flat-button (click)="open()"><np-icon name="plus" class="mat-icon" matButtonIcon />New category</button>
 </bb-page-header>
 
 @if (error()) {
@@ -24,7 +24,7 @@
     title="No categories yet"
     message="Create categories so restaurants can organise their menus."
   >
-    <np-button severity="primary" label="Create the first category" (clicked)="open()" />
+    <button mat-flat-button (click)="open()">Create the first category</button>
   </bb-empty-state>
 } @else {
   <div class="grid">
@@ -34,8 +34,8 @@
           <img class="thumb" [bbSrc]="c.imageUrl" alt="" loading="lazy" />
         } @else {
           <span class="thumb icon"
-            ><np-icon [name]="c.icon | npIcon: 'utensils'" class="mat-icon" matButtonIcon
-          /></span>
+            ><np-icon [name]="(c.icon) | npIcon: 'utensils'" class="mat-icon" matButtonIcon /></span
+          >
         }
         <div class="text">
           <h3>{{ c.name }}</h3>
@@ -51,24 +51,18 @@
             class="bb-label-hidden"
             [label]="'Active: ' + c.name"
           />
-          <np-button
-            variant="text"
-            severity="primary"
-            icon="pencil"
-            label=""
-            (clicked)="open(c)"
-            [ariaLabel]="'Edit ' + c.name"
-          />
-          <span [attr.title]="c.itemCount ? 'In use by menu items. Deactivate instead.' : null">
-            <np-button
-              variant="text"
-              severity="danger"
-              icon="trash-2"
-              label=""
-              (clicked)="remove(c)"
+          <button mat-icon-button (click)="open(c)" [attr.aria-label]="'Edit ' + c.name">
+            <np-icon name="pencil" class="mat-icon" matButtonIcon />
+          </button>
+          <span [matTooltip]="c.itemCount ? 'In use by menu items. Deactivate instead.' : ''">
+            <button
+              mat-icon-button
+              (click)="remove(c)"
               [disabled]="!!c.itemCount"
-              [ariaLabel]="'Delete ' + c.name"
-            />
+              [attr.aria-label]="'Delete ' + c.name"
+            >
+              <np-icon name="trash-2" class="mat-icon" matButtonIcon />
+            </button>
           </span>
         </div>
       </article>

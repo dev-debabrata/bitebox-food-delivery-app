@@ -17,7 +17,7 @@
   cursor: pointer;
   letter-spacing: 0.05em;
   &:hover:not(:disabled) {
-    background: var(--bb-success-bg);
+    background: #e6f5ec;
   }
 }
 .stepper {
@@ -36,7 +36,7 @@
     cursor: pointer;
     border-radius: 8px;
     &:hover:not(:disabled) {
-      background: var(--bb-success-bg);
+      background: #e6f5ec;
     }
   }
   np-icon {

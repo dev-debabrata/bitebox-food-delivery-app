@@ -2,7 +2,6 @@ import { inject } from '@angular/core';
 import { RedirectFunction, Route, Router, Routes } from '@angular/router';
 import { customerSiteGuard, guestGuard, roleGuard } from './core/guards/auth.guards';
 import { ADMIN_ROLES, SelfRegisterRole } from './shared/models/user.models';
-import { OfflinePage } from './features/errors/offline/offline-page';
 
 const authPage = (
   path: string,
@@ -27,9 +26,6 @@ const customerLayout = () =>
   import('./layout/customer-layout/customer-layout').then((m) => m.CustomerLayout);
 
 export const routes: Routes = [
-  // Eager (not lazy-loaded): it must open when the device is offline.
-  { path: 'offline', component: OfflinePage, title: "You're offline | BiteBox" },
-
   {
     path: '',
     pathMatch: 'full',

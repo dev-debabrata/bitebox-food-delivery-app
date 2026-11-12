@@ -5,8 +5,6 @@ import { ROLES } from "../models/user.model.js";
 import { abandonUnpaid } from "../services/order-management.service.js";
 import * as payments from "../services/payments/payment.service.js";
 import { respond } from "../utils/api-response.js";
-import { parsePagination } from "../utils/pagination.js";
-import { paginationRules } from "../validators/common.validators.js";
 import * as rules from "../validators/payment.validators.js";
 
 const customer = [authenticate, authorize(ROLES.CUSTOMER)];
@@ -17,18 +15,6 @@ export const paymentsRouter = Router()
   .get(
     "/methods",
     respond(async () => ({ methods: payments.availableMethods() })),
-  )
-  // The customer's payment history, with refunds.
-  .get(
-    "/mine",
-    ...customer,
-    validate(paginationRules),
-    respond((req) =>
-      payments.listMine(
-        req.user._id,
-        parsePagination(req.validatedQuery, { defaultLimit: 10 }),
-      ),
-    ),
   )
   .post(
     "/orders/:orderId/start",

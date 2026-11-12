@@ -140,7 +140,7 @@
   display: grid;
   place-items: center;
   background: var(--bb-amber);
-  color: var(--bb-on-accent);
+  color: var(--bb-plum);
 }
 
 .business {
@@ -156,5 +156,12 @@
   h2 {
     margin: 0;
     font-size: 1rem;
+  }
+}
+
+// Phones: the Review button spans the card under the text.
+@include bp.phone-only {
+  .approvals > a {
+    flex: 1 1 100%;
   }
 }

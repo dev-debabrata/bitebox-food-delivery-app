@@ -81,10 +81,5 @@ export function pagedList<T extends { items: readonly unknown[] }>(
       limit = event.pageSize;
       load(event.pageIndex + 1);
     },
-    /** For np-pagination: `(pageChange)` → goTo(page); `(rowsChange)` → goTo(1, rows). */
-    goTo: (nextPage: number, rows?: number) => {
-      if (rows) limit = rows;
-      load(nextPage);
-    },
   };
 }

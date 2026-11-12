@@ -1,19 +1,22 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { Observable, catchError, filter, switchMap, throwError } from 'rxjs';
-import { confirmed } from '../../shared/components/confirm-dialog/confirm-dialog';
+import {
+  ConfirmDialog,
+  ConfirmDialogData,
+} from '../../shared/components/confirm-dialog/confirm-dialog';
 import { AuthService } from '../auth/auth.service';
 import { errorCode, errorMessage } from './api-error';
 import { CartService } from './cart.service';
 import { NotificationService } from './notification.service';
-import { BbDialog } from '../../shared/dialog/bb-dialog';
 
 @Injectable({ providedIn: 'root' })
 export class CartActions {
   private readonly cart = inject(CartService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly bbDialog = inject(BbDialog);
+  private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
 
   canOrder(): boolean {
@@ -49,10 +52,13 @@ export class CartActions {
   }
 
   private confirmReplace(message: string): Observable<true> {
-    return confirmed(
-      this.bbDialog,
-      { title: 'Start a new cart?', message, confirmLabel: 'Start new cart' },
-      '420px',
-    ).pipe(filter((ok): ok is true => ok === true));
+    return this.dialog
+      .open<ConfirmDialog, ConfirmDialogData, true>(ConfirmDialog, {
+        data: { title: 'Start a new cart?', message, confirmLabel: 'Start new cart' },
+        width: '420px',
+        maxWidth: '95vw',
+      })
+      .afterClosed()
+      .pipe(filter((ok): ok is true => ok === true));
   }
 }

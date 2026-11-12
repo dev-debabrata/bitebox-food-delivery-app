@@ -1,77 +1,31 @@
-<bb-page-header
-  title="Delivery performance"
-  subtitle="Delivered orders in the selected period: time from placing to delivery, and where it goes."
->
-  <np-select
-    class="bb-period"
-    [formField]="report.filters.days"
-    ariaLabel="Period"
-    [options]="report.periods"
-  />
+<bb-page-header title="Delivery performance" subtitle="Delivered orders in the selected period: time from placing to delivery, and where it goes.">
+  <np-select class="bb-period" [formField]="report.filters.days" ariaLabel="Period" [options]="report.periods" />
 </bb-page-header>
 
 @if (report.error(); as message) {
   <div class="bb-alert error" role="alert">
     <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
-    <span
-      >{{ message }}
-      <button class="bb-link-button" (click)="report.resource.reload()">Retry</button></span
-    >
+    <span>{{ message }} <button class="bb-link-button" (click)="report.resource.reload()">Retry</button></span>
   </div>
 }
 
 @if (report.data(); as d) {
-  <section
-    class="bb-grid cols-3"
-    aria-label="Averages"
-    [class.bb-dim]="report.resource.isLoading()"
-  >
+  <section class="bb-grid cols-3" aria-label="Averages" [class.bb-dim]="report.resource.isLoading()">
     <bb-stat-tile icon="task_alt" label="Delivered" [value]="d.totals.delivered" />
-    <bb-stat-tile
-      icon="timer"
-      label="Average delivery time"
-      [value]="minutes(d.totals.avgDeliveryMinutes)"
-      hint="Placed to delivered"
-    />
+    <bb-stat-tile icon="timer" label="Average delivery time" [value]="minutes(d.totals.avgDeliveryMinutes)" hint="Placed to delivered" />
     <bb-stat-tile
       icon="gauge"
       label="Delivered within 45 min"
       [value]="d.totals.within45Percent == null ? '–' : d.totals.within45Percent + '%'"
     />
-    <bb-stat-tile
-      icon="chef-hat"
-      label="Average cooking time"
-      [value]="minutes(d.totals.avgPrepMinutes)"
-      hint="Accepted to ready"
-    />
-    <bb-stat-tile
-      icon="clock-alert"
-      label="Average wait for pickup"
-      [value]="minutes(d.totals.avgPickupWaitMinutes)"
-      hint="Ready to picked up"
-    />
-    <bb-stat-tile
-      icon="bike"
-      label="Average ride"
-      [value]="minutes(d.totals.avgRideMinutes)"
-      hint="Picked up to delivered"
-    />
+    <bb-stat-tile icon="chef-hat" label="Average cooking time" [value]="minutes(d.totals.avgPrepMinutes)" hint="Accepted to ready" />
+    <bb-stat-tile icon="clock-alert" label="Average wait for pickup" [value]="minutes(d.totals.avgPickupWaitMinutes)" hint="Ready to picked up" />
+    <bb-stat-tile icon="bike" label="Average ride" [value]="minutes(d.totals.avgRideMinutes)" hint="Picked up to delivered" />
   </section>
 
   <div class="bb-grid cols-2 charts">
-    <bb-daily-chart
-      title="Deliveries by day"
-      [dates]="dates()"
-      [series]="deliveredSeries()"
-      [format]="count"
-    />
-    <bb-daily-chart
-      title="Average delivery time by day"
-      [dates]="dates()"
-      [series]="minutesSeries()"
-      [format]="minutes"
-      [showTotal]="false"
-    />
+    <bb-daily-chart title="Deliveries by day" [dates]="dates()" [series]="deliveredSeries()" [format]="count" />
+    <bb-daily-chart title="Average delivery time by day" [dates]="dates()" [series]="minutesSeries()" [format]="minutes" [showTotal]="false" />
   </div>
 
   <section class="bb-card bb-list-card riders" aria-labelledby="riders-title">
@@ -90,9 +44,7 @@
           <tbody>
             @for (r of d.topRiders; track r.id) {
               <tr>
-                <td>
-                  <strong>{{ r.name }}</strong>
-                </td>
+                <td><strong>{{ r.name }}</strong></td>
                 <td class="num">{{ r.deliveries }}</td>
                 <td class="num">{{ minutes(r.avgRideMinutes) }}</td>
                 <td class="num">{{ distance(r.distanceMeters) }}</td>

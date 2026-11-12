@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { BbDialog } from '../../dialog/bb-dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { IconComponent, SelectComponent } from 'nexprime';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -31,7 +31,7 @@ import { ReviewCard } from '../review-card/review-card';
 })
 export class PublicReviews {
   private readonly reviews = inject(ReviewService);
-  private readonly dialog = inject(BbDialog);
+  private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
 

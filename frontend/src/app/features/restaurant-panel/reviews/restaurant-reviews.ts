@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { form } from '@angular/forms/signals';
-import { BbDialog } from '../../../shared/dialog/bb-dialog';
-import { IconComponent, PaginationComponent, SelectOption } from 'nexprime';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { IconComponent, SelectOption } from 'nexprime';
 import { errorMessage } from '../../../core/services/api-error';
 import { ReviewService } from '../../../core/services/review.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
@@ -37,7 +39,8 @@ interface Filters {
   imports: [
     DecimalPipe,
     NP_FORM_FIELDS,
-    PaginationComponent,
+    MatButtonModule,
+    MatPaginatorModule,
     IconComponent,
     EmptyState,
     PageHeader,
@@ -51,7 +54,7 @@ interface Filters {
 })
 export class RestaurantReviews {
   private readonly reviews = inject(ReviewService);
-  private readonly dialog = inject(BbDialog);
+  private readonly dialog = inject(MatDialog);
 
   protected readonly summary = signal<RestaurantReviewSummary | null>(null);
   protected readonly summaryError = signal<string | null>(null);

@@ -1,7 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { form } from '@angular/forms/signals';
-import { IconComponent, PaginationComponent, ToggleComponent } from 'nexprime';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { IconComponent, ToggleComponent } from 'nexprime';
 import { errorMessage } from '../../../core/services/api-error';
 import { NotificationService } from '../../../core/services/notification.service';
 import { AdminOrdersService } from '../../../core/services/order-management.service';
@@ -14,12 +17,10 @@ import { pagedList } from '../../../shared/list/paged-list';
 import { OrderStatus, VEHICLE_LABEL } from '../../../shared/models/checkout.models';
 import { AdminRider } from '../../../shared/models/order-management.models';
 import { openAdminOrder } from '../orders/admin-order-dialog/admin-order-dialog';
-import { BbDialog } from '../../../shared/dialog/bb-dialog';
 
 const RIDER_EVENTS: OrderStatus[] = [
   'ready_for_pickup',
   'assigned',
-  'arrived_at_restaurant',
   'picked_up',
   'on_the_way',
   'delivered',
@@ -31,8 +32,9 @@ const RIDER_EVENTS: OrderStatus[] = [
   imports: [
     DatePipe,
     NP_FORM_FIELDS,
+    MatButtonModule,
     IconComponent,
-    PaginationComponent,
+    MatPaginatorModule,
     ToggleComponent,
     EmptyState,
     OrderStatusChip,
@@ -44,7 +46,7 @@ const RIDER_EVENTS: OrderStatus[] = [
 })
 export class AdminDeliveryPartners {
   private readonly api = inject(AdminOrdersService);
-  private readonly bbDialog = inject(BbDialog);
+  private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
 
   protected readonly filterModel = signal({ search: '', onlineOnly: false });
@@ -71,13 +73,13 @@ export class AdminDeliveryPartners {
   );
 
   protected openOrder(id: string): void {
-    openAdminOrder(this.bbDialog, id).subscribe(() => this.list.reload());
+    openAdminOrder(this.dialog, id).subscribe(() => this.list.reload());
   }
 
   protected toggleStatus(rider: AdminRider): void {
     const suspend = rider.status === 'active';
     confirmed(
-      this.bbDialog,
+      this.dialog,
       suspend
         ? {
             title: `Suspend ${rider.name}?`,

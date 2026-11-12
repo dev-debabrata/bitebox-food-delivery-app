@@ -1,11 +1,5 @@
 import { NpIconPipe } from '../../../shared/icons/np-icon-name';
-import { askPrepTime } from './accept-dialog/accept-dialog';
-import {
-  ButtonComponent,
-  ButtonToggleComponent,
-  IconComponent,
-  PaginationComponent,
-} from 'nexprime';
+import { IconComponent } from 'nexprime';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -17,6 +11,10 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatDialog } from '@angular/material/dialog';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { interval } from 'rxjs';
 import { errorMessage } from '../../../core/services/api-error';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -32,18 +30,13 @@ import { OrderStatus } from '../../../shared/models/checkout.models';
 import { RestaurantAction, RestaurantOrder } from '../../../shared/models/order-management.models';
 import { ItemCountPipe } from '../../../shared/pipes/item-count.pipe';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
-import { BbDialog } from '../../../shared/dialog/bb-dialog';
 
 type Tab = 'new' | 'preparing' | 'ready' | 'out' | 'history';
 
 const TABS: { id: Tab; label: string; statuses: OrderStatus[] }[] = [
   { id: 'new', label: 'New', statuses: ['pending'] },
   { id: 'preparing', label: 'Preparing', statuses: ['confirmed', 'preparing'] },
-  {
-    id: 'ready',
-    label: 'Ready for pickup',
-    statuses: ['ready_for_pickup', 'assigned', 'arrived_at_restaurant'],
-  },
+  { id: 'ready', label: 'Ready for pickup', statuses: ['ready_for_pickup', 'assigned'] },
   { id: 'out', label: 'Out for delivery', statuses: ['picked_up', 'on_the_way'] },
   { id: 'history', label: 'History', statuses: [] },
 ];
@@ -61,11 +54,11 @@ const NEXT: Partial<
   imports: [
     DatePipe,
     RouterLink,
-    ButtonComponent,
-    ButtonToggleComponent,
+    MatButtonModule,
+    MatButtonToggleModule,
     IconComponent,
     NpIconPipe,
-    PaginationComponent,
+    MatPaginatorModule,
     EmptyState,
     OrderStatusChip,
     PageHeader,
@@ -80,7 +73,7 @@ const NEXT: Partial<
 export class RestaurantOrders {
   protected readonly board = inject(RestaurantOrderBoard);
   private readonly api = inject(RestaurantOrdersService);
-  private readonly dialog = inject(BbDialog);
+  private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
 
   protected readonly tabs = TABS;
@@ -98,14 +91,6 @@ export class RestaurantOrders {
   protected readonly countFor = (tab: (typeof TABS)[number]) =>
     tab.statuses.reduce((sum, s) => sum + (this.board.board()?.counts[s] ?? 0), 0);
 
-  /** The stage tabs, with live counts in the labels ("New (2)"). */
-  protected readonly tabOptions = computed(() =>
-    TABS.map((t) => {
-      const n = t.id === 'history' ? 0 : this.countFor(t);
-      return { value: t.id, label: n ? `${t.label} (${n})` : t.label };
-    }),
-  );
-
   protected readonly shown = computed(() => {
     const statuses = TABS.find((t) => t.id === this.tab())?.statuses ?? [];
     return (this.board.board()?.items ?? []).filter((o) => statuses.includes(o.status));
@@ -118,10 +103,7 @@ export class RestaurantOrders {
       .subscribe(() => this.now.set(Date.now()));
   }
 
-  /** np-button-toggle emits a value, an array (multiple mode) or null (deselected): keep the tab. */
-  protected selectTab(value: Tab | Tab[] | null): void {
-    const tab = Array.isArray(value) ? value[0] : value;
-    if (!tab) return;
+  protected selectTab(tab: Tab): void {
     this.tab.set(tab);
     if (tab === 'history' && !this.history.data()) this.history.load(1);
   }
@@ -138,11 +120,7 @@ export class RestaurantOrders {
 
   protected advance(order: RestaurantOrder): void {
     const step = NEXT[order.status];
-    if (!step) return;
-    if (step.action !== 'confirmed') return this.setStatus(order, step.action);
-    askPrepTime(this.dialog, order).subscribe((prepMinutes) =>
-      this.setStatus(order, 'confirmed', { prepMinutes }),
-    );
+    if (step) this.setStatus(order, step.action);
   }
 
   protected reject(order: RestaurantOrder): void {
@@ -156,14 +134,10 @@ export class RestaurantOrders {
         danger: true,
       },
       '460px',
-    ).subscribe((reason) => this.setStatus(order, 'rejected', { reason: reason as string }));
+    ).subscribe((reason) => this.setStatus(order, 'rejected', reason as string));
   }
 
-  private setStatus(
-    order: RestaurantOrder,
-    status: RestaurantAction,
-    extra?: { reason?: string; prepMinutes?: number },
-  ): void {
+  private setStatus(order: RestaurantOrder, status: RestaurantAction, reason?: string): void {
     this.busy.update((s) => new Set(s).add(order.id));
     const done = () =>
       this.busy.update((s) => {
@@ -171,7 +145,7 @@ export class RestaurantOrders {
         copy.delete(order.id);
         return copy;
       });
-    this.api.setStatus(order.id, status, extra).subscribe({
+    this.api.setStatus(order.id, status, reason).subscribe({
       next: (updated) => {
         done();
         this.board.applyChange(updated);

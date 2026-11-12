@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 import { IconComponent } from 'nexprime';
 import { OperationsService } from '../../../../core/services/admin/operations.service';
 import { PageHeader } from '../../../../shared/components/page-header/page-header';
@@ -14,24 +15,20 @@ const LIVE_ORDER: OrderStatus[] = [
   'preparing',
   'ready_for_pickup',
   'assigned',
-  'arrived_at_restaurant',
   'picked_up',
   'on_the_way',
 ];
 
 @Component({
   selector: 'bb-operations-dashboard',
-  imports: [RouterLink, IconComponent, NP_FORM_FIELDS, PageHeader, StatTile],
+  imports: [RouterLink, MatButtonModule, IconComponent, NP_FORM_FIELDS, PageHeader, StatTile],
   templateUrl: './operations-dashboard.html',
   styleUrl: './operations-dashboard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OperationsDashboardPage {
   private readonly api = inject(OperationsService);
-  protected readonly report = periodReport(
-    (days) => this.api.dashboard(days),
-    'Could not load the dashboard.',
-  );
+  protected readonly report = periodReport((days) => this.api.dashboard(days), 'Could not load the dashboard.');
 
   /** Live orders per status, as bars against the busiest status. */
   protected readonly live = computed(() => {

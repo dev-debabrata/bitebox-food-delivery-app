@@ -128,14 +128,12 @@ export type OrderStatus =
   | 'preparing'
   | 'ready_for_pickup'
   | 'assigned'
-  | 'arrived_at_restaurant'
   | 'picked_up'
   | 'on_the_way'
   | 'delivered'
   | 'cancelled';
 
-export type PaymentStatus =
-  'pending' | 'paid' | 'failed' | 'refunded' | 'partially_refunded' | 'cancelled';
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'cancelled';
 
 export interface OrderItem {
   foodItem: string;
@@ -171,11 +169,6 @@ export interface Order {
   paymentStatus: PaymentStatus;
   /** When the restaurant received it (online orders: once paid). */
   submittedAt?: string | null;
-  /** Set when the restaurant accepts (Django API): preparation minutes and expected ready time. */
-  prepMinutes?: number | null;
-  readyBy?: string | null;
-  /** The delivery code the customer gives the rider (Django API; picked up or on the way only). */
-  deliveryOtp?: string | null;
   /** Payment record state (customer and admin views). */
   payment?: PaymentInfo | null;
   /** Why it was rejected or cancelled, and by whom. */
@@ -218,7 +211,6 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   preparing: 'Being prepared',
   ready_for_pickup: 'Ready for pickup',
   assigned: 'Rider assigned',
-  arrived_at_restaurant: 'Rider at the restaurant',
   picked_up: 'Picked up',
   on_the_way: 'On the way',
   delivered: 'Delivered',

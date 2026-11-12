@@ -113,11 +113,11 @@ h2 {
   --bb-icon-size: 16px;
   background: var(--bb-surface-alt);
   &.up {
-    background: var(--bb-success-bg);
+    background: #e6f5ec;
     color: var(--bb-success);
   }
   &.down {
-    background: var(--bb-danger-bg);
+    background: #fdecee;
     color: var(--bb-danger);
   }
 }

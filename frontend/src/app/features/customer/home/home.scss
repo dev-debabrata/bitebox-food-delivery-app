@@ -10,7 +10,7 @@
   background:
     radial-gradient(circle at 88% 8%, rgb(255 181 46 / 32%) 0, transparent 42%),
     radial-gradient(circle at 0% 100%, rgb(109 85 124 / 65%) 0, transparent 52%),
-    linear-gradient(135deg, var(--bb-brand) 0%, #3a2350 100%);
+    linear-gradient(135deg, var(--bb-plum) 0%, #3a2350 100%);
   overflow: hidden;
 }
 
@@ -98,7 +98,7 @@ h1 {
   gap: var(--bb-space-2);
   margin-top: var(--bb-space-5);
   max-width: 580px;
-  background: var(--bb-surface);
+  background: #fff;
   border-radius: 18px;
   padding: 6px;
   box-shadow: 0 18px 40px rgb(0 0 0 / 25%);
@@ -289,7 +289,7 @@ h1 {
   .smile {
     width: 70px;
     height: 34px;
-    border: 7px solid var(--bb-on-accent);
+    border: 7px solid var(--bb-plum);
     border-top: 0;
     border-radius: 0 0 70px 70px;
   }
@@ -303,7 +303,7 @@ h1 {
   height: 56px;
   border-radius: 18px;
   background: #fff6e5;
-  color: var(--bb-brand);
+  color: var(--bb-plum);
   box-shadow: var(--bb-shadow);
   animation: bob 4s ease-in-out infinite;
 
@@ -337,7 +337,7 @@ h1 {
   padding: 8px 14px;
   border-radius: 999px;
   background: #fff;
-  color: var(--bb-brand);
+  color: var(--bb-plum);
   font-weight: 700;
   font-size: 0.85rem;
   box-shadow: 0 10px 24px rgb(0 0 0 / 22%);
@@ -497,7 +497,7 @@ h1 {
   aspect-ratio: 1;
   border-radius: 50%;
   overflow: hidden;
-  background: var(--bb-surface-alt);
+  background: #efece6;
   color: var(--bb-plum);
   transition:
     transform 0.2s ease,
@@ -570,7 +570,7 @@ h1 {
   background:
     radial-gradient(circle at 100% 0%, rgb(255 255 255 / 55%) 0, transparent 40%),
     linear-gradient(120deg, var(--bb-amber) 0%, #ffd27a 100%);
-  color: var(--bb-on-accent);
+  color: var(--bb-plum);
   overflow: hidden;
 
   @include bp.tablet-up {
@@ -580,7 +580,7 @@ h1 {
 
   h2 {
     margin: 0 0 var(--bb-space-2);
-    color: var(--bb-on-accent);
+    color: var(--bb-plum);
     font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
   }
   p {
@@ -601,7 +601,7 @@ h1 {
 .coin {
   @extend %disc;
   position: absolute;
-  background: var(--bb-brand);
+  background: var(--bb-plum);
   color: var(--bb-amber);
   box-shadow: 0 12px 24px rgb(46 26 61 / 30%);
   animation: bob 4.5s ease-in-out infinite;
@@ -688,7 +688,7 @@ h1 {
   right: -4px;
   width: 26px;
   height: 26px;
-  background: var(--bb-brand);
+  background: var(--bb-plum);
   color: #fff6e5;
   font-size: 0.8rem;
   font-weight: 800;
@@ -739,7 +739,7 @@ h1 {
   }
 
   &.restaurant {
-    background: linear-gradient(135deg, var(--bb-brand) 0%, var(--bb-brand-700) 100%);
+    background: linear-gradient(135deg, var(--bb-plum) 0%, #43295a 100%);
     color: #fff6e5;
 
     &::after {
@@ -750,7 +750,7 @@ h1 {
     }
     .partner-icon {
       background: var(--bb-amber);
-      color: var(--bb-on-accent);
+      color: var(--bb-plum);
     }
     .light {
       --mat-button-text-label-text-color: #fff6e5;
@@ -758,13 +758,13 @@ h1 {
   }
 
   &.rider {
-    background: linear-gradient(135deg, var(--bb-amber-100) 0%, var(--bb-amber-200) 100%);
+    background: linear-gradient(135deg, var(--bb-amber-100) 0%, #ffe6b8 100%);
 
     &::after {
-      background: var(--bb-brand);
+      background: var(--bb-plum);
     }
     .partner-icon {
-      background: var(--bb-brand);
+      background: var(--bb-plum);
       color: var(--bb-amber);
     }
   }

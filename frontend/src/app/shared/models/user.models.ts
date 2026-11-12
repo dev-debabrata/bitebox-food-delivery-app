@@ -30,8 +30,7 @@ export type Permission =
   | 'support:manage'
   | 'reviews:moderate'
   | 'rewards:manage'
-  | 'rewards:view'
-  | 'promotions:send';
+  | 'rewards:view';
 export type UserStatus = 'active' | 'suspended';
 
 export interface User {

@@ -115,31 +115,6 @@ export const env = Object.freeze({
 
   reportTimezone: process.env.REPORT_TIMEZONE || "Asia/Kolkata",
 
-  // Delivery OTP: a 4-digit code made at pickup, shown to the customer, needed to mark delivered.
-  deliveryOtp: {
-    required: process.env.DELIVERY_OTP_REQUIRED !== "false",
-    maxAttempts: Number(process.env.DELIVERY_OTP_MAX_ATTEMPTS) || 5,
-  },
-
-  // Web Push (browser notifications). Push is on only when both VAPID keys are set; generate
-  // them once with `npx web-push generate-vapid-keys`. The private key never leaves the API.
-  // Tests never use real keys: they swap in a fake sender (services/push.service.js#usePushSender).
-  push: {
-    vapidPublicKey: isTest ? "" : (process.env.VAPID_PUBLIC_KEY || "").trim(),
-    vapidPrivateKey: isTest ? "" : (process.env.VAPID_PRIVATE_KEY || "").trim(),
-    // A contact the push services can reach about abuse: mailto: or https: URL.
-    subject: process.env.VAPID_SUBJECT || "mailto:support@bitebox.local",
-    // Subscriptions may only point at these push services (the API sends requests to the
-    // endpoint, so any other host is refused). Suffix match on the endpoint's host name.
-    allowedHosts: (
-      process.env.PUSH_ALLOWED_HOSTS ||
-      "fcm.googleapis.com,push.services.mozilla.com,notify.windows.com,push.apple.com"
-    )
-      .split(",")
-      .map((h) => h.trim().toLowerCase())
-      .filter(Boolean),
-  },
-
   routing: {
     url: process.env.ROUTING_URL || "https://router.project-osrm.org",
     profile: process.env.ROUTING_PROFILE || "driving",

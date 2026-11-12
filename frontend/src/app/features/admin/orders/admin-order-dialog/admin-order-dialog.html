@@ -1,34 +1,27 @@
 @if (order(); as o) {
-  <header class="head">
+  <header mat-dialog-title class="head">
     <div class="title-row">
-      <h2 bbDialogTitle>{{ o.orderNumber }}</h2>
+      <h2>{{ o.orderNumber }}</h2>
       <bb-order-status-chip [status]="o.status" [label]="customerLabel(o)" />
     </div>
     <p class="meta">
-      Placed {{ o.createdAt | date: 'd MMM, h:mm a' }} ·
-      <strong>{{ o.pricing.totalPaise | inr }}</strong> ·
+      Placed {{ o.createdAt | date: 'd MMM, h:mm a' }} · <strong>{{ o.pricing.totalPaise | inr }}</strong> ·
       @if (o.payment; as p) {
-        <span class="pay pay-{{ p.status }}"
-          >{{ providerLabel[p.provider] }} · {{ paymentLabel[p.status] }}</span
-        >
+        <span class="pay pay-{{ p.status }}">{{ providerLabel[p.provider] }} · {{ paymentLabel[p.status] }}</span>
       } @else {
         @let isOnline = o.paymentMethod === 'online' || o.paymentStatus === 'paid';
         <span class="pay pay-{{ o.paymentStatus }}">
-          {{ isOnline ? 'Paid online' : 'Cash on delivery' }} ·
-          {{ paymentLabel[o.paymentStatus] ?? o.paymentStatus }}
+          {{ isOnline ? 'Paid online' : 'Cash on delivery' }} · {{ paymentLabel[o.paymentStatus] ?? o.paymentStatus }}
         </span>
       }
     </p>
   </header>
 
-  <div class="bb-dialog__content content">
+  <mat-dialog-content class="content">
     @if (o.cancellation; as c) {
       <div class="bb-alert error" role="status">
         <np-icon name="circle-x" class="mat-icon" matButtonIcon />
-        <span
-          >{{ o.status === 'rejected' ? 'Rejected' : 'Cancelled' }} by {{ c.by
-          }}{{ c.reason ? ': ' + c.reason : '' }}</span
-        >
+        <span>{{ o.status === 'rejected' ? 'Rejected' : 'Cancelled' }} by {{ c.by }}{{ c.reason ? ': ' + c.reason : '' }}</span>
       </div>
     }
     @if (o.payment?.failureReason; as reason) {
@@ -52,14 +45,7 @@
         <h3><np-icon name="user" class="mat-icon" matButtonIcon />Customer</h3>
         @let a = o.deliveryAddress;
         <strong>{{ a.recipientName }}</strong>
-        @let line =
-          a.line1 +
-          (a.line2 ? ', ' + a.line2 : '') +
-          ', ' +
-          (a.area ? a.area + ', ' : '') +
-          a.city +
-          ' ' +
-          a.postalCode;
+        @let line = a.line1 + (a.line2 ? ', ' + a.line2 : '') + ', ' + (a.area ? a.area + ', ' : '') + a.city + ' ' + a.postalCode;
         <span class="clamp" [title]="line">{{ line }}</span>
         <a class="phone" [href]="'tel:' + a.phone">{{ a.phone }}</a>
       </section>
@@ -67,18 +53,12 @@
         <h3><np-icon name="bike" class="mat-icon" matButtonIcon />Rider</h3>
         @if (o.rider; as r) {
           <strong>{{ r.name }}</strong>
-          <span
-            >{{ r.vehicleType ? vehicleLabel[r.vehicleType] : ''
-            }}{{ r.vehicleNumber ? ' · ' + r.vehicleNumber : '' }}</span
-          >
+          <span>{{ r.vehicleType ? vehicleLabel[r.vehicleType] : '' }}{{ r.vehicleNumber ? ' · ' + r.vehicleNumber : '' }}</span>
           @if (r.phone) {
             <a class="phone" [href]="'tel:' + r.phone">{{ r.phone }}</a>
           }
         } @else if (o.offer; as offer) {
-          <span class="bb-muted"
-            >Offered to {{ offer.rider?.name }} until
-            {{ offer.expiresAt | date: 'h:mm:ss a' }}</span
-          >
+          <span class="bb-muted">Offered to {{ offer.rider?.name }} until {{ offer.expiresAt | date: 'h:mm:ss a' }}</span>
         } @else if (o.status === 'ready_for_pickup') {
           <span class="bb-muted">No rider available yet. Retrying automatically.</span>
         } @else {
@@ -100,10 +80,7 @@
         />
         <p class="map-note">
           @if (tracking.riderSeenSeconds(); as s) {
-            Rider location updated
-            {{ s < 120 ? s + 's' : (s / 60 | number: '1.0-0') + ' min' }} ago{{
-              tracking.riderStale() ? ' (stale)' : ''
-            }}.
+            Rider location updated {{ s < 120 ? s + 's' : (s / 60 | number: '1.0-0') + ' min' }} ago{{ tracking.riderStale() ? ' (stale)' : '' }}.
           } @else {
             No live location from the rider yet.
           }
@@ -126,13 +103,7 @@
         @if (o.note) {
           <p class="note"><strong>Note:</strong> {{ o.note }}</p>
         }
-        <bb-bill-summary
-          class="bill"
-          [pricing]="o.pricing"
-          [couponCode]="o.coupon?.code"
-          [distanceMeters]="o.distanceMeters"
-          [coinsRedeemed]="o.coins?.redeemed"
-        />
+        <bb-bill-summary class="bill" [pricing]="o.pricing" [couponCode]="o.coupon?.code" [distanceMeters]="o.distanceMeters" [coinsRedeemed]="o.coins?.redeemed" />
       </section>
       <section class="panel">
         <h3>History</h3>
@@ -149,61 +120,23 @@
         </ol>
       </section>
     </div>
-  </div>
-  <div class="bb-dialog__actions">
-    @if (canManage && o.canAssign) {
-      <np-button
-        variant="outlined"
-        severity="primary"
-        icon="bike"
-        label="Assign rider"
-        [disabled]="busy()"
-        (clicked)="assign(o)"
-      />
-    }
-    @if (canManage && o.deliveryOtpPending) {
-      <np-button
-        variant="outlined"
-        severity="primary"
-        icon="key-round"
-        label="New delivery code"
-        [disabled]="busy()"
-        (clicked)="resetCode(o)"
-      />
-    }
-    @if (canManage && (o.status === 'assigned' || o.status === 'arrived_at_restaurant')) {
-      <np-button
-        variant="outlined"
-        severity="primary"
-        label="Unassign rider"
-        [disabled]="busy()"
-        (clicked)="unassign(o)"
-      />
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    @if (canManage && o.status === 'assigned') {
+      <button mat-stroked-button [disabled]="busy()" (click)="unassign(o)">Unassign rider</button>
     }
     @if (canManage && canCancel(o)) {
-      <np-button
-        variant="outlined"
-        severity="danger"
-        label="Cancel order"
-        [disabled]="busy()"
-        (clicked)="cancel(o)"
-      />
+      <button mat-stroked-button class="danger" [disabled]="busy()" (click)="cancel(o)">Cancel order</button>
     }
-    <np-button severity="primary" label="Close" (clicked)="ref.close(changed())" />
-  </div>
+    <button mat-flat-button [mat-dialog-close]="changed()">Close</button>
+  </mat-dialog-actions>
 } @else if (error(); as message) {
-  <h2 bbDialogTitle class="bb-sr-only">Order</h2>
-  <div class="bb-dialog__content">
+  <mat-dialog-content>
     <div class="bb-alert error" role="alert">
-      <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span
-        >{{ message }} <button class="bb-link-button" (click)="load()">Retry</button></span
-      >
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ message }} <button class="bb-link-button" (click)="load()">Retry</button></span>
     </div>
-  </div>
-  <div class="bb-dialog__actions">
-    <np-button variant="text" severity="secondary" label="Close" (clicked)="ref.close(false)" />
-  </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end"><button mat-button mat-dialog-close>Close</button></mat-dialog-actions>
 } @else {
-  <h2 bbDialogTitle class="bb-sr-only">Order</h2>
-  <div class="bb-dialog__content"><span class="bb-skeleton" style="height: 320px"></span></div>
+  <mat-dialog-content><span class="bb-skeleton" style="height: 320px"></span></mat-dialog-content>
 }

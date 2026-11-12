@@ -11,7 +11,6 @@ import { MatRadioModule } from '@angular/material/radio';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, filter, firstValueFrom, of } from 'rxjs';
 import { errorCode, errorMessage } from '../../core/services/api-error';
-import { ConnectionStatus } from '../../core/services/connection-status.service';
 import { CartActions } from '../../core/services/cart-actions.service';
 import { newIdempotencyKey } from '../../core/services/idempotency';
 import { CartService } from '../../core/services/cart.service';
@@ -58,7 +57,6 @@ import { NP_FORM_FIELDS } from '../../shared/forms/np-form-fields';
 })
 export class Checkout {
   protected readonly cart = inject(CartService);
-  protected readonly connection = inject(ConnectionStatus);
   protected readonly cartActions = inject(CartActions);
   private readonly addresses = inject(AddressService);
   private readonly orders = inject(OrderService);

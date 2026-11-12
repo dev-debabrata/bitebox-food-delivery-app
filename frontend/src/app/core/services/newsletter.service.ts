@@ -16,7 +16,7 @@ export class NewsletterService {
 
   subscribe(email: string): Observable<NewsletterResult> {
     return this.http
-      .post<ApiResponse<NewsletterResult>>(`${environment.baseUrl}/newsletter/subscriptions`, { email })
+      .post<ApiResponse<NewsletterResult>>(`${environment.apiUrl}/newsletter/subscriptions`, { email })
       .pipe(map((r) => r.data));
   }
 }

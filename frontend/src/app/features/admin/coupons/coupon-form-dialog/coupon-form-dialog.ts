@@ -1,11 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import {
-  BB_DIALOG_DATA,
-  BbDialog,
-  BbDialogRef,
-  BbDialogTitle,
-} from '../../../../shared/dialog/bb-dialog';
-import {
   FormRoot,
   TreeValidationResult,
   form,
@@ -15,7 +9,10 @@ import {
   validate,
 } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
-import { ButtonComponent, ButtonToggleComponent, IconComponent, ToggleComponent } from 'nexprime';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { IconComponent, ToggleComponent } from 'nexprime';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { errorMessage, fieldErrors } from '../../../../core/services/api-error';
 import { AdminCouponService } from '../../../../core/services/checkout-api.service';
 import { AdminCoupon, AdminCouponInput } from '../../../../shared/models/checkout.models';
@@ -32,9 +29,9 @@ const startOfDay = (date: Date) => new Date(date).setHours(0, 0, 0, 0);
     ToggleComponent,
     NP_FORM_FIELDS,
     FormRoot,
-    BbDialogTitle,
-    ButtonComponent,
-    ButtonToggleComponent,
+    MatDialogModule,
+    MatButtonModule,
+    MatButtonToggleModule,
     IconComponent,
   ],
   templateUrl: './coupon-form-dialog.html',
@@ -42,12 +39,8 @@ const startOfDay = (date: Date) => new Date(date).setHours(0, 0, 0, 0);
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CouponFormDialog {
-  protected readonly data = inject<AdminCoupon | null>(BB_DIALOG_DATA);
-  protected readonly discountTypes = [
-    { value: 'percent', label: '% off' },
-    { value: 'flat', label: '₹ off' },
-  ];
-  protected readonly ref = inject<BbDialogRef<AdminCoupon>>(BbDialogRef);
+  protected readonly data = inject<AdminCoupon | null>(MAT_DIALOG_DATA);
+  private readonly ref = inject(MatDialogRef<CouponFormDialog, AdminCoupon>);
   private readonly service = inject(AdminCouponService);
   protected readonly shownError = shownError;
   protected readonly error = signal<string | null>(null);

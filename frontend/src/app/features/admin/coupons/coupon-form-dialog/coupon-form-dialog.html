@@ -1,6 +1,6 @@
-<h2 bbDialogTitle>{{ data ? 'Edit coupon' : 'New coupon' }}</h2>
+<h2 mat-dialog-title>{{ data ? 'Edit coupon' : 'New coupon' }}</h2>
 <form [formRoot]="form">
-  <div class="bb-dialog__content bb-form">
+  <mat-dialog-content class="bb-form">
     @if (error()) {
       <div class="bb-alert error" role="alert">
         <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ error() }}</span>
@@ -14,12 +14,14 @@
         cdkFocusInitial
         [error]="shownError(form.code)"
       />
-      <np-button-toggle
-        class="type"
+      <mat-button-toggle-group
         [formField]="form.discountType"
-        [options]="discountTypes"
-        ariaLabel="Discount type"
-      />
+        aria-label="Discount type"
+        class="type"
+      >
+        <mat-button-toggle value="percent">% off</mat-button-toggle>
+        <mat-button-toggle value="flat">₹ off</mat-button-toggle>
+      </mat-button-toggle-group>
     </div>
     <np-text-input
       [formField]="form.description"
@@ -70,12 +72,7 @@
     </div>
     <div class="bb-form-row">
       <div class="bb-field">
-        <np-calendar
-          [formField]="form.validFrom"
-          label="Valid from"
-          dateFormat="dd M yy"
-          showIcon
-        />
+        <np-calendar [formField]="form.validFrom" label="Valid from" dateFormat="dd M yy" showIcon />
         <bb-field-error [field]="form.validFrom" />
       </div>
       <div class="bb-field">
@@ -99,11 +96,11 @@
       <bb-field-error [field]="form.usageLimit" />
     </div>
     <np-toggle [formField]="form.isActive" label="Active" />
-  </div>
-  <div class="bb-dialog__actions">
-    <np-button variant="text" severity="secondary" label="Cancel" (clicked)="ref.close()" />
-    <button class="bb-btn" type="submit" [disabled]="form().submitting()">
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-flat-button type="submit" [disabled]="form().submitting()">
       {{ data ? 'Save' : 'Create' }}
     </button>
-  </div>
+  </mat-dialog-actions>
 </form>

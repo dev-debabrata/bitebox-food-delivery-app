@@ -1,8 +1,9 @@
 import { NpIconPipe } from '../../../shared/icons/np-icon-name';
-import { ButtonComponent, IconComponent } from 'nexprime';
+import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { BB_DIALOG_DATA, BbDialogRef, BbDialogTitle } from '../../../shared/dialog/bb-dialog';
+import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
 import { VegBadge } from '../../../shared/components/veg-badge/veg-badge';
 import { FoodItem } from '../../../shared/models/catalog.models';
 import { RatingSummary } from '../../../shared/models/review.models';
@@ -35,8 +36,8 @@ export interface FoodDetailData {
   selector: 'bb-food-detail-dialog',
   imports: [
     RouterLink,
-    BbDialogTitle,
-    ButtonComponent,
+    MatDialogModule,
+    MatButtonModule,
     IconComponent,
     NpIconPipe,
     VegBadge,
@@ -50,6 +51,5 @@ export interface FoodDetailData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FoodDetailDialog {
-  protected readonly data = inject<FoodDetailData>(BB_DIALOG_DATA);
-  protected readonly ref = inject<BbDialogRef<void>>(BbDialogRef);
+  protected readonly data = inject<FoodDetailData>(MAT_DIALOG_DATA);
 }

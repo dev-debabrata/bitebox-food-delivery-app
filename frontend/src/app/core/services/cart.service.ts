@@ -21,6 +21,7 @@ import { toParams } from './http-params';
 export class CartService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly deliveryLocation = inject(DeliveryLocationService);
   private readonly url = `${environment.apiUrl}/cart`;
 
   private readonly _quote = signal<CartQuote | null>(null);

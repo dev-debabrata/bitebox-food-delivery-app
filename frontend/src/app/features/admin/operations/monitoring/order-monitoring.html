@@ -1,156 +1,140 @@
-<bb-page-header
-  title="Order monitoring"
-  subtitle="Every order in progress, updated live. Orders stuck too long in one status are flagged late."
-/>
+<bb-page-header title="Order monitoring" subtitle="Every order in progress, updated live. Orders stuck too long in one status are flagged late." />
 
-<np-tabs class="bb-tab-strip" variant="underline" [tabs]="tabItems()" [(activeTab)]="tab" />
+<mat-tab-group mat-stretch-tabs="false" animationDuration="0ms">
+  <mat-tab>
+    <ng-template mat-tab-label>
+      Live orders
+      @if (lateCount(); as n) {
+        <span class="bb-badge tone-bad late-count">{{ n }} late</span>
+      }
+    </ng-template>
 
-@if (tab() === 'live') {
-  <div class="tab-body">
-    <div class="bb-filters">
-      <np-text-input
-        [formField]="filters.search"
-        ariaLabel="Search orders"
-        placeholder="Order number or restaurant"
-        icon="search"
-        clearable
-      />
-      <np-select [formField]="filters.status" ariaLabel="Status" [options]="statusOptions" />
-      <np-toggle class="bb-toggle-success" [formField]="filters.lateOnly" label="Late only" />
-    </div>
-
-    @if (error(); as message) {
-      <div class="bb-alert error" role="alert">
-        <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ message }}</span>
+    <div class="tab-body">
+      <div class="bb-filters">
+        <np-text-input [formField]="filters.search" ariaLabel="Search orders" placeholder="Order number or restaurant" icon="search" clearable />
+        <np-select [formField]="filters.status" ariaLabel="Status" [options]="statusOptions" />
+        <np-toggle class="bb-toggle-success" [formField]="filters.lateOnly" label="Late only" />
       </div>
-    }
 
-    <div class="bb-card bb-list-card">
-      @if (!updatedAt() && !error()) {
-        @for (i of [1, 2, 3, 4]; track i) {
-          <span class="bb-skeleton row"></span>
-        }
-      } @else if (orders().length === 0) {
-        <bb-empty-state
-          icon="activity"
-          title="Nothing to watch right now"
-          message="Orders in progress appear here as they come in."
-        />
-      } @else {
-        <div class="bb-table-scroll">
-          <table class="bb-table">
-            <thead>
-              <tr>
-                <th scope="col">Order</th>
-                <th scope="col">Status</th>
-                <th scope="col" class="num">In status</th>
-                <th scope="col">Rider</th>
-                <th scope="col" class="num">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (o of orders(); track o.id) {
-                <tr
-                  class="clickable"
-                  [class.late]="o.late"
-                  (click)="open(o.id)"
-                  tabindex="0"
-                  (keydown.enter)="open(o.id)"
-                >
-                  <td>
-                    <strong>{{ o.orderNumber }}</strong>
-                    <span class="sub"
-                      >{{ o.restaurantName }} · placed {{ o.placedAt | date: 'h:mm a' }}</span
-                    >
-                  </td>
-                  <td>
-                    <span class="bb-badge" [class.tone-bad]="o.late" [class.tone-info]="!o.late">{{
-                      statusLabel[o.status]
-                    }}</span>
-                  </td>
-                  <td class="num">
-                    {{ o.minutesInStatus }} min
-                    @if (o.late) {
-                      <span class="sub late-text">Late</span>
-                    }
-                  </td>
-                  <td>
-                    @if (o.rider) {
-                      {{ o.rider.name }}
-                    } @else if (o.offeredTo) {
-                      <span class="bb-muted">Offer pending</span>
-                    } @else if (o.status === 'ready_for_pickup') {
-                      <span class="late-text">No rider yet</span>
-                    } @else {
-                      <span class="bb-muted">–</span>
-                    }
-                  </td>
-                  <td class="num">
-                    {{ o.totalPaise | inr }}
-                    <span class="sub">{{ o.paymentMethod === 'cod' ? 'Cash' : 'Online' }}</span>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+      @if (error(); as message) {
+        <div class="bb-alert error" role="alert">
+          <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ message }}</span>
         </div>
       }
-    </div>
-    @if (updatedAt(); as at) {
-      <p class="bb-muted updated">
-        Updated {{ at | date: 'h:mm:ss a' }}. Click an order for details, cancelling or unassigning.
-      </p>
-    }
-  </div>
-} @else {
-  <div class="tab-body">
-    @if (restaurants()?.error; as message) {
-      <div class="bb-alert error" role="alert">
-        <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ message }}</span>
-      </div>
-    }
-    <div class="bb-card bb-list-card">
-      @if (!restaurants()) {
-        @for (i of [1, 2, 3]; track i) {
-          <span class="bb-skeleton row"></span>
-        }
-      } @else if (!restaurants()!.data?.length) {
-        <bb-empty-state icon="storefront" title="No approved restaurants yet" />
-      } @else {
-        <div class="bb-table-scroll">
-          <table class="bb-table">
-            <thead>
-              <tr>
-                <th scope="col">Restaurant</th>
-                <th scope="col">Hours</th>
-                <th scope="col">Now</th>
-                <th scope="col" class="num">Live orders</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (r of restaurants()!.data; track r.id) {
+
+      <div class="bb-card bb-list-card">
+        @if (!updatedAt() && !error()) {
+          @for (i of [1, 2, 3, 4]; track i) {
+            <span class="bb-skeleton row"></span>
+          }
+        } @else if (orders().length === 0) {
+          <bb-empty-state icon="activity" title="Nothing to watch right now" message="Orders in progress appear here as they come in." />
+        } @else {
+          <div class="bb-table-scroll">
+            <table class="bb-table">
+              <thead>
                 <tr>
-                  <td>
-                    <strong>{{ r.name }}</strong>
-                    <span class="sub">{{ r.city }}</span>
-                  </td>
-                  <td>{{ r.hours }}</td>
-                  <td>
-                    @if (!r.isAcceptingOrders) {
-                      <span class="bb-badge tone-warn">Paused</span>
-                    } @else if (r.isOpenNow) {
-                      <span class="bb-badge tone-good">Open</span>
-                    } @else {
-                      <span class="bb-badge">Closed</span>
-                    }
-                  </td>
-                  <td class="num">{{ r.activeOrders }}</td>
+                  <th scope="col">Order</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="num">In status</th>
+                  <th scope="col">Rider</th>
+                  <th scope="col" class="num">Total</th>
                 </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                @for (o of orders(); track o.id) {
+                  <tr class="clickable" [class.late]="o.late" (click)="open(o.id)" tabindex="0" (keydown.enter)="open(o.id)">
+                    <td>
+                      <strong>{{ o.orderNumber }}</strong>
+                      <span class="sub">{{ o.restaurantName }} · placed {{ o.placedAt | date: 'h:mm a' }}</span>
+                    </td>
+                    <td>
+                      <span class="bb-badge" [class.tone-bad]="o.late" [class.tone-info]="!o.late">{{ statusLabel[o.status] }}</span>
+                    </td>
+                    <td class="num">
+                      {{ o.minutesInStatus }} min
+                      @if (o.late) {
+                        <span class="sub late-text">Late</span>
+                      }
+                    </td>
+                    <td>
+                      @if (o.rider) {
+                        {{ o.rider.name }}
+                      } @else if (o.offeredTo) {
+                        <span class="bb-muted">Offer pending</span>
+                      } @else if (o.status === 'ready_for_pickup') {
+                        <span class="late-text">No rider yet</span>
+                      } @else {
+                        <span class="bb-muted">–</span>
+                      }
+                    </td>
+                    <td class="num">
+                      {{ o.totalPaise | inr }}
+                      <span class="sub">{{ o.paymentMethod === 'cod' ? 'Cash' : 'Online' }}</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+      @if (updatedAt(); as at) {
+        <p class="bb-muted updated">Updated {{ at | date: 'h:mm:ss a' }}. Click an order for details, cancelling or unassigning.</p>
       }
     </div>
-  </div>
-}
+  </mat-tab>
+
+  <mat-tab label="Restaurant availability">
+    <div class="tab-body">
+      @if (restaurants()?.error; as message) {
+        <div class="bb-alert error" role="alert">
+          <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ message }}</span>
+        </div>
+      }
+      <div class="bb-card bb-list-card">
+        @if (!restaurants()) {
+          @for (i of [1, 2, 3]; track i) {
+            <span class="bb-skeleton row"></span>
+          }
+        } @else if (!restaurants()!.data?.length) {
+          <bb-empty-state icon="storefront" title="No approved restaurants yet" />
+        } @else {
+          <div class="bb-table-scroll">
+            <table class="bb-table">
+              <thead>
+                <tr>
+                  <th scope="col">Restaurant</th>
+                  <th scope="col">Hours</th>
+                  <th scope="col">Now</th>
+                  <th scope="col" class="num">Live orders</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of restaurants()!.data; track r.id) {
+                  <tr>
+                    <td>
+                      <strong>{{ r.name }}</strong>
+                      <span class="sub">{{ r.city }}</span>
+                    </td>
+                    <td>{{ r.hours }}</td>
+                    <td>
+                      @if (!r.isAcceptingOrders) {
+                        <span class="bb-badge tone-warn">Paused</span>
+                      } @else if (r.isOpenNow) {
+                        <span class="bb-badge tone-good">Open</span>
+                      } @else {
+                        <span class="bb-badge">Closed</span>
+                      }
+                    </td>
+                    <td class="num">{{ r.activeOrders }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  </mat-tab>
+</mat-tab-group>

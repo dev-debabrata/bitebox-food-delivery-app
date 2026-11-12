@@ -10,7 +10,7 @@ import {
   fromCoordinates,
 } from '../../../core/services/routing.service';
 import { Order, OrderStatus } from '../../models/checkout.models';
-import { AT_OR_TO_RESTAURANT, TRACKED_STATUSES } from '../../models/order-management.models';
+import { TRACKED_STATUSES } from '../../models/order-management.models';
 
 /** A position older than this is shown as stale ("last seen 3 min ago"). */
 export const STALE_AFTER_MS = 90_000;
@@ -86,9 +86,7 @@ export function deliveryTracking(order: Signal<TrackableOrder | null>) {
   );
   const status = computed(() => order()?.status ?? null);
   /** Heading to the restaurant (assigned) or to the customer (picked up / on the way). */
-  const target = computed(() =>
-    AT_OR_TO_RESTAURANT.includes(status() as OrderStatus) ? restaurant() : destination(),
-  );
+  const target = computed(() => (status() === 'assigned' ? restaurant() : destination()));
 
   const location = signal<RiderLocation | null>(null);
   // Watch live while the order can have a rider; re-join when it moves into that stage.

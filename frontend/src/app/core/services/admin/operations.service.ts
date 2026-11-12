@@ -14,7 +14,7 @@ import { toParams } from '../http-params';
 @Injectable({ providedIn: 'root' })
 export class OperationsService {
   private readonly http = inject(HttpClient);
-  private readonly url = `${environment.baseUrl}/admin/operations`;
+  private readonly url = `${environment.apiUrl}/admin/operations`;
 
   private get<T>(path: string, query: object = {}): Observable<T> {
     return this.http
