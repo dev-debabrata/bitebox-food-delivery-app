@@ -270,9 +270,12 @@ describe("Restaurants, categories and food", () => {
       assert.equal(approved.title, "Your restaurant is live");
       assert.equal(approved.link, "/restaurant");
       assert.equal(
-        await Notification.countDocuments({ type: "restaurant.review" }),
+        await Notification.countDocuments({
+          type: "restaurant.review",
+          user: admin.user.id,
+        }),
         2,
-        "admins: application + resubmission",
+        "each admin with restaurants:manage: application + resubmission",
       );
     });
 

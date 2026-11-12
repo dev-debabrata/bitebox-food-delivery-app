@@ -21,6 +21,7 @@ import {
   seedCatalogFor,
   setupTestDb,
   teardownTestDb,
+  riderStatusBody,
 } from "./helpers.js";
 
 const auth = (token) => ({ Authorization: `Bearer ${token}` });
@@ -116,11 +117,11 @@ describe("order management and delivery", () => {
       .patch("/api/v1/delivery/me/availability")
       .set(auth(token))
       .send({ isOnline: true, ...where });
-  const riderSet = (token, id, status) =>
+  const riderSet = async (token, id, status, otp) =>
     request(app)
       .patch(`/api/v1/delivery/orders/${id}/status`)
       .set(auth(token))
-      .send({ status });
+      .send(await riderStatusBody(id, status, otp));
   const dashboard = (token) =>
     request(app).get("/api/v1/delivery/me").set(auth(token));
 

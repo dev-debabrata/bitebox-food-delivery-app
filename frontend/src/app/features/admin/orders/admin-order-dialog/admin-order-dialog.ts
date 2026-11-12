@@ -1,13 +1,7 @@
-import { IconComponent } from 'nexprime';
+import { ButtonComponent, IconComponent } from 'nexprime';
+import { pickRider } from './assign-rider-dialog/assign-rider-dialog';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import {
-  MAT_DIALOG_DATA,
-  MatDialog,
-  MatDialogConfig,
-  MatDialogModule,
-} from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
 import { Observable, filter } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { errorMessage } from '../../../../core/services/api-error';
@@ -31,6 +25,12 @@ import {
 import { AdminOrder, TRACKED_STATUSES } from '../../../../shared/models/order-management.models';
 import { InrPipe } from '../../../../shared/pipes/money.pipes';
 import { PAYMENT_STATUS_LABEL, PROVIDER_LABEL } from '../../../../shared/models/payment.models';
+import {
+  BB_DIALOG_DATA,
+  BbDialog,
+  BbDialogRef,
+  BbDialogTitle,
+} from '../../../../shared/dialog/bb-dialog';
 
 const CANCELLABLE: OrderStatus[] = [
   'pending',
@@ -38,6 +38,7 @@ const CANCELLABLE: OrderStatus[] = [
   'preparing',
   'ready_for_pickup',
   'assigned',
+  'arrived_at_restaurant',
 ];
 
 @Component({
@@ -45,8 +46,8 @@ const CANCELLABLE: OrderStatus[] = [
   imports: [
     DatePipe,
     DecimalPipe,
-    MatDialogModule,
-    MatButtonModule,
+    BbDialogTitle,
+    ButtonComponent,
     IconComponent,
     BillSummary,
     OrderStatusChip,
@@ -59,9 +60,10 @@ const CANCELLABLE: OrderStatus[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminOrderDialog {
-  private readonly id = inject<string>(MAT_DIALOG_DATA);
+  private readonly id = inject<string>(BB_DIALOG_DATA);
+  protected readonly ref = inject<BbDialogRef<boolean>>(BbDialogRef);
   private readonly api = inject(AdminOrdersService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(BbDialog);
   private readonly notify = inject(NotificationService);
   /** Support can read orders; only operations (and the super admin) cancel or unassign. */
   protected readonly canManage = inject(AuthService).can('orders:manage');
@@ -122,40 +124,57 @@ export class AdminOrderDialog {
     );
   }
 
+  protected assign(o: AdminOrder): void {
+    pickRider(this.dialog, o).subscribe((riderId) =>
+      this.run(this.api.assign(o.id, riderId), 'Rider assigned'),
+    );
+  }
+
+  protected resetCode(o: AdminOrder): void {
+    this.confirm(
+      {
+        title: 'Send a new delivery code?',
+        message: `The customer gets a new 4-digit code for ${o.orderNumber}, and the rider can try again${
+          o.deliveryOtpAttempts ? ` (${o.deliveryOtpAttempts} wrong so far)` : ''
+        }.`,
+        confirmLabel: 'Send new code',
+      },
+      () => this.api.resetDeliveryCode(o.id),
+      'New delivery code sent to the customer',
+    );
+  }
+
   private confirm(
     data: ConfirmDialogData,
     action: (reason?: string) => Observable<AdminOrder>,
     message: string,
   ): void {
-    confirmed(this.dialog, data, '460px').subscribe((result) => {
-      const reason = typeof result === 'string' ? result : undefined;
-      this.busy.set(true);
-      action(reason).subscribe({
-        next: (o) => {
-          this.order.set(o);
-          this.busy.set(false);
-          this.changed.set(true);
-          this.notify.success(message);
-        },
-        error: (err: unknown) => {
-          this.busy.set(false);
-          this.notify.error(errorMessage(err));
-          this.load();
-        },
-      });
+    confirmed(this.dialog, data, '460px').subscribe((result) =>
+      this.run(action(typeof result === 'string' ? result : undefined), message),
+    );
+  }
+
+  /** Runs an order action: busy while it runs, then the updated order, or the error and a reload. */
+  private run(request: Observable<AdminOrder>, message: string): void {
+    this.busy.set(true);
+    request.subscribe({
+      next: (o) => {
+        this.order.set(o);
+        this.busy.set(false);
+        this.changed.set(true);
+        this.notify.success(message);
+      },
+      error: (err: unknown) => {
+        this.busy.set(false);
+        this.notify.error(errorMessage(err));
+        this.load();
+      },
     });
   }
 }
 
-export function openAdminOrder(dialog: MatDialog, orderId: string): Observable<true> {
-  const config: MatDialogConfig<string> = {
-    data: orderId,
-    width: '820px',
-    maxWidth: '95vw',
-    autoFocus: 'dialog',
-  };
+export function openAdminOrder(dialog: BbDialog, orderId: string): Observable<true> {
   return dialog
-    .open<AdminOrderDialog, string, boolean>(AdminOrderDialog, config)
-    .afterClosed()
-    .pipe(filter((changed): changed is true => changed === true));
+    .open<AdminOrderDialog, string, boolean>(AdminOrderDialog, { data: orderId, width: '820px' })
+    .closed.pipe(filter((changed): changed is true => changed === true));
 }

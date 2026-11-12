@@ -1,3 +1,5 @@
+import { randomInt } from "node:crypto";
+import { env } from "../config/env.js";
 import { logger } from "../config/logger.js";
 import { Coupon, CouponRedemption } from "../models/coupon.model.js";
 import { DeliveryPartner } from "../models/delivery-partner.model.js";
@@ -40,11 +42,19 @@ export const TRANSITIONS = Object.freeze({
     [S.READY_FOR_PICKUP]: [A.RESTAURANT],
     [S.CANCELLED]: [A.ADMIN],
   },
+  // A rider accepts an offer, or an admin assigns one directly (manual assignment).
   [S.READY_FOR_PICKUP]: {
-    [S.ASSIGNED]: [A.DELIVERY],
+    [S.ASSIGNED]: [A.DELIVERY, A.ADMIN],
     [S.CANCELLED]: [A.ADMIN, A.SYSTEM],
   },
   [S.ASSIGNED]: {
+    [S.ARRIVED_AT_RESTAURANT]: [A.DELIVERY],
+    // Arrival is optional: riders' apps without that step go straight to "picked up".
+    [S.PICKED_UP]: [A.DELIVERY],
+    [S.READY_FOR_PICKUP]: [A.ADMIN],
+    [S.CANCELLED]: [A.ADMIN, A.SYSTEM],
+  },
+  [S.ARRIVED_AT_RESTAURANT]: {
     [S.PICKED_UP]: [A.DELIVERY],
     [S.READY_FOR_PICKUP]: [A.ADMIN],
     [S.CANCELLED]: [A.ADMIN, A.SYSTEM],
@@ -68,6 +78,7 @@ const LABEL = {
   [S.PREPARING]: "being prepared",
   [S.READY_FOR_PICKUP]: "ready for pickup",
   [S.ASSIGNED]: "assigned to a rider",
+  [S.ARRIVED_AT_RESTAURANT]: "with the rider at the restaurant",
   [S.PICKED_UP]: "picked up",
   [S.ON_THE_WAY]: "on the way",
   [S.DELIVERED]: "delivered",
@@ -75,6 +86,9 @@ const LABEL = {
 };
 
 const conflict = (message, code) => new ApiError(409, message, { code });
+
+/** Four random digits (leading zeros kept). */
+export const newDeliveryOtp = () => String(randomInt(0, 10_000)).padStart(4, "0");
 
 export async function transition(
   orderId,
@@ -110,6 +124,11 @@ export async function transition(
     set.paymentStatus = PAYMENT_STATUS.PAID; // cash collected on delivery (online orders are already paid)
     set.settlement = { ...settlementFor(order), at: now };
   }
+  if (to === S.PICKED_UP && env.deliveryOtp.required) {
+    // The customer reads this code to the rider at the door (order-management#riderSetStatus).
+    set.deliveryOtp = newDeliveryOtp();
+    set.deliveryOtpAttempts = 0;
+  }
 
   const updated = await Order.findOneAndUpdate(
     { _id: order._id, status: order.status, ...scope, ...where },
@@ -122,6 +141,7 @@ export async function transition(
           status: to,
           at: now,
           by: userId,
+          actor,
           note: note || reason || undefined,
         },
       },

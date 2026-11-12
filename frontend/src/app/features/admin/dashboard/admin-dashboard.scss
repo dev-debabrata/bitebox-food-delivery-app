@@ -140,7 +140,7 @@
   display: grid;
   place-items: center;
   background: var(--bb-amber);
-  color: var(--bb-plum);
+  color: var(--bb-on-accent);
 }
 
 .business {
@@ -164,4 +164,16 @@
   .approvals > a {
     flex: 1 1 100%;
   }
+}
+
+.platform {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-3);
+}
+
+.platform-grid {
+  display: grid;
+  gap: var(--bb-space-3);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }

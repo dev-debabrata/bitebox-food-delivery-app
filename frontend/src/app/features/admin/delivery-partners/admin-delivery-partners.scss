@@ -117,8 +117,8 @@
   background: var(--bb-border);
 
   &.on {
-    background: var(--bb-success);
-    box-shadow: 0 0 0 3px #e6f5ec;
+    background: var(--bb-success-solid);
+    box-shadow: 0 0 0 3px var(--bb-success-bg);
   }
 }
 
@@ -154,8 +154,4 @@
   &.status-suspended {
     color: var(--bb-danger);
   }
-}
-
-.danger {
-  --mat-button-outlined-label-text-color: var(--bb-danger);
 }

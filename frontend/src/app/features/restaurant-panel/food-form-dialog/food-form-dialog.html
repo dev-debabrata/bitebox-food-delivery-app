@@ -1,6 +1,6 @@
-<h2 mat-dialog-title>{{ data.item ? 'Edit dish' : 'Add a dish' }}</h2>
+<h2 bbDialogTitle>{{ data.item ? 'Edit dish' : 'Add a dish' }}</h2>
 <form [formRoot]="form">
-  <mat-dialog-content class="bb-form">
+  <div class="bb-dialog__content bb-form">
     @if (error()) {
       <div class="bb-alert error" role="alert">
         <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ error() }}</span>
@@ -37,10 +37,7 @@
       <bb-field-error [field]="form.description" />
     </div>
     <div class="row">
-      <mat-button-toggle-group [formField]="form.isVeg" aria-label="Veg or non-veg">
-        <mat-button-toggle [value]="true">Veg</mat-button-toggle>
-        <mat-button-toggle [value]="false">Non-veg</mat-button-toggle>
-      </mat-button-toggle-group>
+      <np-button-toggle [formField]="form.isVeg" [options]="vegOptions" ariaLabel="Veg or non-veg" />
       <div class="bb-field">
         <np-input-number
           [formField]="form.prepTimeMinutes"
@@ -53,15 +50,15 @@
     </div>
     <np-toggle class="bb-toggle-success" [formField]="form.isAvailable" label="Available to order" />
     <bb-image-upload [(url)]="imageUrl" label="Add a dish photo" aspectRatio="4 / 3" />
-  </mat-dialog-content>
-  <mat-dialog-actions align="end">
-    <button mat-button type="button" mat-dialog-close>Cancel</button>
-    <button mat-flat-button type="submit" [disabled]="form().submitting()">
+  </div>
+  <div class="bb-dialog__actions">
+    <np-button variant="text" severity="secondary" label="Cancel" (clicked)="ref.close()" />
+    <button type="submit" class="bb-btn" [disabled]="form().submitting()">
       @if (form().submitting()) {
-        <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Saving" />
+        <np-spinner size="small" label="Saving" />
       } @else {
         {{ data.item ? 'Save' : 'Add dish' }}
       }
     </button>
-  </mat-dialog-actions>
+  </div>
 </form>

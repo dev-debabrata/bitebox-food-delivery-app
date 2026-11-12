@@ -10,19 +10,13 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
-import { MatMenuModule } from '@angular/material/menu';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, filter, of } from 'rxjs';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { errorMessage } from '../../../core/services/api-error';
 import { MyRestaurantService } from '../../../core/services/my-restaurant.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import {
-  ConfirmDialog,
-  ConfirmDialogData,
-} from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { confirmed } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { VegBadge } from '../../../shared/components/veg-badge/veg-badge';
@@ -33,9 +27,21 @@ import { FoodFormDialog, FoodFormData } from '../food-form-dialog/food-form-dial
 type AvailabilityFilter = 'all' | 'available' | 'unavailable';
 
 import { form } from '@angular/forms/signals';
-import { IconComponent, SelectOption, ToggleComponent } from 'nexprime';
+import {
+  ButtonComponent,
+  IconComponent,
+  MenuComponent,
+  type MenuItem,
+  SelectOption,
+  ToggleComponent,
+} from 'nexprime';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { ImageFallback, UsableImagePipe } from '../../../shared/images/broken-images';
+import { BbDialog } from '../../../shared/dialog/bb-dialog';
+import {
+  COMPACT_MENU_WIDTH,
+  toggleEndAligned,
+} from '../../../shared/menu/end-aligned-menu';
 
 @Component({
   selector: 'bb-restaurant-menu',
@@ -43,10 +49,10 @@ import { ImageFallback, UsableImagePipe } from '../../../shared/images/broken-im
     ToggleComponent,
     NP_FORM_FIELDS,
     RouterLink,
-    MatButtonModule,
+    ButtonComponent,
     IconComponent,
     NpIconPipe,
-    MatMenuModule,
+    MenuComponent,
     EmptyState,
     PageHeader,
     VegBadge,
@@ -60,7 +66,7 @@ import { ImageFallback, UsableImagePipe } from '../../../shared/images/broken-im
 })
 export class RestaurantMenu implements OnInit {
   private readonly service = inject(MyRestaurantService);
-  private readonly dialog = inject(MatDialog);
+  private readonly bbDialog = inject(BbDialog);
   private readonly notify = inject(NotificationService);
 
   readonly available = input<string>();
@@ -72,6 +78,21 @@ export class RestaurantMenu implements OnInit {
     { initialValue: [] },
   );
   protected readonly items = signal<FoodItem[]>([]);
+  protected readonly toggleMenu = (menu: MenuComponent, event: Event) =>
+    toggleEndAligned(menu, event, COMPACT_MENU_WIDTH);
+  /** Each dish's actions menu (built once per list change, not on every render). */
+  protected readonly menus = computed(
+    () =>
+      new Map<string, MenuItem[]>(
+        this.items().map((item) => [
+          item.id,
+          [
+            { label: 'Edit', icon: 'pencil', command: () => this.openForm(item) },
+            { label: 'Delete', icon: 'trash-2', command: () => this.remove(item) },
+          ],
+        ]),
+      ),
+  );
   protected readonly loading = signal(true);
   protected readonly noRestaurant = signal(false);
   protected readonly error = signal<string | null>(null);
@@ -131,14 +152,12 @@ export class RestaurantMenu implements OnInit {
   }
 
   protected openForm(item?: FoodItem): void {
-    this.dialog
+    this.bbDialog
       .open<FoodFormDialog, FoodFormData, FoodItem>(FoodFormDialog, {
         data: { item, categories: this.categories() },
         width: '560px',
-        maxWidth: '95vw',
-        autoFocus: 'first-tabbable',
       })
-      .afterClosed()
+      .closed
       .pipe(filter((saved): saved is FoodItem => !!saved))
       .subscribe((saved) => {
         this.items.update((list) =>
@@ -166,31 +185,28 @@ export class RestaurantMenu implements OnInit {
   }
 
   protected remove(item: FoodItem): void {
-    this.dialog
-      .open<ConfirmDialog, ConfirmDialogData, true>(ConfirmDialog, {
-        data: {
-          title: `Delete “${item.name}”?`,
-          message: 'Customers will no longer see this dish.',
-          confirmLabel: 'Delete',
-          danger: true,
+    confirmed(
+      this.bbDialog,
+      {
+        title: `Delete “${item.name}”?`,
+        message: 'Customers will no longer see this dish.',
+        confirmLabel: 'Delete',
+        danger: true,
+      },
+      '420px',
+    ).subscribe(() => {
+      this.busyId.set(item.id);
+      this.service.deleteFood(item.id).subscribe({
+        next: () => {
+          this.items.update((list) => list.filter((i) => i.id !== item.id));
+          this.notify.success('Dish deleted');
+          this.busyId.set(null);
         },
-        width: '420px',
-      })
-      .afterClosed()
-      .pipe(filter(Boolean))
-      .subscribe(() => {
-        this.busyId.set(item.id);
-        this.service.deleteFood(item.id).subscribe({
-          next: () => {
-            this.items.update((list) => list.filter((i) => i.id !== item.id));
-            this.notify.success('Dish deleted');
-            this.busyId.set(null);
-          },
-          error: (err: unknown) => {
-            this.notify.error(errorMessage(err));
-            this.busyId.set(null);
-          },
-        });
+        error: (err: unknown) => {
+          this.notify.error(errorMessage(err));
+          this.busyId.set(null);
+        },
       });
+    });
   }
 }

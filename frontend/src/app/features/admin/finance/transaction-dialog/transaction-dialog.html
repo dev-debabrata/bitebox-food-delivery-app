@@ -1,5 +1,5 @@
-<h2 mat-dialog-title>Transaction details</h2>
-<mat-dialog-content>
+<h2 bbDialogTitle>Transaction details</h2>
+<div class="bb-dialog__content">
   @if (error(); as message) {
     <div class="bb-alert error" role="alert">
       <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ message }}</span>
@@ -11,7 +11,7 @@
         <span class="amount">{{ t.amountPaise | inr }}</span>
         <span class="bb-muted">{{ providerLabel[t.provider] }} · {{ t.createdAt | date: 'd MMM y, h:mm a' }}</span>
       </div>
-      <span class="bb-badge" [class.tone-good]="t.status === 'paid'" [class.tone-bad]="t.status === 'failed'" [class.tone-info]="t.status === 'refunded'">
+      <span class="bb-badge" [class.tone-good]="t.status === 'paid'" [class.tone-bad]="t.status === 'failed'" [class.tone-info]="t.status === 'refunded' || t.status === 'partially_refunded'">
         {{ statusLabel[t.status] }}
       </span>
     </section>
@@ -72,7 +72,7 @@
   } @else {
     <span class="bb-skeleton block"></span>
   }
-</mat-dialog-content>
-<mat-dialog-actions align="end">
-  <button mat-button type="button" mat-dialog-close>Close</button>
-</mat-dialog-actions>
+</div>
+<div class="bb-dialog__actions">
+  <np-button variant="text" severity="secondary" label="Close" (clicked)="ref.close()" />
+</div>

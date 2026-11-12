@@ -7,7 +7,7 @@ import * as staff from "../services/admin-staff.service.js";
 import * as audit from "../services/audit.service.js";
 import { respond } from "../utils/api-response.js";
 import { parsePagination } from "../utils/pagination.js";
-import { mongoIdParam } from "../validators/common.validators.js";
+import { mongoIdParam, paginationRules } from "../validators/common.validators.js";
 import * as rules from "../validators/admin-staff.validators.js";
 
 /** /api/v1/admin/admins: the super admin creates and manages operations, finance and support admins. */
@@ -24,6 +24,14 @@ export const adminStaffRouter = Router()
     "/:id",
     validate([mongoIdParam()]),
     respond(async (req) => ({ user: await staff.getStaff(req.params.id) })),
+  )
+  // Sign-ins of a staff admin (admin security: login history).
+  .get(
+    "/:id/logins",
+    validate([mongoIdParam(), ...paginationRules]),
+    respond((req) =>
+      staff.loginHistory(req.params.id, ADMIN_ROLES, parsePagination(req.validatedQuery)),
+    ),
   )
   .post(
     "/",

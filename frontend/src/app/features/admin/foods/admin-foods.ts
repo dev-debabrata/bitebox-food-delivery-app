@@ -10,10 +10,7 @@ import {
 import { form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { MatButtonModule } from '@angular/material/button';
-import { IconComponent, ToggleComponent } from 'nexprime';
-import { MatDialog } from '@angular/material/dialog';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { ButtonComponent, IconComponent, PaginationComponent, ToggleComponent } from 'nexprime';
 import { Subscription, debounceTime, distinctUntilChanged, filter, skip } from 'rxjs';
 import {
   AdminCatalogService,
@@ -21,16 +18,14 @@ import {
 } from '../../../core/services/admin/admin-catalog.service';
 import { errorMessage } from '../../../core/services/api-error';
 import { NotificationService } from '../../../core/services/notification.service';
-import {
-  ConfirmDialog,
-  ConfirmDialogData,
-} from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { confirmed } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { VegBadge } from '../../../shared/components/veg-badge/veg-badge';
 import { Pagination } from '../../../shared/models/api.models';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
+import { BbDialog } from '../../../shared/dialog/bb-dialog';
 
 @Component({
   selector: 'bb-admin-foods',
@@ -38,13 +33,13 @@ import { InrPipe } from '../../../shared/pipes/money.pipes';
     ToggleComponent,
     NP_FORM_FIELDS,
     RouterLink,
-    MatButtonModule,
     IconComponent,
-    MatPaginatorModule,
+    PaginationComponent,
     EmptyState,
     PageHeader,
     VegBadge,
     InrPipe,
+    ButtonComponent,
   ],
   templateUrl: './admin-foods.html',
   styleUrl: './admin-foods.scss',
@@ -52,7 +47,7 @@ import { InrPipe } from '../../../shared/pipes/money.pipes';
 })
 export class AdminFoods implements OnInit {
   private readonly service = inject(AdminCatalogService);
-  private readonly dialog = inject(MatDialog);
+  private readonly bbDialog = inject(BbDialog);
   private readonly notify = inject(NotificationService);
   private readonly router = inject(Router);
 
@@ -84,9 +79,10 @@ export class AdminFoods implements OnInit {
     void this.router.navigate([], { queryParams: {} }).then(() => this.load(1));
   }
 
-  protected onPage(event: PageEvent): void {
-    this.pagination.update((p) => ({ ...p, limit: event.pageSize }));
-    this.load(event.pageIndex + 1);
+  /** np-pagination: `(pageChange)` → goTo(page); `(rowsChange)` → goTo(1, rows). */
+  protected goTo(page: number, rows?: number): void {
+    if (rows) this.pagination.update((p) => ({ ...p, limit: rows }));
+    this.load(page);
   }
 
   protected load(page: number): void {
@@ -126,26 +122,23 @@ export class AdminFoods implements OnInit {
   }
 
   protected remove(item: AdminFoodItem): void {
-    this.dialog
-      .open<ConfirmDialog, ConfirmDialogData, true>(ConfirmDialog, {
-        data: {
-          title: `Delete “${item.name}”?`,
-          message: `This removes it from ${item.restaurant.name}'s menu.`,
-          confirmLabel: 'Delete',
-          danger: true,
+    confirmed(
+      this.bbDialog,
+      {
+        title: `Delete “${item.name}”?`,
+        message: `This removes it from ${item.restaurant.name}'s menu.`,
+        confirmLabel: 'Delete',
+        danger: true,
+      },
+      '420px',
+    ).subscribe(() =>
+      this.service.deleteFood(item.id).subscribe({
+        next: () => {
+          this.items.update((list) => list.filter((i) => i.id !== item.id));
+          this.notify.success('Dish deleted');
         },
-        width: '420px',
-      })
-      .afterClosed()
-      .pipe(filter(Boolean))
-      .subscribe(() =>
-        this.service.deleteFood(item.id).subscribe({
-          next: () => {
-            this.items.update((list) => list.filter((i) => i.id !== item.id));
-            this.notify.success('Dish deleted');
-          },
-          error: (err: unknown) => this.notify.error(errorMessage(err)),
-        }),
-      );
+        error: (err: unknown) => this.notify.error(errorMessage(err)),
+      }),
+    );
   }
 }

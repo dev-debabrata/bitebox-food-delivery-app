@@ -33,11 +33,7 @@
     <ul class="rows" [class.dim]="list.loading()">
       @for (o of list.data()!.items; track o.id) {
         <li>
-          <button
-            type="button"
-            class="row"
-            (click)="open(o.id)"
-          >
+          <button type="button" class="row" (click)="open(o.id)">
             <div class="main">
               <strong>{{ o.orderNumber }}</strong>
               <span class="bb-muted meta"
@@ -52,13 +48,14 @@
         </li>
       }
     </ul>
-    <mat-paginator
-      [length]="list.data()!.pagination.total"
-      [pageIndex]="list.data()!.pagination.page - 1"
-      [pageSize]="list.data()!.pagination.limit"
-      [pageSizeOptions]="[20, 50, 100]"
-      (page)="list.onPage($event)"
-      aria-label="Order pages"
+    <np-pagination
+      variant="compact"
+      [page]="list.data()!.pagination.page"
+      [rows]="list.data()!.pagination.limit"
+      [totalRecords]="list.data()!.pagination.total"
+      [rowsOptions]="[20, 50, 100]"
+      (pageChange)="list.goTo($event)"
+      (rowsChange)="list.goTo(1, $event)"
     />
   }
 </div>

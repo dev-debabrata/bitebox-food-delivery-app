@@ -1,0 +1,37 @@
+<h2 bbDialogTitle>Assign a rider to {{ order.orderNumber }}</h2>
+<div class="bb-dialog__content">
+  <p class="bb-muted">
+    Only riders who are online and free are listed. Any open delivery request for this order is
+    withdrawn.
+  </p>
+  @if (riders.isLoading()) {
+    <span class="bb-skeleton" style="height: 44px"></span>
+  } @else if (riders.error()) {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>Could not load riders.</span>
+    </div>
+  } @else if (options().length === 0) {
+    <div class="bb-alert info" role="status">
+      <np-icon name="info" class="mat-icon" matButtonIcon />
+      <span>No rider is online and free right now.</span>
+    </div>
+  } @else {
+    <np-select
+      label="Rider"
+      placeholder="Choose a rider"
+      [options]="options()"
+      [value]="chosen()"
+      (valueChange)="chosen.set($any($event))"
+    />
+  }
+</div>
+<div class="bb-dialog__actions">
+  <np-button variant="text" severity="secondary" label="Cancel" (clicked)="ref.close()" />
+  <np-button
+    severity="primary"
+    label="Assign"
+    [disabled]="!chosen()"
+    (clicked)="ref.close(chosen())"
+  />
+</div>

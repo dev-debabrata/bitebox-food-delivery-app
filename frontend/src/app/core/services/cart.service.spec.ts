@@ -13,7 +13,7 @@ describe('CartService', () => {
   let cart: CartService;
   let location: DeliveryLocationService;
   let http: HttpTestingController;
-  const url = `${environment.apiUrl}/cart`;
+  const url = `${environment.baseUrl}/cart`;
   const quote = { cart: null, pricing: null, issues: [], address: { id: 'default-1' } };
 
   beforeEach(() => {

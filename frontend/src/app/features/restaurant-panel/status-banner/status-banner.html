@@ -8,7 +8,7 @@
       <p class="reason"><strong>Reason:</strong> {{ restaurant().statusReason }}</p>
     }
     @if (restaurant().status === 'rejected' && showFixLink()) {
-      <a mat-stroked-button routerLink="/restaurant/details">Update details</a>
+      <a class="bb-btn bb-btn--outlined bb-btn--small" routerLink="/restaurant/details">Update details</a>
     }
   </div>
 </div>

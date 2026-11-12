@@ -3,9 +3,8 @@ import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { forkJoin, map } from 'rxjs';
+import { catchError, forkJoin, map, of } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AdminCatalogService } from '../../../core/services/admin/admin-catalog.service';
 import { AdminStaffService } from '../../../core/services/admin/admin-staff.service';
@@ -27,7 +26,7 @@ interface StatCard {
 
 @Component({
   selector: 'bb-admin-dashboard',
-  imports: [DatePipe, RouterLink, MatButtonModule, IconComponent, NpIconPipe, PageHeader, StatTile],
+  imports: [DatePipe, RouterLink, IconComponent, NpIconPipe, PageHeader, StatTile],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,6 +46,10 @@ export class AdminDashboard {
   private readonly reports = inject(ReportsService);
   protected readonly report = rxResource({ stream: () => this.reports.adminReport(30) });
   protected readonly formatPaise = formatPaise;
+  /** Platform-wide figures; null when the API has no /admin/dashboard (the Node API). */
+  protected readonly summary = rxResource({
+    stream: () => this.staff.summary().pipe(catchError(() => of(null))),
+  });
 
   constructor() {
     this.load();

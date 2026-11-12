@@ -4,9 +4,6 @@
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  // Height of the phone/tablet tab bar (58px + home indicator): the footer, the restaurant
-  // page's cart bar and the back-to-top button all sit relative to it.
-  --bb-tab-bar: calc(58px + env(safe-area-inset-bottom));
 }
 
 .site-header {

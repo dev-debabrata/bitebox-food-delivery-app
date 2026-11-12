@@ -6,11 +6,13 @@ import { EARNINGS } from "../config/earnings.js";
 import { Address } from "../models/address.model.js";
 import { FoodItem } from "../models/food-item.model.js";
 import { Notification } from "../models/notification.model.js";
+import { AuditLog } from "../models/audit-log.model.js";
 import { Order, Payment } from "../models/order.model.js";
+import { Refund } from "../models/refund.model.js";
 import { Restaurant } from "../models/restaurant.model.js";
 import { sweep } from "../services/dispatch.service.js";
 import { settlementFor } from "../services/earnings.service.js";
-import { useOnlineProvider } from "../services/payments/payment.service.js";
+import { reconcile, useOnlineProvider } from "../services/payments/payment.service.js";
 import { createRazorpayProvider } from "../services/payments/razorpay.provider.js";
 import {
   buildApp,
@@ -21,6 +23,7 @@ import {
   seedCatalogFor,
   setupTestDb,
   teardownTestDb,
+  riderStatusBody,
 } from "./helpers.js";
 
 const auth = (token) => ({ Authorization: `Bearer ${token}` });
@@ -259,7 +262,13 @@ describe("payments, notifications and earnings", () => {
     let gateway;
     let restore;
     beforeEach(() => {
-      gateway = { payment: null, refunds: [] };
+      gateway = {
+        payment: null,
+        refunds: [],
+        orderPayments: [],
+        refundState: "processed",
+        failRefunds: false,
+      };
       const client = {
         orders: {
           create: async ({ amount }) => ({
@@ -267,13 +276,16 @@ describe("payments, notifications and earnings", () => {
             amount,
             currency: "INR",
           }),
+          fetchPayments: async () => ({ items: gateway.orderPayments }),
         },
         payments: {
           fetch: async (id) => ({ id, ...gateway.payment }),
           refund: async (id, { amount }) => {
+            if (gateway.failRefunds) throw new Error("gateway down");
             gateway.refunds.push({ id, amount });
-            return { id: "rfnd_TEST1" };
+            return { id: `rfnd_TEST${gateway.refunds.length}`, status: gateway.refundState };
           },
+          fetchRefund: async (_paymentId, id) => ({ id, status: "processed" }),
         },
       };
       restore = useOnlineProvider(
@@ -434,6 +446,161 @@ describe("payments, notifications and earnings", () => {
         "refunded",
       );
     });
+
+    // -- refunds: failures, partial and cash refunds, refund webhooks, reconciliation ------------
+    async function paidOrder(paymentId = "pay_P") {
+      const { order, checkout } = await placeOrder();
+      gateway.payment = { status: "captured", amount: checkout.amountPaise, order_id: "order_TEST123" };
+      const res = await confirm(order.id, {
+        providerPaymentId: paymentId,
+        signature: hmac(KEY_SECRET, `order_TEST123|${paymentId}`),
+      });
+      assert.equal(res.body.data.payment.status, "paid");
+      return order.id;
+    }
+    const reject = (id) =>
+      request(app)
+        .patch(`/api/v1/my/restaurant/orders/${id}/status`)
+        .set(auth(owner.token))
+        .send({ status: "rejected", reason: "Kitchen closed" });
+    const asAdmin = async (role) => {
+      const { token } = await createAndLogin(app, role);
+      return {
+        get: (url) => request(app).get(url).set(auth(token)),
+        post: (url, body = {}, key) => {
+          const req = request(app).post(url).set(auth(token));
+          if (key) req.set("Idempotency-Key", key);
+          return req.send(body);
+        },
+      };
+    };
+    const refundWebhook = (kind, entity, eventId) => {
+      const raw = JSON.stringify({ event: kind, payload: { refund: { entity } } });
+      return request(app)
+        .post("/api/v1/payments/webhooks/razorpay")
+        .set("Content-Type", "application/json")
+        .set("X-Razorpay-Signature", hmac(WEBHOOK_SECRET, raw))
+        .set("X-Razorpay-Event-Id", eventId)
+        .send(raw);
+    };
+
+    it("reports a failed refund and lets finance retry it", async () => {
+      const id = await paidOrder();
+      const payment = await Payment.findOne({ order: id });
+      gateway.failRefunds = true;
+      await reject(id);
+      let saved = await Payment.findById(payment._id);
+      assert.deepEqual([saved.status, saved.refundedPaise], ["paid", 0], "nothing reserved any more");
+      assert.equal((await Refund.findOne({ payment: payment._id })).status, "failed");
+      assert.ok(await Notification.exists({ type: "payment.refund_failed" }));
+
+      const finance = await asAdmin("finance_admin");
+      const row = (await finance.get("/api/v1/admin/payments")).body.data.items[0];
+      assert.equal(row.refundNeeded, true);
+      assert.equal(row.failureReason, "Refund failed; retry from the admin panel");
+      gateway.failRefunds = false;
+      const retry = await finance.post(`/api/v1/admin/payments/${payment._id}/refund`);
+      assert.equal(retry.status, 200, JSON.stringify(retry.body));
+      saved = await Payment.findById(payment._id);
+      assert.equal(saved.status, "refunded");
+      assert.equal(await Refund.countDocuments({ payment: payment._id }), 1, "the same refund, sent again");
+      assert.equal((await Refund.findOne({ payment: payment._id })).status, "processed");
+      assert.deepEqual(gateway.refunds, [{ id: "pay_P", amount: saved.amountPaise }]);
+      assert.ok(await AuditLog.exists({ action: "payment.refund" }));
+      assert.equal((await finance.post(`/api/v1/admin/payments/${payment._id}/refund`)).status, 409);
+    });
+
+    it("lets finance refund part of a payment, once per request", async () => {
+      const id = await paidOrder();
+      const payment = await Payment.findOne({ order: id });
+      const finance = await asAdmin("finance_admin");
+      const url = `/api/v1/admin/payments/${payment._id}/refunds`;
+      const part = await finance.post(url, { amountPaise: 5000, reason: "Missing raita" }, "refund-key-1");
+      assert.equal(part.status, 200, JSON.stringify(part.body));
+      assert.equal(part.body.message, "Refund started");
+      const data = part.body.data.payment;
+      assert.deepEqual([data.status, data.refundedPaise], ["partially_refunded", 5000]);
+      assert.equal(data.refundablePaise, payment.amountPaise - 5000);
+      assert.equal(data.refunds[0].reason, "Missing raita");
+      assert.equal((await Order.findById(id)).paymentStatus, "partially_refunded");
+      await finance.post(url, { amountPaise: 5000, reason: "Missing raita" }, "refund-key-1");
+      assert.equal(gateway.refunds.length, 1, "a retried request does not refund twice");
+
+      assert.equal((await finance.post(url, { amountPaise: payment.amountPaise })).status, 422, "reason needed");
+      const tooMuch = await finance.post(url, { amountPaise: payment.amountPaise, reason: "All" });
+      assert.equal(tooMuch.status, 422);
+      assert.equal(tooMuch.body.error.details[0].field, "amountPaise");
+      const rest = await finance.post(url, {
+        amountPaise: payment.amountPaise - 5000,
+        reason: "Arrived cold",
+      });
+      assert.equal(rest.body.data.payment.status, "refunded");
+      assert.equal(await AuditLog.countDocuments({ action: "payment.partial_refund" }), 3);
+      const support = await asAdmin("support_admin");
+      assert.equal((await support.post(url, { amountPaise: 100, reason: "x" })).status, 403);
+      // The customer sees the refunds on the order.
+      const mine = await request(app).get(`/api/v1/orders/${id}`).set(auth(customer.token));
+      assert.equal(mine.body.data.order.payment.refunds.length, 2);
+    });
+
+    it("settles refunds the bank confirms later through the webhook", async () => {
+      const id = await paidOrder();
+      gateway.refundState = "pending";
+      await reject(id);
+      const refund = await Refund.findOne({ order: id });
+      assert.equal(refund.status, "processing");
+      assert.equal((await Payment.findOne({ order: id })).status, "paid");
+      const entity = { id: refund.providerRefundId, payment_id: "pay_P", amount: 1 };
+      assert.equal((await refundWebhook("refund.processed", entity, "evt_r1")).body.data.processed, true);
+      assert.equal((await Refund.findById(refund._id)).status, "processed");
+      assert.equal((await Payment.findOne({ order: id })).status, "refunded");
+      assert.equal((await refundWebhook("refund.processed", entity, "evt_r1")).body.data.duplicate, true);
+    });
+
+    it("reconciles payments and refunds the webhooks missed", async () => {
+      const { order, checkout } = await placeOrder();
+      const later = new Date(Date.now() + 3 * 60_000);
+      assert.equal((await reconcile(later)).paid, 0, "nothing paid at the gateway yet");
+      gateway.orderPayments = [{ id: "pay_LOST", status: "captured", amount: checkout.amountPaise }];
+      assert.equal((await reconcile(later)).paid, 1);
+      assert.ok((await Order.findById(order.id)).submittedAt);
+      assert.equal((await reconcile(later)).paid, 0);
+
+      gateway.refundState = "pending";
+      await reject(order.id);
+      assert.equal((await Refund.findOne({ order: order.id })).status, "processing");
+      const summary = await reconcile(new Date(Date.now() + 10 * 60_000));
+      assert.equal(summary.refundsSettled, 1, "the bank confirmed it");
+      assert.equal((await Payment.findOne({ order: order.id })).status, "refunded");
+    });
+
+    it("never refunds more than was paid, even when two refunds race", async () => {
+      const id = await paidOrder();
+      const payment = await Payment.findOne({ order: id });
+      const finance = await asAdmin("finance_admin");
+      const most = payment.amountPaise - 100;
+      const url = `/api/v1/admin/payments/${payment._id}/refunds`;
+      const results = await Promise.all([
+        finance.post(url, { amountPaise: most, reason: "a" }),
+        finance.post(url, { amountPaise: most, reason: "b" }),
+      ]);
+      assert.deepEqual(results.map((r) => r.status).sort(), [200, 409].sort());
+      assert.equal(results.find((r) => r.status === 409).body.error.code, "REFUND_TOO_LARGE");
+      assert.equal((await Payment.findById(payment._id)).refundedPaise, most);
+      assert.equal(gateway.refunds.length, 1);
+    });
+
+    it("lists and opens payments for finance", async () => {
+      const id = await paidOrder();
+      const finance = await asAdmin("finance_admin");
+      const list = (await finance.get("/api/v1/admin/payments")).body.data.items;
+      assert.equal(list[0].refundablePaise, list[0].amountPaise);
+      const detail = await finance.get(`/api/v1/admin/payments/${list[0].id}`);
+      assert.equal(detail.status, 200);
+      assert.equal(detail.body.data.payment.order.id, id);
+      assert.deepEqual(detail.body.data.payment.refunds, []);
+      assert.equal((await (await asAdmin("support_admin")).get(`/api/v1/admin/payments/${list[0].id}`)).status, 403);
+    });
   });
 
   it("cancels orders no rider picks up in time, refunding and freeing the rider", async () => {
@@ -517,7 +684,7 @@ describe("payments, notifications and earnings", () => {
       await request(app)
         .patch(`/api/v1/delivery/orders/${order.id}/status`)
         .set(auth(rider.token))
-        .send({ status });
+        .send(await riderStatusBody(order.id, status));
     }
 
     const saved = await Order.findById(order.id);
@@ -597,13 +764,15 @@ describe("payments, notifications and earnings", () => {
     assert.deepEqual(inboxTypes.filter((t) => t.startsWith("order.")), [
       "order.placed",
       "order.confirmed",
+      "order.preparing",
       "order.assigned",
       "order.picked_up",
+      "order.on_the_way",
       "order.delivered",
     ]);
     // Plus the coins this delivered order earned (rewards programme).
     assert.deepEqual(inboxTypes.filter((t) => !t.startsWith("order.")), ["coins.earned"]);
-    assert.equal(inbox.body.data.unread, 6);
+    assert.equal(inbox.body.data.unread, 8);
     // Every other role heard about its part of the order.
     const types = async (token) =>
       (
@@ -630,7 +799,7 @@ describe("payments, notifications and earnings", () => {
       .set(auth(customer.token));
     assert.equal(
       unreadOnly.body.data.items.length,
-      5, // six notifications (five order updates and the coins earned), one just read
+      7, // eight notifications (seven order updates and the coins earned), one just read
       "the Unread tab leaves out the one just read",
     );
     assert.ok(unreadOnly.body.data.items.every((n) => !n.readAt));
@@ -656,7 +825,7 @@ describe("payments, notifications and earnings", () => {
     const cleared = await request(app)
       .delete("/api/v1/notifications")
       .set(auth(customer.token));
-    assert.equal(cleared.body.data.deleted, 6); // five order updates and the coins earned
+    assert.equal(cleared.body.data.deleted, 8); // seven order updates and the coins earned
     assert.equal(
       (
         await request(app)
@@ -670,5 +839,46 @@ describe("payments, notifications and earnings", () => {
         .body.data.items.length > 0,
       "only my own are cleared",
     );
+  });
+
+  it("keeps the customer's payment history, without abandoned attempts", async () => {
+    const paid = (await placeOrder()).order.id;
+    await mockPay(paid, "success");
+    await placeOrder("cod");
+    const abandoned = (await placeOrder()).order.id;
+    await request(app)
+      .post(`/api/v1/payments/orders/${abandoned}/abandon`)
+      .set(auth(customer.token));
+    const res = await request(app).get("/api/v1/payments/mine").set(auth(customer.token));
+    assert.equal(res.status, 200, JSON.stringify(res.body));
+    assert.deepEqual(res.body.data.items.map((i) => i.method), ["cod", "online"]);
+    assert.equal(res.body.data.items[1].order.restaurantName, "Spice Route Kitchen");
+    assert.equal(
+      (await request(app).get("/api/v1/payments/mine").set(auth(owner.token))).status,
+      403,
+    );
+  });
+
+  it("waits for finance to pay cash refunds by hand", async () => {
+    const { order } = await placeOrder("cod");
+    await Order.updateOne({ _id: order.id }, { $set: { status: "delivered", paymentStatus: "paid" } });
+    await Payment.updateOne({ order: order.id }, { $set: { status: "paid", paidAt: new Date() } });
+    const payment = await Payment.findOne({ order: order.id });
+    const { token } = await createAndLogin(app, "finance_admin");
+    const res = await request(app)
+      .post(`/api/v1/admin/payments/${payment._id}/refunds`)
+      .set(auth(token))
+      .send({ amountPaise: 2000, reason: "Wrong dish" });
+    assert.equal(res.status, 200, JSON.stringify(res.body));
+    const refund = res.body.data.payment.refunds[0];
+    assert.equal(refund.status, "manual_pending");
+    assert.equal(res.body.data.payment.status, "paid");
+    const done = await request(app)
+      .post(`/api/v1/admin/refunds/${refund.id}/paid`)
+      .set(auth(token));
+    assert.equal(done.status, 200, JSON.stringify(done.body));
+    assert.equal(done.body.data.payment.status, "partially_refunded");
+    const again = await request(app).post(`/api/v1/admin/refunds/${refund.id}/paid`).set(auth(token));
+    assert.equal(again.status, 409);
   });
 });

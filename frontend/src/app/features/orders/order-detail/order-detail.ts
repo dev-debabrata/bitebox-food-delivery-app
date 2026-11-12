@@ -1,4 +1,5 @@
 import { NpIconPipe } from '../../../shared/icons/np-icon-name';
+import { AT_OR_TO_RESTAURANT } from '../../../shared/models/order-management.models';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,11 +19,12 @@ import { ConfettiComponent, IconComponent, TimelineComponent, type TimelineEvent
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
 import { EMPTY, catchError, firstValueFrom, map } from 'rxjs';
 import { errorMessage } from '../../../core/services/api-error';
 import { OrderService } from '../../../core/services/checkout-api.service';
 import { PaymentService } from '../../../core/services/payment.service';
+import { ConnectionStatus } from '../../../core/services/connection-status.service';
+import { PushSettings } from '../../../shared/components/push-settings/push-settings';
 import { NotificationService } from '../../../core/services/notification.service';
 import { etaMinutes } from '../../../core/services/routing.service';
 import { liveRefresh } from '../../../core/services/poll';
@@ -42,8 +44,14 @@ import {
   awaitingPayment,
   customerStatusLabel,
 } from '../../../shared/models/checkout.models';
-import { PAYMENT_STATUS_LABEL, PROVIDER_LABEL } from '../../../shared/models/payment.models';
+import {
+  PAYMENT_STATUS_LABEL,
+  PROVIDER_LABEL,
+  REFUND_STATUS_LABEL,
+  paymentTone,
+} from '../../../shared/models/payment.models';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
+import { BbDialog } from '../../../shared/dialog/bb-dialog';
 
 const JOURNEY: { status: OrderStatus; icon: string }[] = [
   { status: 'pending', icon: 'receipt' },
@@ -73,6 +81,7 @@ const JOURNEY: { status: OrderStatus; icon: string }[] = [
     DecimalPipe,
     OrderReviews,
     Stars,
+    PushSettings,
   ],
   templateUrl: './order-detail.html',
   styleUrl: './order-detail.scss',
@@ -80,9 +89,10 @@ const JOURNEY: { status: OrderStatus; icon: string }[] = [
 })
 export class OrderDetail {
   private readonly orders = inject(OrderService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(BbDialog);
   private readonly notify = inject(NotificationService);
   private readonly payments = inject(PaymentService);
+  protected readonly connection = inject(ConnectionStatus);
 
   readonly id = input.required<string>();
   readonly placed = input<string>();
@@ -96,6 +106,8 @@ export class OrderDetail {
   protected readonly statusLabel = customerStatusLabel;
   protected readonly paymentLabel = PAYMENT_STATUS_LABEL;
   protected readonly providerLabel = PROVIDER_LABEL;
+  protected readonly refundLabel = REFUND_STATUS_LABEL;
+  protected readonly tone = paymentTone;
   protected readonly paying = signal(false);
   protected readonly awaitingPayment = computed(() => {
     const o = this.order();
@@ -123,7 +135,7 @@ export class OrderDetail {
     if (!status) return -1;
     if (status === 'delivered') return JOURNEY.length; // every step done, none pulsing
     return JOURNEY.findIndex(
-      (s) => s.status === (status === 'assigned' ? 'ready_for_pickup' : status),
+      (s) => s.status === (AT_OR_TO_RESTAURANT.includes(status) ? 'ready_for_pickup' : status),
     );
   });
 

@@ -1,0 +1,19 @@
+<section class="offline" aria-labelledby="offline-title">
+  <img class="logo" src="/bitebox-logo.svg" alt="BiteBox" height="32" />
+  <span class="icon" aria-hidden="true"></span>
+  <h1 id="offline-title">You're offline</h1>
+  <p class="lead">
+    This page hasn't been saved on this device yet. Pages you've opened before still work
+    without a connection.
+  </p>
+  <p class="need">Placing orders, payments and live tracking need an internet connection.</p>
+  <div class="actions">
+    <button type="button" class="btn primary" (click)="retry()" [disabled]="!connection.online()">
+      Try again
+    </button>
+    <a class="btn" routerLink="/">Go to home</a>
+  </div>
+  @if (!connection.online()) {
+    <p class="need" role="status">We'll continue automatically once you're back online.</p>
+  }
+</section>

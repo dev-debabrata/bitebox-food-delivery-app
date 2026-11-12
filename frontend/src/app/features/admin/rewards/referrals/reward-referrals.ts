@@ -3,7 +3,6 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { RouterLink } from '@angular/router';
 import { IconComponent, SelectOption, ToggleComponent } from 'nexprime';
@@ -25,6 +24,7 @@ import {
   ReferralRewardStatus,
   ReferralStatus,
 } from '../../../../shared/models/rewards.models';
+import { BbDialog } from '../../../../shared/dialog/bb-dialog';
 
 /** Referral management: every referral, its risk signals, and approving or rejecting held ones. */
 @Component({
@@ -37,7 +37,7 @@ import {
 })
 export class RewardReferralsPage {
   private readonly api = inject(AdminRewardsService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(BbDialog);
   private readonly notify = inject(NotificationService);
   protected readonly canManage = inject(AuthService).can('rewards:manage');
   protected readonly statusLabel = REFERRAL_STATUS_LABEL;

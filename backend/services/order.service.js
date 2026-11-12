@@ -142,7 +142,7 @@ export async function placeOrder(
     distanceMeters: quote.delivery.distanceMeters,
     note: note || undefined,
     status: ORDER_STATUS.PENDING,
-    statusHistory: [{ status: ORDER_STATUS.PENDING, at: now, by: userId }],
+    statusHistory: [{ status: ORDER_STATUS.PENDING, at: now, by: userId, actor: "customer" }],
     paymentMethod,
     paymentStatus: PAYMENT_STATUS.PENDING,
     // Cash orders go to the restaurant now; online ones once paid (see payments/payment.service.js).

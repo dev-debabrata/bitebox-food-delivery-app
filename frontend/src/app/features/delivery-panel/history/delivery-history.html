@@ -27,18 +27,24 @@
               >{{ o.orderNumber }} · {{ o.updatedAt | date: 'd MMM, h:mm a' }}</span
             >
           </div>
-          <span class="amount">{{ o.pricing.totalPaise | inr }}</span>
+          <span class="amount">
+            @if (o.estimatedEarningsPaise !== undefined && o.status === 'delivered') {
+              <span class="earned">+{{ o.estimatedEarningsPaise | inr }}</span>
+            }
+            <span class="bb-muted total">Order {{ o.pricing.totalPaise | inr }}</span>
+          </span>
           <bb-order-status-chip [status]="o.status" />
         </li>
       }
     </ul>
-    <mat-paginator
-      [length]="p.pagination.total"
-      [pageIndex]="p.pagination.page - 1"
-      [pageSize]="p.pagination.limit"
-      [pageSizeOptions]="[15, 30, 50]"
-      (page)="list.onPage($event)"
-      aria-label="Delivery history pages"
+    <np-pagination
+      [page]="p.pagination.page"
+      [rows]="p.pagination.limit"
+      [totalRecords]="p.pagination.total"
+      [rowsOptions]="[15, 30, 50]"
+      variant="compact"
+      (pageChange)="list.goTo($event)"
+      (rowsChange)="list.goTo(1, $event)"
     />
   }
 }

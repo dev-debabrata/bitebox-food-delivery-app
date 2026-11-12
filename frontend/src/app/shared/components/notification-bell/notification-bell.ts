@@ -4,7 +4,6 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuthService } from '../../../core/auth/auth.service';
 import { InboxService } from '../../../core/services/inbox.service';
@@ -12,6 +11,7 @@ import { NotificationService } from '../../../core/services/notification.service
 import { notificationIcon } from '../../models/payment.models';
 import { ROLE_META } from '../../models/user.models';
 import { confirmed } from '../confirm-dialog/confirm-dialog';
+import { BbDialog } from '../../dialog/bb-dialog';
 
 @Component({
   selector: 'bb-notification-bell',
@@ -23,7 +23,7 @@ import { confirmed } from '../confirm-dialog/confirm-dialog';
 export class NotificationBell {
   protected readonly inbox = inject(InboxService);
   private readonly auth = inject(AuthService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(BbDialog);
   private readonly notify = inject(NotificationService);
 
   protected readonly icon = notificationIcon;

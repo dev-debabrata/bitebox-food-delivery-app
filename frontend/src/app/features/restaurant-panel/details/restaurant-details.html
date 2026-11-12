@@ -123,15 +123,13 @@
           </p>
           <bb-place-search (picked)="pickPlace($event)">
             @if (geo.supported) {
-              <button
-                mat-stroked-button
-                type="button"
-                (click)="useCurrentLocation()"
-                [disabled]="locating()"
-              >
-                <np-icon name="locate-fixed" class="mat-icon" matButtonIcon />
-                {{ locating() ? 'Locating…' : 'Current location' }}
-              </button>
+              <np-button severity="primary"
+                variant="outlined"
+                icon="locate-fixed"
+                [label]="locating() ? 'Locating…' : 'Current location'"
+                [loading]="locating()"
+                (clicked)="useCurrentLocation()"
+              />
             }
           </bb-place-search>
           @if (locationError()) {
@@ -247,9 +245,9 @@
         </div>
       </section>
 
-      <button mat-flat-button type="submit" class="save" [disabled]="form().submitting() || !changed()">
+      <button type="submit" class="bb-btn save" [disabled]="form().submitting() || !changed()">
         @if (form().submitting()) {
-          <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Saving" />
+          <np-spinner size="small" label="Saving" />
         } @else {
           {{ restaurant() ? 'Save changes' : 'Submit for approval' }}
         }

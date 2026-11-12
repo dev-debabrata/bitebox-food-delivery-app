@@ -2,11 +2,7 @@ import { TableLabels } from '../../../shared/list/table-labels';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { IconComponent, SelectOption } from 'nexprime';
+import { ButtonComponent, IconComponent, PaginationComponent, SelectOption } from 'nexprime';
 import { AuthService } from '../../../core/auth/auth.service';
 import { AdminStaffService } from '../../../core/services/admin/admin-staff.service';
 import { errorMessage } from '../../../core/services/api-error';
@@ -25,6 +21,8 @@ import {
   UserStatus,
 } from '../../../shared/models/user.models';
 import { openStaffForm } from './staff-form-dialog/staff-form-dialog';
+import { openLoginHistory } from './login-history-dialog/login-history-dialog';
+import { BbDialog } from '../../../shared/dialog/bb-dialog';
 
 /** Super admin: create operations, finance and support admins and manage their access. */
 @Component({
@@ -33,12 +31,11 @@ import { openStaffForm } from './staff-form-dialog/staff-form-dialog';
     TableLabels,
     DatePipe,
     NP_FORM_FIELDS,
-    MatButtonModule,
-    MatPaginatorModule,
-    MatTooltipModule,
+    PaginationComponent,
     IconComponent,
     EmptyState,
     PageHeader,
+    ButtonComponent,
   ],
   templateUrl: './admin-staff.html',
   styleUrl: './admin-staff.scss',
@@ -46,12 +43,13 @@ import { openStaffForm } from './staff-form-dialog/staff-form-dialog';
 })
 export class AdminStaff {
   private readonly api = inject(AdminStaffService);
-  private readonly dialog = inject(MatDialog);
+  private readonly bbDialog = inject(BbDialog);
   private readonly notify = inject(NotificationService);
   private readonly auth = inject(AuthService);
   protected readonly me = computed(() => this.auth.user()?.id);
   protected readonly roleLabel = (role: string) => ROLE_META[role as AdminRole]?.label ?? role;
-  protected readonly isStaff = (u: User) => (STAFF_ADMIN_ROLES as readonly string[]).includes(u.role);
+  protected readonly isStaff = (u: User) =>
+    (STAFF_ADMIN_ROLES as readonly string[]).includes(u.role);
   protected readonly busy = signal<string | null>(null);
 
   protected readonly filterModel = signal({ search: '', role: '', status: '' });
@@ -81,7 +79,7 @@ export class AdminStaff {
   );
 
   protected create(): void {
-    openStaffForm(this.dialog, null).subscribe((user) => {
+    openStaffForm(this.bbDialog, null).subscribe((user) => {
       if (!user) return;
       this.notify.success(`${user.name} can now sign in as ${this.roleLabel(user.role)}`);
       this.list.load(1);
@@ -89,7 +87,7 @@ export class AdminStaff {
   }
 
   protected edit(user: User): void {
-    openStaffForm(this.dialog, user).subscribe((saved) => {
+    openStaffForm(this.bbDialog, user).subscribe((saved) => {
       if (!saved) return;
       this.notify.success('Admin updated');
       this.list.reload();
@@ -98,7 +96,7 @@ export class AdminStaff {
 
   protected toggle(user: User): void {
     const activate = user.status !== 'active';
-    confirmed(this.dialog, {
+    confirmed(this.bbDialog, {
       title: activate ? `Activate ${user.name}?` : `Deactivate ${user.name}?`,
       message: activate
         ? 'They can sign in again with their existing password.'
@@ -119,5 +117,9 @@ export class AdminStaff {
         },
       });
     });
+  }
+
+  protected showLogins(user: User): void {
+    openLoginHistory(this.bbDialog, user);
   }
 }

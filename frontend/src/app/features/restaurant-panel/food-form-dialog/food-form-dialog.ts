@@ -1,10 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormRoot, TreeValidationResult, form, maxLength, required } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { BB_DIALOG_DATA, BbDialogRef, BbDialogTitle } from '../../../shared/dialog/bb-dialog';
 import { errorMessage, fieldErrors } from '../../../core/services/api-error';
 import { MyRestaurantService } from '../../../core/services/my-restaurant.service';
 import { ImageUpload } from '../../../shared/components/image-upload/image-upload';
@@ -16,7 +13,14 @@ import {
 } from '../../../shared/models/catalog.models';
 import { rupeesToPaise } from '../../../shared/pipes/money.pipes';
 import { serverErrors, shownError } from '../../../shared/forms/form-errors';
-import { IconComponent, SelectOption, ToggleComponent } from 'nexprime';
+import {
+  ButtonComponent,
+  ButtonToggleComponent,
+  IconComponent,
+  SelectOption,
+  SpinnerComponent,
+  ToggleComponent,
+} from 'nexprime';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { numberRange, requiredText } from '../../../shared/forms/form-rules';
 
@@ -31,11 +35,11 @@ export interface FoodFormData {
     ToggleComponent,
     NP_FORM_FIELDS,
     FormRoot,
-    MatDialogModule,
-    MatButtonModule,
-    MatButtonToggleModule,
+    BbDialogTitle,
+    ButtonComponent,
+    ButtonToggleComponent,
     IconComponent,
-    MatProgressSpinnerModule,
+    SpinnerComponent,
     ImageUpload,
   ],
   templateUrl: './food-form-dialog.html',
@@ -43,12 +47,16 @@ export interface FoodFormData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FoodFormDialog {
-  protected readonly data = inject<FoodFormData>(MAT_DIALOG_DATA);
+  protected readonly data = inject<FoodFormData>(BB_DIALOG_DATA);
+  protected readonly vegOptions = [
+    { value: true, label: 'Veg' },
+    { value: false, label: 'Non-veg' },
+  ];
   protected readonly categoryOptions: SelectOption[] = this.data.categories.map((c) => ({
     value: c.id,
     label: c.name,
   }));
-  private readonly ref = inject(MatDialogRef<FoodFormDialog, FoodItem>);
+  protected readonly ref = inject<BbDialogRef<FoodItem>>(BbDialogRef);
   private readonly service = inject(MyRestaurantService);
   protected readonly shownError = shownError;
 

@@ -1,12 +1,28 @@
+// One scroll area for the photo, title and details: the dialog fits short screens.
+.scroll {
+  max-height: none;
+  padding-top: 0;
+  // Scrolls by wheel, touch and keyboard, without a visible scrollbar.
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+// Full-bleed photo inside the padded scroll area.
 .hero {
-  width: 100%;
+  display: block;
+  width: calc(100% + 2 * var(--bb-space-5));
+  max-width: none; // the global img max-width (100%) would leave a gap on the right
+  margin-inline: calc(-1 * var(--bb-space-5));
   aspect-ratio: 16 / 9;
   object-fit: cover;
 }
-h2 {
+.title {
   display: flex;
   align-items: center;
   gap: var(--bb-space-2);
+  padding: var(--bb-space-4) 0 var(--bb-space-2);
 }
 .price {
   font-size: 1.3rem;

@@ -1,0 +1,52 @@
+<div class="stack">
+  <!-- Always in the DOM so screen readers announce changes (polite). -->
+  <div class="live" role="status" aria-live="polite">
+    @if (!connection.online()) {
+      <div class="pill offline">
+        <np-icon name="wifi-off" class="mat-icon" matButtonIcon />
+        <span>
+          <strong>You're offline.</strong>
+          <span class="detail"> Saved pages still work; ordering and payment need a connection.</span>
+        </span>
+      </div>
+    } @else if (connection.restored()) {
+      <div class="pill online">
+        <np-icon name="wifi" class="mat-icon" matButtonIcon />
+        <strong>Back online</strong>
+      </div>
+    } @else if (installer.justInstalled()) {
+      <div class="pill online">
+        <np-icon name="circle-check" class="mat-icon" matButtonIcon />
+        <span><strong>BiteBox is installed.</strong> Open it from your home screen or app list.</span>
+      </div>
+    }
+  </div>
+
+  @if (update.broken()) {
+    <div class="card" role="alert">
+      <np-icon name="refresh-cw" class="mat-icon" matButtonIcon />
+      <p><strong>BiteBox needs to reload</strong> to finish an update.</p>
+      <button mat-flat-button class="bb-btn-accent" type="button" (click)="update.reload()">Reload</button>
+    </div>
+  } @else if (update.available()) {
+    <div class="card" role="status" aria-live="polite">
+      <np-icon name="sparkles" class="mat-icon" matButtonIcon />
+      <p>
+        <strong>A new version of BiteBox is available.</strong>
+        <span class="detail"> Update to get the latest fixes.</span>
+      </p>
+      <div class="actions">
+        <button mat-button type="button" (click)="update.dismiss()" [disabled]="update.updating()">Later</button>
+        <button
+          mat-flat-button
+          class="bb-btn-accent"
+          type="button"
+          (click)="update.applyUpdate()"
+          [disabled]="update.updating() || !connection.online()"
+        >
+          {{ update.updating() ? 'Updating…' : 'Update now' }}
+        </button>
+      </div>
+    </div>
+  }
+</div>

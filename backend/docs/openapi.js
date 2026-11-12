@@ -24,6 +24,7 @@ import {
   rewardsSchemas,
   rewardsTags,
 } from "./openapi.rewards.js";
+import { pushPaths, pushSchemas, pushTags } from "./openapi.push.js";
 import {
   reviewsPaths,
   reviewsSchemas,
@@ -93,6 +94,7 @@ export const openApiDocument = {
     ...adminRolesTags,
     ...reviewsTags,
     ...rewardsTags,
+    ...pushTags,
   ],
   components: {
     securitySchemes: {
@@ -106,6 +108,7 @@ export const openApiDocument = {
       ...adminRolesSchemas,
       ...reviewsSchemas,
       ...rewardsSchemas,
+      ...pushSchemas,
       Role: {
         type: "string",
         enum: ["customer", "admin", "restaurant", "delivery"],
@@ -226,6 +229,7 @@ export const openApiDocument = {
     ...adminRolesPaths,
     ...reviewsPaths,
     ...rewardsPaths,
+    ...pushPaths,
     "/health": {
       get: {
         tags: ["Health"],
@@ -239,6 +243,23 @@ export const openApiDocument = {
             },
           }),
           503: { description: "Database unreachable" },
+        },
+      },
+    },
+    "/health/live": {
+      get: {
+        tags: ["Health"],
+        summary: "Liveness probe: the process is running",
+        responses: { 200: ok({ type: "object", properties: { status: { type: "string" } } }) },
+      },
+    },
+    "/health/ready": {
+      get: {
+        tags: ["Health"],
+        summary: "Readiness probe: the database answers",
+        responses: {
+          200: ok({ type: "object", properties: { status: { type: "string" } } }),
+          503: { description: "Not ready" },
         },
       },
     },

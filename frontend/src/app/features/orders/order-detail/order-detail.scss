@@ -8,7 +8,7 @@
   display: flex;
   align-items: center;
   gap: var(--bb-space-3);
-  background: #e6f5ec;
+  background: var(--bb-success-bg);
   color: var(--bb-success);
   border-radius: var(--bb-radius-lg);
   padding: var(--bb-space-4) var(--bb-space-5);
@@ -62,15 +62,15 @@
   padding: 6px 14px;
   border-radius: 999px;
   background: var(--bb-amber-100);
-  color: #7a4b00;
+  color: var(--bb-warning-ink);
 
   &.status-delivered {
-    background: #e6f5ec;
+    background: var(--bb-success-bg);
     color: var(--bb-success);
   }
   &.status-cancelled,
   &.status-rejected {
-    background: #fdecee;
+    background: var(--bb-danger-bg);
     color: var(--bb-danger);
   }
 }
@@ -188,18 +188,19 @@
   padding: 2px 10px;
   border-radius: 999px;
   background: var(--bb-amber-100);
-  color: #7a4b00;
+  color: var(--bb-warning-ink);
   font-size: 0.8rem;
   white-space: nowrap;
 
   &.pay-paid,
-  &.pay-refunded {
-    background: #e6f5ec;
+  &.pay-refunded,
+  &.pay-partially_refunded {
+    background: var(--bb-success-bg);
     color: var(--bb-success);
   }
 
   &.pay-failed {
-    background: #fdecee;
+    background: var(--bb-danger-bg);
     color: var(--bb-danger);
   }
 
@@ -261,7 +262,7 @@ address {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--bb-plum);
+  background: var(--bb-brand);
   color: var(--bb-amber);
   font-weight: 800;
 }
@@ -314,4 +315,55 @@ address {
   font-size: 0.9rem;
   --bb-icon-size: 18px;
   color: var(--bb-ink-muted);
+}
+
+// The delivery code: large, spaced digits, in a tinted card that stands out from the rest.
+.otp {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bb-space-4);
+  background: var(--bb-info-bg);
+  border-color: transparent;
+
+  p {
+    margin: 4px 0 0;
+  }
+}
+
+.otp-code {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.35em;
+  color: var(--bb-info-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ready-by {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-2);
+  margin: 0;
+  --bb-icon-size: 20px;
+}
+
+.refunds {
+  list-style: none;
+  margin: var(--bb-space-2) 0 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--bb-space-2);
+    padding: 6px 0;
+    font-size: 0.9rem;
+  }
+
+  li > span:first-child {
+    display: flex;
+    flex-direction: column;
+  }
 }

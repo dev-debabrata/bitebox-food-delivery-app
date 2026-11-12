@@ -480,12 +480,12 @@ describe("Authentication", () => {
 
   describe("seed", () => {
     it("is idempotent", async () => {
-      const { seedUsers } = await import("../scripts/seed.js");
+      const { seedUsers, SEED_USERS } = await import("../scripts/seed.js");
       const first = await seedUsers(PASSWORD);
       const second = await seedUsers(PASSWORD);
       assert.ok(first.every((r) => r.created));
       assert.ok(second.every((r) => !r.created));
-      assert.equal(await User.countDocuments(), 4);
+      assert.equal(await User.countDocuments(), SEED_USERS.length);
     });
   });
 });

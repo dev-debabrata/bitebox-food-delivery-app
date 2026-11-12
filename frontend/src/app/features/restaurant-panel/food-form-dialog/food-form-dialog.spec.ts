@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { BB_DIALOG_DATA, BbDialogRef } from '../../../shared/dialog/bb-dialog';
 import { of } from 'rxjs';
 import { MyRestaurantService } from '../../../core/services/my-restaurant.service';
 import { UploadService } from '../../../core/services/upload.service';
@@ -14,8 +14,8 @@ describe('FoodFormDialog', () => {
     await TestBed.configureTestingModule({
       imports: [FoodFormDialog],
       providers: [
-        { provide: MAT_DIALOG_DATA, useValue: { item, categories: [{ id: 'c1', name: 'Pizza', icon: 'local_pizza' }] } },
-        { provide: MatDialogRef, useValue: ref },
+        { provide: BB_DIALOG_DATA, useValue: { item, categories: [{ id: 'c1', name: 'Pizza', icon: 'local_pizza' }] } },
+        { provide: BbDialogRef, useValue: ref },
         { provide: MyRestaurantService, useValue: service },
         { provide: UploadService, useValue: { validate: () => null, uploadImage: vi.fn() } },
       ],

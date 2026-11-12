@@ -25,7 +25,7 @@ const PAGE_SIZE = 20;
 export class InboxService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly url = `${environment.apiUrl}/notifications`;
+  private readonly url = `${environment.baseUrl}/notifications`;
 
   readonly items = signal<AppNotification[]>([]);
   readonly unread = signal(0);

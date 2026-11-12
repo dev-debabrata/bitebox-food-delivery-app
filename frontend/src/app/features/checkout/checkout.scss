@@ -216,7 +216,7 @@ h2 {
   display: flex;
   align-items: center;
   gap: var(--bb-space-2);
-  background: #e6f5ec;
+  background: var(--bb-success-bg);
   border-radius: var(--bb-radius-sm);
   padding: var(--bb-space-2) var(--bb-space-3);
   color: var(--bb-success);

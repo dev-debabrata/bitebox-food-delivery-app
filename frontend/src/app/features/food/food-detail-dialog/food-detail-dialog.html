@@ -1,12 +1,13 @@
 @let item = data.item;
-@if (item.imageUrl | usableImage) {
-  <img class="hero" [bbSrc]="item.imageUrl" alt="" />
-}
-<h2 mat-dialog-title>
-  <bb-veg-badge [veg]="item.isVeg" />
-  {{ item.name }}
-</h2>
-<mat-dialog-content>
+<!-- Photo, title and details scroll together; the actions below stay in view. -->
+<div class="bb-dialog__content scroll">
+  @if (item.imageUrl | usableImage) {
+    <img class="hero" [bbSrc]="item.imageUrl" alt="" />
+  }
+  <h2 bbDialogTitle class="title">
+    <bb-veg-badge [veg]="item.isVeg" />
+    {{ item.name }}
+  </h2>
   <p class="price">{{ item.pricePaise | inr }}</p>
   @if (!item.isAvailable) {
     <div class="bb-alert error" role="status">
@@ -48,12 +49,15 @@
       <bb-public-reviews [subject]="{ kind: 'food', key: item.id }" [responder]="data.restaurant.name" [pageSize]="3" />
     </section>
   }
-</mat-dialog-content>
-<mat-dialog-actions align="end">
+</div>
+<div class="bb-dialog__actions">
   @if (data.showRestaurantLink) {
-    <a mat-stroked-button [routerLink]="['/restaurants', data.restaurant.slug]" mat-dialog-close
+    <a
+      class="bb-btn bb-btn--outlined"
+      [routerLink]="['/restaurants', data.restaurant.slug]"
+      (click)="ref.close()"
       >View menu</a
     >
   }
-  <button mat-flat-button mat-dialog-close cdkFocusInitial>Close</button>
-</mat-dialog-actions>
+  <np-button severity="primary" label="Close" (clicked)="ref.close()" />
+</div>

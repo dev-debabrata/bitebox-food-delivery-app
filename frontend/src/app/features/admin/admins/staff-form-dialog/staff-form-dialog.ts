@@ -1,15 +1,24 @@
 import { DatePipe } from '@angular/common';
+import {
+  BB_DIALOG_DATA,
+  BbDialog,
+  BbDialogRef,
+  BbDialogTitle,
+} from '../../../../shared/dialog/bb-dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormRoot, TreeValidationResult, form, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { IconComponent, SelectOption } from 'nexprime';
+import { ButtonComponent, IconComponent, SelectOption } from 'nexprime';
 import { Observable, firstValueFrom } from 'rxjs';
 import { AdminStaffService } from '../../../../core/services/admin/admin-staff.service';
 import { errorMessage, fieldErrors } from '../../../../core/services/api-error';
 import { PhoneInput } from '../../../../shared/components/phone-input/phone-input';
 import { serverErrors, shownError } from '../../../../shared/forms/form-errors';
-import { emailRules, passwordRules, phoneRules, requiredText } from '../../../../shared/forms/form-rules';
+import {
+  emailRules,
+  passwordRules,
+  phoneRules,
+  requiredText,
+} from '../../../../shared/forms/form-rules';
 import { NP_FORM_FIELDS } from '../../../../shared/forms/np-form-fields';
 import { STAFF_ROLE_SUMMARY } from '../../../../shared/models/admin-roles.models';
 import {
@@ -22,14 +31,22 @@ import {
 /** Create a staff admin (no data) or edit one (their user). Closes with the saved user. */
 @Component({
   selector: 'bb-staff-form-dialog',
-  imports: [DatePipe, FormRoot, NP_FORM_FIELDS, MatDialogModule, MatButtonModule, IconComponent, PhoneInput],
+  imports: [
+    DatePipe,
+    FormRoot,
+    NP_FORM_FIELDS,
+    BbDialogTitle,
+    ButtonComponent,
+    IconComponent,
+    PhoneInput,
+  ],
   templateUrl: './staff-form-dialog.html',
   styleUrl: './staff-form-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StaffFormDialog {
-  protected readonly user = inject<User | null>(MAT_DIALOG_DATA);
-  private readonly ref = inject(MatDialogRef<StaffFormDialog, User>);
+  protected readonly user = inject<User | null>(BB_DIALOG_DATA);
+  protected readonly ref = inject<BbDialogRef<User>>(BbDialogRef);
   private readonly api = inject(AdminStaffService);
   protected readonly shownError = shownError;
   protected readonly error = signal<string | null>(null);
@@ -88,7 +105,6 @@ export class StaffFormDialog {
   }
 }
 
-export const openStaffForm = (dialog: MatDialog, user: User | null): Observable<User | undefined> =>
-  dialog
-    .open<StaffFormDialog, User | null, User>(StaffFormDialog, { data: user, width: '520px' })
-    .afterClosed();
+export const openStaffForm = (dialog: BbDialog, user: User | null): Observable<User | undefined> =>
+  dialog.open<StaffFormDialog, User | null, User>(StaffFormDialog, { data: user, width: '520px' })
+    .closed;

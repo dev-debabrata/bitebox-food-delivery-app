@@ -1,12 +1,18 @@
-<bb-page-header title="Admin management" subtitle="Operations, finance and support admins. Each role only sees its own part of the panel.">
-  <button mat-flat-button type="button" (click)="create()">
-    <np-icon name="user-round-plus" class="mat-icon" matButtonIcon />
-    New admin
-  </button>
+<bb-page-header
+  title="Admin management"
+  subtitle="Operations, finance and support admins. Each role only sees its own part of the panel."
+>
+  <np-button severity="primary" icon="user-round-plus" label="New admin" (clicked)="create()" />
 </bb-page-header>
 
 <div class="bb-filters">
-  <np-text-input [formField]="filters.search" ariaLabel="Search admins" placeholder="Search name, email or phone" icon="search" clearable />
+  <np-text-input
+    [formField]="filters.search"
+    ariaLabel="Search admins"
+    placeholder="Search name, email or phone"
+    icon="search"
+    clearable
+  />
   <np-select [formField]="filters.role" ariaLabel="Role" [options]="roleOptions" />
   <np-select [formField]="filters.status" ariaLabel="Status" [options]="statusOptions" />
 </div>
@@ -24,7 +30,11 @@
       <span class="bb-skeleton row"></span>
     }
   } @else if (list.empty()) {
-    <bb-empty-state icon="user-cog" title="No admins match these filters" message="Create an operations, finance or support admin to share the work." />
+    <bb-empty-state
+      icon="user-cog"
+      title="No admins match these filters"
+      message="Create an operations, finance or support admin to share the work."
+    />
   } @else {
     <div class="bb-table-scroll" [class.bb-dim]="list.loading()">
       <table class="bb-table">
@@ -44,9 +54,15 @@
                 <strong>{{ u.name }}</strong>
                 <span class="sub">{{ u.email }}{{ u.phone ? ' · ' + u.phone : '' }}</span>
               </td>
-              <td><span class="bb-role-chip role-{{ u.role }}">{{ roleLabel(u.role) }}</span></td>
               <td>
-                <span class="bb-badge" [class.tone-good]="u.status === 'active'" [class.tone-bad]="u.status !== 'active'">
+                <span class="bb-role-chip role-{{ u.role }}">{{ roleLabel(u.role) }}</span>
+              </td>
+              <td>
+                <span
+                  class="bb-badge"
+                  [class.tone-good]="u.status === 'active'"
+                  [class.tone-bad]="u.status !== 'active'"
+                >
                   {{ u.status === 'active' ? 'Active' : 'Inactive' }}
                 </span>
               </td>
@@ -55,13 +71,27 @@
                 @if (u.id === me()) {
                   <span class="bb-badge">You</span>
                 } @else if (isStaff(u)) {
-                  <button mat-icon-button type="button" (click)="edit(u)" [attr.aria-label]="'Edit ' + u.name" matTooltip="View and edit">
-                    <np-icon name="pencil" class="mat-icon" />
-                  </button>
+                  <np-button
+                    variant="text"
+                    severity="primary"
+                    icon="pencil"
+                    label=""
+                    (clicked)="edit(u)"
+                    [ariaLabel]="'Edit ' + u.name"
+                    title="View and edit"
+                  />
+                  <np-button
+                    variant="text"
+                    severity="secondary"
+                    icon="history"
+                    label=""
+                    [ariaLabel]="'Sign-in history of ' + u.name"
+                    title="Sign-in history"
+                    (clicked)="showLogins(u)"
+                  />
                   <button
-                    mat-stroked-button
                     type="button"
-                    class="bb-pill-action"
+                    class="bb-btn bb-btn--outlined bb-pill-action"
                     [class.danger]="u.status === 'active'"
                     [disabled]="busy() === u.id"
                     (click)="toggle(u)"
@@ -69,7 +99,9 @@
                     {{ u.status === 'active' ? 'Deactivate' : 'Activate' }}
                   </button>
                 } @else {
-                  <span class="bb-muted small" matTooltip="Super admins are managed outside the panel">Super admin</span>
+                  <span class="bb-muted small" title="Super admins are managed outside the panel"
+                    >Super admin</span
+                  >
                 }
               </td>
             </tr>
@@ -77,13 +109,14 @@
         </tbody>
       </table>
     </div>
-    <mat-paginator
-      [length]="list.data()!.pagination.total"
-      [pageIndex]="list.data()!.pagination.page - 1"
-      [pageSize]="list.data()!.pagination.limit"
-      [pageSizeOptions]="[20, 50, 100]"
-      (page)="list.onPage($event)"
-      aria-label="Admin pages"
+    <np-pagination
+      variant="compact"
+      [page]="list.data()!.pagination.page"
+      [rows]="list.data()!.pagination.limit"
+      [totalRecords]="list.data()!.pagination.total"
+      [rowsOptions]="[20, 50, 100]"
+      (pageChange)="list.goTo($event)"
+      (rowsChange)="list.goTo(1, $event)"
     />
   }
 </div>
