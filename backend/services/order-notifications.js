@@ -118,6 +118,12 @@ export async function notifyStatusChange(order, actor, previous) {
         `${r} accepted`,
         `${restaurantName} is getting your food ready.`,
       );
+    case S.PREPARING:
+      return toCustomer(
+        order,
+        `${r} is being prepared`,
+        `${restaurantName} has started cooking your food.`,
+      );
     case S.REJECTED:
       return Promise.all([
         toCustomer(
@@ -154,15 +160,29 @@ export async function notifyStatusChange(order, actor, previous) {
           "Keep the order ready for pickup.",
         ),
       ]);
+    case S.ARRIVED_AT_RESTAURANT:
+      return toRestaurant(
+        order,
+        `Rider has arrived for ${r}`,
+        "Hand the order to the rider.",
+      );
     case S.PICKED_UP:
       return Promise.all([
         toCustomer(
           order,
-          `${r} is on its way`,
-          "Track your rider live on the order page.",
+          `${r} picked up`,
+          order.deliveryOtp
+            ? `Your rider has collected your food. Your delivery code is ${order.deliveryOtp}: share it with the rider only when you have your order.`
+            : "Your rider has collected your food from the restaurant.",
         ),
         toRestaurant(order, `${r} picked up`, "The rider has collected it."),
       ]);
+    case S.ON_THE_WAY:
+      return toCustomer(
+        order,
+        `${r} is out for delivery`,
+        "Track your rider live on the order page.",
+      );
     case S.DELIVERED:
       return Promise.all([
         toCustomer(order, `${r} delivered`, "Enjoy your meal!"),
@@ -218,3 +238,12 @@ export async function notifyStatusChange(order, actor, previous) {
       return undefined;
   }
 }
+
+/** Support reset the delivery code (the rider ran out of tries). */
+export const notifyNewDeliveryOtp = (order) =>
+  toCustomer(
+    order,
+    `New delivery code for ${ref(order)}`,
+    `Your new code is ${order.deliveryOtp}. Share it with the rider at your door.`,
+    "order.delivery_code",
+  );

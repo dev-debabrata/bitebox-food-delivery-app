@@ -199,14 +199,18 @@ h2 {
 
 .cash {
   background: var(--bb-amber-100);
-  color: #854d0e;
-  np-icon { color: #854d0e; }
+  color: var(--bb-warning-ink);
+  np-icon {
+    color: var(--bb-warning-ink);
+  }
 }
 
 .paid-online {
-  background: #e6f5ec;
+  background: var(--bb-success-bg);
   color: var(--bb-success);
-  np-icon { color: var(--bb-success); }
+  np-icon {
+    color: var(--bb-success);
+  }
 }
 
 .paid-tag {
@@ -227,8 +231,9 @@ h2 {
   }
 }
 
-.go {
-  --mat-button-filled-container-color: var(--bb-success);
+// Action buttons share the row equally (np-button renders its own <button> inside the host).
+.work-actions ::ng-deep .np-button {
+  width: 100%;
 }
 
 .small {
@@ -266,23 +271,5 @@ h2 {
   np-icon {
     --bb-icon-size: 18px;
     color: var(--bb-plum-500);
-  }
-}
-
-// Phones: completed and rating side by side; the vehicle gets a full row with "Change" at its end.
-.stats {
-  @include bp.phone-only {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-
-    .vehicle {
-      grid-column: 1 / -1;
-
-      dd {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: var(--bb-space-2);
-      }
-    }
   }
 }

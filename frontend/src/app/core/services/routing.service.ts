@@ -58,7 +58,7 @@ export class RoutingService {
     let request = this.cache.get(key);
     if (!request) {
       request = this.http
-        .get<ApiResponse<{ route: RoadRoute }>>(`${environment.apiUrl}/geo/route`, {
+        .get<ApiResponse<{ route: RoadRoute }>>(`${environment.baseUrl}/geo/route`, {
           params: {
             fromLat: from.latitude,
             fromLng: from.longitude,

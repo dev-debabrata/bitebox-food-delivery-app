@@ -1,4 +1,4 @@
-import { IconComponent } from 'nexprime';
+import { IconComponent, PaginationComponent, TabsComponent } from 'nexprime';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,9 +12,6 @@ import { DatePipe } from '@angular/common';
 import { form } from '@angular/forms/signals';
 import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { MatButtonModule } from '@angular/material/button';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatTabsModule } from '@angular/material/tabs';
 import { Subscription, debounceTime, distinctUntilChanged, skip } from 'rxjs';
 import { AdminCatalogService } from '../../../core/services/admin/admin-catalog.service';
 import { errorMessage } from '../../../core/services/api-error';
@@ -38,10 +35,9 @@ const TABS: { status: RestaurantStatus; label: string }[] = [
     DatePipe,
     NP_FORM_FIELDS,
     RouterLink,
-    MatButtonModule,
     IconComponent,
-    MatPaginatorModule,
-    MatTabsModule,
+    PaginationComponent,
+    TabsComponent,
     EmptyState,
     PageHeader,
     ImageFallback,
@@ -85,6 +81,21 @@ export class AdminRestaurants implements OnInit {
     this.load(1);
   }
 
+  /** The status tabs, with each status's count as the badge. */
+  protected readonly tabItems = computed(() =>
+    TABS.map((t) => ({
+      id: t.status,
+      label: t.label,
+      content: '',
+      badge: this.counts()?.[t.status],
+    })),
+  );
+
+  protected selectTabId(id: string): void {
+    const index = TABS.findIndex((t) => t.status === id);
+    if (index >= 0 && index !== this.activeTab()) this.selectTab(index);
+  }
+
   protected selectTab(index: number): void {
     this.activeTab.set(index);
     void this.router.navigate([], {
@@ -94,9 +105,10 @@ export class AdminRestaurants implements OnInit {
     this.load(1);
   }
 
-  protected onPage(event: PageEvent): void {
-    this.pagination.update((p) => ({ ...p, limit: event.pageSize }));
-    this.load(event.pageIndex + 1);
+  /** np-pagination: `(pageChange)` → goTo(page); `(rowsChange)` → goTo(1, rows). */
+  protected goTo(page: number, rows?: number): void {
+    if (rows) this.pagination.update((p) => ({ ...p, limit: rows }));
+    this.load(page);
   }
 
   protected loadCounts(): void {

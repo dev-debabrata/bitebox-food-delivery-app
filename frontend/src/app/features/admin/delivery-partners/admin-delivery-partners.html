@@ -73,8 +73,8 @@
           <div class="actions">
             <span class="status status-{{ r.status }}">{{ r.status }}</span>
             <button
-              mat-stroked-button
-              [class.danger]="r.status === 'active'"
+              class="bb-btn bb-btn--outlined"
+              [class.bb-btn--danger]="r.status === 'active'"
               [disabled]="busyId() === r.id"
               (click)="toggleStatus(r)"
             >
@@ -84,13 +84,14 @@
         </li>
       }
     </ul>
-    <mat-paginator
-      [length]="list.data()!.pagination.total"
-      [pageIndex]="list.data()!.pagination.page - 1"
-      [pageSize]="list.data()!.pagination.limit"
-      [pageSizeOptions]="[20, 50, 100]"
-      (page)="list.onPage($event)"
-      aria-label="Delivery partner pages"
+    <np-pagination
+      variant="compact"
+      [page]="list.data()!.pagination.page"
+      [rows]="list.data()!.pagination.limit"
+      [totalRecords]="list.data()!.pagination.total"
+      [rowsOptions]="[20, 50, 100]"
+      (pageChange)="list.goTo($event)"
+      (rowsChange)="list.goTo(1, $event)"
     />
   }
 </div>

@@ -1,0 +1,51 @@
+[project]
+name = "bitebox-api"
+version = "0.1.0"
+description = "BiteBox API (Django). Replaces the Node API in backend/; see docs/django-migration/."
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv", "**/migrations/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "DJ", "S", "SIM", "RUF", "PT"]
+ignore = [
+  "RUF012", # Django/DRF class attributes (Meta, permission_classes) are mutable by convention
+  "DJ001",  # nullable strings are deliberate: optional *unique* values (phone, gateway ids,
+            # idempotency keys) need NULL so partial unique indexes ignore missing values
+  "RUF001", "RUF002", "RUF003", # en dashes in prose and comments (1–10) are intended
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101", "S105", "S106"] # asserts and fake secrets are fine in tests
+"config/settings/*.py" = ["F405", "F403"]  # settings modules extend base with `from .base import *`
+
+[tool.ruff.lint.isort]
+known-first-party = ["config", "common", "apps"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py"]
+testpaths = ["common", "apps", "config", "tests"]
+addopts = "-ra --strict-markers"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = ["error::RuntimeWarning"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+strict_optional = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+disallow_untyped_defs = true
+exclude = ["\\.venv/", "/migrations/", "/tests/"]
+
+[[tool.mypy.overrides]]
+module = ["environ.*", "djangorestframework_camel_case.*", "channels.*", "channels_redis.*", "drf_spectacular.*", "corsheaders.*", "cloudinary", "cloudinary.*"]
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"

@@ -44,7 +44,7 @@ describe('DeliveryLocationService', () => {
     await Promise.resolve();
     await Promise.resolve();
     http
-      .expectOne((r) => r.url === `${environment.apiUrl}/geo/reverse`)
+      .expectOne((r) => r.url === `${environment.baseUrl}/geo/reverse`)
       .flush({ success: true, message: 'OK', data: { place: { label: 'Test Area, Test City', latitude: 10.5, longitude: 20.5 } } });
     const location = await pending;
     expect(location.label).toBe('Test Area, Test City');

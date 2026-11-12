@@ -1,0 +1,67 @@
+<div class="bb-container page">
+  <bb-page-header title="Payments" subtitle="What you paid for each order, and any refunds." />
+
+  @if (list.error(); as message) {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span
+        >{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span
+      >
+    </div>
+  }
+
+  <div class="bb-card list-card" [attr.aria-busy]="list.loading()">
+    @if (list.showSkeleton()) {
+      @for (i of [1, 2, 3]; track i) {
+        <span class="bb-skeleton row-skeleton"></span>
+      }
+    } @else if (list.empty()) {
+      <bb-empty-state icon="credit-card" title="No payments yet" />
+    } @else if (list.data(); as data) {
+      <ul class="rows" [class.bb-dim]="list.loading()">
+        @for (p of data.items; track p.id) {
+          <li>
+            <div class="row">
+              <div class="main">
+                <a class="order" [routerLink]="['/orders', p.order.id]">{{
+                  p.order.restaurantName
+                }}</a>
+                <span class="bb-muted small">
+                  {{ p.order.orderNumber }} · {{ providerLabel[p.provider] }} ·
+                  {{ p.createdAt | date: 'd MMM y' }}
+                </span>
+              </div>
+              <span class="amount">{{ p.amountPaise | inr }}</span>
+              <span class="bb-badge {{ tone(p.status) }}">
+                {{
+                  p.method === 'cod' && p.status === 'pending'
+                    ? 'Pay on delivery'
+                    : statusLabel[p.status]
+                }}
+              </span>
+            </div>
+            @for (r of p.refunds; track r.id) {
+              <div class="refund">
+                <span>
+                  <np-icon name="undo-2" class="mat-icon" matButtonIcon />
+                  Refund {{ r.amountPaise | inr }}
+                  @if (r.reason) {
+                    <span class="bb-muted">· {{ r.reason }}</span>
+                  }
+                </span>
+                <span class="bb-badge {{ tone(r.status) }}">{{ refundLabel[r.status] }}</span>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+      <np-pagination
+        variant="compact"
+        [page]="data.pagination.page"
+        [rows]="data.pagination.limit"
+        [totalRecords]="data.pagination.total"
+        (pageChange)="list.goTo($event)"
+      />
+    }
+  </div>
+</div>

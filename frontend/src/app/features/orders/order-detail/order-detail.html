@@ -46,12 +46,37 @@
 
     <div class="layout">
       <div class="main">
+        @if (o.deliveryOtp; as code) {
+          <section class="bb-card otp" aria-labelledby="otp-title">
+            <div>
+              <h2 class="bb-h3" id="otp-title">Your delivery code</h2>
+              <p class="bb-muted">
+                Give it to the rider only when you have your order. Don't share it on a call.
+              </p>
+            </div>
+            <strong class="otp-code" aria-label="Delivery code {{ code.split('').join(' ') }}">{{
+              code
+            }}</strong>
+          </section>
+        }
+        @if (o.readyBy && (o.status === 'confirmed' || o.status === 'preparing')) {
+          <p class="ready-by">
+            <np-icon name="chef-hat" class="mat-icon" matButtonIcon />
+            {{ o.restaurantSnapshot.name }} expects your food to be ready by
+            <strong>{{ o.readyBy | date: 'h:mm a' }}</strong>.
+          </p>
+        }
         @if (!ended() && o.status !== 'delivered' && !awaitingPayment()) {
+          <!-- Offers browser notifications while the order is on its way (only if not on yet). -->
+          <bb-push-settings [compact]="true" />
           @let t = tracking;
           <section class="bb-card" aria-labelledby="track-title">
             <h2 class="bb-h3" id="track-title">Live tracking</h2>
             <p class="track-status" aria-live="polite">
-              @if (o.status === 'assigned') {
+              @if (o.status === 'arrived_at_restaurant') {
+                <strong>{{ o.rider?.name ?? 'Your rider' }}</strong> is at the restaurant, collecting your
+                order.
+              } @else if (o.status === 'assigned') {
                 @if (t.remaining(); as r) {
                   <strong>{{ o.rider?.name ?? 'Your rider' }}</strong> is heading to the restaurant,
                   about {{ minutes(r.durationSeconds) }} min away.
@@ -168,7 +193,7 @@
               <button
                 mat-flat-button
                 class="bb-btn-accent"
-                [disabled]="paying() || cancelling()"
+                [disabled]="paying() || cancelling() || !connection.online()"
                 (click)="payNow(o)"
               >
                 <np-icon [name]="(o.payment?.simulated ? 'science' : 'lock') | npIcon" class="mat-icon" matButtonIcon />
@@ -268,6 +293,19 @@
           </p>
           @if (o.payment?.simulated) {
             <p class="bb-muted small simulated">Test payment: no real money was charged.</p>
+          }
+          @if (o.payment?.refunds?.length) {
+            <ul class="refunds" aria-label="Refunds">
+              @for (r of o.payment!.refunds!; track r.id) {
+                <li>
+                  <span>
+                    Refund {{ r.amountPaise | inr }}
+                    <span class="bb-muted small">{{ r.reason }} · {{ r.createdAt | date: 'd MMM' }}</span>
+                  </span>
+                  <span class="bb-badge {{ tone(r.status) }}">{{ refundLabel[r.status] }}</span>
+                </li>
+              }
+            </ul>
           }
         </section>
         @if (o.rider; as r) {

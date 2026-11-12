@@ -10,9 +10,13 @@
     clearable
   />
   @if (restaurant()) {
-    <button mat-stroked-button (click)="clearRestaurant()">
-      <np-icon name="x" class="mat-icon" matButtonIcon />One restaurant only
-    </button>
+    <np-button
+      variant="outlined"
+      severity="primary"
+      icon="x"
+      label="One restaurant only"
+      (clicked)="clearRestaurant()"
+    />
   }
 </div>
 
@@ -49,19 +53,25 @@
             class="bb-toggle-success bb-label-hidden"
             [label]="'Available: ' + item.name"
           />
-          <button mat-icon-button (click)="remove(item)" [attr.aria-label]="'Delete ' + item.name">
-            <np-icon name="trash-2" class="mat-icon" matButtonIcon />
-          </button>
+          <np-button
+            variant="text"
+            severity="danger"
+            icon="trash-2"
+            label=""
+            (clicked)="remove(item)"
+            [ariaLabel]="'Delete ' + item.name"
+          />
         </li>
       }
     </ul>
   }
-  <mat-paginator
-    [length]="pagination().total"
-    [pageIndex]="pagination().page - 1"
-    [pageSize]="pagination().limit"
-    [pageSizeOptions]="[20, 50, 100]"
-    (page)="onPage($event)"
-    aria-label="Select page of dishes"
+  <np-pagination
+    variant="compact"
+    [page]="pagination().page"
+    [rows]="pagination().limit"
+    [totalRecords]="pagination().total"
+    [rowsOptions]="[20, 50, 100]"
+    (pageChange)="goTo($event)"
+    (rowsChange)="goTo(1, $event)"
   />
 </div>

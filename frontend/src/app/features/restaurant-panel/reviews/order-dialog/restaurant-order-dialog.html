@@ -1,6 +1,6 @@
 @if (data(); as d) {
-  <header mat-dialog-title class="head">
-    <h2>Order {{ d.orderNumber }}</h2>
+  <header class="head">
+    <h2 bbDialogTitle>Order {{ d.orderNumber }}</h2>
     <p class="meta">
       {{ d.authorName }} · {{ d.createdAt | date: 'd MMM y' }} · {{ d.reviews.length }}
       {{ d.reviews.length === 1 ? 'review' : 'reviews' }}
@@ -9,7 +9,7 @@
       }
     </p>
   </header>
-  <mat-dialog-content>
+  <div class="bb-dialog__content">
     <ul class="reviews">
       @for (r of d.reviews; track r.id) {
         <li>
@@ -23,23 +23,34 @@
             } @else {
               <div class="actions">
                 @if (r.response) {
-                  <button mat-button type="button" (click)="replying.set(r.id)">
-                    <np-icon name="pencil" class="mat-icon" matButtonIcon />Edit reply
-                  </button>
-                  <button mat-button type="button" (click)="deleteReply(r)">
-                    <np-icon name="trash-2" class="mat-icon" matButtonIcon />Remove reply
-                  </button>
+                  <np-button severity="primary" variant="text" icon="pencil" label="Edit reply" (clicked)="replying.set(r.id)" />
+                  <np-button
+                    variant="text"
+                    severity="danger"
+                    icon="trash-2"
+                    label="Remove reply"
+                    (clicked)="deleteReply(r)"
+                  />
                 } @else {
-                  <button mat-stroked-button type="button" (click)="replying.set(r.id)" [attr.aria-label]="'Reply to the ' + heading(r) + ' review'">
-                    <np-icon name="message-square-reply" class="mat-icon" matButtonIcon />Reply
-                  </button>
+                  <np-button severity="primary"
+                    variant="outlined"
+                    icon="message-square-reply"
+                    label="Reply"
+                    [ariaLabel]="'Reply to the ' + heading(r) + ' review'"
+                    (clicked)="replying.set(r.id)"
+                  />
                 }
                 @if (r.reportedByYou) {
                   <span class="bb-muted reported">Reported</span>
                 } @else {
-                  <button mat-button type="button" (click)="report(r)" [attr.aria-label]="'Report the ' + heading(r) + ' review'">
-                    <np-icon name="flag" class="mat-icon" matButtonIcon />Report
-                  </button>
+                  <np-button
+                    variant="text"
+                    severity="secondary"
+                    icon="flag"
+                    label="Report"
+                    [ariaLabel]="'Report the ' + heading(r) + ' review'"
+                    (clicked)="report(r)"
+                  />
                 }
               </div>
             }
@@ -47,18 +58,22 @@
         </li>
       }
     </ul>
-  </mat-dialog-content>
-  <mat-dialog-actions align="end">
-    <button mat-button type="button" [mat-dialog-close]="changed()">Close</button>
-  </mat-dialog-actions>
+  </div>
+  <div class="bb-dialog__actions">
+    <np-button severity="primary" variant="text" label="Close" (clicked)="ref.close(changed())" />
+  </div>
 } @else if (error(); as message) {
-  <mat-dialog-content>
+  <h2 bbDialogTitle class="bb-sr-only">Order reviews</h2>
+  <div class="bb-dialog__content">
     <div class="bb-alert error" role="alert">
       <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
       <span>{{ message }} <button class="bb-link-button" (click)="load()">Retry</button></span>
     </div>
-  </mat-dialog-content>
-  <mat-dialog-actions align="end"><button mat-button mat-dialog-close>Close</button></mat-dialog-actions>
+  </div>
+  <div class="bb-dialog__actions">
+    <np-button severity="primary" variant="text" label="Close" (clicked)="ref.close(false)" />
+  </div>
 } @else {
-  <mat-dialog-content><span class="bb-skeleton" style="height: 280px" aria-busy="true"></span></mat-dialog-content>
+  <h2 bbDialogTitle class="bb-sr-only">Order reviews</h2>
+  <div class="bb-dialog__content"><span class="bb-skeleton" style="height: 280px" aria-busy="true"></span></div>
 }

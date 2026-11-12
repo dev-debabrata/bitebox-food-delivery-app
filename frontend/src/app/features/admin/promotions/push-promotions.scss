@@ -1,0 +1,47 @@
+@use 'breakpoints' as bp;
+
+.layout {
+  display: grid;
+  gap: var(--bb-space-5);
+  align-items: start;
+
+  @include bp.desktop-up {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+}
+
+.compose {
+  padding: var(--bb-space-5);
+
+  @include bp.phone-only {
+    padding: var(--bb-space-4);
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.notification {
+  display: flex;
+  gap: var(--bb-space-3);
+  padding: var(--bb-space-3);
+  margin-block: var(--bb-space-2);
+  border-radius: var(--bb-radius);
+  background: var(--bb-surface);
+  box-shadow: var(--bb-shadow);
+
+  img {
+    flex: none;
+    border-radius: 8px;
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    font-size: 0.875rem;
+    overflow-wrap: anywhere;
+  }
+}

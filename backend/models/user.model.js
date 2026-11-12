@@ -67,6 +67,14 @@ const userSchema = new mongoose.Schema(
     referralCode: { type: String, trim: true, uppercase: true, maxlength: 40 },
     // Customers: date of birth (UTC midnight of the day) for birthday rewards. Set once.
     birthDate: { type: Date, default: undefined },
+
+    // Which notifications may be pushed to this person's devices. The in-app inbox always
+    // records them; these switches only decide what also arrives as a browser push.
+    pushPreferences: {
+      orders: { type: Boolean, default: true }, // order and delivery updates
+      account: { type: Boolean, default: true }, // support, reviews, coins, panel alerts
+      promotions: { type: Boolean, default: false }, // offers: opt-in only
+    },
   },
   {
     timestamps: true,
@@ -79,6 +87,7 @@ const userSchema = new mongoose.Schema(
         delete ret.tokenVersion;
         delete ret.passwordResetTokenHash;
         delete ret.passwordResetExpiresAt;
+        delete ret.pushPreferences; // served by GET /push/preferences
         // Admin roles carry their permissions so the web app can shape its menu (the API still checks).
         if (ADMIN_ROLES.includes(ret.role)) ret.permissions = permissionsFor(ret.role);
         return ret;

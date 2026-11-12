@@ -11,8 +11,7 @@
   border-radius: var(--bb-radius-lg);
   color: #fff6e5;
   background:
-    radial-gradient(circle at 100% 0%, rgb(255 181 46 / 35%) 0, transparent 50%),
-    var(--bb-plum);
+    radial-gradient(circle at 100% 0%, rgb(255 181 46 / 35%) 0, transparent 50%), var(--bb-brand);
 
   h1 {
     color: #fff6e5;
@@ -76,7 +75,7 @@
     font-size: 2rem;
     font-weight: 800;
     color: var(--bb-amber);
-    background: var(--bb-plum);
+    background: var(--bb-brand);
   }
 
   h2 {
@@ -125,11 +124,11 @@
   font-weight: 700;
   padding: 2px 10px;
   border-radius: 999px;
-  background: #fdecee;
+  background: var(--bb-danger-bg);
   color: var(--bb-danger);
 
   &.open {
-    background: #e6f5ec;
+    background: var(--bb-success-bg);
     color: var(--bb-success);
   }
 }
@@ -161,62 +160,4 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--bb-space-2);
-}
-
-@include bp.phone-only {
-  // Smaller photo pinned to the top of the text instead of floating mid-block.
-  .identity {
-    align-items: flex-start;
-    gap: var(--bb-space-3);
-    width: 100%;
-
-    img,
-    .avatar {
-      width: 60px;
-      height: 60px;
-    }
-    h2 {
-      font-size: 1.1rem;
-    }
-    p {
-      font-size: 0.85rem;
-    }
-    > div {
-      min-width: 0;
-    }
-  }
-
-  // Toggle and open/closed pill share one row under the restaurant details.
-  .orders-toggle {
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  // Three compact tiles in a row instead of three full-width cards.
-  .stats {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--bb-space-2);
-  }
-  .stat {
-    padding: var(--bb-space-3) var(--bb-space-2);
-    align-items: center;
-    text-align: center;
-
-    np-icon {
-      margin-bottom: var(--bb-space-1);
-    }
-    strong {
-      font-size: 1.5rem;
-    }
-    span {
-      font-size: 0.78rem;
-      line-height: 1.2;
-    }
-  }
-
-  .actions {
-    flex-direction: column;
-  }
 }

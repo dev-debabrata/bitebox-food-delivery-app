@@ -14,7 +14,7 @@
   width: 280px;
   border-right: 0;
   border-radius: 0;
-  background: var(--bb-plum);
+  background: var(--bb-brand);
   color: #fff6e5;
   display: flex;
   flex-direction: column;
@@ -38,7 +38,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--bb-plum);
+  color: var(--bb-on-accent); // stays dark on amber in both themes
   background: var(--bb-amber);
   padding: 3px 10px;
   border-radius: 999px;
@@ -231,7 +231,7 @@
   display: inline-grid;
   place-items: center;
   background: var(--bb-amber);
-  color: var(--bb-plum);
+  color: var(--bb-on-accent);
   font-size: 0.75rem;
   font-weight: 800;
 }

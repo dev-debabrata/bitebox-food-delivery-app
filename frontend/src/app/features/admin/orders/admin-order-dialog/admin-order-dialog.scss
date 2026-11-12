@@ -1,9 +1,11 @@
 @use 'breakpoints' as bp;
 
+// The title row and the meta line share the dialog's title padding.
 .head {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding: var(--bb-space-5) var(--bb-space-5) var(--bb-space-2);
 }
 
 .title-row {
@@ -14,6 +16,7 @@
 
   h2 {
     margin: 0;
+    padding: 0;
     font-size: 1.35rem;
   }
 }
@@ -29,20 +32,20 @@
   padding: 1px 8px;
   border-radius: 999px;
   background: var(--bb-amber-100);
-  color: #7a4b00;
+  color: var(--bb-warning-ink);
   font-size: 0.8rem;
   font-weight: 600;
   white-space: nowrap;
 
   &.pay-paid,
   &.pay-refunded {
-    background: #e6f5ec;
+    background: var(--bb-success-bg);
     color: var(--bb-success);
   }
 
   &.pay-failed,
   &.pay-cancelled {
-    background: #fdecee;
+    background: var(--bb-danger-bg);
     color: var(--bb-danger);
   }
 }
@@ -184,7 +187,7 @@ p {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: var(--bb-plum);
+      background: var(--bb-brand);
     }
 
     &:not(:last-child)::after {
@@ -210,10 +213,6 @@ p {
 
 .note-line {
   font-size: 0.8rem;
-}
-
-.danger {
-  --mat-button-outlined-label-text-color: var(--bb-danger);
 }
 
 .map-note {

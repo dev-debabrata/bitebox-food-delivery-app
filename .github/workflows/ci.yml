@@ -39,3 +39,57 @@ jobs:
       - run: npm ci
       - run: npm test -- --watch=false
       - run: npm run build
+
+  # Django API (backend-django/, replacing backend/ phase by phase; see docs/django-migration/).
+  backend-django:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend-django
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: bitebox_test
+          POSTGRES_USER: bitebox
+          POSTGRES_PASSWORD: bitebox
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U bitebox -d bitebox_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      TEST_DATABASE_URL: postgres://bitebox:bitebox@localhost:5432/bitebox_test
+      REDIS_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend-django/requirements/*.txt
+      - run: pip install -r requirements/dev.txt
+      - run: ruff format --check .
+      - run: ruff check .
+      - run: mypy .
+      - run: python manage.py check
+      - run: python manage.py makemigrations --check --dry-run
+      - run: python manage.py spectacular --validate --fail-on-warn --file /tmp/openapi.yml
+      - run: pytest
+      - name: Production settings pass Django's deploy checklist
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.production
+          DJANGO_SECRET_KEY: ci-only-not-a-real-secret-0123456789abcdefghij
+          DJANGO_ALLOWED_HOSTS: api.bitebox.example
+          JWT_SECRET: ci-only-jwt-secret-not-real-0123456789abcdef
+          SMTP_HOST: smtp.example.invalid
+          DATABASE_URL: postgres://bitebox:bitebox@localhost:5432/bitebox_test
+        run: python manage.py check --deploy --fail-level WARNING
+      - name: Known vulnerabilities in dependencies
+        run: pip-audit -r requirements/base.txt

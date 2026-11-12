@@ -1,10 +1,10 @@
 <header class="gateway-head">
   <span class="logo" aria-hidden="true">B</span>
   <div class="merchant">
-    <strong>BiteBox</strong>
+    <strong [id]="titleId">BiteBox</strong>
     <span>Order {{ session.orderNumber }}</span>
   </div>
-  <button mat-icon-button type="button" mat-dialog-close aria-label="Close payment" [disabled]="processing()">
+  <button type="button" class="bb-btn bb-btn--text bb-btn--icon close" aria-label="Close payment" [disabled]="processing()" (click)="ref.close()">
     <np-icon name="x" class="mat-icon" matButtonIcon />
   </button>
   <span class="amount-label">Amount to pay</span>
@@ -16,7 +16,7 @@
   <span><strong>Test mode.</strong> No real money moves. Available in development only.</span>
 </p>
 
-<mat-dialog-content class="body">
+<div class="body">
   <h2 class="bb-muted">Payment method</h2>
   <div class="methods" role="radiogroup" aria-label="Payment method">
     @for (m of methods; track m.id) {
@@ -39,10 +39,10 @@
     }
   </div>
   <p class="detail">{{ selected().detail }}</p>
-</mat-dialog-content>
+</div>
 
 <footer class="gateway-foot">
-  <button mat-flat-button type="button" class="pay bb-btn-accent" [disabled]="processing()" (click)="finish('success')" cdkFocusInitial>
+  <button type="button" class="pay bb-btn bb-btn--accent" [disabled]="processing()" (click)="finish('success')" cdkFocusInitial>
     <np-icon name="lock" class="mat-icon" matButtonIcon />
     {{ processing() ? 'Processing…' : 'Pay ' + (session.amountPaise | inr) }}
   </button>

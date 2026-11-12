@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router, provideRouter } from '@angular/router';
-import { MatDialog } from '@angular/material/dialog';
+import { BbDialog } from '../../shared/dialog/bb-dialog';
 import { of, throwError } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { CartActions } from './cart-actions.service';
@@ -25,7 +25,7 @@ describe('CartActions', () => {
         provideRouter([]),
         { provide: CartService, useValue: cart },
         { provide: NotificationService, useValue: notify },
-        { provide: MatDialog, useValue: dialog },
+        { provide: BbDialog, useValue: dialog },
         {
           provide: AuthService,
           useValue: {
@@ -65,7 +65,7 @@ describe('CartActions', () => {
       },
     });
     cart.add.mockReturnValueOnce(throwError(() => conflict)).mockReturnValueOnce(of({}));
-    dialog.open.mockReturnValue({ afterClosed: () => of(true) });
+    dialog.open.mockReturnValue({ closed: of(true) });
 
     actions.add('f2', 'Dosa');
 
@@ -80,7 +80,7 @@ describe('CartActions', () => {
       error: { error: { code: 'CART_RESTAURANT_CONFLICT' }, message: 'x' },
     });
     cart.add.mockReturnValue(throwError(() => conflict));
-    dialog.open.mockReturnValue({ afterClosed: () => of(undefined) });
+    dialog.open.mockReturnValue({ closed: of(undefined) });
     actions.add('f2', 'Dosa');
     expect(cart.add).toHaveBeenCalledTimes(1);
     expect(notify.success).not.toHaveBeenCalled();

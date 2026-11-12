@@ -5,3 +5,14 @@
 img {
   width: auto;
 }
+.for-dark {
+  display: none;
+}
+:host-context([data-theme='dark']) {
+  .for-light {
+    display: none;
+  }
+  .for-dark {
+    display: block;
+  }
+}

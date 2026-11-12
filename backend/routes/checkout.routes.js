@@ -76,6 +76,7 @@ export const ordersRouter = Router()
   )
   .get("/", validate(rules.listOrdersRules), c.listMyOrders)
   .get("/:id", validate([mongoIdParam()]), orders.customerGet)
+  .get("/:id/timeline", validate([mongoIdParam()]), orders.customerTimeline)
   .get(
     "/:id/reviews",
     validate([mongoIdParam()]),

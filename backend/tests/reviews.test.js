@@ -17,6 +17,7 @@ import {
   seedCatalogFor,
   setupTestDb,
   teardownTestDb,
+  riderStatusBody,
 } from "./helpers.js";
 
 const auth = (token) => ({ Authorization: `Bearer ${token}` });
@@ -112,7 +113,7 @@ describe("ratings and reviews", () => {
       await request(app)
         .patch(`/api/v1/delivery/orders/${id}/status`)
         .set(auth(rider.token))
-        .send({ status });
+        .send(await riderStatusBody(id, status));
     assert.equal((await Order.findById(id)).status, "delivered");
     return id;
   }

@@ -1,0 +1,113 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.csr.html",
+  "appData": {
+    "name": "BiteBox"
+  },
+  "assetGroups": [
+    {
+      "name": "app-shell",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.csr.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js",
+          "/icon-192.png",
+          "/bitebox-favicon.svg",
+          "/bitebox-logo.svg",
+          "/icons/wifi-off.svg",
+          "/icons/wifi.svg",
+          "/icons/refresh-cw.svg",
+          "/icons/x.svg",
+          "/icons/download.svg",
+          "/icons/house.svg",
+          "/icons/store.svg",
+          "/icons/shopping-bag.svg",
+          "/icons/user.svg",
+          "/icons/log-in.svg",
+          "/icons/map-pin.svg",
+          "/icons/chevron-down.svg",
+          "/icons/bell.svg",
+          "/icons/sparkles.svg"
+        ]
+      }
+    },
+    {
+      "name": "static-assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/media/**",
+          "/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|ico|otf|ttf|woff|woff2)"
+        ]
+      }
+    },
+    {
+      "name": "web-fonts",
+      "installMode": "lazy",
+      "updateMode": "lazy",
+      "resources": {
+        "urls": [
+          "https://fonts.googleapis.com/**",
+          "https://fonts.gstatic.com/**"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "ui-icons",
+      "urls": [
+        "/icons/**"
+      ],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 400,
+        "maxAge": "7d"
+      }
+    },
+    {
+      "name": "public-catalogue",
+      "urls": [
+        "/api/v1/restaurants",
+        "/api/v1/restaurants/**",
+        "/api/v1/categories",
+        "/api/v1/foods",
+        "/api/v1/foods/**"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "timeout": "5s",
+        "maxSize": 120,
+        "maxAge": "1d"
+      }
+    },
+    {
+      "name": "catalogue-images",
+      "urls": [
+        "/uploads/**",
+        "https://res.cloudinary.com/**"
+      ],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 200,
+        "maxAge": "7d"
+      }
+    }
+  ],
+  "navigationUrls": [
+    "/**",
+    "!/**/*.*",
+    "!/**/*__*",
+    "!/**/*__*/**",
+    "!/api/**",
+    "!/uploads/**",
+    "!/socket.io/**",
+    "!/healthz"
+  ]
+}

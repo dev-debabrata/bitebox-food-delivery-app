@@ -1,18 +1,19 @@
-@use 'breakpoints' as bp;
-
 .head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--bb-space-3);
+  margin-top: var(--bb-space-2);
 
   div {
     display: flex;
     flex-direction: column;
+    gap: 6px;
   }
   .amount {
     font-size: 1.6rem;
     font-weight: 800;
+    line-height: 1.2;
   }
 }
 

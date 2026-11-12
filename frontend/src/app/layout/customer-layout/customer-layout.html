@@ -95,6 +95,10 @@
               <np-icon name="map-pin" class="mat-icon" matButtonIcon />
               <span>Saved addresses</span>
             </a>
+            <a mat-menu-item routerLink="/account/payments">
+              <np-icon name="credit-card" class="mat-icon" matButtonIcon />
+              <span>Payments</span>
+            </a>
             <mat-divider />
             <a mat-menu-item routerLink="/account/coins">
               <np-icon name="coins" class="mat-icon" matButtonIcon />
@@ -119,6 +123,16 @@
             </a>
           }
           <mat-divider />
+          <button mat-menu-item (click)="themes.toggle()">
+            <np-icon [name]="themes.theme() === 'dark' ? 'sun' : 'moon'" class="mat-icon" matButtonIcon />
+            <span>{{ themes.theme() === 'dark' ? 'Light theme' : 'Dark theme' }}</span>
+          </button>
+          @if (installer.canInstall()) {
+            <button mat-menu-item (click)="installer.install()">
+              <np-icon name="download" class="mat-icon" matButtonIcon />
+              <span>Install app</span>
+            </button>
+          }
           <button mat-menu-item (click)="logout()">
             <np-icon name="log-out" class="mat-icon" matButtonIcon />
             <span>Sign out</span>
@@ -133,6 +147,10 @@
 </header>
 
 <main id="main" class="site-main">
+  <!-- Home and the restaurant list only (pages without their own bottom bar). -->
+  @if (installPromo()) {
+    <bb-install-banner />
+  }
   <router-outlet />
 </main>
 

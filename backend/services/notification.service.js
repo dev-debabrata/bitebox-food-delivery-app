@@ -4,6 +4,7 @@ import { Restaurant } from "../models/restaurant.model.js";
 import { hasPermission } from "../config/permissions.js";
 import { ADMIN_ROLES, ROLES, USER_STATUS, User } from "../models/user.model.js";
 import { emitToUsers } from "../sockets/events.js";
+import { pushToUsers } from "./push.service.js";
 import { ApiError } from "../utils/api-error.js";
 import { paginationMeta } from "../utils/pagination.js";
 
@@ -22,6 +23,8 @@ export async function notify(userIds, { type, title, body, link, order }) {
     );
     for (const doc of docs)
       emitToUsers([doc.user], "notification:new", doc.toJSON());
+    // Also to their subscribed browsers (in the background, filtered by push preferences).
+    pushToUsers(users, { type, title, body, link, order });
   } catch (error) {
     logger.error({ err: error, type }, "Could not store notification");
   }

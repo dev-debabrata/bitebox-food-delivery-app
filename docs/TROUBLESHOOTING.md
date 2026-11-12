@@ -34,13 +34,13 @@ Each entry is **symptom → cause → fix**. Start with the health checks:
 | Symptom | Cause | Fix |
 |---|---|---|
 | Backend tests fail with `Instance closed unexpectedly` / `mongod` killed | The in-memory MongoDB can't start in this environment | Run against a real database: `TEST_MONGO_URI='mongodb://127.0.0.1:27017/bitebox_test' npm test`. The name **must end in `_test`** (the tests wipe it). |
-| `documents every API route in OpenAPI` fails | A route was added or changed without updating the docs | Add it to the matching `backend/src/docs/openapi.*.js` file (the test lists what's missing). |
+| `documents every API route in OpenAPI` fails | A route was added or changed without updating the docs | Add it to the matching `backend/docs/openapi.*.js` file (the test lists what's missing). |
 
 ## Orders, riders and maps
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| New orders become "rejected" | The restaurant didn't answer within 10 minutes | Expected. Tune `restaurantResponseMinutes` in `backend/src/config/dispatch.js`. |
+| New orders become "rejected" | The restaurant didn't answer within 10 minutes | Expected. Tune `restaurantResponseMinutes` in `backend/config/dispatch.js`. |
 | Ready orders become "cancelled" | No rider picked them up within 30 minutes | Expected (paid orders are refunded). Tune `pickupWindowMinutes`. |
 | A rider gets no delivery requests | The rider must be online, with a vehicle and a location under 15 minutes old, within 10 km of the restaurant | Check `/admin/delivery-partners`. A rider who ignores an offer is set offline. |
 | "Can't pinpoint where you are" when going online | The device location is vaguer than 1 km (desktops) | Use a phone with GPS, or Chrome DevTools → Sensors. |
@@ -68,4 +68,10 @@ Each entry is **symptom → cause → fix**. Start with the health checks:
 | `Transaction numbers are only allowed on a replica set` warnings, or set `DISABLE_TRANSACTIONS` | MongoDB isn't a replica set | Atlas is one already. Self-hosted: run `mongod --replSet rs0` and `rs.initiate()` (docker-compose does this). Without it the API still works using its undo fallback. |
 | Uploaded images vanish after a redeploy | Images were stored on the container's disk | Configure Cloudinary, or mount a volume at `/app/uploads` (docker-compose does). |
 | The test payment option is missing in production | By design | The simulated provider is never enabled when `NODE_ENV=production`. |
+| No "Install" option, and DevTools > Application shows no service worker | Development server, or not HTTPS | The service worker is registered in production builds only (`npm run build`, then `npm run serve:ssr:frontend`), and only on HTTPS or `localhost`. |
+| Visitors keep seeing an old version after a deploy | `ngsw-worker.js` / `ngsw.json` cached by a proxy or CDN | Serve them (and `manifest.webmanifest`) with `Cache-Control: no-cache`. The SSR server, `vercel.json` and `public/_headers` do; add the same rule to any CDN in front. Users then get the "New version available" card. |
+| A deploy breaks the app for installed users until they clear site data | Emergency: a broken service worker | Copy `safety-worker.js` over `ngsw-worker.js` in the deployed files: it unregisters the worker and reloads clients. Redeploy normally afterwards. |
+| "Push notifications aren't available right now" | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` not set on the API | Generate a pair once (`npx web-push generate-vapid-keys` in `backend/`) and set both. Never change them casually: every existing subscription stops working. |
+| Subscribing fails with "This browser's push service is not supported" | The browser's push endpoint host isn't in `PUSH_ALLOWED_HOSTS` | Add the push service's host (suffix) to `PUSH_ALLOWED_HOSTS` on the API. |
+| Push works on Android/desktop but not on iPhone | iOS only allows push in Home Screen apps (iOS 16.4+) | Add BiteBox to the Home Screen from Safari's Share menu, open it from there and turn notifications on. |
 | `npm audit` reports `quill` (low) | Pulled in by NexPrime's rich-text editor, which BiteBox doesn't use | Not reachable in the app. It goes away when NexPrime updates its dependency. |
