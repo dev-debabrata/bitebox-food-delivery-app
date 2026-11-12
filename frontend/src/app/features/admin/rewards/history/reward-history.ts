@@ -1,3 +1,4 @@
+import { TableLabels } from '../../../../shared/list/table-labels';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
@@ -13,7 +14,8 @@ import { REWARD_TYPE_LABEL, RewardType } from '../../../../shared/models/rewards
 /** Reward distribution history: every welcome, birthday and campaign reward given. */
 @Component({
   selector: 'bb-reward-history',
-  imports: [DatePipe, NP_FORM_FIELDS, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
+  imports: [
+    TableLabels,DatePipe, NP_FORM_FIELDS, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
   templateUrl: './reward-history.html',
   styleUrl: './reward-history.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

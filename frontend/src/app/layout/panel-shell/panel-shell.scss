@@ -14,7 +14,7 @@
   width: 280px;
   border-right: 0;
   border-radius: 0;
-  background: var(--bb-plum);
+  background: var(--bb-brand);
   color: #fff6e5;
   display: flex;
   flex-direction: column;
@@ -38,7 +38,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--bb-plum);
+  color: var(--bb-on-accent); // stays dark on amber in both themes
   background: var(--bb-amber);
   padding: 3px 10px;
   border-radius: 999px;
@@ -68,6 +68,7 @@
 
 .sidebar-footer {
   padding: var(--bb-space-3);
+  padding-bottom: calc(var(--bb-space-3) + env(safe-area-inset-bottom));
   border-top: 1px solid rgb(255 255 255 / 10%);
 
   .signout {
@@ -89,10 +90,15 @@
   // The content column is a flex box: without this, long pages (e.g. the dashboard) squash the bar.
   flex-shrink: 0;
   gap: var(--bb-space-2);
-  background: rgb(255 255 255 / 92%);
-  backdrop-filter: blur(8px);
+  // Solid, so iOS Safari tints the strip behind the status bar to match (not the page grey).
+  background: var(--bb-surface);
   border-bottom: 1px solid var(--bb-border);
-  padding-inline: var(--bb-space-2) var(--bb-page-gutter);
+  // viewport-fit=cover: grow by the status bar (home-screen web app) and clear a sideways notch.
+  padding-top: env(safe-area-inset-top);
+  --mat-toolbar-standard-height: calc(64px + env(safe-area-inset-top));
+  --mat-toolbar-mobile-height: calc(56px + env(safe-area-inset-top));
+  padding-inline: max(var(--bb-space-2), env(safe-area-inset-left))
+    max(var(--bb-page-gutter), env(safe-area-inset-right));
 
   @include bp.desktop-up {
     padding-inline: var(--bb-page-gutter);
@@ -115,10 +121,16 @@
     margin-right: 8px;
   }
 
-  // Phones show the avatar alone.
+  // Phones show the avatar alone: drop the gap and Material's 64px minimum width so the
+  // hover/focus layer is a circle around the avatar, not a pill.
   @include bp.phone-only {
+    min-width: 0;
+
     np-icon {
       display: none;
+    }
+    .avatar {
+      margin-right: 0;
     }
   }
 }
@@ -156,7 +168,9 @@
   width: 100%;
   max-width: var(--bb-content-max);
   margin-inline: auto;
-  padding: var(--bb-space-5) var(--bb-page-gutter) var(--bb-space-7);
+  padding: var(--bb-space-5) var(--bb-page-gutter) calc(var(--bb-space-7) + env(safe-area-inset-bottom));
+  padding-inline: max(var(--bb-page-gutter), env(safe-area-inset-left))
+    max(var(--bb-page-gutter), env(safe-area-inset-right));
 }
 
 // Long labels ("Delivery partner complaints") wrap onto a second line instead of being cut off.
@@ -217,7 +231,7 @@
   display: inline-grid;
   place-items: center;
   background: var(--bb-amber);
-  color: var(--bb-plum);
+  color: var(--bb-on-accent);
   font-size: 0.75rem;
   font-weight: 800;
 }

@@ -30,11 +30,11 @@
             } @else {
               <strong>Order removed</strong>
             }
-            <span class="bb-muted">
+            <span class="bb-muted meta">
               @if (p.customer) {
                 {{ p.customer.name }} ·
               }
-              {{ providerLabel[p.provider] }} · {{ p.createdAt | date: 'd MMM, h:mm a' }}
+              {{ providerLabel[p.provider] }} · <span class="when">{{ p.createdAt | date: 'd MMM, h:mm a' }}</span>
               @if (p.providerPaymentId) {
                 · <span class="ref">{{ p.providerPaymentId }}</span>
               }
@@ -47,22 +47,22 @@
           <span class="pay-status pay-{{ p.status }}">{{ statusLabel[p.status] }}</span>
           <div class="action">
             @if (p.refundNeeded && canRefund) {
-              <button mat-stroked-button type="button" [disabled]="refunding() === p.id" (click)="retryRefund(p)">
-                <np-icon name="rotate-ccw" class="mat-icon" matButtonIcon />
-                Retry refund
-              </button>
+              <np-button size="small" variant="outlined" severity="primary" icon="rotate-ccw" label="Retry refund" [disabled]="refunding() === p.id" (clicked)="retryRefund(p)" />
+            } @else if (hasRefunds(p)) {
+              <np-button size="small" variant="outlined" severity="secondary" [label]="canRefund && p.refundablePaise! > 0 ? 'Refund' : 'Refunds'" (clicked)="refunds(p)" />
             }
           </div>
         </li>
       }
     </ul>
-    <mat-paginator
-      [length]="list.data()!.pagination.total"
-      [pageIndex]="list.data()!.pagination.page - 1"
-      [pageSize]="list.data()!.pagination.limit"
-      [pageSizeOptions]="[20, 50, 100]"
-      (page)="list.onPage($event)"
-      aria-label="Payment pages"
+    <np-pagination
+      variant="compact"
+      [page]="list.data()!.pagination.page"
+      [rows]="list.data()!.pagination.limit"
+      [totalRecords]="list.data()!.pagination.total"
+      [rowsOptions]="[20, 50, 100]"
+      (pageChange)="list.goTo($event)"
+      (rowsChange)="list.goTo(1, $event)"
     />
   }
 </div>

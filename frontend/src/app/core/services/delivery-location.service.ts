@@ -81,21 +81,25 @@ export class DeliveryLocationService {
   private readonly http = inject(HttpClient);
   private readonly geo = inject(GeolocationService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-  private readonly api = `${environment.apiUrl}/geo`;
+  private readonly api = `${environment.baseUrl}/geo`;
 
   readonly location = signal<DeliveryLocation | null>(null);
-  private restored = false;
+  /**
+   * True once the saved location has been read (always on the server, which has none). Screens
+   * that load by location wait for it, so they don't fetch once without it and again with it.
+   */
+  readonly ready = signal(!this.isBrowser);
 
   constructor() {
     if (!this.isBrowser) return;
     afterNextRender(() => {
       const saved = this.restore();
-      this.restored = true;
       if (saved && !this.location()) this.location.set(saved);
+      this.ready.set(true);
     });
     effect(() => {
       const value = this.location();
-      if (!this.restored) return;
+      if (!this.ready()) return;
       try {
         if (value) localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
         else localStorage.removeItem(STORAGE_KEY);
@@ -175,6 +179,14 @@ export class DeliveryLocationService {
 
   clear(): void {
     this.location.set(null);
+  }
+
+  /** Drops a saved address that no longer exists; the point itself stays as the location. */
+  forgetAddress(addressId: string): void {
+    const current = this.location();
+    if (current?.addressId === addressId) {
+      this.location.set({ ...current, source: 'search', addressId: undefined });
+    }
   }
 
   private restore(): DeliveryLocation | null {

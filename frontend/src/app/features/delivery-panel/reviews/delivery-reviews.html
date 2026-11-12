@@ -39,27 +39,33 @@
       @for (r of list.data()!.items; track r.id) {
         <li>
           <bb-review-card [review]="r">
-            <span badge class="order-no">Order {{ r.orderNumber }}</span>
             <div class="actions">
+              <span class="order-no">Order {{ r.orderNumber }}</span>
               @if (r.reportedByYou) {
                 <span class="bb-muted">Reported</span>
               } @else {
-                <button mat-button type="button" (click)="report(r)" [attr.aria-label]="'Report rating from ' + r.authorName">
-                  <np-icon name="flag" class="mat-icon" matButtonIcon />Report
-                </button>
+                <np-button
+                  variant="text"
+                  severity="secondary"
+                  icon="flag"
+                  label="Report"
+                  [ariaLabel]="'Report rating from ' + r.authorName"
+                  (clicked)="report(r)"
+                />
               }
             </div>
           </bb-review-card>
         </li>
       }
     </ul>
-    <mat-paginator
-      [length]="list.data()!.pagination.total"
-      [pageIndex]="list.data()!.pagination.page - 1"
-      [pageSize]="list.data()!.pagination.limit"
-      [pageSizeOptions]="[10, 20, 50]"
-      (page)="list.onPage($event)"
-      aria-label="Rating pages"
+    <np-pagination
+      [page]="list.data()!.pagination.page"
+      [rows]="list.data()!.pagination.limit"
+      [totalRecords]="list.data()!.pagination.total"
+      [rowsOptions]="[10, 20, 50]"
+      variant="compact"
+      (pageChange)="list.goTo($event)"
+      (rowsChange)="list.goTo(1, $event)"
     />
   }
 </div>

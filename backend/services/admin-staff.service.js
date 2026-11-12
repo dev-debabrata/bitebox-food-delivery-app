@@ -1,4 +1,4 @@
-import { Session } from "../models/session.model.js";
+import mongoose from "mongoose";
 import {
   ADMIN_ROLES,
   MEMBER_ROLES,
@@ -7,20 +7,11 @@ import {
   USER_STATUS,
   User,
 } from "../models/user.model.js";
+import { Session } from "../models/session.model.js";
 import { ApiError } from "../utils/api-error.js";
 import { escapeRegex, paginationMeta } from "../utils/pagination.js";
-import { hashPassword } from "./auth.service.js";
+import { endSessions, hashPassword } from "./auth.service.js";
 import { adminSetStatus as setRiderStatus } from "./delivery-partner.service.js";
-
-/** Signs the user out everywhere: old access tokens fail (`tokenVersion`) and refresh tokens are revoked. */
-async function endSessions(user, reason) {
-  user.tokenVersion = (user.tokenVersion || 0) + 1;
-  await user.save();
-  await Session.updateMany(
-    { user: user._id, revokedAt: null },
-    { revokedAt: new Date(), revokedReason: reason },
-  );
-}
 
 /**
  * Suspends or reactivates an account whose role is in `roles` (the Users page passes member roles,
@@ -121,4 +112,53 @@ export async function updateStaff(actorId, id, { name, phone, role }) {
     await user.save();
   }
   return user.toJSON();
+}
+
+/**
+ * Sign-ins of one account, newest first. A sign-in is a session family: refreshes rotate the
+ * token inside it, so its first row is the sign-in and its newest row says whether it is still
+ * active. (Expired sessions are purged by a TTL index, so history covers the refresh lifetime.)
+ */
+export async function loginHistory(userId, roles, pagination) {
+  if (!(await User.exists({ _id: userId, role: { $in: roles } })))
+    throw ApiError.notFound("User not found");
+  const [{ families, total }] = await Session.aggregate([
+    { $match: { user: new mongoose.Types.ObjectId(String(userId)) } },
+    { $sort: { createdAt: 1 } },
+    {
+      $group: {
+        _id: "$family",
+        signedInAt: { $first: "$createdAt" },
+        lastActiveAt: { $last: "$createdAt" },
+        ip: { $first: "$ip" },
+        userAgent: { $first: "$userAgent" },
+        last: { $last: { revokedAt: "$revokedAt", reason: "$revokedReason", expiresAt: "$expiresAt" } },
+      },
+    },
+    {
+      $facet: {
+        families: [
+          { $sort: { signedInAt: -1 } },
+          { $skip: pagination.skip },
+          { $limit: pagination.limit },
+        ],
+        total: [{ $count: "n" }],
+      },
+    },
+  ]);
+  const now = new Date();
+  return {
+    items: families.map((f) => {
+      const active = !f.last.revokedAt && f.last.expiresAt > now;
+      return {
+        signedInAt: f.signedInAt,
+        lastActiveAt: f.lastActiveAt,
+        ip: f.ip ?? null,
+        userAgent: f.userAgent ?? null,
+        active,
+        endedReason: active ? null : (f.last.reason ?? "expired"),
+      };
+    }),
+    pagination: paginationMeta(pagination, total[0]?.n ?? 0),
+  };
 }

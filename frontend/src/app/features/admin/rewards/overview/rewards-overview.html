@@ -51,26 +51,28 @@
       @if (!d.campaigns.top.length) {
         <p class="bb-muted">No campaign has paid out yet.</p>
       } @else {
-        <table class="bb-table">
-          <thead>
-            <tr>
-              <th scope="col">Campaign</th>
-              <th scope="col">Status</th>
-              <th scope="col" class="num">Claims</th>
-              <th scope="col" class="num">Coins</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (c of d.campaigns.top; track c.id) {
+        <div class="bb-table-scroll">
+          <table class="bb-table">
+            <thead>
               <tr>
-                <td>{{ c.name }}</td>
-                <td>{{ statusLabel[c.status] }}</td>
-                <td class="num">{{ c.claims }}</td>
-                <td class="num">{{ c.coins.toLocaleString('en-IN') }}</td>
+                <th scope="col">Campaign</th>
+                <th scope="col">Status</th>
+                <th scope="col" class="num">Claims</th>
+                <th scope="col" class="num">Coins</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (c of d.campaigns.top; track c.id) {
+                <tr>
+                  <td>{{ c.name }}</td>
+                  <td>{{ statusLabel[c.status] }}</td>
+                  <td class="num">{{ c.claims }}</td>
+                  <td class="num">{{ c.coins.toLocaleString('en-IN') }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
     </section>
 

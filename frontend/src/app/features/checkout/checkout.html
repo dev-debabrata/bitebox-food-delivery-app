@@ -159,11 +159,22 @@
               <ul class="offers">
                 @for (o of offers(); track o.code) {
                   <li>
+                    <np-icon name="ticket-percent" class="mat-icon offer-icon" />
                     <div>
                       <strong>{{ offerTitle(o) }}</strong>
                       <span class="bb-muted small">{{ o.description }}</span>
+                      <span class="code">{{ o.code }}</span>
                     </div>
-                    <button mat-button type="button" (click)="applyCoupon(o.code)" [disabled]="applyingCoupon()">{{ o.code }}</button>
+                    <button
+                      mat-flat-button
+                      class="bb-btn-accent"
+                      type="button"
+                      (click)="applyCoupon(o.code)"
+                      [disabled]="applyingCoupon()"
+                      [attr.aria-label]="'Apply coupon ' + o.code"
+                    >
+                      Apply
+                    </button>
                   </li>
                 }
               </ul>
@@ -213,7 +224,13 @@
           </div>
         }
 
-        <button mat-flat-button class="place bb-btn-accent" type="button" (click)="placeOrder()" [disabled]="!q.canCheckout || placing() || cart.busy()">
+        @if (!connection.online()) {
+          <div class="bb-alert info" role="status">
+            <np-icon name="wifi-off" class="mat-icon" matButtonIcon />
+            <span>You're offline. Placing an order and paying need an internet connection; your cart is kept.</span>
+          </div>
+        }
+        <button mat-flat-button class="place bb-btn-accent" type="button" (click)="placeOrder()" [disabled]="!q.canCheckout || placing() || cart.busy() || !connection.online()">
           @if (placing()) {
             <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Placing order" />
           } @else {

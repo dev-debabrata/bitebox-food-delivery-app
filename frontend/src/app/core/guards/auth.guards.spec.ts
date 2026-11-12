@@ -126,5 +126,11 @@ describe('auth guards', () => {
     it('sends signed-out visitors to the login page', async () => {
       expect(serialize(await run(permissionGuard('orders:view')))).toBe('/login');
     });
+
+    it('never redirects to the page that was refused (no redirect loop)', async () => {
+      auth.role.set('finance_admin');
+      auth.permissions.set([]);
+      expect(serialize(await run(permissionGuard('finance:view'), '/admin/finance?days=30'))).toBe('/forbidden');
+    });
   });
 });

@@ -1,4 +1,6 @@
+import mongoose from "mongoose";
 import { env } from "../config/env.js";
+import { DeliveryPartner } from "../models/delivery-partner.model.js";
 import { ORDER_STATUS, Order, PAYMENT_STATUS } from "../models/order.model.js";
 import { Restaurant } from "../models/restaurant.model.js";
 import { ROLES, User } from "../models/user.model.js";
@@ -187,5 +189,54 @@ export async function adminReport(days) {
       orders: x.orders,
       gmvPaise: x.gmvPaise,
     })),
+  };
+}
+
+/** True when `field` falls in the current `unit` ("day" or "week", from Monday) in the report timezone. */
+export const inCurrent = (field, unit) => ({
+  $gte: [
+    field,
+    { $dateTrunc: { date: "$$NOW", unit, timezone: tz(), startOfWeek: "monday" } },
+  ],
+});
+
+/**
+ * The rider dashboard's figures: today and this week (Monday onwards), in env.reportTimezone,
+ * from the settlements of delivered orders; all-time totals; the rating.
+ */
+export async function riderStats(userId) {
+  const at = "$settlement.at";
+  const pay = { $ifNull: ["$settlement.riderPaise", 0] };
+  const [[row], profile] = await Promise.all([
+    Order.aggregate([
+      {
+        $match: {
+          deliveryPartner: new mongoose.Types.ObjectId(String(userId)),
+          status: S.DELIVERED,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          totalPaise: { $sum: pay },
+          today: { $sum: { $cond: [inCurrent(at, "day"), 1, 0] } },
+          todayPaise: { $sum: { $cond: [inCurrent(at, "day"), pay, 0] } },
+          week: { $sum: { $cond: [inCurrent(at, "week"), 1, 0] } },
+          weekPaise: { $sum: { $cond: [inCurrent(at, "week"), pay, 0] } },
+        },
+      },
+    ]),
+    DeliveryPartner.findOne({ user: userId }).select("rating"),
+  ]);
+  const window = (key) => ({
+    deliveries: row?.[key] ?? 0,
+    earningsPaise: row?.[`${key}Paise`] ?? 0,
+  });
+  return {
+    today: window("today"),
+    week: window("week"),
+    total: window("total"),
+    rating: { average: profile?.rating?.average ?? 0, count: profile?.rating?.count ?? 0 },
   };
 }

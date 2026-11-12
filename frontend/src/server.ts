@@ -10,6 +10,12 @@ import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
+/**
+ * PWA files that must always be revalidated: the service worker and its manifest decide which
+ * version of the app every visitor runs, so a year-long cache would pin people to an old build.
+ */
+const ALWAYS_REVALIDATE = /(?:^|[\/])(?:ngsw-worker\.js|ngsw\.json|safety-worker\.js|worker-basic\.min\.js|manifest\.webmanifest)$/;
+
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
@@ -36,7 +42,8 @@ app.use(
     index: false,
     redirect: false,
     setHeaders: (res, path) => {
-      if (path.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache');
+      if (path.endsWith('.html') || ALWAYS_REVALIDATE.test(path))
+        res.setHeader('Cache-Control', 'no-cache');
     },
   }),
 );

@@ -17,13 +17,31 @@ export interface MyRestaurantState {
   stats: MenuStats | null;
 }
 
+/** The dashboard's order figures (GET /my/restaurant/stats). Money in paise. */
+export interface RestaurantStats {
+  totalOrders: number;
+  todayOrders: number;
+  pendingOrders: number;
+  completedOrders: number;
+  cancelledOrders: number;
+  salesPaise: number;
+  averageOrderPaise: number;
+  rating: { average: number; count: number };
+}
+
 @Injectable({ providedIn: 'root' })
 export class MyRestaurantService {
   private readonly http = inject(HttpClient);
-  private readonly url = `${environment.apiUrl}/my/restaurant`;
+  private readonly url = `${environment.baseUrl}/my/restaurant`;
 
   get(): Observable<MyRestaurantState> {
     return this.http.get<ApiResponse<MyRestaurantState>>(this.url).pipe(map((res) => res.data));
+  }
+
+  stats(): Observable<RestaurantStats> {
+    return this.http
+      .get<ApiResponse<RestaurantStats>>(`${this.url}/stats`)
+      .pipe(map((res) => res.data));
   }
 
   create(input: RestaurantInput): Observable<Restaurant> {

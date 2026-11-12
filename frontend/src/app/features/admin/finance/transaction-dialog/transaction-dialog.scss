@@ -1,16 +1,22 @@
+@use 'breakpoints' as bp;
+
+// Amount and its provider/date line, with room between them and below the dialog title.
 .head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--bb-space-3);
+  margin-top: var(--bb-space-2);
 
   div {
     display: flex;
     flex-direction: column;
+    gap: 6px;
   }
   .amount {
     font-size: 1.6rem;
     font-weight: 800;
+    line-height: 1.2;
   }
 }
 
@@ -19,13 +25,24 @@
 
   div {
     display: grid;
-    grid-template-columns: 140px 1fr;
+    grid-template-columns: 140px minmax(0, 1fr);
     gap: var(--bb-space-2);
     padding: 6px 0;
     border-bottom: 1px solid var(--bb-border);
+
+    // Phones: label above its value, so long values (emails, gateway ids) get the full width.
+    @include bp.phone-only {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2px;
+      padding: 8px 0;
+    }
   }
   dt {
     color: var(--bb-ink-muted);
+
+    @include bp.phone-only {
+      font-size: 0.8rem;
+    }
   }
   dd {
     margin: 0;

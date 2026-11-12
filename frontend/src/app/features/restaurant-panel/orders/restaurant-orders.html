@@ -2,7 +2,7 @@
   title="Orders"
   subtitle="Accept new orders quickly: unanswered ones are rejected automatically."
 >
-  <button mat-stroked-button (click)="board.refresh()"><np-icon name="refresh-cw" class="mat-icon" matButtonIcon />Refresh</button>
+  <np-button severity="primary" variant="outlined" icon="refresh-cw" label="Refresh" (clicked)="board.refresh()" />
 </bb-page-header>
 
 @if (board.noRestaurant()) {
@@ -11,26 +11,17 @@
     title="Add your restaurant first"
     message="Once your restaurant is approved, orders arrive here."
   >
-    <a mat-flat-button routerLink="/restaurant/details">Add restaurant details</a>
+    <a class="bb-btn" routerLink="/restaurant/details">Add restaurant details</a>
   </bb-empty-state>
 } @else {
   <div class="tabs-scroll">
-    <mat-button-toggle-group
+    <np-button-toggle
       class="tabs"
+      [options]="tabOptions()"
       [value]="tab()"
-      (change)="selectTab($event.value)"
-      aria-label="Order stage"
-      hideSingleSelectionIndicator
-    >
-      @for (t of tabs; track t.id) {
-        <mat-button-toggle [value]="t.id">
-          {{ t.label }}
-          @if (t.id !== 'history' && countFor(t); as n) {
-            <span class="count" [class.hot]="t.id === 'new'">{{ n }}</span>
-          }
-        </mat-button-toggle>
-      }
-    </mat-button-toggle-group>
+      (valueChange)="selectTab($event)"
+      ariaLabel="Order stage"
+    />
   </div>
 
   @if (board.error(); as message) {
@@ -79,13 +70,14 @@
             </li>
           }
         </ul>
-        <mat-paginator
-          [length]="h.pagination.total"
-          [pageIndex]="h.pagination.page - 1"
-          [pageSize]="h.pagination.limit"
-          [pageSizeOptions]="[15, 30, 50]"
-          (page)="history.onPage($event)"
-          aria-label="Order history pages"
+        <np-pagination
+          [page]="h.pagination.page"
+          [rows]="h.pagination.limit"
+          [totalRecords]="h.pagination.total"
+          [rowsOptions]="[15, 30, 50]"
+          variant="compact"
+          (pageChange)="history.goTo($event)"
+          (rowsChange)="history.goTo(1, $event)"
         />
       }
     }
@@ -185,22 +177,31 @@
               }}
             </p>
           }
+          @if (o.readyBy && (o.status === 'confirmed' || o.status === 'preparing')) {
+            <p class="deadline">
+              <np-icon name="chef-hat" class="mat-icon" matButtonIcon />
+              Ready by {{ o.readyBy | date: 'h:mm a' }} ({{ o.prepMinutes }} min)
+            </p>
+          }
 
           @if (next[o.status]; as step) {
             <div class="actions">
               @if (o.status === 'pending') {
-                <button
-                  mat-stroked-button
-                  class="reject"
+                <np-button
+                  variant="outlined"
+                  severity="danger"
+                  label="Reject"
                   [disabled]="busy().has(o.id)"
-                  (click)="reject(o)"
-                >
-                  Reject
-                </button>
+                  (clicked)="reject(o)"
+                />
               }
-              <button mat-flat-button [disabled]="busy().has(o.id)" (click)="advance(o)">
-                <np-icon [name]="(busy().has(o.id) ? 'hourglass_top' : step.icon) | npIcon" class="mat-icon" matButtonIcon />{{ step.label }}
-              </button>
+              <np-button
+                severity="primary"
+                [icon]="step.icon | npIcon"
+                [label]="step.label"
+                [loading]="busy().has(o.id)"
+                (clicked)="advance(o)"
+              />
             </div>
           } @else {
             <p class="waiting">

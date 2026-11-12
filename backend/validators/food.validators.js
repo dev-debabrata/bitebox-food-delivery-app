@@ -25,8 +25,10 @@ function foodRules({ partial }) {
       .toBoolean(),
     body("isAvailable").optional().isBoolean().toBoolean(),
     imageUrlBody(),
+    // null clears it, so it must reach the service (validate drops "not sent" fields).
     body("prepTimeMinutes")
-      .optional({ values: "null" })
+      .optional()
+      .if((v) => v !== null)
       .isInt({ min: 1, max: 180 })
       .toInt(),
     body("tags").optional().isArray({ max: 10 }),

@@ -1,3 +1,4 @@
+import { TableLabels } from '../../../../shared/list/table-labels';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
@@ -13,7 +14,8 @@ import { InrPipe } from '../../../../shared/pipes/money.pipes';
 /** A campaign's settings, performance and latest claims. */
 @Component({
   selector: 'bb-campaign-detail-dialog',
-  imports: [DatePipe, MatDialogModule, MatButtonModule, IconComponent, StatTile, InrPipe],
+  imports: [
+    TableLabels,DatePipe, MatDialogModule, MatButtonModule, IconComponent, StatTile, InrPipe],
   templateUrl: './campaign-detail-dialog.html',
   styleUrl: './campaign-detail-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

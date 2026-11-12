@@ -4,13 +4,34 @@
     <meta charset="utf-8" />
     <title>BiteBox - Food Delivery</title>
     <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <!-- <link rel="icon" type="image/x-icon" href="favicon.png" /> -->
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/bitebox-favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="theme-color" content="#2E1A3D" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#ffffff" />
+    <!-- Dark theme before the first paint (no light flash). Same key and rules as core/services/theme.service.ts.
+         If a Content-Security-Policy is added, allow this script by its hash. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('bb-theme');
+          var dark = stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#120c17');
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <!-- Installed app (standalone): full-screen on iOS/Android, with a light status bar. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="BiteBox" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="application-name" content="BiteBox" />
     <meta name="description" content="BiteBox - order food from your favourite local restaurants and track your delivery live." />
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -22,5 +43,6 @@
   </head>
   <body class="mat-typography">
     <app-root></app-root>
+    <noscript>BiteBox needs JavaScript to run. Please enable it in your browser settings.</noscript>
   </body>
 </html>

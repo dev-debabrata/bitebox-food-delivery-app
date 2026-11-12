@@ -1,10 +1,14 @@
 import { NpIconPipe } from '../../../../shared/icons/np-icon-name';
+import {
+  BB_DIALOG_DATA,
+  BbDialog,
+  BbDialogRef,
+  BbDialogTitle,
+} from '../../../../shared/dialog/bb-dialog';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormRoot, TreeValidationResult, form, maxLength, pattern } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { IconComponent, ToggleComponent } from 'nexprime';
-import { MatButtonModule } from '@angular/material/button';
+import { ButtonComponent, IconComponent, ToggleComponent } from 'nexprime';
 import { AdminCatalogService } from '../../../../core/services/admin/admin-catalog.service';
 import { errorMessage, fieldErrors } from '../../../../core/services/api-error';
 import { FoodCategory } from '../../../../shared/models/catalog.models';
@@ -38,8 +42,8 @@ const ICON_SUGGESTIONS = [
     ToggleComponent,
     NP_FORM_FIELDS,
     FormRoot,
-    MatDialogModule,
-    MatButtonModule,
+    BbDialogTitle,
+    ButtonComponent,
     IconComponent,
     NpIconPipe,
     ImageUpload,
@@ -49,8 +53,8 @@ const ICON_SUGGESTIONS = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CategoryFormDialog {
-  protected readonly data = inject<FoodCategory | null>(MAT_DIALOG_DATA);
-  private readonly ref = inject(MatDialogRef<CategoryFormDialog, FoodCategory>);
+  protected readonly data = inject<FoodCategory | null>(BB_DIALOG_DATA);
+  protected readonly ref = inject<BbDialogRef<FoodCategory>>(BbDialogRef);
   private readonly service = inject(AdminCatalogService);
   protected readonly shownError = shownError;
   protected readonly icons = ICON_SUGGESTIONS;

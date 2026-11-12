@@ -51,12 +51,15 @@ export const customerSiteGuard: CanActivateFn = (route) =>
 /** Admin routes: needs any of the permissions; otherwise back to the user's own dashboard. */
 export const permissionGuard =
   (...permissions: Permission[]): CanActivateFn =>
-  () => {
+  (_route, state) => {
     const auth = inject(AuthService);
     const router = inject(Router);
     return whenReady(() => {
       const role = auth.role();
       if (!role) return router.createUrlTree(['/login']);
-      return permissions.some((p) => auth.can(p)) || router.createUrlTree([ROLE_META[role].home]);
+      if (permissions.some((p) => auth.can(p))) return true;
+      // Back to the role's home, unless that is this very page (would redirect forever).
+      const home = ROLE_META[role].home;
+      return router.createUrlTree([state.url.split('?')[0] === home ? '/forbidden' : home]);
     });
   };

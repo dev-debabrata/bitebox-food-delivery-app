@@ -1,1 +1,8 @@
-<img [src]="src()" alt="BiteBox" [style.height.px]="height()" />
+@if (variant() === 'light') {
+  <img src="/bitebox-logo-dark.svg" alt="BiteBox" [style.height.px]="height()" />
+} @else {
+  <!-- Both are in the page; CSS shows the one for the theme (right from the first paint, SSR included).
+       The hidden one is display:none, so screen readers announce only one. -->
+  <img class="for-light" src="/bitebox-logo.svg" alt="BiteBox" [style.height.px]="height()" />
+  <img class="for-dark" src="/bitebox-logo-dark.svg" alt="BiteBox" [style.height.px]="height()" />
+}

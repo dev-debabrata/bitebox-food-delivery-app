@@ -93,3 +93,15 @@ export async function seedCatalogFor(app) {
 
 export const refreshCookie = (setCookie) =>
   setCookie?.find((c) => c.startsWith("bb_refresh="))?.split(";")[0];
+
+/**
+ * Body for PATCH /delivery/orders/:id/status. With "delivered" it adds the customer's delivery
+ * code from the database (as the customer would read it out), unless `otp` is given.
+ */
+export async function riderStatusBody(orderId, status, otp) {
+  if (status !== "delivered") return { status };
+  const { Order } = await import("../models/order.model.js");
+  const code =
+    otp ?? (await Order.findById(orderId).select("deliveryOtp"))?.deliveryOtp;
+  return code ? { status, otp: code } : { status };
+}

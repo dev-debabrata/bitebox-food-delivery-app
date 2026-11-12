@@ -1,16 +1,17 @@
 import { HttpClient } from '@angular/common/http';
 import { DOCUMENT } from '@angular/common';
 import { Injectable, inject } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
 import { Observable, firstValueFrom, map, shareReplay } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiResponse } from '../../shared/models/api.models';
+import { ApiResponse, Paginated } from '../../shared/models/api.models';
 import {
   CheckoutSession,
+  PaymentHistoryItem,
   PaymentInfo,
   PaymentMethodOption,
 } from '../../shared/models/payment.models';
-import { MockPaymentDialog } from '../../shared/components/mock-payment-dialog/mock-payment-dialog';
+import { openMockPayment } from '../../shared/components/mock-payment-dialog/mock-payment-dialog';
+import { BbDialog } from '../../shared/dialog/bb-dialog';
 import { publicRequest } from '../interceptors/auth.interceptor';
 
 const RAZORPAY_SCRIPT = 'https://checkout.razorpay.com/v1/checkout.js';
@@ -25,9 +26,9 @@ type RazorpayCtor = new (options: Record<string, unknown>) => { open(): void };
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
   private readonly http = inject(HttpClient);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(BbDialog);
   private readonly document = inject(DOCUMENT);
-  private readonly url = `${environment.apiUrl}/payments`;
+  private readonly url = `${environment.baseUrl}/payments`;
   private razorpay?: Promise<RazorpayCtor>;
 
   readonly methods$: Observable<PaymentMethodOption[]> = this.http
@@ -53,17 +54,7 @@ export class PaymentService {
 
   async pay(orderId: string, session: CheckoutSession): Promise<PaymentInfo | null> {
     if (session.provider === 'mock') {
-      const outcome = await firstValueFrom(
-        this.dialog
-          .open<MockPaymentDialog, CheckoutSession, 'success' | 'failure'>(MockPaymentDialog, {
-            data: session,
-            width: '440px',
-            maxWidth: '95vw',
-            panelClass: 'bb-gateway-dialog',
-            autoFocus: false,
-          })
-          .afterClosed(),
-      );
+      const outcome = await firstValueFrom(openMockPayment(this.dialog, session));
       return outcome ? this.post(orderId, 'mock', { outcome }) : null;
     }
     const result = await this.openRazorpay(session);
@@ -120,5 +111,14 @@ export class PaymentService {
       this.document.head.appendChild(script);
     });
     return this.razorpay;
+  }
+
+  /** Django API: the customer's payment history, with refunds. */
+  history(page = 1, limit = 10): Observable<Paginated<PaymentHistoryItem>> {
+    return this.http
+      .get<ApiResponse<Paginated<PaymentHistoryItem>>>(`${this.url}/mine`, {
+        params: { page, limit },
+      })
+      .pipe(map((r) => r.data));
   }
 }

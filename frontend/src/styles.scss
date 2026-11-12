@@ -23,11 +23,40 @@
   --bb-surface-alt: #faf8fc;
   --bb-bg: #f6f3f9;
 
+  // Fixed brand surfaces: the same in light and dark (heroes, footer, panel sidebar, avatars).
+  // Text on them is fixed too (--bb-on-brand). --bb-plum, by contrast, is the brand colour used
+  // for text and accents on ordinary surfaces, so it turns light lavender in the dark theme.
+  --bb-brand: #2e1a3d;
+  --bb-brand-700: #43295a;
+  --bb-brand-500: #6d557c;
+  --bb-on-brand: #fff6e5;
+  // Text and icons on an amber fill (amber stays amber in both themes).
+  --bb-on-accent: #2e1a3d;
+  --bb-amber-200: #ffe6b8;
+
   // Feedback
   --bb-success: #1a7a43; // 5.4:1 on white, 4.8:1 on the pale success tint (WCAG AA)
   --bb-warning: #b26a00;
   --bb-danger: #c62839;
   --bb-info: #2563eb;
+  // Solid fills with white text (badges, snackbars, danger buttons): fixed in both themes,
+  // because the dark theme's lighter --bb-success/--bb-danger are for text, not for fills.
+  --bb-success-solid: #1a7a43;
+  --bb-danger-solid: #c62839;
+  // Tinted backgrounds and the text colour that goes on them (status chips, banners, badges).
+  --bb-success-bg: #e6f5ec;
+  --bb-danger-bg: #fdecee;
+  --bb-warning-bg: #fff6e5;
+  --bb-warning-ink: #7a4b00;
+  --bb-info-bg: #e3f1ff;
+  --bb-info-ink: #12457a;
+  --bb-teal-bg: #e2f4f4;
+  --bb-teal-ink: #12706f;
+
+  // Misc
+  --bb-skeleton: #eee8f2;
+  --bb-skeleton-shine: #f7f3fa;
+  --bb-star-empty: #ddd6e3;
 
   // Shape, depth, spacing
   --bb-radius-sm: 8px;
@@ -72,11 +101,18 @@
   }
 }
 
+// Height of the customer site's phone/tablet tab bar (58px + home indicator). The footer, the
+// restaurant page's cart bar, the back-to-top button and app-wide messages sit relative to it;
+// pages without the tab bar (panels, auth) leave it unset.
+:root:has(bb-customer-layout) {
+  --bb-tab-bar: calc(58px + env(safe-area-inset-bottom));
+}
+
 // ---------------------------------------------------------------------------
 // Angular Material (M3) theme generated from the BiteBox logo colours
 // ---------------------------------------------------------------------------
 html {
-  color-scheme: light;
+  color-scheme: light; // dark: see :root[data-theme='dark'] below
   @include mat.theme(
     (
       color: (
@@ -99,6 +135,83 @@ html {
       on-primary-container: #2e1a3d,
     )
   );
+}
+
+// ---------------------------------------------------------------------------
+// Dark theme: <html data-theme="dark">, set by ThemeService (and the inline script in
+// index.html before first paint). NexPrime reads the same attribute. Every pair below is
+// WCAG AA or better: body text 15:1, muted text 7.4:1+, white on the primary button 5.5:1.
+// ---------------------------------------------------------------------------
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bb-plum: #d7c2ea;
+  --bb-plum-700: #e6d8f2;
+  --bb-plum-500: #b39cc6;
+  --bb-plum-100: #33243f;
+  --bb-amber-600: #ffc65a;
+  --bb-amber-100: #3a2c12;
+  --bb-amber-200: #4a3714;
+
+  --bb-ink: #f1ebf5;
+  --bb-ink-muted: #b4a9bd;
+  --bb-border: #3a2e44;
+  --bb-surface: #1c1423;
+  --bb-surface-alt: #241a2c;
+  --bb-bg: #120c17;
+
+  --bb-success: #4cc283;
+  --bb-warning: #f0a83a;
+  --bb-danger: #ff7b88;
+  --bb-info: #7fb2ff;
+  --bb-success-bg: #17301f;
+  --bb-danger-bg: #3a1a20;
+  --bb-warning-bg: #3a2c12;
+  --bb-warning-ink: #ffd28a;
+  --bb-info-bg: #16263f;
+  --bb-info-ink: #a9c8ff;
+  --bb-teal-bg: #0f2e2e;
+  --bb-teal-ink: #7fdcd6;
+
+  --bb-skeleton: #2a2032;
+  --bb-skeleton-shine: #34283d;
+  --bb-star-empty: #4a3d55;
+  --bb-shadow-sm: 0 1px 2px rgb(0 0 0 / 40%), 0 1px 3px rgb(0 0 0 / 30%);
+  --bb-shadow: 0 6px 24px rgb(0 0 0 / 45%);
+
+  // NexPrime declares its own dark values on this same selector; restate the brand mapping so
+  // ours win (this file loads after nexprime/styles/theme.css). np-button puts white text on
+  // --ui-primary, so it gets a mid purple rather than the light lavender used for text.
+  --ui-primary: #7e57a6;
+  --ui-primary-hover: #6b4690;
+  --ui-text: var(--bb-ink);
+  --ui-text-muted: var(--bb-ink-muted);
+  --ui-border: var(--bb-border);
+  --ui-surface: var(--bb-surface);
+  --ui-surface-muted: var(--bb-surface-alt);
+  --ui-success: var(--bb-success);
+  --ui-warning: var(--bb-warning);
+  --ui-danger: var(--bb-danger);
+
+  // Material's M3 system colours follow color-scheme; only the fixed brand overrides need dark values.
+  @include mat.theme-overrides(
+    (
+      primary: #d7c2ea,
+      on-primary: #2e1a3d,
+      primary-container: #43295a,
+      on-primary-container: #f2eaf7,
+    )
+  );
+
+  // Map tiles have no dark style; dim them so they don't glare.
+  .leaflet-tile-pane {
+    filter: brightness(0.8) contrast(1.1);
+  }
+}
+
+// NexPrime sets the dark body to --ui-surface; keep the page background a step darker than cards.
+:root[data-theme='dark'] body {
+  background: var(--bb-bg);
 }
 
 // ---------------------------------------------------------------------------
@@ -185,7 +298,10 @@ img {
   width: 100%;
   max-width: var(--bb-content-max);
   margin-inline: auto;
-  padding-inline: var(--bb-page-gutter);
+  // viewport-fit=cover (index.html): content keeps clear of the notch on a sideways phone,
+  // while full-width backgrounds around the container still reach the screen edge.
+  padding-inline: max(var(--bb-page-gutter), env(safe-area-inset-left))
+    max(var(--bb-page-gutter), env(safe-area-inset-right));
 }
 
 .bb-card {
@@ -203,7 +319,7 @@ img {
 .bb-grid {
   display: grid;
   gap: var(--bb-space-4);
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 
   &.cols-2 {
     @include bp.tablet-up {
@@ -300,7 +416,7 @@ np-icon[matChipAvatar] {
   height: 40px;
   border-radius: 50%;
   border: 1px solid var(--bb-border);
-  background: var(--bb-plum);
+  background: var(--bb-brand);
   color: var(--bb-amber);
   font-size: 0.85rem;
   font-weight: 700;
@@ -315,7 +431,7 @@ np-icon[matChipAvatar] {
   height: 20px;
   padding: 0 5px;
   border-radius: 10px;
-  background: var(--bb-danger);
+  background: var(--bb-danger-solid);
   color: #fff;
   font-size: 0.7rem;
   font-weight: 700;
@@ -343,7 +459,7 @@ np-icon[matChipAvatar] {
   top: 0;
   z-index: 100;
   background: var(--bb-amber);
-  color: var(--bb-plum);
+  color: var(--bb-on-accent);
   padding: var(--bb-space-2) var(--bb-space-4);
   font-weight: 700;
 
@@ -369,22 +485,207 @@ np-icon[matChipAvatar] {
   border: 0;
 }
 
+// NexPrime-look buttons for what np-button can't be (docs/django-migration/08 §8.3): form submit
+// buttons (<button type="submit">) and links styled as buttons (<a routerLink>). Same tokens and
+// sizes as np-button (medium), so both sit side by side. Variants: solid (default, brand
+// gradient), --outlined, --text, --soft, --accent (amber), --danger; --small; --icon (icon only).
+.bb-btn {
+  --btn: var(--ui-primary);
+  --btn-fg: #fff;
+  --btn-text: color-mix(in srgb, var(--btn) 80%, var(--ui-text));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 11px 22px;
+  border: 0;
+  border-radius: var(--bb-btn-radius);
+  font-family: var(--ui-font);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  color: var(--bb-on-brand);
+  background: var(--bb-brand);
+  box-shadow: none;
+  transition:
+    transform var(--ui-ease),
+    background var(--ui-ease),
+    color var(--ui-ease),
+    box-shadow var(--ui-ease),
+    filter var(--ui-ease);
+  --bb-icon-size: 18px;
+
+  &:hover:not(:disabled, [aria-disabled='true']) {
+    filter: brightness(1.15);
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-ring);
+  }
+  &:disabled,
+  &[aria-disabled='true'] {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &--outlined,
+  &--text,
+  &--soft {
+    color: var(--btn-text);
+    background: transparent;
+    box-shadow: none;
+    &:hover:not(:disabled, [aria-disabled='true']) {
+      filter: none;
+      background: color-mix(in srgb, var(--btn) 10%, transparent);
+    }
+  }
+  &--outlined {
+    box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--btn) 70%, transparent);
+  }
+  &--soft {
+    background: color-mix(in srgb, var(--btn) 14%, var(--ui-surface));
+  }
+  &--accent {
+    --btn: var(--bb-amber);
+    color: var(--bb-on-accent);
+    background: var(--bb-amber);
+  }
+  &--danger {
+    --btn: var(--ui-danger);
+    // Solid fill: --bb-danger-solid stays a deep red in dark mode (--bb-danger turns light there,
+    // for text), so white text keeps its contrast.
+    &:not(.bb-btn--outlined, .bb-btn--text, .bb-btn--soft) {
+      color: #fff;
+      background: var(--bb-danger-solid);
+    }
+  }
+  &--small {
+    min-height: 32px;
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+  &--icon {
+    padding: 10px;
+    min-width: 40px;
+  }
+}
+
+// np-button in the BiteBox look: rounded rectangle (not a pill), solid brand plum (not the
+// gradient), no coloured glow. NexPrime's emulated styles carry an attribute selector, so these
+// rules need two classes to win. --bb-brand stays plum in dark mode; text on it is --bb-on-brand.
+:root {
+  --bb-btn-radius: 12px;
+}
+
+np-button .np-button:is(.np-button--solid, .np-button--outlined, .np-button--text, .np-button--soft) {
+  border-radius: var(--bb-btn-radius);
+}
+
+np-button .np-button.np-button--solid {
+  box-shadow: none;
+}
+
+// Solid red and green np-buttons (Reject, Accept, Delivered): the solid tokens stay deep in dark
+// mode, where --ui-danger/--ui-success turn light for text and white labels would wash out.
+np-button .np-button.np-button--solid:is(.np-button--danger, .np-button--success) {
+  color: #fff;
+  background: var(--solid-fill);
+
+  &.np-button--danger {
+    --solid-fill: var(--bb-danger-solid);
+  }
+  &.np-button--success {
+    --solid-fill: var(--bb-success-solid);
+  }
+  &:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+}
+
+// Same height as .bb-btn (submit buttons, links), so Cancel and Save line up in a dialog.
+np-button .np-button.np-button--medium {
+  min-height: 40px;
+}
+
+np-button .np-button.np-button--solid.np-button--primary {
+  color: var(--bb-on-brand);
+  background: var(--bb-brand);
+
+  &:hover:not(:disabled) {
+    background: var(--bb-brand);
+    filter: brightness(1.15);
+  }
+}
+
+// np-pagination's current page in the same solid plum as the buttons (not the gradient).
+// Lists use variant="compact" (Items per page · 1 – 10 of 240 · arrows), at the list's right edge.
+np-pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--bb-space-2) var(--bb-space-3) var(--bb-space-3);
+  --pg-active-bg: var(--bb-brand);
+  --pg-active-fg: var(--bb-on-brand);
+  --pg-glow: transparent;
+}
+
+// np-tabs used as a tab strip only: its panel takes text content, so screens render their own
+// content below and the built-in (empty) panel is hidden.
+np-tabs.bb-tab-strip .tab-panel {
+  display: none;
+}
+
+np-tabs.bb-tab-strip {
+  display: block;
+  margin-bottom: var(--bb-space-4);
+}
+
+// A narrower np-menu popup for short action lists (e.g. Edit / Delete). Keep the width in sync with
+// COMPACT_MENU_WIDTH in shared/menu/end-aligned-menu.ts, which aligns the panel to its trigger.
+np-menu.bb-menu-compact .menu.mi-panel {
+  width: 160px;
+}
+
+// NexPrime colours any `.ui-control[aria-invalid='true']` red, and Signal Forms sets `invalid` as
+// soon as a form opens. Keep untouched fields neutral (NpFieldTouch adds .bb-untouched); errors
+// appear after blur or a submit attempt, like <bb-field-error> and np-text-input's [error].
+.bb-untouched .ui-control[aria-invalid='true'] {
+  border-color: var(--ui-border-strong);
+
+  &:hover:not(:disabled) {
+    border-color: var(--ui-text-subtle);
+  }
+  &:focus {
+    border-color: var(--ui-primary);
+    box-shadow: var(--ui-ring);
+  }
+}
+
 // Buttons: amber call-to-action variant on top of Material buttons.
 .mat-mdc-unelevated-button.bb-btn-accent {
   --mat-button-filled-container-color: var(--bb-amber);
-  --mat-button-filled-label-text-color: var(--bb-plum);
+  --mat-button-filled-label-text-color: var(--bb-on-accent);
 }
 
 .mat-mdc-button-base {
   --mat-button-filled-container-shape: 12px;
   --mat-button-outlined-container-shape: 12px;
   --mat-button-text-container-shape: 12px;
-  --mat-button-filled-container-height: 44px;
-  --mat-button-outlined-container-height: 44px;
+  // 40px like .bb-btn and np-button, for dialogs that still mix Material and NexPrime buttons.
+  --mat-button-filled-container-height: 40px;
+  --mat-button-outlined-container-height: 40px;
+  --mat-button-text-container-height: 40px;
 }
 
 // The simulated payment page: edge-to-edge header, clipped to the dialog's rounded corners.
-.bb-gateway-dialog .mat-mdc-dialog-surface {
+.bb-gateway-dialog .cdk-dialog-container {
   overflow: hidden;
 }
 
@@ -423,9 +724,60 @@ np-icon[matChipAvatar] {
   background: #141016;
 }
 
+// BbDialog (shared/dialog/bb-dialog.ts): CDK dialogs styled like the Material ones they replace.
+// The dialog component is the container's only child; it and any <form> inside it are flex
+// columns so the content scrolls between a fixed title and fixed actions.
+.bb-dialog-backdrop {
+  background: rgb(18 12 23 / 55%);
+}
+
+.bb-dialog-panel .cdk-dialog-container {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+  overflow: hidden;
+  border-radius: var(--bb-radius-lg);
+  background: var(--bb-surface);
+  color: var(--bb-ink);
+  box-shadow: var(--bb-shadow);
+
+  > *,
+  > * > form {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+.bb-dialog__title {
+  margin: 0;
+  padding: var(--bb-space-5) var(--bb-space-5) var(--bb-space-2);
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.bb-dialog__content {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 65vh; // as Material's dialog content: long forms scroll inside, actions stay visible
+  overflow: auto;
+  padding: var(--bb-space-2) var(--bb-space-5);
+  color: var(--bb-ink-muted);
+}
+
+.bb-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--bb-space-2);
+  padding: var(--bb-space-3) var(--bb-space-5) var(--bb-space-5);
+}
+
 // Dialog actions: "Cancel" (a text button) is outlined and as tall as the primary action beside it.
-.mat-mdc-dialog-actions .mat-mdc-button-base {
-  --mat-button-text-container-height: 44px;
+.mat-mdc-dialog-actions .mat-mdc-button-base,
+.bb-dialog__actions .mat-mdc-button-base {
+  --mat-button-text-container-height: 40px;
   --mat-button-text-horizontal-padding: 18px;
 
   &.mat-mdc-button {
@@ -510,12 +862,12 @@ np-time-picker .time-picker-field {
 
 // Snackbar variants used by NotificationService
 .bb-snack-success {
-  --mat-snack-bar-container-color: var(--bb-success);
+  --mat-snack-bar-container-color: var(--bb-success-solid);
   --mat-snack-bar-supporting-text-color: #fff;
   --mat-snack-bar-button-color: #fff;
 }
 .bb-snack-error {
-  --mat-snack-bar-container-color: var(--bb-danger);
+  --mat-snack-bar-container-color: var(--bb-danger-solid);
   --mat-snack-bar-supporting-text-color: #fff;
   --mat-snack-bar-button-color: #fff;
 }
@@ -524,7 +876,7 @@ np-time-picker .time-picker-field {
 .bb-skeleton {
   display: block;
   border-radius: var(--bb-radius-sm);
-  background: linear-gradient(90deg, #eee8f2 25%, #f7f3fa 37%, #eee8f2 63%);
+  background: linear-gradient(90deg, var(--bb-skeleton) 25%, var(--bb-skeleton-shine) 37%, var(--bb-skeleton) 63%);
   background-size: 400% 100%;
   animation: bb-shimmer 1.4s ease infinite;
 }
@@ -591,14 +943,14 @@ np-time-picker .time-picker-field {
   .bb-form-row {
     display: grid;
     gap: 0 var(--bb-space-3);
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
 
     // Let controls shrink to their column instead of overflowing it.
     > * {
       min-width: 0;
     }
     @include bp.tablet-up {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
   }
 
@@ -670,16 +1022,16 @@ np-time-picker .time-picker-field {
   }
 
   &.error {
-    background: #fdecee;
+    background: var(--bb-danger-bg);
     color: var(--bb-danger);
   }
   &.success {
-    background: #e6f5ec;
+    background: var(--bb-success-bg);
     color: var(--bb-success);
   }
   &.info {
     background: var(--bb-amber-100);
-    color: #7a4b00;
+    color: var(--bb-warning-ink);
   }
 }
 
@@ -706,18 +1058,18 @@ np-time-picker .time-picker-field {
   color: var(--bb-ink-muted);
 
   &.is-published {
-    background: #e6f5ec;
+    background: var(--bb-success-bg);
     color: var(--bb-success);
   }
 
   &.is-hidden,
   &.is-open {
     background: var(--bb-amber-100);
-    color: #7a4b00;
+    color: var(--bb-warning-ink);
   }
 
   &.is-removed {
-    background: #fdecee;
+    background: var(--bb-danger-bg);
     color: var(--bb-danger);
   }
 }
@@ -732,27 +1084,27 @@ np-time-picker .time-picker-field {
   white-space: nowrap;
 
   &.role-admin {
-    background: var(--bb-plum);
+    background: var(--bb-brand);
     color: var(--bb-amber);
   }
   &.role-restaurant {
     background: var(--bb-amber-100);
   }
   &.role-delivery {
-    background: #e3f1ff;
-    color: #12457a;
+    background: var(--bb-info-bg);
+    color: var(--bb-info-ink);
   }
   &.role-operations_admin {
-    background: #e6f5ec;
+    background: var(--bb-success-bg);
     color: var(--bb-success);
   }
   &.role-finance_admin {
     background: var(--bb-amber-100);
-    color: #7a4b00;
+    color: var(--bb-warning-ink);
   }
   &.role-support_admin {
-    background: #e3f1ff;
-    color: #12457a;
+    background: var(--bb-info-bg);
+    color: var(--bb-info-ink);
   }
 }
 
@@ -791,7 +1143,8 @@ np-time-picker .time-picker-field {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
-  font-variant-numeric: tabular-nums;
+  // Proportional digits: this font's tabular "1" has serifs and reads like a typewriter digit.
+  // Number columns are right-aligned (.num), so they still line up.
 
   th,
   td {
@@ -834,17 +1187,15 @@ np-time-picker .time-picker-field {
 }
 
 // Small rounded action in a table row (suspend, activate): green, or red with .danger.
+// A small outlined status action on a .bb-btn (Suspend / Reactivate): green, or red with .danger.
 .bb-pill-action {
   --tone: var(--bb-success);
+  --btn: var(--tone);
   --bb-icon-size: 16px;
-  --mat-button-outlined-container-height: 32px;
-  --mat-button-outlined-container-shape: 999px;
-  --mat-button-outlined-horizontal-padding: 12px;
-  --mat-button-outlined-label-text-size: 0.8rem;
-  --mat-button-outlined-label-text-color: var(--tone);
-  --mat-button-outlined-outline-color: color-mix(in srgb, var(--tone) 40%, transparent);
-  --mat-button-outlined-state-layer-color: var(--tone);
   min-width: 104px;
+  min-height: 32px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
 
   &.danger {
     --tone: var(--bb-danger);
@@ -854,7 +1205,7 @@ np-time-picker .time-picker-field {
 // Dashboard bar: label and value on one line, a track filled to the share below.
 .bb-bar-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 4px var(--bb-space-2);
   padding: 6px 0;
 
@@ -943,20 +1294,20 @@ np-time-picker .time-picker-field {
   color: var(--bb-ink-muted);
 
   &.tone-good {
-    background: #e6f5ec;
+    background: var(--bb-success-bg);
     color: var(--bb-success);
   }
   &.tone-warn {
     background: var(--bb-amber-100);
-    color: #7a4b00;
+    color: var(--bb-warning-ink);
   }
   &.tone-bad {
-    background: #fdecee;
+    background: var(--bb-danger-bg);
     color: var(--bb-danger);
   }
   &.tone-info {
-    background: #e3f1ff;
-    color: #12457a;
+    background: var(--bb-info-bg);
+    color: var(--bb-info-ink);
   }
 }
 
@@ -974,4 +1325,155 @@ np-time-picker .time-picker-field {
 .mat-mdc-menu-panel.bb-account-menu {
   width: 300px;
   max-width: calc(100vw - 32px);
+}
+
+// Restaurant page on phones/tablets: the sticky "View cart" bar (~64px) sits on the tab bar, so
+// lift the back-to-top button above it instead of over its button. The layout's own rule is
+// component-scoped, hence the extra specificity here.
+@include bp.below-desktop {
+  body:has(.cart-bar) np-scroll-top.scroll-top {
+    bottom: calc(var(--bb-tab-bar) + 18px + 72px);
+  }
+}
+
+// Phones: the paginator drops "Items per page" so the range and arrows fit on one row.
+@include bp.phone-only {
+  .mat-mdc-paginator .mat-mdc-paginator-page-size {
+    display: none;
+  }
+  .mat-mdc-paginator .mat-mdc-paginator-range-actions {
+    flex: 1;
+  }
+  .mat-mdc-paginator .mat-mdc-paginator-range-label {
+    margin-right: auto;
+  }
+}
+
+// Phones: the notification panel is a full-width sheet under the header (8px from each edge)
+// instead of hanging off the bell, which sits left of the avatar. The overlay wrappers are
+// global, so this lives here rather than in the bell component.
+@include bp.phone-only {
+  .cdk-overlay-connected-position-bounding-box:has(.bb-inbox-menu) {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+  }
+  .cdk-overlay-pane:has(.bb-inbox-menu) {
+    left: 0 !important;
+    right: 0 !important;
+  }
+  .mat-mdc-menu-panel.bb-inbox-menu {
+    width: 100%;
+  }
+}
+
+// Stat tile grids are two per row on phones and tablets (narrow tiles stack their icon);
+// an odd last tile takes the full row.
+@include bp.phone-only {
+  .bb-grid:has(> bb-stat-tile, > .bb-skeleton.tile) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--bb-space-3);
+  }
+}
+@include bp.below-desktop {
+  .bb-grid > bb-stat-tile:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+// Phones: each `.bb-table` row becomes a card. The first cell is the title; every other
+// cell shows its column name (`data-label`, set by the TableLabels directive) on the left
+// and its value on the right. A single row action (menu, button or badge) sits in the
+// top-right corner beside the title; several actions form a right-aligned row at the foot.
+// (`mat-menu` stays in the DOM beside its trigger but takes no space, so it isn't counted.)
+$single-action: ':not(:has(> :nth-child(2):not(mat-menu)))';
+$text-button: '.mat-mdc-button-base:not(.mat-mdc-icon-button)';
+
+@include bp.phone-only {
+  .bb-table-scroll:has(> .bb-table) {
+    overflow-x: visible;
+  }
+  .bb-table {
+    thead {
+      display: none;
+    }
+    tbody tr {
+      display: block;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--bb-border);
+
+      &:last-child {
+        border-bottom: 0;
+      }
+      &:has(> td.actions) {
+        position: relative;
+      }
+      // The title keeps clear of a corner action: 44px for an icon button, 104px for a
+      // compact text button (and at least its height, so it never overlaps a value).
+      &:has(> td.actions > .mat-mdc-icon-button:only-child),
+      &:has(> td.actions > .mat-mdc-icon-button:first-child + mat-menu:last-child) {
+        > td:first-child {
+          padding-right: 44px;
+        }
+      }
+      &:has(> td.actions > #{$text-button}:only-child) > td:first-child {
+        padding-right: 104px;
+        min-height: 32px;
+        box-sizing: content-box;
+      }
+    }
+    tbody td {
+      display: flow-root;
+      padding: 3px 0;
+      border: 0;
+      text-align: right;
+      white-space: normal;
+
+      &::before {
+        content: attr(data-label);
+        float: left;
+        margin-right: 12px;
+        color: var(--bb-ink-muted);
+        font-size: 0.78rem;
+        font-weight: 400;
+        line-height: 1.6;
+      }
+      &:is(:first-child, [colspan], [data-label='']) {
+        text-align: left;
+      }
+      &:is(:first-child, [colspan], [data-label=''], :not([data-label]), .actions)::before {
+        content: none;
+      }
+      &:first-child {
+        font-weight: 600;
+        padding-bottom: 6px;
+
+        .sub {
+          font-weight: 400;
+        }
+      }
+    }
+    td.actions {
+      #{$text-button} {
+        height: 32px;
+      }
+      &#{$single-action} {
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        padding: 0;
+      }
+      &#{$single-action}:not(:has(.mat-mdc-icon-button)) {
+        top: 12px;
+        right: 16px;
+      }
+      &:not(#{$single-action}) {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--bb-space-2);
+        padding-top: var(--bb-space-2);
+      }
+    }
+  }
 }

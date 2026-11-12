@@ -6,14 +6,14 @@
   min-height: 100dvh;
 }
 
-
 .site-header {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgb(255 255 255 / 94%);
-  backdrop-filter: blur(10px);
+  // Solid, so iOS Safari tints the strip behind the status bar to match (not the page grey).
+  background: var(--bb-surface);
   border-bottom: 1px solid var(--bb-border);
+  padding-top: env(safe-area-inset-top); // home-screen web app: clear the status bar
 }
 
 .header-inner {
@@ -22,6 +22,11 @@
   gap: var(--bb-space-4);
   height: 64px;
 
+  // Phones: tighter spacing so the location label gets the room.
+  @include bp.phone-only {
+    gap: var(--bb-space-2);
+  }
+
   @include bp.desktop-up {
     height: 72px;
   }
@@ -29,6 +34,20 @@
 
 .logo {
   display: inline-flex;
+  // Never squeezed by the location and the action buttons beside it.
+  flex-shrink: 0;
+}
+
+// Phones show only the logo icon, leaving the room for the delivery location.
+.logo-full {
+  @include bp.phone-only {
+    display: none;
+  }
+}
+.logo-mark {
+  @include bp.tablet-up {
+    display: none;
+  }
 }
 
 .location-button {
@@ -56,6 +75,13 @@
 
   .caret {
     color: var(--bb-ink-muted);
+  }
+
+  // Phones: fill the space between the logo and the action buttons.
+  @include bp.phone-only {
+    flex: 1 1 auto;
+    max-width: none;
+    padding-inline: 4px;
   }
 
   @include bp.desktop-up {
@@ -105,6 +131,28 @@
   align-items: center;
   // Room for the count badges that stick out of the round icons.
   gap: var(--bb-space-3);
+  flex-shrink: 0;
+
+  // Phones: smaller round buttons (40px, still a comfortable tap target), closer together.
+  @include bp.phone-only {
+    gap: var(--bb-space-2);
+
+    // The bell lives in a child component, hence ::ng-deep (still scoped to .header-actions).
+    ::ng-deep .bb-icon-circle {
+      --mat-icon-button-state-layer-size: 40px;
+      --bb-icon-size: 20px;
+    }
+  }
+}
+
+// The cart bag lives in the bottom tab bar on mobile and tablet; the navbar displays it
+// only on desktop where the bottom tab bar is hidden.
+.cart-button {
+  display: none !important;
+
+  @include bp.desktop-up {
+    display: inline-flex !important;
+  }
 }
 
 // Bottom bar: a plain icon, so the badge sits further out to keep the icon visible.
@@ -152,8 +200,18 @@
   grid-auto-columns: 1fr;
   background: var(--bb-surface);
   border-top: 1px solid var(--bb-border);
-  padding-bottom: env(safe-area-inset-bottom);
+  // Runs under the home indicator and, sideways, the notch (viewport-fit=cover in index.html).
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   box-shadow: 0 -4px 16px rgb(46 26 61 / 6%);
+
+  // Carries the white down behind iOS Safari's see-through bottom toolbar (no page seam).
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 100% 0 auto;
+    height: 100vh;
+    background: var(--bb-surface);
+  }
 
   @include bp.desktop-up {
     display: none;
@@ -165,7 +223,7 @@
     align-items: center;
     gap: 2px;
     padding: var(--bb-space-2) 0;
-    min-height: 56px;
+    height: 57px; // + 1px border = the 58px in --bb-tab-bar
     justify-content: center;
     color: var(--bb-ink-muted);
     text-decoration: none;
@@ -185,7 +243,7 @@
 // Keep the back-to-top button above the bottom tab bar on phones/tablets.
 .scroll-top {
   @include bp.below-desktop {
-    bottom: calc(76px + env(safe-area-inset-bottom));
+    bottom: calc(var(--bb-tab-bar) + 18px);
     right: 16px;
   }
 }
@@ -208,7 +266,9 @@
 
   // Phones show the avatar alone.
   @include bp.phone-only {
-    padding-inline: 2px;
+    height: 40px;
+    min-width: 0;
+    padding-inline: 0;
 
     .avatar {
       margin-right: 0;

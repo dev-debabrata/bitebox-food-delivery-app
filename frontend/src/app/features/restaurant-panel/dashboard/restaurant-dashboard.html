@@ -24,9 +24,7 @@
       Add your business details, location and opening hours. Our team will review them before your
       restaurant goes live.
     </p>
-    <a mat-flat-button class="bb-btn-accent" routerLink="/restaurant/details"
-      >Add restaurant details</a
-    >
+    <a class="bb-btn bb-btn--accent" routerLink="/restaurant/details">Add restaurant details</a>
   </section>
 } @else {
   @let r = state()!.restaurant!;
@@ -42,9 +40,11 @@
       }
       <div>
         <h2 id="restaurant-name">{{ r.name }}</h2>
-        <p class="bb-muted">{{ r.cuisines.join(' · ') }} · {{ r.address.city }}</p>
-        <p class="bb-muted">
-          {{ r.openingTime | clockTime }} – {{ r.closingTime | clockTime }} · {{ r.costForTwoPaise | inr }} for two
+        <p class="bb-muted cuisines">{{ r.cuisines.join(' · ') }}</p>
+        <p class="bb-muted meta">
+          <span><np-icon name="map-pin" class="mat-icon" />{{ r.address.city }}</span>
+          <span><np-icon name="clock" class="mat-icon" />{{ r.openingTime | clockTime }} – {{ r.closingTime | clockTime }}</span>
+          <span><np-icon name="wallet" class="mat-icon" />{{ r.costForTwoPaise | inr }} for two</span>
         </p>
       </div>
     </div>
@@ -60,6 +60,40 @@
       }}</span>
     </div>
   </section>
+
+  @if (!statsUnavailable()) {
+  <section class="figures" aria-labelledby="orders-heading">
+    <h2 id="orders-heading" class="bb-sr-only">Orders and sales</h2>
+    @if (orderStats(); as o) {
+      <bb-stat-tile icon="receipt" label="Today's orders" [value]="o.todayOrders" />
+      <bb-stat-tile icon="hourglass" label="In progress" [value]="o.pendingOrders" />
+      <bb-stat-tile icon="circle-check" label="Delivered" [value]="o.completedOrders" />
+      <bb-stat-tile icon="circle-x" label="Cancelled or rejected" [value]="o.cancelledOrders" />
+      <bb-stat-tile icon="shopping-bag" label="Total orders" [value]="o.totalOrders" />
+      <bb-stat-tile
+        icon="indian-rupee"
+        label="Sales"
+        [value]="o.salesPaise | inr"
+        hint="Food value of delivered orders"
+      />
+      <bb-stat-tile icon="calculator" label="Average order" [value]="o.averageOrderPaise | inr" />
+      <bb-stat-tile
+        icon="star"
+        label="Rating"
+        [value]="o.rating.count ? o.rating.average : '–'"
+        [hint]="o.rating.count + (o.rating.count === 1 ? ' rating' : ' ratings')"
+      />
+    } @else if (statsError()) {
+      <p class="bb-muted">
+        {{ statsError() }} <button class="bb-link-button" (click)="loadStats()">Retry</button>
+      </p>
+    } @else {
+      @for (i of [1, 2, 3, 4]; track i) {
+        <span class="bb-skeleton" style="height: 96px"></span>
+      }
+    }
+  </section>
+  }
 
   <section class="grid stats" aria-label="Menu statistics">
     <a class="bb-card stat" routerLink="/restaurant/menu">
@@ -80,13 +114,16 @@
   </section>
 
   <section class="actions">
-    <a mat-flat-button routerLink="/restaurant/menu"><np-icon name="plus" class="mat-icon" matButtonIcon />Add a dish</a>
-    <a mat-stroked-button routerLink="/restaurant/details"
-      ><np-icon name="pencil" class="mat-icon" matButtonIcon />Edit restaurant details</a
+    <a class="bb-btn" routerLink="/restaurant/menu"><np-icon name="plus" />Add a dish</a>
+    <a class="bb-btn bb-btn--outlined" routerLink="/restaurant/orders"
+      ><np-icon name="receipt" />Orders</a
+    >
+    <a class="bb-btn bb-btn--outlined" routerLink="/restaurant/details"
+      ><np-icon name="pencil" />Edit restaurant details</a
     >
     @if (r.status === 'approved') {
-      <a mat-button [routerLink]="['/restaurants', r.slug]" target="_blank" rel="noopener">
-        <np-icon name="external-link" class="mat-icon" matButtonIcon />View public page
+      <a class="bb-btn bb-btn--text" [routerLink]="['/restaurants', r.slug]" target="_blank" rel="noopener">
+        <np-icon name="external-link" />View public page
       </a>
     }
   </section>

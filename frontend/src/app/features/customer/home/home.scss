@@ -10,7 +10,7 @@
   background:
     radial-gradient(circle at 88% 8%, rgb(255 181 46 / 32%) 0, transparent 42%),
     radial-gradient(circle at 0% 100%, rgb(109 85 124 / 65%) 0, transparent 52%),
-    linear-gradient(135deg, var(--bb-plum) 0%, #3a2350 100%);
+    linear-gradient(135deg, var(--bb-brand) 0%, #3a2350 100%);
   overflow: hidden;
 }
 
@@ -20,10 +20,10 @@
   padding-block: var(--bb-space-7) 72px;
   align-items: center;
 
-  @include bp.tablet-up {
-    grid-template-columns: 3fr 2fr;
-  }
+  // Text and illustration side by side only on desktop; on tablets the text gets the full
+  // width so the greeting, its buttons and the perks each fit on one line.
   @include bp.desktop-up {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
     padding-block: 80px 104px;
   }
 }
@@ -98,7 +98,7 @@ h1 {
   gap: var(--bb-space-2);
   margin-top: var(--bb-space-5);
   max-width: 580px;
-  background: #fff;
+  background: var(--bb-surface);
   border-radius: 18px;
   padding: 6px;
   box-shadow: 0 18px 40px rgb(0 0 0 / 25%);
@@ -138,6 +138,12 @@ h1 {
 
   span {
     opacity: 0.7;
+  }
+  // Phones: one row of the top three; the rest are a tap away on the restaurants page.
+  @include bp.phone-only {
+    a:nth-of-type(n + 4) {
+      display: none;
+    }
   }
   a {
     padding: 4px 12px;
@@ -213,6 +219,19 @@ h1 {
   np-icon {
     color: var(--bb-amber);
   }
+
+  // Phones: three even columns, icon above the label.
+  @include bp.phone-only {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    font-size: 0.8rem;
+    text-align: center;
+
+    li {
+      flex-direction: column;
+      line-height: 1.25;
+    }
+  }
 }
 
 // Illustration made from CSS shapes (no third-party imagery).
@@ -220,7 +239,7 @@ h1 {
   position: relative;
   display: none;
 
-  @include bp.tablet-up {
+  @include bp.desktop-up {
     display: block;
     height: 340px;
   }
@@ -270,7 +289,7 @@ h1 {
   .smile {
     width: 70px;
     height: 34px;
-    border: 7px solid var(--bb-plum);
+    border: 7px solid var(--bb-on-accent);
     border-top: 0;
     border-radius: 0 0 70px 70px;
   }
@@ -284,7 +303,7 @@ h1 {
   height: 56px;
   border-radius: 18px;
   background: #fff6e5;
-  color: var(--bb-plum);
+  color: var(--bb-brand);
   box-shadow: var(--bb-shadow);
   animation: bob 4s ease-in-out infinite;
 
@@ -318,7 +337,7 @@ h1 {
   padding: 8px 14px;
   border-radius: 999px;
   background: #fff;
-  color: var(--bb-plum);
+  color: var(--bb-brand);
   font-weight: 700;
   font-size: 0.85rem;
   box-shadow: 0 10px 24px rgb(0 0 0 / 22%);
@@ -369,6 +388,17 @@ h1 {
     margin: 0;
     letter-spacing: -0.01em;
   }
+
+  // Phones: keep the action beside the title instead of on a row of its own.
+  @include bp.phone-only {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+
+    > div {
+      flex: 1;
+      min-width: 0;
+    }
+  }
 }
 
 // A row of buttons (no-results card, rewards banner, partner cards).
@@ -396,6 +426,14 @@ h1 {
 
 .see-all {
   flex: none;
+
+  // Phones: a compact pill so it fits beside the heading.
+  @include bp.phone-only {
+    min-height: 36px;
+    height: 36px;
+    padding-inline: 12px;
+    font-size: 0.85rem;
+  }
 }
 
 .location-link {
@@ -459,7 +497,7 @@ h1 {
   aspect-ratio: 1;
   border-radius: 50%;
   overflow: hidden;
-  background: #efece6;
+  background: var(--bb-surface-alt);
   color: var(--bb-plum);
   transition:
     transform 0.2s ease,
@@ -491,7 +529,7 @@ h1 {
 .popular {
   display: grid;
   gap: var(--bb-space-4);
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 
   @include bp.tablet-up {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -532,17 +570,17 @@ h1 {
   background:
     radial-gradient(circle at 100% 0%, rgb(255 255 255 / 55%) 0, transparent 40%),
     linear-gradient(120deg, var(--bb-amber) 0%, #ffd27a 100%);
-  color: var(--bb-plum);
+  color: var(--bb-on-accent);
   overflow: hidden;
 
   @include bp.tablet-up {
-    grid-template-columns: 1.6fr 1fr;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
     padding: var(--bb-space-6);
   }
 
   h2 {
     margin: 0 0 var(--bb-space-2);
-    color: var(--bb-plum);
+    color: var(--bb-on-accent);
     font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
   }
   p {
@@ -563,7 +601,7 @@ h1 {
 .coin {
   @extend %disc;
   position: absolute;
-  background: var(--bb-plum);
+  background: var(--bb-brand);
   color: var(--bb-amber);
   box-shadow: 0 12px 24px rgb(46 26 61 / 30%);
   animation: bob 4.5s ease-in-out infinite;
@@ -603,7 +641,7 @@ h1 {
   position: relative;
 
   @include bp.tablet-up {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 
     &::before {
       content: '';
@@ -650,7 +688,7 @@ h1 {
   right: -4px;
   width: 26px;
   height: 26px;
-  background: var(--bb-plum);
+  background: var(--bb-brand);
   color: #fff6e5;
   font-size: 0.8rem;
   font-weight: 800;
@@ -662,7 +700,7 @@ h1 {
   gap: var(--bb-space-4);
 
   @include bp.tablet-up {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 
@@ -701,7 +739,7 @@ h1 {
   }
 
   &.restaurant {
-    background: linear-gradient(135deg, var(--bb-plum) 0%, #43295a 100%);
+    background: linear-gradient(135deg, var(--bb-brand) 0%, var(--bb-brand-700) 100%);
     color: #fff6e5;
 
     &::after {
@@ -712,7 +750,7 @@ h1 {
     }
     .partner-icon {
       background: var(--bb-amber);
-      color: var(--bb-plum);
+      color: var(--bb-on-accent);
     }
     .light {
       --mat-button-text-label-text-color: #fff6e5;
@@ -720,13 +758,13 @@ h1 {
   }
 
   &.rider {
-    background: linear-gradient(135deg, var(--bb-amber-100) 0%, #ffe6b8 100%);
+    background: linear-gradient(135deg, var(--bb-amber-100) 0%, var(--bb-amber-200) 100%);
 
     &::after {
-      background: var(--bb-plum);
+      background: var(--bb-brand);
     }
     .partner-icon {
-      background: var(--bb-plum);
+      background: var(--bb-brand);
       color: var(--bb-amber);
     }
   }

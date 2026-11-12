@@ -176,10 +176,15 @@ export async function buildQuote(userId, { addressId } = {}) {
   };
   if (!cart || cart.items.length === 0) return empty;
 
-  const [restaurant, foods] = await Promise.all([
+  // Independent reads run together (each sequential read is a round trip to the database).
+  // Without an explicit address, quote against the customer's default one.
+  const [restaurant, foods, address, coinsBase] = await Promise.all([
     Restaurant.findById(cart.restaurant),
     FoodItem.find({ _id: { $in: cart.items.map((l) => l.foodItem) } }),
+    Address.findOne(addressId ? { _id: addressId, user: userId } : { user: userId, isDefault: true }),
+    coinsService.loadCartCoins(userId),
   ]);
+  if (addressId && !address) throw ApiError.notFound("Address not found");
   const foodById = new Map(foods.map((f) => [String(f._id), f]));
   const issues = [];
 
@@ -246,12 +251,7 @@ export async function buildQuote(userId, { addressId } = {}) {
     }
   }
 
-  // Delivery address and distance
-  // Without an explicit address, quote against the customer's default one.
-  const address = addressId
-    ? await Address.findOne({ _id: addressId, user: userId })
-    : await Address.findOne({ user: userId, isDefault: true });
-  if (addressId && !address) throw ApiError.notFound("Address not found");
+  // Delivery distance
   let distanceMeters = null;
   if (!address) {
     issues.push({ code: "NO_ADDRESS", message: "Add a delivery address." });
@@ -269,7 +269,8 @@ export async function buildQuote(userId, { addressId } = {}) {
   }
 
   // Coins: worked out on the food value after the coupon, then taken off the payable total.
-  const coins = await coinsService.quoteForCart(userId, {
+  const coins = coinsService.redemptionQuote({
+    ...coinsBase,
     requested: cart.coinsToRedeem ?? 0,
     foodPaise: subtotalPaise - couponDiscount(coupon, subtotalPaise),
   });

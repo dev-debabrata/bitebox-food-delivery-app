@@ -1,9 +1,17 @@
+@use 'breakpoints' as bp;
+
 .tabs {
   display: flex;
   gap: var(--bb-space-2);
   overflow-x: auto;
   margin-bottom: var(--bb-space-4);
   padding-bottom: 2px;
+
+  // Phones: three equal tiles (icon above the label) so every link is visible, no cut-off pill.
+  @include bp.phone-only {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 a {
   display: inline-flex;
@@ -24,8 +32,21 @@ a {
     border-color: var(--bb-plum-500);
   }
   &.active {
-    background: var(--bb-plum);
-    border-color: var(--bb-plum);
+    background: var(--bb-brand);
+    border-color: var(--bb-brand);
     color: #fff;
+  }
+
+  @include bp.phone-only {
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 6px;
+    border-radius: var(--bb-radius-sm);
+    font-size: 0.82rem;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.2;
+    --bb-icon-size: 20px;
   }
 }

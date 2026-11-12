@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { Address } from "../models/address.model.js";
 import { FoodItem } from "../models/food-item.model.js";
 import { Restaurant } from "../models/restaurant.model.js";
-import { createAndLogin, request, seedCatalogFor } from "./helpers.js";
+import { createAndLogin, request, seedCatalogFor, riderStatusBody } from "./helpers.js";
 
 export const auth = (token) => ({ Authorization: `Bearer ${token}` });
 export const NEAR = { latitude: 12.9729, longitude: 77.6412 };
@@ -88,7 +88,10 @@ export async function orderWorld(app) {
     const accept = await api(rider.token).post(`/api/v1/delivery/offers/${orderId}/accept`);
     assert.equal(accept.status, 200, JSON.stringify(accept.body));
     for (const status of ["picked_up", "on_the_way", "delivered"]) {
-      const res = await api(rider.token).patch(`/api/v1/delivery/orders/${orderId}/status`, { status });
+      const res = await api(rider.token).patch(
+        `/api/v1/delivery/orders/${orderId}/status`,
+        await riderStatusBody(orderId, status),
+      );
       assert.equal(res.status, 200, JSON.stringify(res.body));
     }
   }

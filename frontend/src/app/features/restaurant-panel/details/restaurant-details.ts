@@ -18,9 +18,13 @@ import {
 } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ChipComponent, IconComponent, ToggleComponent } from 'nexprime';
+import {
+  ButtonComponent,
+  ChipComponent,
+  IconComponent,
+  SpinnerComponent,
+  ToggleComponent,
+} from 'nexprime';
 import { errorMessage, fieldErrors } from '../../../core/services/api-error';
 import {
   DeliveryLocationService,
@@ -87,9 +91,9 @@ function emptyModel() {
     FormRoot,
     NP_FORM_FIELDS,
     ChipComponent,
-    MatButtonModule,
+    ButtonComponent,
     IconComponent,
-    MatProgressSpinnerModule,
+    SpinnerComponent,
     ImageUpload,
     MapPicker,
     PageHeader,

@@ -115,12 +115,12 @@ export function redemptionQuote({ config, available, requested = 0, foodPaise })
   };
 }
 
-/** The checkout coins block for a cart (reads the wallet and the configuration). */
-export async function quoteForCart(userId, { requested, foodPaise }) {
+/** The configuration and spendable balance for the checkout coins block (see `redemptionQuote`). */
+export async function loadCartCoins(userId) {
   const config = await getRewardConfig();
   // No wallet read while redemption is off: the quote says so and applies nothing.
   const available = redemptionOn(config) ? await wallet.spendableCoins(userId, config) : 0;
-  return redemptionQuote({ config, available, requested, foodPaise });
+  return { config, available };
 }
 
 /** Validates the amount a customer asks for (cart PUT): it must be usable on the current cart. */

@@ -26,6 +26,16 @@ describe('DeliveryLocationService', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => http.verify());
 
+  it('is ready only once the saved location has been read', () => {
+    localStorage.setItem('bb_delivery_location', JSON.stringify({ label: 'Maple Town', latitude: 10, longitude: 20, source: 'search' }));
+    setup();
+    expect(service.ready()).toBe(false);
+    expect(service.location()).toBeNull();
+    render();
+    expect(service.ready()).toBe(true);
+    expect(service.location()?.label).toBe('Maple Town');
+  });
+
   it('names the current GPS position via reverse geocoding and remembers it', async () => {
     setup();
     render();
@@ -34,7 +44,7 @@ describe('DeliveryLocationService', () => {
     await Promise.resolve();
     await Promise.resolve();
     http
-      .expectOne((r) => r.url === `${environment.apiUrl}/geo/reverse`)
+      .expectOne((r) => r.url === `${environment.baseUrl}/geo/reverse`)
       .flush({ success: true, message: 'OK', data: { place: { label: 'Test Area, Test City', latitude: 10.5, longitude: 20.5 } } });
     const location = await pending;
     expect(location.label).toBe('Test Area, Test City');

@@ -20,7 +20,7 @@ export type AdminFoodItem = Omit<FoodItem, 'restaurant'> & {
 @Injectable({ providedIn: 'root' })
 export class AdminCatalogService {
   private readonly http = inject(HttpClient);
-  private readonly url = `${environment.apiUrl}/admin`;
+  private readonly url = `${environment.baseUrl}/admin`;
 
   // Restaurants
   restaurants(query: {

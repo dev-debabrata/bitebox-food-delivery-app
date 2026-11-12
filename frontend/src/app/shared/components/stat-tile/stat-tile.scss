@@ -1,6 +1,6 @@
 :host {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
   column-gap: var(--bb-space-2);
   align-content: start;
   padding: var(--bb-space-4);
@@ -8,6 +8,7 @@
   background: var(--bb-surface);
   border: 1px solid var(--bb-border);
   min-width: 0;
+  container-type: inline-size;
 }
 
 .icon {
@@ -31,4 +32,22 @@
   grid-column: 2;
   font-size: 0.8rem;
   color: var(--bb-ink-muted);
+}
+
+// Narrow tiles (two per row on phones): icon on its own line so label and value
+// get the full width instead of sharing it with the icon column.
+@container (max-width: 170px) {
+  .icon {
+    grid-row: auto;
+    margin-bottom: var(--bb-space-1);
+  }
+  .label,
+  .value,
+  .hint {
+    grid-column: 1 / -1;
+  }
+  .value {
+    font-size: 1.3rem;
+    overflow-wrap: anywhere;
+  }
 }

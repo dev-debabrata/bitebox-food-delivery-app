@@ -7,10 +7,10 @@
 .layout {
   display: grid;
   gap: var(--bb-space-4);
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 
   @include bp.desktop-up {
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: minmax(0, 1fr) 380px;
     align-items: start;
   }
 }
@@ -63,14 +63,14 @@ h2 {
 
   li {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     align-items: center;
     gap: var(--bb-space-2) var(--bb-space-3);
     padding: var(--bb-space-3) 0;
     border-bottom: 1px dashed var(--bb-border);
 
     @include bp.tablet-up {
-      grid-template-columns: auto 1fr auto 72px;
+      grid-template-columns: auto minmax(0, 1fr) auto 72px;
     }
 
     &.unavailable .item-text {
@@ -216,7 +216,7 @@ h2 {
   display: flex;
   align-items: center;
   gap: var(--bb-space-2);
-  background: #e6f5ec;
+  background: var(--bb-success-bg);
   border-radius: var(--bb-radius-sm);
   padding: var(--bb-space-2) var(--bb-space-3);
   color: var(--bb-success);
@@ -235,19 +235,46 @@ h2 {
   display: grid;
   gap: var(--bb-space-2);
 
+  // Icon, offer details with its code as a tag, and an obvious "Apply" button.
   li {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--bb-space-2);
+    gap: var(--bb-space-3);
     border: 1px dashed var(--bb-amber-600);
     border-radius: var(--bb-radius-sm);
-    padding: var(--bb-space-2) var(--bb-space-3);
+    padding: var(--bb-space-3);
+    background: var(--bb-amber-100);
 
     div {
+      flex: 1;
+      min-width: 0;
       display: flex;
       flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
     }
+    button {
+      flex-shrink: 0;
+      height: 36px;
+    }
+  }
+
+  .offer-icon {
+    --bb-icon-size: 28px;
+    flex-shrink: 0;
+    color: var(--bb-amber-600);
+  }
+
+  .code {
+    margin-top: 4px;
+    padding: 1px 8px;
+    border: 1px dashed var(--bb-plum);
+    border-radius: 4px;
+    background: var(--bb-surface);
+    color: var(--bb-plum);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
   }
 }
 

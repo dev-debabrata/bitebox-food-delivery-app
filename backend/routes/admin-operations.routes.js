@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { PERMISSIONS } from "../config/permissions.js";
-import { authenticate, can } from "../middleware/auth.middleware.js";
+import { PERMISSIONS, hasPermission } from "../config/permissions.js";
+import { ADMIN_ROLES } from "../config/roles.js";
+import { authenticate, authorize, can } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import * as ops from "../services/operations.service.js";
 import { respond } from "../utils/api-response.js";
@@ -30,4 +31,14 @@ export const adminOperationsRouter = Router()
     "/performance",
     validate(daysRules),
     respond((req) => ops.deliveryPerformance(req.validatedQuery.days ?? 30)),
+  );
+
+/** /api/v1/admin/dashboard: every admin role sees the counts; money figures need finance:view. */
+export const adminDashboardRouter = Router()
+  .use(authenticate, authorize(...ADMIN_ROLES))
+  .get(
+    "/",
+    respond((req) =>
+      ops.platformSummary(hasPermission(req.user.role, PERMISSIONS.FINANCE_VIEW)),
+    ),
   );

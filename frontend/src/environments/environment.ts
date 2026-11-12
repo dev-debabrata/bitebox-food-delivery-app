@@ -1,15 +1,15 @@
-/**
- * Development talks to the API directly on port 5000, on the host the page was opened from
- * (localhost, or the machine's LAN IP from a phone). Server-side rendering uses localhost.
- */
-const apiOrigin =
-  typeof window === 'undefined'
-    ? 'http://localhost:5000'
-    : `${window.location.protocol}//${window.location.hostname}:5000`;
-
 export const environment = {
   production: false,
-  apiUrl: `${apiOrigin}/api/v1`,
+  baseUrl: 'http://localhost:5000/api/v1', // Node API
+  // baseUrl: 'http://192.168.0.12:5000/api/v1', // from a phone on the same Wi-Fi (your PC's LAN IP)
+
+  // Django API: only the paths in djangoRoutes go here, everything else stays on baseUrl.
+  djangoUrl: 'http://localhost:8000/api/v1',
+  // djangoUrl: 'http://192.168.0.12:8000/api/v1',
+  djangoRoutes: ['/health'] as string[],
+  // Live updates: 'node' (Socket.IO on baseUrl) or 'django' (WebSocket at djangoUrl's /ws/).
+  // Switch together with /auth: the socket signs in with the same access token.
+  realtime: 'node' as 'node' | 'django',
 
   map: {
     tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -18,10 +18,7 @@ export const environment = {
     maxZoom: 19,
   },
 
-  /**
-   * Public links shown in the site footer. Leave a value empty until the official URL exists:
-   * empty links are not shown. Never put secrets here (this file is bundled into the browser).
-   */
+  // Footer links; empty ones are hidden. No secrets in this file (it ships to the browser).
   links: {
     social: { facebook: '', instagram: '', youtube: '', linkedin: '', x: '' },
     apps: { googlePlay: '', appStore: '' },

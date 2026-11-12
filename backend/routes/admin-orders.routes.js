@@ -9,6 +9,7 @@ import * as rules from "../validators/order-management.validators.js";
 import * as paymentRules from "../validators/payment.validators.js";
 import * as payments from "../services/payments/payment.service.js";
 import * as reports from "../services/reports.service.js";
+import { rupees } from "../services/order-notifications.js";
 import { respond } from "../utils/api-response.js";
 import { parsePagination } from "../utils/pagination.js";
 
@@ -34,7 +35,22 @@ export const adminOrdersRouter = Router()
       ["Unassigned the rider", req.body.reason].filter(Boolean).join(": "),
     ),
     c.adminUnassign,
-  );
+  )
+  .post(
+    "/:id/assign",
+    can(P.ORDERS_MANAGE),
+    validate(rules.adminAssignRules),
+    audited("order.assign", "order", () => "Assigned a rider manually"),
+    c.adminAssign,
+  )
+  .post(
+    "/:id/delivery-code",
+    can(P.ORDERS_MANAGE),
+    validate([mongoIdParam()]),
+    audited("order.delivery_code", "order", () => "Issued a new delivery code"),
+    c.adminResetDeliveryOtp,
+  )
+  .get("/:id/timeline", can(P.ORDERS_VIEW), validate([mongoIdParam()]), c.adminTimeline);
 
 /** /api/v1/admin/payments: every payment; retry a failed refund. */
 export const adminPaymentsRouter = Router()
@@ -61,6 +77,45 @@ export const adminPaymentsRouter = Router()
       }),
       "Refund issued",
     ),
+  )
+  .get(
+    "/:id",
+    can(P.FINANCE_VIEW),
+    validate(paymentRules.paymentIdRules),
+    respond((req) => payments.adminGet(req.params.id)),
+  )
+  // A full or partial refund. An Idempotency-Key header makes a retried request safe.
+  .post(
+    "/:id/refunds",
+    can(P.REFUNDS_MANAGE),
+    validate(paymentRules.refundRules),
+    audited(
+      "payment.partial_refund",
+      "payment",
+      (req) => `Refunded ${rupees(req.body.amountPaise)}: ${req.body.reason}`,
+    ),
+    respond(
+      (req) =>
+        payments.adminRefund(
+          req.user._id,
+          req.params.id,
+          req.body,
+          /^[A-Za-z0-9_-]{8,100}$/.test(req.get("idempotency-key") ?? "")
+            ? req.get("idempotency-key")
+            : undefined,
+        ),
+      "Refund started",
+    ),
+  );
+
+/** /api/v1/admin/refunds/:id/paid: finance paid a cash refund back by hand. */
+export const adminRefundsRouter = Router()
+  .use(authenticate, can(P.REFUNDS_MANAGE))
+  .post(
+    "/:id/paid",
+    validate([mongoIdParam()]),
+    audited("payment.refund_paid", "refund", () => "Marked a cash refund as paid"),
+    respond((req) => payments.adminCompleteManualRefund(req.params.id), "Refund marked as paid"),
   );
 
 /** /api/v1/admin/reports?days=30: platform analytics. */

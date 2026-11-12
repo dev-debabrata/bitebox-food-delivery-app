@@ -1,0 +1,16 @@
+@if (installer.showBanner()) {
+  <aside class="install" aria-label="Install the BiteBox app">
+    <img src="/icon-192.png" alt="" width="44" height="44" />
+    <p>
+      <strong>Get the BiteBox app</strong>
+      <span>Faster ordering, live tracking and order alerts. Free, no app store needed.</span>
+    </p>
+    <div class="actions">
+      <button mat-button type="button" (click)="installer.dismiss()">Not now</button>
+      <button mat-flat-button class="bb-btn-accent" type="button" (click)="installer.install()">
+        <np-icon name="download" class="mat-icon" matButtonIcon />
+        Install
+      </button>
+    </div>
+  </aside>
+}

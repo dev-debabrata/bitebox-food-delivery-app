@@ -13,6 +13,9 @@ import { LocationPickerDialog } from '../../shared/components/location-picker/lo
 import { NotificationBell } from '../../shared/components/notification-bell/notification-bell';
 import { BrandLogo } from '../../shared/components/brand-logo/brand-logo';
 import { SiteFooter } from '../../shared/components/site-footer/site-footer';
+import { InstallBanner } from '../../shared/components/install-banner/install-banner';
+import { InstallPromptService } from '../../core/services/install-prompt.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { ROLE_META } from '../../shared/models/user.models';
 
 import { initialsOf } from '../../shared/models/user.models';
@@ -31,6 +34,7 @@ import { initialsOf } from '../../shared/models/user.models';
     ScrollTopComponent,
     NotificationBell,
     SiteFooter,
+    InstallBanner,
   ],
   templateUrl: './customer-layout.html',
   styleUrl: './customer-layout.scss',
@@ -40,6 +44,8 @@ export class CustomerLayout {
   private readonly auth = inject(AuthService);
 
   protected readonly cart = inject(CartService);
+  protected readonly installer = inject(InstallPromptService);
+  protected readonly themes = inject(ThemeService);
   protected readonly deliveryLocation = inject(DeliveryLocationService).location;
   private readonly dialog = inject(MatDialog);
   protected readonly shown = this.auth.displayUser;
@@ -56,6 +62,8 @@ export class CustomerLayout {
   private readonly url = currentUrl();
   /** Checkout gets the compact footer (no links pulling the customer away from paying). */
   protected readonly onCheckout = computed(() => this.url().startsWith('/checkout'));
+  /** The install promo floats over the page, so only where nothing else sits at the bottom. */
+  protected readonly installPromo = computed(() => ['/', '/restaurants'].includes(this.url().split(/[?#]/)[0]));
 
   protected chooseLocation(): void {
     this.dialog.open(LocationPickerDialog, {

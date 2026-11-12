@@ -16,5 +16,10 @@ h2 {
   flex-wrap: wrap;
   gap: var(--bb-space-2);
   margin-top: var(--bb-space-3);
+
+  // Buttons share each row evenly, and fill it when they wrap on narrow screens.
+  a {
+    flex: 1 1 170px;
+  }
 }
 

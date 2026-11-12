@@ -18,17 +18,33 @@
 .toolbar {
   display: grid;
   gap: var(--bb-space-3);
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 
-  .search {
+  // Phones: search and category on full rows, then cuisine and sort side by side.
+  .search,
+  .category-select {
     grid-column: 1 / -1;
   }
 
+  // Tablets: category, cuisine and sort in one row.
+  @include bp.tablet-up {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    .category-select {
+      grid-column: auto;
+    }
+  }
+
   @include bp.desktop-up {
-    grid-template-columns: 1fr 220px 220px;
+    grid-template-columns: minmax(0, 1fr) 220px 220px;
 
     .search {
       grid-column: auto;
+    }
+    // Desktop filters by category with the chips below. !important beats the global
+    // `display: block !important` on NexPrime inputs (styles.scss).
+    .category-select {
+      display: none !important;
     }
   }
 }
@@ -39,29 +55,43 @@
   align-items: center;
   gap: var(--bb-space-3);
   margin: var(--bb-space-3) 0;
+
+  // Phones: the location gets its own full-width row; below it the veg switch on the left and the
+  // text actions on the right, so "Show all restaurants" no longer reads as the switch's label.
+  @include bp.phone-only {
+    gap: var(--bb-space-2) var(--bb-space-3);
+
+    .location-chip {
+      flex: 1 1 100%;
+
+      .chip-label {
+        max-width: none;
+      }
+    }
+    .veg-toggle {
+      order: 1;
+      margin-right: auto;
+    }
+    > button:not(.location-chip) {
+      order: 2;
+    }
+  }
 }
 
 .categories {
-  display: block;
+  display: none;
   margin-bottom: var(--bb-space-4);
 
-  // Horizontal scroll on small screens instead of wrapping into many rows.
-  ::ng-deep .mdc-evolution-chip-set__chips {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: var(--bb-space-1);
-    scrollbar-width: thin;
-
-    @include bp.desktop-up {
-      flex-wrap: wrap;
-    }
+  // Desktop only; smaller screens use the Category dropdown in the toolbar.
+  @include bp.desktop-up {
+    display: block;
   }
 }
 
 .grid {
   display: grid;
   gap: var(--bb-space-4);
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 
   @include bp.tablet-up {
     grid-template-columns: repeat(2, minmax(0, 1fr));

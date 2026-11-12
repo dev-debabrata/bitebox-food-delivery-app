@@ -96,6 +96,16 @@
           <np-icon name="user-cog" class="mat-icon" matButtonIcon />
           <span>Profile</span>
         </a>
+        <button mat-menu-item (click)="themes.toggle()">
+          <np-icon [name]="themes.theme() === 'dark' ? 'sun' : 'moon'" class="mat-icon" matButtonIcon />
+          <span>{{ themes.theme() === 'dark' ? 'Light theme' : 'Dark theme' }}</span>
+        </button>
+        @if (installer.canInstall()) {
+          <button mat-menu-item (click)="installer.install()">
+            <np-icon name="download" class="mat-icon" matButtonIcon />
+            <span>Install app</span>
+          </button>
+        }
         <button mat-menu-item (click)="logout()">
           <np-icon name="log-out" class="mat-icon" matButtonIcon />
           <span>Sign out</span>

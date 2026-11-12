@@ -42,6 +42,24 @@ h2 {
   justify-content: space-between;
   align-items: center;
   gap: var(--bb-space-3);
+
+  // Phones: title and switch share the top line; the description runs full width below.
+  @include bp.phone-only {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 var(--bb-space-3);
+
+    > div {
+      display: contents;
+    }
+    p {
+      grid-column: 1 / -1;
+    }
+    np-toggle {
+      grid-row: 1;
+      grid-column: 2;
+    }
+  }
 }
 
 .stats,
@@ -181,12 +199,12 @@ h2 {
 
 .cash {
   background: var(--bb-amber-100);
-  color: #854d0e;
-  np-icon { color: #854d0e; }
+  color: var(--bb-warning-ink);
+  np-icon { color: var(--bb-warning-ink); }
 }
 
 .paid-online {
-  background: #e6f5ec;
+  background: var(--bb-success-bg);
   color: var(--bb-success);
   np-icon { color: var(--bb-success); }
 }
@@ -209,8 +227,9 @@ h2 {
   }
 }
 
-.go {
-  --mat-button-filled-container-color: var(--bb-success);
+// Action buttons share the row equally (np-button renders its own <button> inside the host).
+.work-actions ::ng-deep .np-button {
+  width: 100%;
 }
 
 .small {
@@ -249,4 +268,44 @@ h2 {
     --bb-icon-size: 18px;
     color: var(--bb-plum-500);
   }
+}
+
+// Phones: completed and rating side by side; the vehicle gets a full row with "Change" at its end.
+.stats {
+  @include bp.phone-only {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    .vehicle {
+      grid-column: 1 / -1;
+
+      dd {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: var(--bb-space-2);
+      }
+    }
+  }
+}
+
+.figures {
+  display: grid;
+  gap: var(--bb-space-3);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.trip .earn dd {
+  color: var(--bb-success-ink);
+  font-weight: 700;
+}
+
+// np-progress-bar's `label` is both its accessible name and a visible caption; keep the name only
+// (the countdown next to the title already says it in words).
+np-progress-bar ::ng-deep .caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }

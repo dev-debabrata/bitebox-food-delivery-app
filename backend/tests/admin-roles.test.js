@@ -15,6 +15,7 @@ import {
   setupTestDb,
   teardownTestDb,
   PASSWORD,
+  riderStatusBody,
 } from "./helpers.js";
 
 const auth = (token) => ({ Authorization: `Bearer ${token}` });
@@ -240,7 +241,7 @@ describe("operations, finance and support admin roles", () => {
         await request(app)
           .patch(`/api/v1/delivery/orders/${order.id}/status`)
           .set(auth(rider.token))
-          .send({ status });
+          .send(await riderStatusBody(order.id, status));
       return Order.findById(order.id);
     }
 

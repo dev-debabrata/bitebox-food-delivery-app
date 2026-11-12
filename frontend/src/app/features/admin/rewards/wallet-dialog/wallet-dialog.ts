@@ -1,3 +1,4 @@
+import { TableLabels } from '../../../../shared/list/table-labels';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
@@ -12,7 +13,8 @@ import { SOURCE_LABEL, TXN_TYPE_LABEL } from '../../../../shared/models/rewards.
 /** One customer's wallet: balances, live batches, the ledger check and recent rows. */
 @Component({
   selector: 'bb-wallet-dialog',
-  imports: [DatePipe, MatDialogModule, MatButtonModule, IconComponent, StatTile],
+  imports: [
+    TableLabels,DatePipe, MatDialogModule, MatButtonModule, IconComponent, StatTile],
   templateUrl: './wallet-dialog.html',
   styleUrl: './wallet-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

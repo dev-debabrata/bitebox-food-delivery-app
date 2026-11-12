@@ -31,15 +31,20 @@
   }
 }
 
-.order-no {
-  margin-left: auto;
-  color: var(--bb-ink-muted);
-  font-size: 0.8rem;
-}
-
+// Order number on the left, Report on the right: one tidy footer row on every screen size.
 .actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
+  gap: var(--bb-space-2);
   font-size: 0.85rem;
+}
+
+.order-no {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--bb-ink-muted);
+  font-size: 0.8rem;
 }

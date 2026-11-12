@@ -53,6 +53,17 @@ async function revokeAllSessions(userId, reason) {
   );
 }
 
+/**
+ * Saves `user` (with any pending changes) and signs them out everywhere: old access tokens
+ * fail (`tokenVersion`, incremented atomically whether or not it was loaded) and refresh
+ * tokens are revoked.
+ */
+export async function endSessions(user, reason) {
+  user.$inc("tokenVersion", 1);
+  await user.save();
+  await revokeAllSessions(user._id, reason);
+}
+
 /** Partner sign-ups admins are told about (customers sign up too often to notify). */
 const PARTNER_SIGNUP = {
   [ROLES.RESTAURANT]: {
@@ -226,9 +237,7 @@ export async function changePassword(userId, currentPassword, newPassword) {
     throw ApiError.badRequest("Current password is incorrect");
   }
   user.passwordHash = await hashPassword(newPassword);
-  user.tokenVersion += 1;
-  await user.save();
-  await revokeAllSessions(user._id, "password-change");
+  await endSessions(user, "password-change");
 }
 
 export async function updateProfile(userId, { name, phone }) {

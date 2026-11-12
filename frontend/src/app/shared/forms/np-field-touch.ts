@@ -4,10 +4,15 @@ import { FormField } from '@angular/forms/signals';
 @Directive({
   selector:
     'np-text-input[formField], np-textarea[formField], np-input-number[formField], np-select[formField], np-calendar[formField], np-time-picker[formField], np-rating[formField]',
-  host: { '(focusout)': 'onFocusOut($event)' },
+  host: {
+    '(focusout)': 'onFocusOut($event)',
+    // Signal Forms passes `invalid` to NexPrime controls at once; styles.scss shows the red border
+    // only once the field is touched (blur, or a submit attempt marks every field touched).
+    '[class.bb-untouched]': '!formField.state().touched()',
+  },
 })
 export class NpFieldTouch {
-  private readonly formField = inject(FormField);
+  protected readonly formField = inject(FormField);
   private readonly host = this.formField.element;
 
   protected onFocusOut(event: FocusEvent): void {

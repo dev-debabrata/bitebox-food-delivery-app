@@ -1,0 +1,48 @@
+<h2 bbDialogTitle>Sign-ins · {{ user.name }}</h2>
+<div class="bb-dialog__content" [attr.aria-busy]="loading()">
+  @if (error(); as message) {
+    <div class="bb-alert info" role="status">
+      <np-icon name="info" class="mat-icon" matButtonIcon /><span>{{ message }}</span>
+    </div>
+  } @else if (items() === null) {
+    @for (i of [1, 2, 3]; track i) {
+      <span class="bb-skeleton" style="height: 52px; margin-bottom: 8px"></span>
+    }
+  } @else if (items()!.length === 0) {
+    <p class="bb-muted">No sign-ins yet.</p>
+  } @else {
+    <ul class="logins" [class.bb-dim]="loading()">
+      @for (l of items(); track l.signedInAt) {
+        <li>
+          <div class="main">
+            <strong>{{ l.signedInAt | date: 'd MMM y, h:mm a' }}</strong>
+            <span class="bb-muted" [attr.title]="l.userAgent">
+              {{ device(l.userAgent) }}{{ l.ip ? ' · ' + l.ip : '' }}
+            </span>
+          </div>
+          @if (l.active) {
+            <span class="state active"
+              >Active · last seen {{ l.lastActiveAt | date: 'd MMM, h:mm a' }}</span
+            >
+          } @else {
+            <span class="state">{{ ended(l) }}</span>
+          }
+        </li>
+      }
+    </ul>
+    @if (pagination().total > pagination().limit) {
+      <np-pagination
+        variant="compact"
+        [page]="pagination().page"
+        [rows]="pagination().limit"
+        [totalRecords]="pagination().total"
+        [rowsOptions]="[10, 25, 50]"
+        (pageChange)="load($event)"
+        (rowsChange)="load(1, $event)"
+      />
+    }
+  }
+</div>
+<div class="bb-dialog__actions">
+  <np-button variant="text" severity="secondary" label="Close" (clicked)="ref.close()" />
+</div>

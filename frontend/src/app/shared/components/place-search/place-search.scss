@@ -1,3 +1,5 @@
+@use 'breakpoints' as bp;
+
 :host {
   display: block;
   margin-bottom: var(--bb-space-3);
@@ -15,9 +17,14 @@
   }
 }
 
-// Projected controls (outside this component's style scope) keep their natural width.
+// Projected controls (outside this component's style scope) keep their natural width;
+// on phones they wrap under the search box, so stretch them to line up with it.
 :host ::ng-deep .row > :not(.box) {
   flex-shrink: 0;
+
+  @include bp.phone-only {
+    flex-grow: 1;
+  }
 }
 
 .results {

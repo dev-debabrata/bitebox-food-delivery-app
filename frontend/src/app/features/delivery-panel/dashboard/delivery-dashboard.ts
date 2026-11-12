@@ -12,13 +12,18 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
-import { FormRoot, form, required } from '@angular/forms/signals';
+import { FormRoot, TreeValidationResult, form, required } from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { IconComponent, SelectOption, ToggleComponent } from 'nexprime';
+import { HttpErrorResponse } from '@angular/common/http';
+import {
+  ButtonComponent,
+  IconComponent,
+  ProgressBarComponent,
+  SelectOption,
+  ToggleComponent,
+} from 'nexprime';
 import { EMPTY, catchError, firstValueFrom, interval, of, switchMap } from 'rxjs';
-import { errorMessage } from '../../../core/services/api-error';
+import { errorMessage, fieldErrors } from '../../../core/services/api-error';
 import {
   GeolocationService,
   ImpreciseLocationError,
@@ -33,40 +38,49 @@ import { TrackingMap } from '../../../shared/components/tracking-map/tracking-ma
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { OrderStatusChip } from '../../../shared/components/order-status-chip/order-status-chip';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
-import { shownError } from '../../../shared/forms/form-errors';
+import { StatTile } from '../../../shared/components/stat-tile/stat-tile';
+import { BbDialog } from '../../../shared/dialog/bb-dialog';
+import { openDeliveryCode } from '../delivery-code-dialog/delivery-code-dialog';
+import { serverErrors, shownError } from '../../../shared/forms/form-errors';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { VEHICLE_LABEL, VehicleType } from '../../../shared/models/checkout.models';
 import {
   RiderAction,
   RiderDashboard,
   RiderOrder,
+  RiderStats,
+  AT_OR_TO_RESTAURANT,
 } from '../../../shared/models/order-management.models';
 import { ItemCountPipe } from '../../../shared/pipes/item-count.pipe';
 import { InrPipe, formatDistance } from '../../../shared/pipes/money.pipes';
 
 const POLL_MS = 30_000;
 
-const NEXT_STEP: Partial<
-  Record<RiderOrder['status'], { action: RiderAction; label: string; hint: string; icon: string }>
-> = {
-  assigned: {
-    action: 'picked_up',
+/** What each move looks like in the app. */
+const STEP: Record<RiderAction, { label: string; hint: string; icon: string }> = {
+  arrived_at_restaurant: {
+    label: 'Arrived at restaurant',
+    hint: 'Go to the restaurant. Tap when you are there so they hand you the order.',
+    icon: 'store',
+  },
+  picked_up: {
     label: 'Picked up',
     hint: 'Go to the restaurant and collect the order.',
     icon: 'inventory_2',
   },
-  picked_up: {
-    action: 'on_the_way',
+  on_the_way: {
     label: 'Start delivery',
     hint: 'Order collected. Head to the customer.',
     icon: 'two_wheeler',
   },
-  on_the_way: {
-    action: 'delivered',
-    label: 'Delivered',
-    hint: 'Hand over the order and collect the cash.',
-    icon: 'task_alt',
-  },
+  delivered: { label: 'Delivered', hint: '', icon: 'task_alt' },
+};
+
+/** The next move when the API does not list them (the Node API has no arrival step). */
+const NEXT_ACTION: Partial<Record<RiderOrder['status'], RiderAction>> = {
+  assigned: 'picked_up',
+  picked_up: 'on_the_way',
+  on_the_way: 'delivered',
 };
 
 @Component({
@@ -76,10 +90,11 @@ const NEXT_STEP: Partial<
     FormRoot,
     NP_FORM_FIELDS,
     RouterLink,
-    MatButtonModule,
+    ButtonComponent,
     IconComponent,
     NpIconPipe,
-    MatProgressBarModule,
+    ProgressBarComponent,
+    StatTile,
     ToggleComponent,
     EmptyState,
     OrderStatusChip,
@@ -97,6 +112,7 @@ export class DeliveryDashboard {
   private readonly geo = inject(GeolocationService);
   private readonly notify = inject(NotificationService);
   protected readonly gps = inject(RiderGps);
+  private readonly bbDialog = inject(BbDialog);
 
   protected readonly data = signal<RiderDashboard | null>(null);
   protected readonly loadError = signal<string | null>(null);
@@ -104,6 +120,9 @@ export class DeliveryDashboard {
   protected readonly acting = signal(false);
   protected readonly availabilityError = signal<string | null>(null);
   protected readonly now = signal(Date.now());
+  protected readonly stats = signal<RiderStats | null>(null);
+  /** The API has no /delivery/stats (the Node API; Django has it): hide the figures. */
+  protected readonly statsUnavailable = signal(false);
 
   protected readonly profile = computed(() => this.data()?.profile ?? null);
   protected readonly online = computed(() => this.profile()?.isOnline ?? false);
@@ -112,32 +131,50 @@ export class DeliveryDashboard {
   protected readonly active = computed(() => this.data()?.activeOrder ?? null);
   protected readonly nextStep = computed(() => {
     const o = this.active();
-    if (!o?.status) return null;
-    const step = NEXT_STEP[o.status];
-    if (!step) return null;
-    if (o.status === 'on_the_way') {
-      const isPaid = o.paymentMethod === 'online' || o.paymentStatus === 'paid';
-      return {
-        ...step,
-        hint: isPaid
-          ? 'Hand over the order to the customer (already paid online).'
-          : 'Hand over the order and collect the cash.',
-      };
+    const action = o && (o.nextStatuses ? o.nextStatuses[0] : NEXT_ACTION[o.status]);
+    if (!o || !action) return null;
+    const step = { action, ...STEP[action] };
+    if (o.status === 'arrived_at_restaurant') {
+      step.hint = 'Collect the order from the counter, then tap Picked up.';
+    } else if (action === 'delivered') {
+      const paid = o.paymentMethod === 'online' || o.paymentStatus === 'paid';
+      const code = o.deliveryOtpRequired ? " and ask for the customer's 4-digit code" : '';
+      step.hint = paid
+        ? `Hand over the order${code} (already paid online).`
+        : `Hand over the order, collect the cash${code}.`;
     }
     return step;
   });
   protected readonly vehicleLabel = VEHICLE_LABEL;
+
+  private readonly statsOnDelivery = effect(() => {
+    const completed = this.profile()?.completedDeliveries;
+    if (completed === undefined) return;
+    untracked(() => this.loadStats());
+  });
+
+  private loadStats(): void {
+    if (this.statsUnavailable()) return;
+    this.rider.stats().subscribe({
+      next: (stats) => this.stats.set(stats),
+      error: (err: unknown) => {
+        // 404: the Node API (no figures endpoint). Other errors: keep the last figures.
+        if (err instanceof HttpErrorResponse && err.status === 404) this.statsUnavailable.set(true);
+      },
+    });
+  }
 
   protected readonly stops = computed(() => {
     const o = this.active();
     if (!o) return null;
     const restaurant = fromCoordinates(o.restaurantSnapshot.location?.coordinates);
     const destination = fromCoordinates(o.deliveryAddress.location?.coordinates);
+    const toRestaurant = AT_OR_TO_RESTAURANT.includes(o.status);
     return {
       restaurant,
       destination,
-      target: o.status === 'assigned' ? restaurant : destination,
-      toRestaurant: o.status === 'assigned',
+      target: toRestaurant ? restaurant : destination,
+      toRestaurant,
     };
   });
   protected readonly directionsUrl = computed(() => {
@@ -229,7 +266,7 @@ export class DeliveryDashboard {
     this.editingVehicle.set(true);
   }
 
-  private async saveVehicle(): Promise<undefined> {
+  private async saveVehicle(): Promise<TreeValidationResult> {
     const { vehicleType, vehicleNumber } = this.vehicleModel();
     try {
       const profile = await firstValueFrom(
@@ -238,10 +275,13 @@ export class DeliveryDashboard {
       this.data.update((d) => (d ? { ...d, profile } : d));
       this.editingVehicle.set(false);
       this.notify.success('Vehicle saved');
+      return undefined;
     } catch (err) {
-      this.notify.error(errorMessage(err));
+      // Field errors (422) show under their fields; anything else as a message.
+      const details = fieldErrors(err);
+      if (!details.length) this.notify.error(errorMessage(err));
+      return serverErrors(this.vehicleForm, details);
     }
-    return undefined;
   }
 
   protected async setOnline(online: boolean): Promise<void> {
@@ -281,12 +321,20 @@ export class DeliveryDashboard {
   }
 
   protected advance(order: RiderOrder): void {
-    const step = NEXT_STEP[order.status];
-    if (step)
-      this.act(
-        this.rider.setStatus(order.id, step.action),
-        step.action === 'delivered' ? 'Delivered. Nice work!' : step.label,
-      );
+    const step = this.nextStep();
+    if (!step) return;
+    if (step.action === 'delivered' && order.deliveryOtpRequired) {
+      // The dialog sends the code itself, so a wrong code is shown there and can be retried.
+      openDeliveryCode(this.bbDialog, order).subscribe((dashboard) => {
+        this.apply(dashboard);
+        this.notify.success('Delivered. Nice work!');
+      });
+      return;
+    }
+    this.act(
+      this.rider.setStatus(order.id, step.action),
+      step.action === 'delivered' ? 'Delivered. Nice work!' : step.label,
+    );
   }
 
   private act(request: ReturnType<RiderService['accept']>, message: string): void {
