@@ -57,6 +57,12 @@ export const CUSTOMER_ROUTES: Routes = [
     loadComponent: () => import('./addresses/addresses').then((m) => m.Addresses),
   },
   {
+    path: 'account/payments',
+    title: 'Payments | BiteBox',
+    canActivate: [roleGuard('customer')],
+    loadComponent: () => import('./payments/payment-history').then((m) => m.PaymentHistory),
+  },
+  {
     path: 'account/coins',
     title: 'My coins | BiteBox',
     canActivate: [roleGuard('customer')],

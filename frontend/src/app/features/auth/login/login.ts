@@ -11,10 +11,9 @@ import { serverErrors, shownError } from '../../../shared/forms/form-errors';
 import { emailRules } from '../../../shared/forms/form-rules';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { ROLE_META, Role } from '../../../shared/models/user.models';
+import { safeReturnUrl } from '../../../core/services/safe-url';
 
-export function safeReturnUrl(url: string | undefined): string | null {
-  return url && url.startsWith('/') && !url.startsWith('//') && !url.startsWith('/\\') ? url : null;
-}
+export { safeReturnUrl };
 
 const PANELS: Partial<Record<Role, string>> = {
   admin: '/admin',

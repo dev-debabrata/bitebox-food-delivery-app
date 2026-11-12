@@ -8,8 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormRoot, TreeValidationResult, form, maxLength, minLength, required } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { IconComponent } from 'nexprime';
+import { ButtonComponent, IconComponent } from 'nexprime';
 import { firstValueFrom } from 'rxjs';
 import { errorMessage, fieldErrors } from '../../../../core/services/api-error';
 import { ReviewService } from '../../../../core/services/review.service';
@@ -21,7 +20,7 @@ import { REVIEW_LIMITS, RestaurantReview } from '../../../../shared/models/revie
 /** Inline public reply to one review. The review itself is never changed. */
 @Component({
   selector: 'bb-reply-form',
-  imports: [FormRoot, NP_FORM_FIELDS, MatButtonModule, IconComponent],
+  imports: [FormRoot, NP_FORM_FIELDS, ButtonComponent, IconComponent],
   templateUrl: './reply-form.html',
   styleUrl: './reply-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

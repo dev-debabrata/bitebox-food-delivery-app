@@ -4,9 +4,7 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { form } from '@angular/forms/signals';
-import { MatDialog } from '@angular/material/dialog';
-import { MatTabsModule } from '@angular/material/tabs';
-import { IconComponent, SelectOption, ToggleComponent } from 'nexprime';
+import { IconComponent, SelectOption, TabsComponent, ToggleComponent } from 'nexprime';
 import { catchError, map, of } from 'rxjs';
 import { OperationsService } from '../../../../core/services/admin/operations.service';
 import { errorMessage } from '../../../../core/services/api-error';
@@ -34,7 +32,7 @@ const failed = <T>(err: unknown, text: string): Loaded<T> => ({
     DatePipe,
     NP_FORM_FIELDS,
     ToggleComponent,
-    MatTabsModule,
+    TabsComponent,
     IconComponent,
     EmptyState,
     PageHeader,
@@ -46,7 +44,7 @@ const failed = <T>(err: unknown, text: string): Loaded<T> => ({
 })
 export class OrderMonitoring {
   private readonly api = inject(OperationsService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(BbDialog);
   protected readonly statusLabel = ORDER_STATUS_LABEL;
 
   /** Re-read on every order event, with a 20 s fallback poll while the tab is visible. */
@@ -84,6 +82,7 @@ export class OrderMonitoring {
         'preparing',
         'ready_for_pickup',
         'assigned',
+        'arrived_at_restaurant',
         'picked_up',
         'on_the_way',
       ] as OrderStatus[]
@@ -107,6 +106,17 @@ export class OrderMonitoring {
   protected readonly lateCount = computed(
     () => this.board()?.data?.items.filter((o) => o.late).length ?? 0,
   );
+
+  protected readonly tab = signal('live');
+  protected readonly tabItems = computed(() => [
+    {
+      id: 'live',
+      label: 'Live orders',
+      content: '',
+      badge: this.lateCount() ? `${this.lateCount()} late` : undefined,
+    },
+    { id: 'restaurants', label: 'Restaurant availability', content: '' },
+  ]);
   protected readonly updatedAt = computed(() => this.board()?.data?.at ?? null);
 
   protected open(orderId: string): void {

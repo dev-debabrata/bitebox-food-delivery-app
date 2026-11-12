@@ -58,11 +58,24 @@ export function createRazorpayProvider(
       };
     },
 
-    async refund({ providerPaymentId, amountPaise }) {
+    /** status: "processed", "pending" (the bank has not confirmed yet) or "failed". */
+    async refund({ providerPaymentId, amountPaise, receipt }) {
       const refund = await client.payments.refund(providerPaymentId, {
         amount: amountPaise,
+        ...(receipt ? { receipt: String(receipt).slice(0, 40) } : {}),
       });
-      return { providerRefundId: refund.id };
+      return { providerRefundId: refund.id, status: refund.status ?? "pending" };
+    },
+
+    async refundStatus(providerPaymentId, providerRefundId) {
+      const refund = await client.payments.fetchRefund(providerPaymentId, providerRefundId);
+      return refund.status;
+    },
+
+    /** Payments made against a gateway order: [{ id, status, amountPaise }]. */
+    async orderPayments(providerOrderId) {
+      const { items = [] } = await client.orders.fetchPayments(providerOrderId);
+      return items.map((p) => ({ id: p.id, status: p.status, amountPaise: p.amount }));
     },
 
     /** Webhooks are signed over the exact raw request body with the webhook secret. */

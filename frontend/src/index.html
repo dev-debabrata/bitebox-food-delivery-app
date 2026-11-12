@@ -18,9 +18,7 @@
       (function () {
         try {
           var stored = localStorage.getItem('bb-theme');
-          var dark =
-            stored === 'dark' ||
-            (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var dark = stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
           if (dark) {
             document.documentElement.setAttribute('data-theme', 'dark');
             document.querySelector('meta[name="theme-color"]').setAttribute('content', '#120c17');
@@ -34,10 +32,7 @@
     <meta name="apple-mobile-web-app-title" content="BiteBox" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="application-name" content="BiteBox" />
-    <meta
-      name="description"
-      content="BiteBox - order food from your favourite local restaurants and track your delivery live."
-    />
+    <meta name="description" content="BiteBox - order food from your favourite local restaurants and track your delivery live." />
     <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -48,5 +43,6 @@
   </head>
   <body class="mat-typography">
     <app-root></app-root>
+    <noscript>BiteBox needs JavaScript to run. Please enable it in your browser settings.</noscript>
   </body>
 </html>

@@ -8,30 +8,7 @@
 }
 
 .tabs {
-  --mat-button-toggle-shape: 999px;
   white-space: nowrap;
-}
-
-.count {
-  // Own line height: the toggle's tall label line would otherwise push the digit below the pill.
-  display: inline-block;
-  vertical-align: middle;
-  box-sizing: border-box;
-  min-width: 20px;
-  height: 20px;
-  line-height: 20px;
-  text-align: center;
-  margin-left: 6px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--bb-plum-100);
-  color: var(--bb-plum);
-  font-size: 0.72rem;
-  font-weight: 800;
-
-  &.hot {
-    background: var(--bb-amber);
-  }
 }
 
 .grid {
@@ -156,10 +133,6 @@
   button {
     flex: 1;
   }
-}
-
-.reject {
-  --mat-button-outlined-label-text-color: var(--bb-danger);
 }
 
 .waiting {

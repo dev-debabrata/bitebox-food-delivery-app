@@ -1,0 +1,20 @@
+<h2 bbDialogTitle>Accept order {{ order.orderNumber }}</h2>
+<div class="bb-dialog__content">
+  <p class="bb-muted">How long will the food take? The customer sees when it should be ready.</p>
+  <np-select
+    class="times"
+    label="Ready in"
+    [options]="options"
+    [value]="'' + minutes()"
+    (valueChange)="pick($event)"
+  />
+</div>
+<div class="bb-dialog__actions">
+  <np-button variant="text" severity="secondary" label="Cancel" (clicked)="ref.close()" />
+  <np-button
+    severity="success"
+    icon="check"
+    [label]="'Accept · ready in ' + minutes() + ' min'"
+    (clicked)="ref.close(minutes())"
+  />
+</div>

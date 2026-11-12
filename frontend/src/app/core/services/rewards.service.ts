@@ -22,7 +22,7 @@ import { toParams } from './http-params';
 @Injectable({ providedIn: 'root' })
 export class RewardsService {
   private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
+  private readonly api = environment.baseUrl;
 
   private get<T>(path: string, query: object = {}): Observable<T> {
     return this.http

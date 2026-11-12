@@ -8,11 +8,20 @@ export const ACTIVE_STATUSES: OrderStatus[] = [
   'preparing',
   'ready_for_pickup',
   'assigned',
+  'arrived_at_restaurant',
   'picked_up',
   'on_the_way',
 ];
 
-export const TRACKED_STATUSES: OrderStatus[] = ['assigned', 'picked_up', 'on_the_way'];
+export const TRACKED_STATUSES: OrderStatus[] = [
+  'assigned',
+  'arrived_at_restaurant',
+  'picked_up',
+  'on_the_way',
+];
+
+/** Heading to, or waiting at, the restaurant: the map's target is the restaurant. */
+export const AT_OR_TO_RESTAURANT: OrderStatus[] = ['assigned', 'arrived_at_restaurant'];
 
 export type OrderCounts = Partial<Record<OrderStatus, number>>;
 
@@ -52,6 +61,22 @@ export interface RiderOrder extends Omit<Order, 'deliveryAddress' | 'rider' | 'c
   };
   offerExpiresAt: string | null;
   offerWindowSeconds: number;
+  /** What the delivery pays the rider (Django API; absent from the Node API). */
+  estimatedEarningsPaise?: number;
+  /** Straight-line metres from the rider's last GPS fix to the restaurant (offers only; Django). */
+  pickupDistanceMeters?: number | null;
+  /** The rider's allowed next moves, main one first (Django API; absent from the Node API). */
+  nextStatuses?: RiderAction[];
+  /** "Delivered" needs the customer's 4-digit code (Django API). */
+  deliveryOtpRequired?: boolean;
+}
+
+/** GET /delivery/stats (Django API only). Money in paise. */
+export interface RiderStats {
+  today: { deliveries: number; earningsPaise: number };
+  week: { deliveries: number; earningsPaise: number };
+  total: { deliveries: number; earningsPaise: number };
+  rating: { average: number; count: number };
 }
 
 export interface RiderDashboard {
@@ -60,7 +85,7 @@ export interface RiderDashboard {
   activeOrder: RiderOrder | null;
 }
 
-export type RiderAction = 'picked_up' | 'on_the_way' | 'delivered';
+export type RiderAction = 'arrived_at_restaurant' | 'picked_up' | 'on_the_way' | 'delivered';
 
 // Admin
 export interface AdminOrderList {
@@ -71,6 +96,11 @@ export interface AdminOrderList {
 
 export interface AdminOrder extends Order {
   offer: { rider: RiderCard | null; expiresAt: string } | null;
+  /** Django API: a rider can be assigned by hand (the order waits for one). */
+  canAssign?: boolean;
+  /** Django API: the customer holds a delivery code; wrong tries so far. */
+  deliveryOtpPending?: boolean;
+  deliveryOtpAttempts?: number;
 }
 
 export interface AdminRider {

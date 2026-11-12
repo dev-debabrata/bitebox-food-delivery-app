@@ -22,7 +22,7 @@ export class UploadService {
     const form = new FormData();
     form.append('image', file);
     return this.http
-      .post<ApiResponse<{ url: string }>>(`${environment.apiUrl}/uploads/${endpoint}`, form)
+      .post<ApiResponse<{ url: string }>>(`${environment.baseUrl}/uploads/${endpoint}`, form)
       .pipe(map((res) => res.data.url));
   }
 }

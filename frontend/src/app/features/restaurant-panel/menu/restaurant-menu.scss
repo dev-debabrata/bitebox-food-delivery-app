@@ -29,6 +29,7 @@
   padding: 0;
 
   li {
+    position: relative;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto auto;
     align-items: center;
@@ -84,4 +85,10 @@
 
 .meta {
   font-size: 0.88rem;
+}
+
+// The actions popup floats (position: fixed) when open; keep its host out of the row's grid, or it
+// takes a fifth cell, wraps onto a second grid row and makes every row taller.
+.items np-menu {
+  position: absolute;
 }

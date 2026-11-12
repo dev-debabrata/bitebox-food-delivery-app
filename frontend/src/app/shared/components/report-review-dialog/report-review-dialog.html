@@ -1,6 +1,6 @@
-<h2 mat-dialog-title>Report this review</h2>
+<h2 bbDialogTitle>Report this review</h2>
 <form [formRoot]="form" novalidate>
-  <mat-dialog-content class="bb-form">
+  <div class="bb-dialog__content bb-form">
     <p class="bb-muted">
       Our team checks every report against the review policy. The author is not told who reported it.
     </p>
@@ -23,11 +23,11 @@
       <np-textarea [formField]="form.note" label="Anything else? (optional)" rows="3" autoResize />
       <bb-field-error [field]="form.note" />
     </div>
-  </mat-dialog-content>
-  <mat-dialog-actions align="end">
-    <button mat-button type="button" mat-dialog-close>Cancel</button>
-    <button mat-flat-button type="submit" class="danger" [disabled]="form().submitting()">
+  </div>
+  <div class="bb-dialog__actions">
+    <np-button variant="text" severity="secondary" label="Cancel" (clicked)="ref.close()" />
+    <button type="submit" class="bb-btn bb-btn--danger" [disabled]="form().submitting()">
       {{ form().submitting() ? 'Sending…' : 'Send report' }}
     </button>
-  </mat-dialog-actions>
+  </div>
 </form>

@@ -12,7 +12,7 @@
   align-items: center;
   gap: var(--bb-space-3);
   padding: var(--bb-space-4) var(--bb-space-3) var(--bb-space-3) var(--bb-space-5);
-  background: var(--bb-plum);
+  background: var(--bb-brand);
   color: #fff;
 
   button {
@@ -28,7 +28,7 @@
   height: 36px;
   border-radius: 10px;
   background: var(--bb-amber);
-  color: var(--bb-plum);
+  color: var(--bb-on-accent);
   font-weight: 800;
 }
 
@@ -60,7 +60,7 @@
   margin: 0;
   padding: 8px var(--bb-space-5);
   background: var(--bb-amber-100);
-  color: #7a4b00;
+  color: var(--bb-warning-ink);
   font-size: 0.82rem;
 
   np-icon {
@@ -68,7 +68,10 @@
   }
 }
 
-.body.mat-mdc-dialog-content {
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   padding: var(--bb-space-4) var(--bb-space-5) var(--bb-space-2);
 }
 
@@ -142,7 +145,9 @@ h2 {
   padding: 8px var(--bb-space-3);
   border-radius: var(--bb-radius-sm);
   background: var(--bb-surface-alt);
-  font: 0.82rem ui-monospace, monospace;
+  font:
+    0.82rem ui-monospace,
+    monospace;
 }
 
 .gateway-foot {
@@ -155,8 +160,8 @@ h2 {
 
 .pay {
   width: 100%;
+  min-height: 48px;
   font-size: 1rem;
-  --mat-button-filled-container-height: 48px;
 }
 
 .fail {

@@ -1,5 +1,5 @@
 <bb-page-header title="Coupons" subtitle="Discount codes customers can apply at checkout.">
-  <button mat-flat-button (click)="open()"><np-icon name="plus" class="mat-icon" matButtonIcon />New coupon</button>
+  <np-button severity="primary" icon="plus" label="New coupon" (clicked)="open()" />
 </bb-page-header>
 @if (error()) {
   <div class="bb-alert error" role="alert">
@@ -10,7 +10,7 @@
   <span class="bb-skeleton" style="height: 240px"></span>
 } @else if (coupons().length === 0) {
   <bb-empty-state icon="local_offer" title="No coupons yet">
-    <button mat-flat-button (click)="open()">Create a coupon</button>
+    <np-button severity="primary" label="Create a coupon" (clicked)="open()" />
   </bb-empty-state>
 } @else {
   <div class="grid">
@@ -48,9 +48,15 @@
           {{ c.perUserLimit }} per customer
         </p>
         <footer>
-          <button mat-button (click)="open(c)"><np-icon name="pencil" class="mat-icon" matButtonIcon />Edit</button>
-          <button mat-button (click)="remove(c)" [disabled]="c.usedCount > 0">
-            <np-icon name="trash-2" class="mat-icon" matButtonIcon />Delete
+          <np-button
+            variant="text"
+            severity="primary"
+            icon="pencil"
+            label="Edit"
+            (clicked)="open(c)"
+          />
+          <button class="bb-btn bb-btn--text" (click)="remove(c)" [disabled]="c.usedCount > 0">
+            <np-icon name="trash-2" />Delete
           </button>
         </footer>
       </article>

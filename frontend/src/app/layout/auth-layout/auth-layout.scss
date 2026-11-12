@@ -20,7 +20,8 @@
   color: #fff6e5;
   background:
     radial-gradient(circle at 85% 10%, rgb(255 181 46 / 35%) 0, transparent 40%),
-    radial-gradient(circle at 10% 90%, rgb(255 181 46 / 18%) 0, transparent 45%), var(--bb-brand);
+    radial-gradient(circle at 10% 90%, rgb(255 181 46 / 18%) 0, transparent 45%),
+    var(--bb-brand);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -51,7 +52,7 @@
   }
   np-icon {
     --bb-icon-size: 40px;
-    color: var(--bb-plum);
+    color: var(--bb-on-accent); // stays dark on amber in both themes
     background: var(--bb-amber);
     border-radius: 12px;
     padding: 8px;

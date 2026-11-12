@@ -4,7 +4,6 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { rxResource } from '@angular/core/rxjs-interop';
 import { form } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { IconComponent, SelectOption } from 'nexprime';
 import { Observable } from 'rxjs';
@@ -25,6 +24,7 @@ import {
   PayoutType,
 } from '../../../../shared/models/admin-roles.models';
 import { InrPipe, formatPaise } from '../../../../shared/pipes/money.pipes';
+import { BbDialog } from '../../../../shared/dialog/bb-dialog';
 
 const COPY: Record<PayoutType, { title: string; subtitle: string; payee: string }> = {
   restaurant: {
@@ -58,7 +58,7 @@ const COPY: Record<PayoutType, { title: string; subtitle: string; payee: string 
 })
 export class PayoutsPage {
   private readonly api = inject(FinanceService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(BbDialog);
   private readonly notify = inject(NotificationService);
 
   /** Route parameter: restaurant or rider. */

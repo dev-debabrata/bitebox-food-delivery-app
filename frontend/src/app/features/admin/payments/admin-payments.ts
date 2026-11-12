@@ -1,10 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { form } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { IconComponent, SelectOption } from 'nexprime';
+import { ButtonComponent, IconComponent, PaginationComponent, SelectOption } from 'nexprime';
 import { errorMessage } from '../../../core/services/api-error';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ReportsService } from '../../../core/services/reports.service';
@@ -21,16 +18,18 @@ import {
 } from '../../../shared/models/payment.models';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
 import { AuthService } from '../../../core/auth/auth.service';
+import { BbDialog } from '../../../shared/dialog/bb-dialog';
 import { openTransaction } from '../finance/transaction-dialog/transaction-dialog';
+import { openRefund } from './refund-dialog/refund-dialog';
 
 @Component({
   selector: 'bb-admin-payments',
   imports: [
     DatePipe,
     NP_FORM_FIELDS,
-    MatButtonModule,
+    ButtonComponent,
     IconComponent,
-    MatPaginatorModule,
+    PaginationComponent,
     EmptyState,
     PageHeader,
     InrPipe,
@@ -41,7 +40,7 @@ import { openTransaction } from '../finance/transaction-dialog/transaction-dialo
 })
 export class AdminPayments {
   private readonly api = inject(ReportsService);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(BbDialog);
   private readonly notify = inject(NotificationService);
 
   protected readonly statusLabel = PAYMENT_STATUS_LABEL;
@@ -83,6 +82,15 @@ export class AdminPayments {
 
   protected details(p: AdminPayment): void {
     openTransaction(this.dialog, p.id).subscribe();
+  }
+
+  /** Something to refund, or refunds to look at. */
+  protected hasRefunds(p: AdminPayment): boolean {
+    return (p.refundablePaise ?? 0) > 0 || (p.refundedPaise ?? 0) > 0;
+  }
+
+  protected refunds(p: AdminPayment): void {
+    openRefund(this.dialog, p).subscribe(() => this.list.reload());
   }
 
   protected retryRefund(p: AdminPayment): void {

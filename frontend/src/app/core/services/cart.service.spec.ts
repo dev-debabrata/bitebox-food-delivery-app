@@ -34,22 +34,13 @@ describe('CartService', () => {
   afterEach(() => http.verify());
 
   it('falls back to the default address when the remembered one is not on this account', async () => {
-    location.location.set({
-      label: 'Maple Town',
-      latitude: 10,
-      longitude: 20,
-      source: 'address',
-      addressId: 'gone-1',
-    });
+    location.location.set({ label: 'Maple Town', latitude: 10, longitude: 20, source: 'address', addressId: 'gone-1' });
     cart.selectedAddressId.set('gone-1');
 
     const result = firstValueFrom(cart.refresh());
     http
       .expectOne((r) => r.url === url && r.params.get('addressId') === 'gone-1')
-      .flush(
-        { success: false, message: 'Address not found' },
-        { status: 404, statusText: 'Not Found' },
-      );
+      .flush({ success: false, message: 'Address not found' }, { status: 404, statusText: 'Not Found' });
     http
       .expectOne((r) => r.url === url && !r.params.has('addressId'))
       .flush({ success: true, message: 'OK', data: quote });
@@ -57,21 +48,14 @@ describe('CartService', () => {
     expect((await result).address?.id).toBe('default-1');
     expect(cart.selectedAddressId()).toBeNull();
     // The point stays as the delivery location; only the dead address link is dropped.
-    expect(location.location()).toMatchObject({
-      label: 'Maple Town',
-      source: 'search',
-      addressId: undefined,
-    });
+    expect(location.location()).toMatchObject({ label: 'Maple Town', source: 'search', addressId: undefined });
   });
 
   it('still reports other failures', async () => {
     const result = firstValueFrom(cart.refresh());
     http
       .expectOne(url)
-      .flush(
-        { success: false, message: 'Server error' },
-        { status: 500, statusText: 'Server Error' },
-      );
+      .flush({ success: false, message: 'Server error' }, { status: 500, statusText: 'Server Error' });
     await expect(result).rejects.toMatchObject({ status: 500 });
   });
 });

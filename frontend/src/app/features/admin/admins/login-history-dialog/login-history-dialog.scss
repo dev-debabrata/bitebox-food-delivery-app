@@ -1,0 +1,40 @@
+.logins {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--bb-space-3);
+    padding: var(--bb-space-2) 0;
+  }
+
+  li + li {
+    border-top: 1px solid var(--bb-border);
+  }
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  color: var(--bb-ink);
+
+  .bb-muted {
+    font-size: 0.85rem;
+  }
+}
+
+.state {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--bb-ink-muted);
+
+  &.active {
+    color: var(--bb-success-ink);
+    font-weight: 600;
+  }
+}

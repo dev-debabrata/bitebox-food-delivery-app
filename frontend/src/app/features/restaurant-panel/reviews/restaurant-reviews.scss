@@ -23,7 +23,7 @@
   border: 0;
   border-radius: 999px;
   background: var(--bb-amber-100);
-  color: #7a4b00;
+  color: var(--bb-warning-ink);
   font: inherit;
   font-weight: 600;
   font-size: 0.85rem;
@@ -157,10 +157,10 @@
 
 .needs {
   background: var(--bb-amber-100);
-  color: #7a4b00;
+  color: var(--bb-warning-ink);
 }
 
 .done {
-  background: #e6f5ec;
+  background: var(--bb-success-bg);
   color: var(--bb-success);
 }

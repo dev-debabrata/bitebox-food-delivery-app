@@ -1,6 +1,6 @@
 <bb-page-header title="Menu" subtitle="Add dishes, set prices and switch availability on or off.">
   @if (!noRestaurant() && !loading()) {
-    <button mat-flat-button (click)="openForm()"><np-icon name="plus" class="mat-icon" matButtonIcon />Add dish</button>
+    <np-button severity="primary" icon="plus" label="Add dish" (clicked)="openForm()" />
   }
 </bb-page-header>
 
@@ -14,7 +14,7 @@
     title="Add your restaurant first"
     message="Create your restaurant profile, then build your menu here."
   >
-    <a mat-flat-button routerLink="/restaurant/details">Add restaurant details</a>
+    <a class="bb-btn" routerLink="/restaurant/details">Add restaurant details</a>
   </bb-empty-state>
 } @else if (error()) {
   <div class="bb-alert error" role="alert">
@@ -27,9 +27,7 @@
     title="Your menu is empty"
     message="Add your first dish so customers can see what you serve."
   >
-    <button mat-flat-button (click)="openForm()">
-      <np-icon name="plus" class="mat-icon" matButtonIcon />Add your first dish
-    </button>
+    <np-button severity="primary" icon="plus" label="Add your first dish" (clicked)="openForm()" />
   </bb-empty-state>
 } @else {
   <div class="filters">
@@ -79,22 +77,16 @@
           [attr.title]="'Available: ' + item.name"
           (checkedChange)="toggleAvailability(item, $event)"
         />
-        <button
-          mat-icon-button
-          [matMenuTriggerFor]="itemMenu"
-          [attr.aria-label]="'Actions for ' + item.name"
+        <np-button
+          variant="text"
+          severity="secondary"
+          icon="ellipsis-vertical"
+          label=""
+          [ariaLabel]="'Actions for ' + item.name"
           [disabled]="busyId() === item.id"
-        >
-          <np-icon name="ellipsis-vertical" class="mat-icon" matButtonIcon />
-        </button>
-        <mat-menu #itemMenu="matMenu" xPosition="before">
-          <button mat-menu-item (click)="openForm(item)">
-            <np-icon name="pencil" class="mat-icon" matButtonIcon /><span>Edit</span>
-          </button>
-          <button mat-menu-item (click)="remove(item)">
-            <np-icon name="trash-2" class="mat-icon" matButtonIcon /><span>Delete</span>
-          </button>
-        </mat-menu>
+          (clicked)="toggleMenu(itemMenu, $event)"
+        />
+        <np-menu #itemMenu class="bb-menu-compact" [popup]="true" [model]="menus().get(item.id) ?? []" />
       </li>
     } @empty {
       <li class="none bb-muted">No dishes match these filters.</li>

@@ -10,7 +10,7 @@ $muted: #c9b8d6;
 $line: rgb(255 255 255 / 12%);
 
 .site-footer {
-  background: var(--bb-plum);
+  background: var(--bb-brand);
   color: $text;
 
   // Room for the phone tab bar under the page.
@@ -143,7 +143,7 @@ ul {
 
     &:hover {
       background: var(--bb-amber);
-      color: var(--bb-plum);
+      color: var(--bb-on-accent);
       text-decoration: none;
     }
   }
@@ -255,7 +255,7 @@ ul {
   height: 44px;
   border-radius: 12px;
   background: var(--bb-amber);
-  color: var(--bb-plum);
+  color: var(--bb-on-accent);
   --bb-icon-size: 22px;
 }
 .partner-links {
@@ -271,7 +271,7 @@ ul {
     padding: 6px 14px;
     border-radius: 999px;
     background: var(--bb-amber);
-    color: var(--bb-plum);
+    color: var(--bb-on-accent);
 
     &:hover {
       text-decoration: none;

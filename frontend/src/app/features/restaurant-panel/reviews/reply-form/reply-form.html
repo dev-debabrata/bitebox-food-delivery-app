@@ -16,8 +16,8 @@
   </div>
   <p class="bb-muted note">Everyone can see your reply under the review. Keep it polite and don't share customer details.</p>
   <div class="actions">
-    <button mat-button type="button" (click)="cancelled.emit()">Cancel</button>
-    <button mat-flat-button type="submit" [disabled]="form().submitting()">
+    <np-button variant="text" severity="secondary" label="Cancel" (clicked)="cancelled.emit()" />
+    <button type="submit" class="bb-btn" [disabled]="form().submitting()">
       {{ form().submitting() ? 'Posting…' : review().response ? 'Save reply' : 'Post reply' }}
     </button>
   </div>

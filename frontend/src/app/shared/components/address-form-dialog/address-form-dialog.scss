@@ -35,7 +35,7 @@
 
   &.pinned {
     border: 1px solid var(--bb-success);
-    background: #e6f5ec;
+    background: var(--bb-success-bg);
 
     > np-icon {
       color: var(--bb-success);

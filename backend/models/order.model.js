@@ -7,6 +7,8 @@ export const ORDER_STATUS = Object.freeze({
   PREPARING: "preparing",
   READY_FOR_PICKUP: "ready_for_pickup",
   ASSIGNED: "assigned",
+  // The rider is at the restaurant counter (optional step before pickup).
+  ARRIVED_AT_RESTAURANT: "arrived_at_restaurant",
   PICKED_UP: "picked_up",
   ON_THE_WAY: "on_the_way",
   DELIVERED: "delivered",
@@ -20,6 +22,7 @@ export const ACTIVE_STATUSES = Object.freeze([
   S.PREPARING,
   S.READY_FOR_PICKUP,
   S.ASSIGNED,
+  S.ARRIVED_AT_RESTAURANT,
   S.PICKED_UP,
   S.ON_THE_WAY,
 ]);
@@ -30,6 +33,7 @@ export const FINAL_STATUSES = Object.freeze([
 ]);
 export const TRACKED_STATUSES = Object.freeze([
   S.ASSIGNED,
+  S.ARRIVED_AT_RESTAURANT,
   S.PICKED_UP,
   S.ON_THE_WAY,
 ]);
@@ -46,6 +50,7 @@ export const PAYMENT_STATUS = Object.freeze({
   PAID: "paid",
   FAILED: "failed",
   REFUNDED: "refunded",
+  PARTIALLY_REFUNDED: "partially_refunded",
   CANCELLED: "cancelled",
 });
 
@@ -143,6 +148,8 @@ const orderSchema = new mongoose.Schema(
         },
         at: { type: Date, default: Date.now },
         by: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        // Who made the move: customer, restaurant, delivery, admin or system (for the timeline).
+        actor: String,
         note: String,
       },
     ],
@@ -160,6 +167,13 @@ const orderSchema = new mongoose.Schema(
     payment: { type: mongoose.Schema.Types.ObjectId, ref: "Payment" },
 
     submittedAt: { type: Date, default: null },
+    // Set when the restaurant accepts: its preparation time and the expected ready time.
+    prepMinutes: { type: Number, default: null },
+    readyBy: { type: Date, default: null },
+    // The 4-digit code made at pickup. Only the customer sees it; "delivered" needs it. Never in
+    // toJSON: the presenters decide who gets what.
+    deliveryOtp: { type: String, default: null },
+    deliveryOtpAttempts: { type: Number, default: 0 },
     settlement: {
       restaurantPaise: Number,
       riderPaise: Number,
@@ -198,6 +212,8 @@ const orderSchema = new mongoose.Schema(
         delete ret._id;
         delete ret.idempotencyKey;
         delete ret.declinedBy;
+        delete ret.deliveryOtp;
+        delete ret.deliveryOtpAttempts;
         return ret;
       },
     },
@@ -248,6 +264,9 @@ const paymentSchema = new mongoose.Schema(
       required: true,
     },
     amountPaise: { type: Number, required: true, min: 0 },
+    // Refunded so far, counting refunds still under way (services/payments: reserved when a
+    // refund opens, so two refunds can never return more than was paid).
+    refundedPaise: { type: Number, default: 0, min: 0 },
     currency: { type: String, default: "INR" },
     status: {
       type: String,
@@ -261,6 +280,11 @@ const paymentSchema = new mongoose.Schema(
     refundedAt: Date,
     providerRefundId: String,
     processedEvents: { type: [String], default: [], select: false },
+    // The gateway events applied to this payment (ids, types, times only), for the audit trail.
+    events: {
+      type: [{ _id: false, eventId: String, type: { type: String }, at: Date }],
+      default: [],
+    },
   },
   {
     timestamps: true,

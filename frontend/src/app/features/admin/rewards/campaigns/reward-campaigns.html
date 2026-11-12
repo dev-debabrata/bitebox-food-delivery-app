@@ -1,6 +1,6 @@
 <bb-page-header title="Campaigns" subtitle="Festival and promotional rewards. Birthday and welcome rewards are in Settings.">
   @if (canManage) {
-    <button mat-flat-button (click)="open()"><np-icon name="plus" class="mat-icon" matButtonIcon />New campaign</button>
+    <np-button severity="primary" icon="plus" label="New campaign" (clicked)="open()" />
   }
 </bb-page-header>
 
@@ -25,7 +25,7 @@
   } @else if (list.empty()) {
     <bb-empty-state icon="party-popper" title="No campaigns here" message="Create a festival or promotional campaign to reward customers.">
       @if (canManage) {
-        <button mat-flat-button (click)="open()">Create a campaign</button>
+        <np-button severity="primary" label="Create a campaign" (clicked)="open()" />
       }
     </bb-empty-state>
   } @else {
@@ -55,26 +55,21 @@
               <td class="num">{{ c.rewardCoins }}</td>
               <td><span class="bb-badge {{ tone(c.status) }}">{{ statusLabel[c.status] }}</span></td>
               <td class="num">
-                {{ c.stats.claims }}
+                <span class="given">{{ c.stats.claims.toLocaleString('en-IN') }} {{ c.stats.claims === 1 ? 'claim' : 'claims' }}</span>
                 <span class="sub">{{ c.stats.coins.toLocaleString('en-IN') }} coins</span>
               </td>
               <td class="actions">
                 @if (canManage && (actions(c).length || c.status !== 'EXPIRED')) {
-                  <button mat-icon-button type="button" [matMenuTriggerFor]="menu" [disabled]="busy() === c.id" [attr.aria-label]="'Actions for ' + c.name">
-                    <np-icon name="ellipsis-vertical" class="mat-icon" />
-                  </button>
-                  <mat-menu #menu="matMenu" xPosition="before">
-                    @if (c.status !== 'EXPIRED' && c.status !== 'COMPLETED') {
-                      <button mat-menu-item (click)="open(c)"><np-icon name="pencil" class="mat-icon" matButtonIcon />Edit</button>
-                    }
-                    @for (a of actions(c); track a) {
-                      <button mat-menu-item (click)="act(c, a)">
-                        <np-icon [name]="a === 'activate' ? 'play' : a === 'pause' ? 'pause' : 'square'" class="mat-icon" matButtonIcon />
-                        {{ actionLabel[a] }}
-                      </button>
-                    }
-                    <button mat-menu-item (click)="details(c)"><np-icon name="chart-column" class="mat-icon" matButtonIcon />Performance</button>
-                  </mat-menu>
+                  <np-button
+                    variant="text"
+                    severity="secondary"
+                    icon="ellipsis-vertical"
+                    label=""
+                    [ariaLabel]="'Actions for ' + c.name"
+                    [disabled]="busy() === c.id"
+                    (clicked)="toggleMenu(menu, $event)"
+                  />
+                  <np-menu #menu class="bb-menu-compact" [popup]="true" [model]="menus().get(c.id) ?? []" />
                 }
               </td>
             </tr>
@@ -82,13 +77,14 @@
         </tbody>
       </table>
     </div>
-    <mat-paginator
-      [length]="list.data()!.pagination.total"
-      [pageIndex]="list.data()!.pagination.page - 1"
-      [pageSize]="list.data()!.pagination.limit"
-      [pageSizeOptions]="[20, 50, 100]"
-      (page)="list.onPage($event)"
-      aria-label="Campaign pages"
+    <np-pagination
+      variant="compact"
+      [page]="list.data()!.pagination.page"
+      [rows]="list.data()!.pagination.limit"
+      [totalRecords]="list.data()!.pagination.total"
+      [rowsOptions]="[20, 50, 100]"
+      (pageChange)="list.goTo($event)"
+      (rowsChange)="list.goTo(1, $event)"
     />
   }
 </div>

@@ -81,7 +81,7 @@ export class DeliveryLocationService {
   private readonly http = inject(HttpClient);
   private readonly geo = inject(GeolocationService);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-  private readonly api = `${environment.apiUrl}/geo`;
+  private readonly api = `${environment.baseUrl}/geo`;
 
   readonly location = signal<DeliveryLocation | null>(null);
   /**

@@ -200,17 +200,13 @@ h2 {
 .cash {
   background: var(--bb-amber-100);
   color: var(--bb-warning-ink);
-  np-icon {
-    color: var(--bb-warning-ink);
-  }
+  np-icon { color: var(--bb-warning-ink); }
 }
 
 .paid-online {
-  background: #e6f5ec;
+  background: var(--bb-success-bg);
   color: var(--bb-success);
-  np-icon {
-    color: var(--bb-success);
-  }
+  np-icon { color: var(--bb-success); }
 }
 
 .paid-tag {
@@ -231,8 +227,9 @@ h2 {
   }
 }
 
-.go {
-  --mat-button-filled-container-color: var(--bb-success);
+// Action buttons share the row equally (np-button renders its own <button> inside the host).
+.work-actions ::ng-deep .np-button {
+  width: 100%;
 }
 
 .small {

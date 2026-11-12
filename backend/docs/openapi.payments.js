@@ -67,7 +67,7 @@ export const paymentsSchemas = {
     properties: {
       status: {
         type: "string",
-        enum: ["pending", "paid", "failed", "refunded", "cancelled"],
+        enum: ["pending", "paid", "failed", "refunded", "partially_refunded", "cancelled"],
       },
       method: { type: "string", enum: ["cod", "online"] },
       provider: {
@@ -311,6 +311,67 @@ export const paymentsPaths = {
       security: bearer,
       parameters: [idParam],
       responses: { 200: payment, 409: err("Not refundable") },
+    },
+  },
+  "/admin/payments/{id}": {
+    get: {
+      tags: ["Admin - Payments & reports"],
+      summary: "One payment with its refunds and the gateway events applied to it",
+      security: bearer,
+      parameters: [idParam],
+      responses: { 200: ok({ type: "object" }), 404: err("Not found") },
+    },
+  },
+  "/admin/payments/{id}/refunds": {
+    post: {
+      tags: ["Admin - Payments & reports"],
+      summary: "Refund all or part of a payment (refunds:manage)",
+      description:
+        "Online payments are refunded through the gateway; cash refunds wait to be paid by hand. An Idempotency-Key header makes a retried request safe.",
+      security: bearer,
+      parameters: [
+        idParam,
+        { in: "header", name: "Idempotency-Key", schema: { type: "string" } },
+      ],
+      requestBody: body({
+        type: "object",
+        required: ["amountPaise", "reason"],
+        properties: {
+          amountPaise: { type: "integer", minimum: 1 },
+          reason: { type: "string", maxLength: 300 },
+        },
+      }),
+      responses: {
+        200: ok({ type: "object" }),
+        409: err("Not paid, or more than is left (REFUND_TOO_LARGE)"),
+        422: err("Invalid amount or reason"),
+      },
+    },
+  },
+  "/admin/refunds/{id}/paid": {
+    post: {
+      tags: ["Admin - Payments & reports"],
+      summary: "Mark a cash refund as paid back by hand",
+      security: bearer,
+      parameters: [idParam],
+      responses: { 200: ok({ type: "object" }), 409: err("Not a pending cash refund") },
+    },
+  },
+  "/payments/mine": {
+    get: {
+      tags: ["Payments"],
+      summary: "My payments and their refunds",
+      security: bearer,
+      parameters: paging,
+      responses: { 200: ok({ type: "object" }) },
+    },
+  },
+  "/delivery/stats": {
+    get: {
+      tags: ["Earnings"],
+      summary: "Rider: today, this week and all-time deliveries and earnings, and the rating",
+      security: bearer,
+      responses: { 200: ok({ type: "object" }) },
     },
   },
   "/admin/reports": {

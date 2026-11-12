@@ -277,7 +277,7 @@ export interface TicketSummary {
   lastActivityAt: string;
 }
 export interface TicketDetail extends Omit<TicketSummary, 'messages'> {
-  requester: Pick<User, 'id' | 'name' | 'email' | 'role'> & { phone: string | null } | null;
+  requester: (Pick<User, 'id' | 'name' | 'email' | 'role'> & { phone: string | null }) | null;
   order: {
     id: string;
     orderNumber: string;
@@ -374,3 +374,29 @@ export const STAFF_ROLE_SUMMARY: Record<StaffAdminRole, string> = {
   support_admin:
     'Support tickets from customers, restaurants and riders, review moderation, and read-only order details.',
 };
+
+/** GET /admin/dashboard (Django API only). Money only for roles with finance:view. */
+export interface PlatformSummary {
+  customers: number;
+  restaurants: number;
+  approvedRestaurants: number;
+  deliveryPartners: number;
+  orders: { total: number; active: number; completed: number; cancelled: number };
+  money?: {
+    gmvPaise: number;
+    platformRevenuePaise: number;
+    pendingSettlementsPaise: number;
+    pendingRestaurantPaise: number;
+    pendingRiderPaise: number;
+  };
+}
+
+/** One sign-in (a session family) from GET /admin/admins/{id}/logins (Django API only). */
+export interface LoginEntry {
+  signedInAt: string;
+  lastActiveAt: string;
+  ip: string | null;
+  userAgent: string;
+  active: boolean;
+  endedReason: string | null;
+}

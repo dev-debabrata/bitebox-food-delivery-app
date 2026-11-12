@@ -7,6 +7,7 @@ const TONE: Record<OrderStatus, string> = {
   preparing: 'cooking',
   ready_for_pickup: 'handover',
   assigned: 'handover',
+  arrived_at_restaurant: 'handover',
   picked_up: 'road',
   on_the_way: 'road',
   delivered: 'done',

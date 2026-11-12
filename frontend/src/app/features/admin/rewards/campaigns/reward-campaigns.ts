@@ -1,12 +1,17 @@
 import { TableLabels } from '../../../../shared/list/table-labels';
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { IconComponent, SelectOption } from 'nexprime';
+import {
+  ButtonComponent,
+  IconComponent,
+  MenuComponent,
+  PaginationComponent,
+  SelectOption,
+  type MenuItem,
+} from 'nexprime';
+import { COMPACT_MENU_WIDTH, toggleEndAligned } from '../../../../shared/menu/end-aligned-menu';
 import { filter, switchMap } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AdminRewardsService } from '../../../../core/services/admin/admin-rewards.service';
@@ -26,6 +31,7 @@ import {
 } from '../../../../shared/models/rewards.models';
 import { CampaignDetailDialog } from '../campaign-detail-dialog/campaign-detail-dialog';
 import { CampaignFormDialog } from '../campaign-form-dialog/campaign-form-dialog';
+import { BbDialog } from '../../../../shared/dialog/bb-dialog';
 
 type Action = 'activate' | 'pause' | 'end';
 
@@ -33,16 +39,7 @@ type Action = 'activate' | 'pause' | 'end';
 @Component({
   selector: 'bb-reward-campaigns',
   imports: [
-    TableLabels,
-    DatePipe,
-    NP_FORM_FIELDS,
-    ButtonComponent,
-    MenuComponent,
-    PaginationComponent,
-    IconComponent,
-    EmptyState,
-    PageHeader,
-  ],
+    TableLabels,DatePipe, NP_FORM_FIELDS, ButtonComponent, MenuComponent, PaginationComponent, IconComponent, EmptyState, PageHeader],
   templateUrl: './reward-campaigns.html',
   styleUrl: './reward-campaigns.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,6 +47,7 @@ type Action = 'activate' | 'pause' | 'end';
 export class RewardCampaignsPage {
   private readonly api = inject(AdminRewardsService);
   private readonly dialog = inject(MatDialog);
+  private readonly bbDialog = inject(BbDialog);
   private readonly notify = inject(NotificationService);
   protected readonly canManage = inject(AuthService).can('rewards:manage');
   protected readonly statusLabel = CAMPAIGN_STATUS_LABEL;
@@ -82,13 +80,7 @@ export class RewardCampaignsPage {
   );
 
   protected tone(status: CampaignStatus): string {
-    return status === 'ACTIVE'
-      ? 'tone-good'
-      : status === 'SCHEDULED'
-        ? 'tone-info'
-        : status === 'PAUSED'
-          ? 'tone-warn'
-          : '';
+    return status === 'ACTIVE' ? 'tone-good' : status === 'SCHEDULED' ? 'tone-info' : status === 'PAUSED' ? 'tone-warn' : '';
   }
 
   protected actions(c: AdminCampaign): Action[] {
@@ -103,11 +95,7 @@ export class RewardCampaignsPage {
     return moves[c.status];
   }
 
-  protected readonly actionLabel: Record<Action, string> = {
-    activate: 'Activate',
-    pause: 'Pause',
-    end: 'End now',
-  };
+  protected readonly actionLabel: Record<Action, string> = { activate: 'Activate', pause: 'Pause', end: 'End now' };
 
   protected readonly toggleMenu = (menu: MenuComponent, event: Event) =>
     toggleEndAligned(menu, event, COMPACT_MENU_WIDTH);
@@ -161,7 +149,7 @@ export class RewardCampaignsPage {
       pause: 'Customers cannot get it until you activate it again.',
       end: 'It stops for good. Rewards already given are kept.',
     };
-    confirmed(this.dialog, {
+    confirmed(this.bbDialog, {
       title: `${this.actionLabel[action]} “${c.name}”?`,
       message: messages[action],
       confirmLabel: this.actionLabel[action],

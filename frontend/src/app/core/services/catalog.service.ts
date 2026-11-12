@@ -16,7 +16,7 @@ import { publicRequest } from '../interceptors/auth.interceptor';
 @Injectable({ providedIn: 'root' })
 export class CatalogService {
   private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
+  private readonly api = environment.baseUrl;
 
   private categories$?: Observable<FoodCategory[]>;
 

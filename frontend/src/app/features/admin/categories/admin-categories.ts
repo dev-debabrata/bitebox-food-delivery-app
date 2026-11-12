@@ -1,35 +1,29 @@
 import { NpIconPipe } from '../../../shared/icons/np-icon-name';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { IconComponent, ToggleComponent } from 'nexprime';
-import { MatDialog } from '@angular/material/dialog';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { ButtonComponent, IconComponent, ToggleComponent } from 'nexprime';
 import { filter } from 'rxjs';
 import { AdminCatalogService } from '../../../core/services/admin/admin-catalog.service';
 import { errorMessage } from '../../../core/services/api-error';
 import { NotificationService } from '../../../core/services/notification.service';
-import {
-  ConfirmDialog,
-  ConfirmDialogData,
-} from '../../../shared/components/confirm-dialog/confirm-dialog';
+import { confirmed } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { FoodCategory } from '../../../shared/models/catalog.models';
 import { ImageFallback, UsableImagePipe } from '../../../shared/images/broken-images';
 import { CategoryFormDialog } from './category-form-dialog/category-form-dialog';
+import { BbDialog } from '../../../shared/dialog/bb-dialog';
 
 @Component({
   selector: 'bb-admin-categories',
   imports: [
     ToggleComponent,
-    MatButtonModule,
     IconComponent,
     NpIconPipe,
-    MatTooltipModule,
     EmptyState,
     PageHeader,
     ImageFallback,
     UsableImagePipe,
+    ButtonComponent,
   ],
   templateUrl: './admin-categories.html',
   styleUrl: './admin-categories.scss',
@@ -37,7 +31,7 @@ import { CategoryFormDialog } from './category-form-dialog/category-form-dialog'
 })
 export class AdminCategories {
   private readonly service = inject(AdminCatalogService);
-  private readonly dialog = inject(MatDialog);
+  private readonly bbDialog = inject(BbDialog);
   private readonly notify = inject(NotificationService);
 
   protected readonly categories = signal<FoodCategory[]>([]);
@@ -64,14 +58,12 @@ export class AdminCategories {
   }
 
   protected open(category?: FoodCategory): void {
-    this.dialog
+    this.bbDialog
       .open<CategoryFormDialog, FoodCategory | null, FoodCategory>(CategoryFormDialog, {
         data: category ?? null,
         width: '520px',
-        maxWidth: '95vw',
       })
-      .afterClosed()
-      .pipe(filter(Boolean))
+      .closed.pipe(filter(Boolean))
       .subscribe(() => {
         this.notify.success(category ? 'Category saved' : 'Category created');
         this.load();
@@ -93,26 +85,23 @@ export class AdminCategories {
   }
 
   protected remove(category: FoodCategory): void {
-    this.dialog
-      .open<ConfirmDialog, ConfirmDialogData, true>(ConfirmDialog, {
-        data: {
-          title: `Delete “${category.name}”?`,
-          message: 'This cannot be undone.',
-          confirmLabel: 'Delete',
-          danger: true,
+    confirmed(
+      this.bbDialog,
+      {
+        title: `Delete “${category.name}”?`,
+        message: 'This cannot be undone.',
+        confirmLabel: 'Delete',
+        danger: true,
+      },
+      '420px',
+    ).subscribe(() =>
+      this.service.deleteCategory(category.id).subscribe({
+        next: () => {
+          this.categories.update((list) => list.filter((c) => c.id !== category.id));
+          this.notify.success('Category deleted');
         },
-        width: '420px',
-      })
-      .afterClosed()
-      .pipe(filter(Boolean))
-      .subscribe(() =>
-        this.service.deleteCategory(category.id).subscribe({
-          next: () => {
-            this.categories.update((list) => list.filter((c) => c.id !== category.id));
-            this.notify.success('Category deleted');
-          },
-          error: (err: unknown) => this.notify.error(errorMessage(err)),
-        }),
-      );
+        error: (err: unknown) => this.notify.error(errorMessage(err)),
+      }),
+    );
   }
 }

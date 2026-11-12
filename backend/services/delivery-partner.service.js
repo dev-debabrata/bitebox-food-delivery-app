@@ -44,7 +44,12 @@ export async function dashboard(userId) {
   ]);
   return {
     profile: profile.toJSON(),
-    offer: offer ? presentForRider(offer, userId) : null,
+    offer: offer
+      ? {
+          ...presentForRider(offer, userId),
+          pickupDistanceMeters: pickupDistanceMeters(profile, offer),
+        }
+      : null,
     activeOrder: active ? presentForRider(active, userId) : null,
   };
 }

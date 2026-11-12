@@ -1,4 +1,5 @@
 import { NpIconPipe } from '../../../shared/icons/np-icon-name';
+import { BbDialog } from '../../../shared/dialog/bb-dialog';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -15,7 +16,6 @@ import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-i
 import { MatButtonModule } from '@angular/material/button';
 import { IconComponent, ToggleComponent } from 'nexprime';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog } from '@angular/material/dialog';
 import { Subscription, catchError, debounceTime, distinctUntilChanged, of } from 'rxjs';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { errorMessage } from '../../../core/services/api-error';
@@ -52,7 +52,7 @@ import { ImageFallback, UsableImagePipe } from '../../../shared/images/broken-im
 export class FoodSearch {
   private readonly catalog = inject(CatalogService);
   private readonly router = inject(Router);
-  private readonly dialog = inject(MatDialog);
+  private readonly dialog = inject(BbDialog);
 
   readonly search = input<string>();
   readonly category = input<string>();
@@ -139,8 +139,6 @@ export class FoodSearch {
         showRestaurantLink: true,
       },
       width: '480px',
-      maxWidth: '95vw',
-      autoFocus: 'dialog',
     });
   }
 }

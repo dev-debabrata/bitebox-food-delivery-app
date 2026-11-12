@@ -19,6 +19,56 @@ export interface PaymentInfo {
   paidAt: string | null;
   refundedAt: string | null;
   failureReason: string | null;
+  /** Django API only: refunded so far (or under way), and the refunds themselves. */
+  refundedPaise?: number;
+  refunds?: RefundInfo[];
+}
+
+export type RefundStatus =
+  'pending' | 'processing' | 'processed' | 'failed' | 'manual_pending' | 'manual_done';
+
+export interface RefundInfo {
+  id: string;
+  amountPaise: number;
+  status: RefundStatus;
+  reason: string | null;
+  createdAt: string;
+  processedAt: string | null;
+}
+
+export const REFUND_STATUS_LABEL: Record<RefundStatus, string> = {
+  pending: 'Starting',
+  processing: 'With the bank',
+  processed: 'Refunded',
+  failed: 'Failed',
+  manual_pending: 'To pay by hand',
+  manual_done: 'Paid by hand',
+};
+
+const SETTLED = new Set<string>([
+  'paid',
+  'refunded',
+  'partially_refunded',
+  'processed',
+  'manual_done',
+]);
+
+/** The `.bb-badge` tone class for a payment or refund status. */
+export const paymentTone = (status: PaymentStatus | RefundStatus): string =>
+  SETTLED.has(status)
+    ? 'tone-good'
+    : status === 'failed'
+      ? 'tone-bad'
+      : status === 'cancelled'
+        ? ''
+        : 'tone-warn';
+
+/** One entry of the customer's payment history (`GET /payments/mine`). */
+export interface PaymentHistoryItem extends PaymentInfo {
+  id: string;
+  createdAt: string;
+  order: { id: string; orderNumber: string; status: OrderStatus; restaurantName: string };
+  refunds: RefundInfo[];
 }
 
 export interface CheckoutSession {
@@ -95,6 +145,14 @@ export interface AdminPayment extends PaymentInfo {
   order: { id: string; orderNumber: string; status: OrderStatus } | null;
   customer: { id: string; name: string; email: string } | null;
   refundNeeded: boolean;
+  /** Django API only: what can still be refunded (absent on the Node API). */
+  refundablePaise?: number;
+}
+
+/** `GET /admin/payments/:id` (Django API): the payment, its refunds and gateway events. */
+export interface AdminPaymentDetail extends AdminPayment {
+  refunds: RefundInfo[];
+  events: { type: string; eventId: string; createdAt: string }[];
 }
 
 export const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
@@ -102,6 +160,7 @@ export const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
   paid: 'Paid',
   failed: 'Payment failed',
   refunded: 'Refunded',
+  partially_refunded: 'Partly refunded',
   cancelled: 'Not charged',
 };
 

@@ -227,6 +227,7 @@ export const checkoutSchemas = {
           "preparing",
           "ready_for_pickup",
           "assigned",
+          "arrived_at_restaurant",
           "picked_up",
           "on_the_way",
           "delivered",
@@ -265,7 +266,7 @@ export const checkoutSchemas = {
       paymentMethod: { type: "string", enum: ["cod", "online"] },
       paymentStatus: {
         type: "string",
-        enum: ["pending", "paid", "failed", "refunded", "cancelled"],
+        enum: ["pending", "paid", "failed", "refunded", "partially_refunded", "cancelled"],
       },
       statusHistory: {
         type: "array",

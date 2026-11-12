@@ -49,7 +49,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-  private readonly baseUrl = `${environment.apiUrl}/auth`;
+  private readonly baseUrl = `${environment.baseUrl}/auth`;
 
   private readonly _user = signal<User | null>(null);
   private readonly _accessToken = signal<string | null>(null);

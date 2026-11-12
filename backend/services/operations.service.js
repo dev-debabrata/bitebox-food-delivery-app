@@ -6,6 +6,7 @@ import {
   Order,
 } from "../models/order.model.js";
 import { RESTAURANT_STATUS, Restaurant } from "../models/restaurant.model.js";
+import { ROLES, User } from "../models/user.model.js";
 import { day, fillDays, since } from "./reports.service.js";
 
 const S = ORDER_STATUS;
@@ -37,6 +38,7 @@ const LATE_AFTER_MINUTES = {
   [S.PREPARING]: 45,
   [S.READY_FOR_PICKUP]: 15,
   [S.ASSIGNED]: 20,
+  [S.ARRIVED_AT_RESTAURANT]: 10, // the rider is waiting at the counter
   [S.PICKED_UP]: 30,
   [S.ON_THE_WAY]: 45,
 };
@@ -265,4 +267,79 @@ export async function deliveryPerformance(days) {
       distanceMeters: r.distanceMeters,
     })),
   };
+}
+
+/**
+ * The admin home page's figures: people, all-time orders by state, and, for roles with
+ * finance:view, gross order value, platform revenue and settlements not yet paid out.
+ */
+export async function platformSummary(includeMoney) {
+  const [people, restaurants, approved, [orders]] = await Promise.all([
+    User.aggregate([
+      { $match: { role: { $in: [ROLES.CUSTOMER, ROLES.RESTAURANT, ROLES.DELIVERY] } } },
+      { $group: { _id: "$role", n: { $sum: 1 } } },
+    ]),
+    Restaurant.countDocuments(),
+    Restaurant.countDocuments({ status: RESTAURANT_STATUS.APPROVED }),
+    Order.aggregate([
+      { $match: { submittedAt: { $ne: null } } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          active: { $sum: { $cond: [{ $in: ["$status", ACTIVE_STATUSES] }, 1, 0] } },
+          completed: { $sum: { $cond: [{ $eq: ["$status", S.DELIVERED] }, 1, 0] } },
+          cancelled: {
+            $sum: { $cond: [{ $in: ["$status", [S.CANCELLED, S.REJECTED]] }, 1, 0] },
+          },
+        },
+      },
+    ]),
+  ]);
+  const count = Object.fromEntries(people.map((p) => [p._id, p.n]));
+  const data = {
+    customers: count[ROLES.CUSTOMER] ?? 0,
+    restaurants,
+    approvedRestaurants: approved,
+    deliveryPartners: count[ROLES.DELIVERY] ?? 0,
+    orders: {
+      total: orders?.total ?? 0,
+      active: orders?.active ?? 0,
+      completed: orders?.completed ?? 0,
+      cancelled: orders?.cancelled ?? 0,
+    },
+  };
+  if (includeMoney) {
+    // A cancelled payout releases its orders (payouts.* back to null), so null means "due".
+    const due = (side) => ({
+      $sum: {
+        $cond: [
+          { $ifNull: [`$payouts.${side}`, false] },
+          0,
+          { $ifNull: [`$settlement.${side}Paise`, 0] },
+        ],
+      },
+    });
+    const [m] = await Order.aggregate([
+      { $match: { status: S.DELIVERED, "settlement.at": { $ne: null } } },
+      {
+        $group: {
+          _id: null,
+          gmv: { $sum: "$pricing.totalPaise" },
+          platform: { $sum: { $ifNull: ["$settlement.platformPaise", 0] } },
+          restaurantsDue: due("restaurant"),
+          ridersDue: due("rider"),
+        },
+      },
+    ]);
+    const { gmv = 0, platform = 0, restaurantsDue = 0, ridersDue = 0 } = m ?? {};
+    data.money = {
+      gmvPaise: gmv,
+      platformRevenuePaise: platform,
+      pendingSettlementsPaise: restaurantsDue + ridersDue,
+      pendingRestaurantPaise: restaurantsDue,
+      pendingRiderPaise: ridersDue,
+    };
+  }
+  return data;
 }
