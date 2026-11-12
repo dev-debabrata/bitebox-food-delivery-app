@@ -33,7 +33,16 @@ type Action = 'activate' | 'pause' | 'end';
 @Component({
   selector: 'bb-reward-campaigns',
   imports: [
-    TableLabels,DatePipe, NP_FORM_FIELDS, MatButtonModule, MatMenuModule, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
+    TableLabels,
+    DatePipe,
+    NP_FORM_FIELDS,
+    ButtonComponent,
+    MenuComponent,
+    PaginationComponent,
+    IconComponent,
+    EmptyState,
+    PageHeader,
+  ],
   templateUrl: './reward-campaigns.html',
   styleUrl: './reward-campaigns.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,7 +82,13 @@ export class RewardCampaignsPage {
   );
 
   protected tone(status: CampaignStatus): string {
-    return status === 'ACTIVE' ? 'tone-good' : status === 'SCHEDULED' ? 'tone-info' : status === 'PAUSED' ? 'tone-warn' : '';
+    return status === 'ACTIVE'
+      ? 'tone-good'
+      : status === 'SCHEDULED'
+        ? 'tone-info'
+        : status === 'PAUSED'
+          ? 'tone-warn'
+          : '';
   }
 
   protected actions(c: AdminCampaign): Action[] {
@@ -88,7 +103,35 @@ export class RewardCampaignsPage {
     return moves[c.status];
   }
 
-  protected readonly actionLabel: Record<Action, string> = { activate: 'Activate', pause: 'Pause', end: 'End now' };
+  protected readonly actionLabel: Record<Action, string> = {
+    activate: 'Activate',
+    pause: 'Pause',
+    end: 'End now',
+  };
+
+  protected readonly toggleMenu = (menu: MenuComponent, event: Event) =>
+    toggleEndAligned(menu, event, COMPACT_MENU_WIDTH);
+
+  /** Each campaign's actions menu (built once per page of results). */
+  protected readonly menus = computed(
+    () =>
+      new Map<string, MenuItem[]>(
+        (this.list.data()?.items ?? []).map((c) => [
+          c.id,
+          [
+            ...(c.status !== 'EXPIRED' && c.status !== 'COMPLETED'
+              ? [{ label: 'Edit', icon: 'pencil', command: () => this.open(c) }]
+              : []),
+            ...this.actions(c).map((a) => ({
+              label: this.actionLabel[a],
+              icon: a === 'activate' ? 'play' : a === 'pause' ? 'pause' : 'square',
+              command: () => this.act(c, a),
+            })),
+            { label: 'Performance', icon: 'chart-column', command: () => this.details(c) },
+          ],
+        ]),
+      ),
+  );
 
   protected open(campaign?: AdminCampaign): void {
     this.dialog

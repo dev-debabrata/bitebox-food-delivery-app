@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import {
   ADMIN_ROLES,
   MEMBER_ROLES,

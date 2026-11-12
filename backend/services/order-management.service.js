@@ -57,15 +57,29 @@ function orderJson(order) {
   return json;
 }
 
-/** Customer and admin: the full order plus the rider's card and the payment's state. */
-export async function presentWithRider(order) {
+/**
+ * Customer and admin: the full order plus the rider's card and the payment's state. Only the
+ * customer sees the delivery code (they read it to the rider); admins see whether one is pending
+ * and how many wrong tries there were.
+ */
+export async function presentWithRider(order, { forCustomer = false } = {}) {
   const json = orderJson(order);
   const [rider, payment] = await Promise.all([
     riderCard(order.deliveryPartner),
     Payment.findOne({ order: order._id }),
   ]);
   json.rider = rider;
-  json.payment = payment ? paymentView(payment) : null;
+  json.payment = payment
+    ? { ...paymentView(payment), refunds: await refundsOf(payment._id) }
+    : null;
+  const otpPending =
+    Boolean(order.deliveryOtp) &&
+    [S.PICKED_UP, S.ON_THE_WAY].includes(order.status);
+  if (forCustomer) json.deliveryOtp = otpPending ? order.deliveryOtp : null;
+  else {
+    json.deliveryOtpPending = otpPending;
+    json.deliveryOtpAttempts = order.deliveryOtpAttempts ?? 0;
+  }
   return json;
 }
 
@@ -103,6 +117,12 @@ export function presentForRider(order, userId) {
   }
   json.offerExpiresAt = order.offer?.expiresAt ?? null;
   json.offerWindowSeconds = DISPATCH.offerTimeoutSeconds;
+  // What the rider earns for this delivery (fixed by distance, before they accept).
+  json.estimatedEarningsPaise = settlementFor(order).riderPaise;
+  // The rider's next allowed moves, in order (the app shows the first as its main button), and
+  // whether "delivered" needs the customer's code. Never the code itself.
+  json.nextStatuses = carrying ? (RIDER_NEXT[order.status] ?? []) : [];
+  json.deliveryOtpRequired = carrying && Boolean(order.deliveryOtp);
   delete json.cancellation;
   return json;
 }

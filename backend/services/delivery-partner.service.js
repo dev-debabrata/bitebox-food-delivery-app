@@ -10,7 +10,10 @@ import {
   findWaitingOrders,
 } from "./dispatch.service.js";
 import { endSessions } from "./auth.service.js";
-import { presentForRider } from "./order-management.service.js";
+import {
+  pickupDistanceMeters,
+  presentForRider,
+} from "./order-management.service.js";
 
 /** The rider's profile, created on first use (a plain read on every later call). */
 export async function getOrCreateProfile(userId) {

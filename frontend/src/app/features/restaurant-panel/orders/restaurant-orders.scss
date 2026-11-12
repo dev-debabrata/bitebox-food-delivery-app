@@ -230,10 +230,5 @@
     border: 0;
     border-radius: 0;
     overflow: visible;
-
-    ::ng-deep .mat-button-toggle {
-      border: 1px solid var(--bb-border) !important;
-      border-radius: 999px;
-    }
   }
 }

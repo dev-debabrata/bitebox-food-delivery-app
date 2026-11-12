@@ -11,8 +11,7 @@
   border-radius: var(--bb-radius-lg);
   color: #fff6e5;
   background:
-    radial-gradient(circle at 100% 0%, rgb(255 181 46 / 35%) 0, transparent 50%),
-    var(--bb-plum);
+    radial-gradient(circle at 100% 0%, rgb(255 181 46 / 35%) 0, transparent 50%), var(--bb-brand);
 
   h1 {
     color: #fff6e5;
@@ -218,5 +217,15 @@
 
   .actions {
     flex-direction: column;
+  }
+}
+
+.figures {
+  display: grid;
+  gap: var(--bb-space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @include bp.tablet-up {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

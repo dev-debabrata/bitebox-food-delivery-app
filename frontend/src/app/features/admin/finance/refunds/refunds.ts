@@ -26,7 +26,16 @@ import { openTransaction } from '../transaction-dialog/transaction-dialog';
 @Component({
   selector: 'bb-refunds',
   imports: [
-    TableLabels,DatePipe, NP_FORM_FIELDS, MatButtonModule, MatPaginatorModule, IconComponent, EmptyState, PageHeader, InrPipe],
+    TableLabels,
+    DatePipe,
+    NP_FORM_FIELDS,
+    MatButtonModule,
+    MatPaginatorModule,
+    IconComponent,
+    EmptyState,
+    PageHeader,
+    InrPipe,
+  ],
   templateUrl: './refunds.html',
   styleUrl: './refunds.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

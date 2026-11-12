@@ -35,7 +35,14 @@ const ACTIONS: Record<string, string> = {
 @Component({
   selector: 'bb-audit-log',
   imports: [
-    TableLabels,DatePipe, NP_FORM_FIELDS, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
+    TableLabels,
+    DatePipe,
+    NP_FORM_FIELDS,
+    PaginationComponent,
+    IconComponent,
+    EmptyState,
+    PageHeader,
+  ],
   templateUrl: './audit-log.html',
   styleUrl: './audit-log.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

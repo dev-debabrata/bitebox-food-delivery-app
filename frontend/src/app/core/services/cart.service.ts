@@ -22,7 +22,7 @@ export class CartService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
   private readonly deliveryLocation = inject(DeliveryLocationService);
-  private readonly url = `${environment.apiUrl}/cart`;
+  private readonly url = `${environment.baseUrl}/cart`;
 
   private readonly _quote = signal<CartQuote | null>(null);
   private readonly _busy = signal(false);

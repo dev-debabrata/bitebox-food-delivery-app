@@ -1,4 +1,5 @@
 import { TableLabels } from '../../../../shared/list/table-labels';
+import { BbDialog } from '../../../../shared/dialog/bb-dialog';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -77,7 +78,15 @@ export class OrderMonitoring {
   protected readonly statusOptions: SelectOption[] = [
     { value: '', label: 'Every live status' },
     ...(
-      ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'assigned', 'picked_up', 'on_the_way'] as OrderStatus[]
+      [
+        'pending',
+        'confirmed',
+        'preparing',
+        'ready_for_pickup',
+        'assigned',
+        'picked_up',
+        'on_the_way',
+      ] as OrderStatus[]
     ).map((s) => ({ value: s, label: ORDER_STATUS_LABEL[s] })),
   ];
 
@@ -90,7 +99,9 @@ export class OrderMonitoring {
       (o) =>
         (!status || o.status === status) &&
         (!lateOnly || o.late) &&
-        (!q || o.orderNumber.toLowerCase().includes(q) || o.restaurantName?.toLowerCase().includes(q)),
+        (!q ||
+          o.orderNumber.toLowerCase().includes(q) ||
+          o.restaurantName?.toLowerCase().includes(q)),
     );
   });
   protected readonly lateCount = computed(

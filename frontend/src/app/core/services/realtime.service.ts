@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth/auth.service';
 import { OrderStatus } from '../../shared/models/checkout.models';
 import { AppNotification } from '../../shared/models/payment.models';
+import { DjangoSocketTransport, RealtimeTransport, SocketIoTransport } from './realtime-transport';
 
 export interface OrderEvent {
   id: string;
@@ -56,15 +57,10 @@ export class RealtimeService {
   }
 
   private connect(): void {
-    if (this.socket$.value) return;
+    if (this.transport$.value) return;
     this.retries = 0;
-    const origin = new URL(environment.apiUrl, window.location.origin).origin;
-    const socket = io(origin, {
-      path: '/socket.io',
-      auth: (cb) => cb({ token: this.auth.accessToken }),
-      transports: ['websocket', 'polling'],
-    });
-    this.socket$.next(socket);
+    const transport = this.createTransport();
+    this.transport$.next(transport);
 
     socket.on('connect', () => {
       this.retries = 0;
@@ -83,16 +79,16 @@ export class RealtimeService {
   }
 
   private reconnectWithFreshToken(): void {
-    const socket = this.socket$.value;
-    if (!socket) return;
+    const transport = this.transport$.value;
+    if (!transport) return;
     // Out of retries: drop the dead socket, so the next session change (sign-in or a token
     // refresh made by any API call) starts a fresh one instead of finding this one in place.
     if (this.retries >= 5) return this.disconnect();
     const delay = Math.min(30_000, 1000 * 2 ** this.retries++);
     setTimeout(() => {
-      if (this.socket$.value !== socket || !this.auth.user()) return;
+      if (this.transport$.value !== transport || !this.auth.user()) return;
       this.auth.refresh().subscribe({
-        next: () => socket.connect(),
+        next: () => transport.reconnect(),
         error: () => this.reconnectWithFreshToken(), // e.g. a network blip: back off and retry
       });
     }, delay);
