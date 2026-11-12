@@ -2,7 +2,3 @@
   <div class="page-loader" role="progressbar" aria-label="Loading"></div>
 }
 <router-outlet />
-<!-- Deferred so its UI libraries stay out of the first download (the service worker caches it). -->
-@defer (on idle) {
-  <bb-app-status />
-}

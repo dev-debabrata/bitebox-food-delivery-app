@@ -118,17 +118,16 @@
   font-size: 0.8rem;
   font-weight: 600;
   background: var(--bb-amber-100);
-  color: var(--bb-warning-ink);
+  color: #7a4b00;
 
   &.pay-paid,
-  &.pay-refunded,
-  &.pay-partially_refunded {
-    background: var(--bb-success-bg);
+  &.pay-refunded {
+    background: #e6f5ec;
     color: var(--bb-success);
   }
 
   &.pay-failed {
-    background: var(--bb-danger-bg);
+    background: #fdecee;
     color: var(--bb-danger);
   }
 

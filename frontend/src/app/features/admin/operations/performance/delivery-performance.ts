@@ -14,7 +14,8 @@ const minutes = (n: number | null | undefined) => (n == null ? '–' : `${n} min
 /** Operations reports: how fast orders get cooked and delivered, by day and by rider. */
 @Component({
   selector: 'bb-delivery-performance',
-  imports: [IconComponent, NP_FORM_FIELDS, PageHeader, StatTile, DailyChart],
+  imports: [
+    TableLabels,IconComponent, NP_FORM_FIELDS, PageHeader, StatTile, DailyChart],
   templateUrl: './delivery-performance.html',
   styleUrl: './delivery-performance.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

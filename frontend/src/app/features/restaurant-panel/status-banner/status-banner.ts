@@ -2,6 +2,7 @@ import { NpIconPipe } from '../../../shared/icons/np-icon-name';
 import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 import { Restaurant } from '../../../shared/models/catalog.models';
 
 const COPY = {
@@ -33,7 +34,7 @@ const COPY = {
 
 @Component({
   selector: 'bb-status-banner',
-  imports: [RouterLink, IconComponent, NpIconPipe],
+  imports: [RouterLink, MatButtonModule, IconComponent, NpIconPipe],
   templateUrl: './status-banner.html',
   styleUrl: './status-banner.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

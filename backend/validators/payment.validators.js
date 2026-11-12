@@ -36,18 +36,3 @@ export const adminPaymentListRules = [
   ...paginationRules,
 ];
 export const paymentIdRules = [mongoIdParam()];
-export const refundRules = [
-  mongoIdParam(),
-  body("amountPaise")
-    .isInt({ min: 1 })
-    .withMessage("Enter an amount to refund")
-    .toInt(),
-  body("reason")
-    .exists({ values: "falsy" })
-    .withMessage("Give a reason")
-    .bail()
-    .isString()
-    .trim()
-    .isLength({ min: 1, max: 300 })
-    .withMessage("Keep the reason under 300 characters"),
-];

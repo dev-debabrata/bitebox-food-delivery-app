@@ -8,7 +8,7 @@
   color: #fff6e5;
   background:
     radial-gradient(circle at 90% 10%, rgb(255 181 46 / 30%) 0, transparent 45%),
-    var(--bb-brand);
+    var(--bb-plum);
 
   &.has-image {
     background:
@@ -285,7 +285,7 @@
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--bb-danger);
-  background: var(--bb-danger-bg);
+  background: #fdecee;
   padding: 2px 8px;
   border-radius: 999px;
 }
@@ -296,7 +296,7 @@
   position: sticky;
   bottom: var(--bb-tab-bar);
   z-index: 5;
-  background: var(--bb-success-solid);
+  background: var(--bb-success);
   color: #fff;
   box-shadow: 0 -4px 16px rgb(0 0 0 / 12%);
 

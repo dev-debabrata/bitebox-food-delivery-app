@@ -18,7 +18,6 @@ import {
   seedCatalogFor,
   setupTestDb,
   teardownTestDb,
-  riderStatusBody,
 } from "./helpers.js";
 
 const auth = (token) => ({ Authorization: `Bearer ${token}` });
@@ -229,7 +228,7 @@ describe("live tracking and routing", () => {
       await request(app)
         .patch(`/api/v1/delivery/orders/${id}/status`)
         .set(auth(rider.token))
-        .send(await riderStatusBody(id, status));
+        .send({ status });
     }
     await settle();
     const riderSocket = await open(rider.token);

@@ -20,7 +20,6 @@ import {
 } from '../../../../shared/models/review.models';
 import { openAdminOrder } from '../../orders/admin-order-dialog/admin-order-dialog';
 import { openReviewHistory } from '../admin-review-dialog/admin-review-dialog';
-import { BbDialog } from '../../../../shared/dialog/bb-dialog';
 
 const card = (r: AdminReviewDetail): ReviewCardData => ({
   rating: r.rating,
@@ -53,7 +52,6 @@ export class AdminOrderReviewsDialog {
   private readonly orderId = inject<string>(MAT_DIALOG_DATA);
   private readonly reviews = inject(ReviewService);
   private readonly dialog = inject(MatDialog);
-  private readonly bbDialog = inject(BbDialog);
   private readonly notify = inject(NotificationService);
 
   protected readonly data = signal<AdminOrderReviews<AdminReviewDetail> | null>(null);
@@ -93,7 +91,7 @@ export class AdminOrderReviewsDialog {
   protected act(r: AdminReviewDetail, action: ModerationAction | 'dismiss'): void {
     const copy = MODERATION_COPY[action];
     confirmed(
-      this.bbDialog,
+      this.dialog,
       {
         title: copy.title,
         message: copy.message,
@@ -130,7 +128,7 @@ export class AdminOrderReviewsDialog {
   }
 
   protected openOrder(): void {
-    openAdminOrder(this.bbDialog, this.orderId).subscribe();
+    openAdminOrder(this.dialog, this.orderId).subscribe();
   }
 
   /** The API answers with the moderated review; swap it in instead of reloading the order. */

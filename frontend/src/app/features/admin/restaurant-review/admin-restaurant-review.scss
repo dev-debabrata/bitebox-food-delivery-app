@@ -30,7 +30,7 @@
     place-items: center;
     font-size: 2rem;
     font-weight: 800;
-    background: var(--bb-brand);
+    background: var(--bb-plum);
     color: var(--bb-amber);
   }
   h1 {
@@ -47,15 +47,15 @@
 
   &.status-pending {
     background: var(--bb-amber-100);
-    color: var(--bb-warning-ink);
+    color: #7a4b00;
   }
   &.status-approved {
-    background: var(--bb-success-bg);
+    background: #e6f5ec;
     color: var(--bb-success);
   }
   &.status-rejected,
   &.status-suspended {
-    background: var(--bb-danger-bg);
+    background: #fdecee;
     color: var(--bb-danger);
   }
 }
@@ -64,6 +64,10 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--bb-space-2);
+
+  .danger {
+    --mat-button-filled-container-color: var(--bb-danger);
+  }
 }
 
 .grid {

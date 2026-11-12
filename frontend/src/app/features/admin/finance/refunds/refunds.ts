@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { IconComponent, SelectOption } from 'nexprime';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -17,7 +18,6 @@ import { pagedList } from '../../../../shared/list/paged-list';
 import { RefundRow } from '../../../../shared/models/admin-roles.models';
 import { InrPipe } from '../../../../shared/pipes/money.pipes';
 import { openTransaction } from '../transaction-dialog/transaction-dialog';
-import { BbDialog } from '../../../../shared/dialog/bb-dialog';
 
 /**
  * Refund management. Refunds happen automatically when a paid online order is cancelled; this
@@ -26,15 +26,7 @@ import { BbDialog } from '../../../../shared/dialog/bb-dialog';
 @Component({
   selector: 'bb-refunds',
   imports: [
-    DatePipe,
-    NP_FORM_FIELDS,
-    MatButtonModule,
-    MatPaginatorModule,
-    IconComponent,
-    EmptyState,
-    PageHeader,
-    InrPipe,
-  ],
+    TableLabels,DatePipe, NP_FORM_FIELDS, MatButtonModule, MatPaginatorModule, IconComponent, EmptyState, PageHeader, InrPipe],
   templateUrl: './refunds.html',
   styleUrl: './refunds.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,7 +34,7 @@ import { BbDialog } from '../../../../shared/dialog/bb-dialog';
 export class RefundsPage {
   private readonly api = inject(FinanceService);
   private readonly payments = inject(ReportsService);
-  private readonly dialog = inject(BbDialog);
+  private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
   protected readonly canRefund = inject(AuthService).can('refunds:manage');
   protected readonly busy = signal<string | null>(null);

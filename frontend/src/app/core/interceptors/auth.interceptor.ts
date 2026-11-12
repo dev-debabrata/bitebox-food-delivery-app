@@ -21,13 +21,13 @@ const NO_RETRY = [
   '/auth/reset-password',
 ];
 
-const isApiRequest = (req: HttpRequest<unknown>) => req.url.startsWith(environment.baseUrl);
+const isApiRequest = (req: HttpRequest<unknown>) => req.url.startsWith(environment.apiUrl);
 
 const PUBLIC_REQUEST = new HttpContextToken<boolean>(() => false);
 export const publicRequest = () => new HttpContext().set(PUBLIC_REQUEST, true);
 
 const needsCookies = (req: HttpRequest<unknown>) =>
-  req.url.startsWith(`${environment.baseUrl}/auth/`);
+  req.url.startsWith(`${environment.apiUrl}/auth/`);
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (!isApiRequest(req)) return next(req);

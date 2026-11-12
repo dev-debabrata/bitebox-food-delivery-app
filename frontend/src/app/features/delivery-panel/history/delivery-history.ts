@@ -1,6 +1,8 @@
-import { IconComponent, PaginationComponent } from 'nexprime';
+import { IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { RiderService } from '../../../core/services/order-management.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { OrderStatusChip } from '../../../shared/components/order-status-chip/order-status-chip';
@@ -12,8 +14,9 @@ import { InrPipe } from '../../../shared/pipes/money.pipes';
   selector: 'bb-delivery-history',
   imports: [
     DatePipe,
+    MatButtonModule,
     IconComponent,
-    PaginationComponent,
+    MatPaginatorModule,
     EmptyState,
     OrderStatusChip,
     PageHeader,

@@ -1,15 +1,17 @@
-<bb-page-header
-  title="Restaurants"
-  subtitle="Review new applications and manage live restaurants."
-/>
+<bb-page-header title="Restaurants" subtitle="Review new applications and manage live restaurants." />
 
-<np-tabs
-  class="bb-tab-strip"
-  variant="underline"
-  [tabs]="tabItems()"
-  [activeTab]="tabs[activeTab()].status"
-  (activeTabChange)="selectTabId($event)"
-/>
+<mat-tab-group [selectedIndex]="activeTab()" (selectedIndexChange)="selectTab($event)" mat-stretch-tabs="false" aria-label="Restaurant status">
+  @for (tab of tabs; track tab.status) {
+    <mat-tab>
+      <ng-template mat-tab-label>
+        {{ tab.label }}
+        @if (counts(); as c) {
+          <span class="count" [class.alert]="tab.status === 'pending' && c[tab.status] > 0">{{ c[tab.status] }}</span>
+        }
+      </ng-template>
+    </mat-tab>
+  }
+</mat-tab-group>
 
 <np-text-input
   class="search"
@@ -36,11 +38,7 @@
     <bb-empty-state
       icon="storefront"
       [title]="'No ' + tabs[activeTab()].label.toLowerCase() + ' restaurants'"
-      [message]="
-        tabs[activeTab()].status === 'pending'
-          ? 'New applications will appear here for review.'
-          : undefined
-      "
+      [message]="tabs[activeTab()].status === 'pending' ? 'New applications will appear here for review.' : undefined"
     />
   } @else {
     <ul class="rows" [class.dim]="loading()">
@@ -57,22 +55,19 @@
               <span class="bb-muted">{{ r.cuisines.join(', ') }} · {{ r.address.city }}</span>
               <span class="bb-muted small">Owner: {{ r.owner.name }} ({{ r.owner.email }})</span>
             </span>
-            <span class="when bb-muted small"
-              >Submitted {{ r.createdAt | date: 'mediumDate' }}</span
-            >
+            <span class="when bb-muted small">Submitted {{ r.createdAt | date: 'mediumDate' }}</span>
             <np-icon name="chevron-right" class="mat-icon chev" matButtonIcon />
           </a>
         </li>
       }
     </ul>
   }
-  <np-pagination
-    variant="compact"
-    [page]="pagination().page"
-    [rows]="pagination().limit"
-    [totalRecords]="pagination().total"
-    [rowsOptions]="[10, 25, 50]"
-    (pageChange)="goTo($event)"
-    (rowsChange)="goTo(1, $event)"
+  <mat-paginator
+    [length]="pagination().total"
+    [pageIndex]="pagination().page - 1"
+    [pageSize]="pagination().limit"
+    [pageSizeOptions]="[10, 25, 50]"
+    (page)="onPage($event)"
+    aria-label="Select page of restaurants"
   />
 </div>

@@ -1,5 +1,4 @@
 import { NpIconPipe } from '../../../shared/icons/np-icon-name';
-import { BbDialog } from '../../../shared/dialog/bb-dialog';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -15,6 +14,7 @@ import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { IconComponent, ToggleComponent } from 'nexprime';
+import { MatDialog } from '@angular/material/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { CartActions } from '../../../core/services/cart-actions.service';
@@ -61,7 +61,7 @@ import { ImageFallback, UsableImagePipe } from '../../../shared/images/broken-im
 })
 export class RestaurantDetail {
   private readonly catalog = inject(CatalogService);
-  private readonly dialog = inject(BbDialog);
+  private readonly dialog = inject(MatDialog);
   private readonly title = inject(Title);
   private readonly document = inject(DOCUMENT);
   protected readonly cart = inject(CartService);
@@ -194,6 +194,8 @@ export class RestaurantDetail {
         },
       },
       width: '480px',
+      maxWidth: '95vw',
+      autoFocus: 'dialog',
     });
   }
 }

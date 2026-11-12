@@ -12,11 +12,17 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
+import { filter } from 'rxjs';
 import { AdminCatalogService } from '../../../core/services/admin/admin-catalog.service';
 import { errorMessage } from '../../../core/services/api-error';
 import { NotificationService } from '../../../core/services/notification.service';
-import { confirmed } from '../../../shared/components/confirm-dialog/confirm-dialog';
+import {
+  ConfirmDialog,
+  ConfirmDialogData,
+} from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import {
   AdminRestaurant,
@@ -26,7 +32,6 @@ import {
 import { InrPipe } from '../../../shared/pipes/money.pipes';
 import { ClockTimePipe } from '../../../shared/pipes/clock-time.pipe';
 import { ImageFallback, UsableImagePipe } from '../../../shared/images/broken-images';
-import { BbDialog } from '../../../shared/dialog/bb-dialog';
 
 interface StatusAction {
   status: RestaurantStatus;
@@ -72,24 +77,14 @@ const ACTIONS: Record<RestaurantStatus, StatusAction[]> = {
 
 @Component({
   selector: 'bb-admin-restaurant-review',
-  imports: [
-    DatePipe,
-    RouterLink,
-    IconComponent,
-    NpIconPipe,
-    EmptyState,
-    InrPipe,
-    ClockTimePipe,
-    ImageFallback,
-    UsableImagePipe,
-  ],
+  imports: [DatePipe, RouterLink, MatButtonModule, IconComponent, NpIconPipe, EmptyState, InrPipe, ClockTimePipe, ImageFallback, UsableImagePipe],
   templateUrl: './admin-restaurant-review.html',
   styleUrl: './admin-restaurant-review.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminRestaurantReview {
   private readonly service = inject(AdminCatalogService);
-  private readonly bbDialog = inject(BbDialog);
+  private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
 
   readonly id = input.required<string>();
@@ -140,34 +135,38 @@ export class AdminRestaurantReview {
   protected act(action: StatusAction): void {
     const r = this.restaurant();
     if (!r) return;
-    confirmed(
-      this.bbDialog,
-      {
-        title: `${action.label} ${r.name}?`,
-        message:
-          action.status === 'approved'
-            ? 'The restaurant will become visible to customers.'
-            : 'The restaurant will be hidden from customers. The owner will see your reason.',
-        confirmLabel: action.label,
-        danger: action.danger,
-        reasonLabel: action.needsReason ? 'Reason (shown to the restaurant owner)' : undefined,
-      },
-      '460px',
-    ).subscribe((result) => {
-      this.acting.set(true);
-      const reason = typeof result === 'string' ? result : undefined;
-      this.service.setRestaurantStatus(r.id, action.status, reason).subscribe({
-        next: (updated) => {
-          this.restaurant.set(updated);
-          this.notify.success(`${updated.name} is now ${updated.status}`);
-          this.acting.set(false);
+    this.dialog
+      .open<ConfirmDialog, ConfirmDialogData, true | string>(ConfirmDialog, {
+        data: {
+          title: `${action.label} ${r.name}?`,
+          message:
+            action.status === 'approved'
+              ? 'The restaurant will become visible to customers.'
+              : 'The restaurant will be hidden from customers. The owner will see your reason.',
+          confirmLabel: action.label,
+          danger: action.danger,
+          reasonLabel: action.needsReason ? 'Reason (shown to the restaurant owner)' : undefined,
         },
-        error: (err: unknown) => {
-          this.notify.error(errorMessage(err));
-          this.acting.set(false);
-          if (err instanceof HttpErrorResponse && err.status === 409) this.load();
-        },
+        width: '460px',
+        maxWidth: '95vw',
+      })
+      .afterClosed()
+      .pipe(filter((result): result is true | string => !!result))
+      .subscribe((result) => {
+        this.acting.set(true);
+        const reason = typeof result === 'string' ? result : undefined;
+        this.service.setRestaurantStatus(r.id, action.status, reason).subscribe({
+          next: (updated) => {
+            this.restaurant.set(updated);
+            this.notify.success(`${updated.name} is now ${updated.status}`);
+            this.acting.set(false);
+          },
+          error: (err: unknown) => {
+            this.notify.error(errorMessage(err));
+            this.acting.set(false);
+            if (err instanceof HttpErrorResponse && err.status === 409) this.load();
+          },
+        });
       });
-    });
   }
 }

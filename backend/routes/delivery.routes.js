@@ -51,8 +51,6 @@ export default Router()
       ),
     ),
   )
-  // Today, this week and all-time deliveries and earnings, plus the rating.
-  .get("/stats", respond((req) => reports.riderStats(req.user._id)))
   .get(
     "/earnings",
     validate(daysRules),

@@ -50,7 +50,6 @@ router.patch(
 );
 router.delete("/foods/:id", validate([mongoIdParam()]), foods.ownerDelete);
 
-router.get("/stats", orders.restaurantStats);
 router.get(
   "/orders",
   validate(orderRules.restaurantListRules),

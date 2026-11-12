@@ -1,5 +1,5 @@
 <bb-page-header title="Deliveries" subtitle="Go online to receive delivery requests near you.">
-  <a class="bb-btn bb-btn--outlined" routerLink="/delivery/history"><np-icon name="history" />History</a>
+  <a mat-stroked-button routerLink="/delivery/history"><np-icon name="history" class="mat-icon" matButtonIcon />History</a>
 </bb-page-header>
 
 @if (!data()) {
@@ -42,7 +42,7 @@
           />
         </div>
         @if (switching()) {
-          <np-progress-bar [indeterminate]="true" [showLabel]="false" size="small" label="Updating availability" />
+          <mat-progress-bar mode="indeterminate" aria-label="Updating availability" />
         }
         @if (online() && gps.problem(); as problem) {
           <div class="bb-alert info" role="status">
@@ -84,36 +84,6 @@
         </dl>
       </section>
 
-      @if (!statsUnavailable()) {
-        <section class="figures" aria-labelledby="figures-title">
-          <h2 id="figures-title" class="bb-sr-only">Your earnings</h2>
-          @if (stats(); as st) {
-            <bb-stat-tile
-              icon="wallet"
-              label="Today"
-              [value]="st.today.earningsPaise | inr"
-              [hint]="st.today.deliveries + (st.today.deliveries === 1 ? ' delivery' : ' deliveries')"
-            />
-            <bb-stat-tile
-              icon="calendar-days"
-              label="This week"
-              [value]="st.week.earningsPaise | inr"
-              [hint]="st.week.deliveries + (st.week.deliveries === 1 ? ' delivery' : ' deliveries')"
-            />
-            <bb-stat-tile
-              icon="trophy"
-              label="All time"
-              [value]="st.total.earningsPaise | inr"
-              [hint]="st.total.deliveries + (st.total.deliveries === 1 ? ' delivery' : ' deliveries')"
-            />
-          } @else {
-            @for (i of [1, 2, 3]; track i) {
-              <span class="bb-skeleton" style="height: 96px"></span>
-            }
-          }
-        </section>
-      }
-
       <!-- Vehicle (required before going online) -->
       @if (editingVehicle()) {
         <section class="bb-card" aria-labelledby="vehicle-title">
@@ -140,14 +110,9 @@
             </div>
             <div class="form-actions">
               @if (profile()?.vehicleType) {
-                <np-button
-                  variant="text"
-                  severity="secondary"
-                  label="Cancel"
-                  (clicked)="editingVehicle.set(false)"
-                />
+                <button mat-button type="button" (click)="editingVehicle.set(false)">Cancel</button>
               }
-              <button type="submit" class="bb-btn" [disabled]="vehicleForm().submitting()">
+              <button mat-flat-button type="submit" [disabled]="vehicleForm().submitting()">
                 Save vehicle
               </button>
             </div>
@@ -241,18 +206,13 @@
             <p class="hint">{{ step.hint }}</p>
             <div class="work-actions">
               @if (directionsUrl(); as url) {
-                <a class="bb-btn bb-btn--outlined" [href]="url" target="_blank" rel="noopener"
-                  ><np-icon name="navigation" />Directions</a
+                <a mat-stroked-button [href]="url" target="_blank" rel="noopener"
+                  ><np-icon name="navigation" class="mat-icon" matButtonIcon />Directions</a
                 >
               }
-              <np-button
-                class="go"
-                severity="success"
-                [icon]="step.icon | npIcon"
-                [label]="step.label"
-                [loading]="acting()"
-                (clicked)="advance(o)"
-              />
+              <button mat-flat-button class="go" [disabled]="acting()" (click)="advance(o)">
+                <np-icon [name]="(step.icon) | npIcon" class="mat-icon" matButtonIcon />{{ step.label }}
+              </button>
             </div>
           }
         </section>
@@ -265,7 +225,11 @@
               >{{ offerSecondsLeft() }}s</span
             >
           </header>
-          <np-progress-bar [value]="offerProgress()" [showLabel]="false" size="small" label="Time left to accept" />
+          <mat-progress-bar
+            mode="determinate"
+            [value]="offerProgress()"
+            aria-label="Time left to accept"
+          />
 
           <ol class="stops">
             <li>
@@ -287,18 +251,6 @@
           </ol>
 
           <dl class="trip">
-            @if (o.estimatedEarningsPaise !== undefined) {
-              <div class="earn">
-                <dt>You earn</dt>
-                <dd>{{ o.estimatedEarningsPaise | inr }}</dd>
-              </div>
-            }
-            @if (o.pickupDistanceMeters != null) {
-              <div>
-                <dt>To pickup</dt>
-                <dd>~{{ o.pickupDistanceMeters / 1000 | number: '1.1-1' }} km</dd>
-              </div>
-            }
             <div>
               <dt>Trip</dt>
               <dd>~{{ o.distanceMeters / 1000 | number: '1.1-1' }} km</dd>
@@ -314,26 +266,26 @@
             </div>
           </dl>
           <p class="bb-muted small">
-            Distances are straight lines (you to the restaurant, restaurant to customer); road
-            routes are longer.
+            Trip distance is a straight line between restaurant and customer; the road route is
+            longer.
           </p>
 
           <div class="work-actions">
-            <np-button
-              variant="outlined"
-              severity="secondary"
-              label="Decline"
+            <button
+              mat-stroked-button
               [disabled]="acting() || offerSecondsLeft() === 0"
-              (clicked)="decline(o)"
-            />
-            <np-button
+              (click)="decline(o)"
+            >
+              Decline
+            </button>
+            <button
+              mat-flat-button
               class="go"
-              severity="success"
-              icon="check"
-              label="Accept"
               [disabled]="acting() || offerSecondsLeft() === 0"
-              (clicked)="accept(o)"
-            />
+              (click)="accept(o)"
+            >
+              <np-icon name="check" class="mat-icon" matButtonIcon />Accept
+            </button>
           </div>
         </section>
       } @else {

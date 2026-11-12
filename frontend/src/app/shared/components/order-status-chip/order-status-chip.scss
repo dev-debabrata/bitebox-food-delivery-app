@@ -10,25 +10,25 @@
 
 :host(.tone-waiting) {
   background: var(--bb-amber-100);
-  color: var(--bb-warning-ink);
+  color: #7a4b00;
 }
 :host(.tone-cooking) {
-  background: var(--bb-info-bg);
-  color: var(--bb-info-ink);
+  background: #e7efff;
+  color: #2a4fa8;
 }
 :host(.tone-handover) {
   background: var(--bb-plum-100);
   color: var(--bb-plum);
 }
 :host(.tone-road) {
-  background: var(--bb-teal-bg);
-  color: var(--bb-teal-ink);
+  background: #e2f4f4;
+  color: #12706f;
 }
 :host(.tone-done) {
-  background: var(--bb-success-bg);
+  background: #e6f5ec;
   color: var(--bb-success);
 }
 :host(.tone-stopped) {
-  background: var(--bb-danger-bg);
+  background: #fdecee;
   color: var(--bb-danger);
 }

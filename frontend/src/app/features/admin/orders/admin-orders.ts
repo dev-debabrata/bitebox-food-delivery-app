@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { BbDialog } from '../../../shared/dialog/bb-dialog';
 import { DatePipe } from '@angular/common';
 import { form } from '@angular/forms/signals';
-import { IconComponent, PaginationComponent, SelectOption } from 'nexprime';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { IconComponent, SelectOption } from 'nexprime';
 import { AdminOrdersService } from '../../../core/services/order-management.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { OrderStatusChip } from '../../../shared/components/order-status-chip/order-status-chip';
@@ -24,8 +26,9 @@ import { openAdminOrder } from './admin-order-dialog/admin-order-dialog';
   imports: [
     DatePipe,
     NP_FORM_FIELDS,
+    MatButtonModule,
     IconComponent,
-    PaginationComponent,
+    MatPaginatorModule,
     EmptyState,
     OrderStatusChip,
     PageHeader,
@@ -38,7 +41,7 @@ import { openAdminOrder } from './admin-order-dialog/admin-order-dialog';
 })
 export class AdminOrders {
   private readonly api = inject(AdminOrdersService);
-  private readonly dialog = inject(BbDialog);
+  private readonly dialog = inject(MatDialog);
   protected readonly statusLabel = customerStatusLabel;
 
   protected readonly filterModel = signal({ status: '', search: '' });

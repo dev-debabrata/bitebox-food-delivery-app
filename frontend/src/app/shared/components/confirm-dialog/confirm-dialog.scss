@@ -1,1 +1,3 @@
-// Buttons use the global .bb-btn / np-button styles.
+.danger {
+  --mat-button-filled-container-color: var(--bb-danger);
+}

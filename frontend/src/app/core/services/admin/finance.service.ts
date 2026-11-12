@@ -18,7 +18,7 @@ import { toParams } from '../http-params';
 @Injectable({ providedIn: 'root' })
 export class FinanceService {
   private readonly http = inject(HttpClient);
-  private readonly url = `${environment.baseUrl}/admin/finance`;
+  private readonly url = `${environment.apiUrl}/admin/finance`;
 
   private get<T>(path: string, query: object = {}): Observable<T> {
     return this.http

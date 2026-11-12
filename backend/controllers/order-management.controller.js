@@ -9,7 +9,6 @@ const STATUS_MESSAGE = {
   rejected: "Order rejected",
   preparing: "Marked as preparing",
   ready_for_pickup: "Marked ready for pickup",
-  arrived_at_restaurant: "Marked as arrived. Collect the order when it is ready.",
   picked_up: "Marked as picked up",
   on_the_way: "On the way",
   delivered: "Delivered. Nice work!",
@@ -69,12 +68,7 @@ export const riderDeclineOffer = respond(async (req) => {
   return riders.dashboard(req.user._id);
 }, "Request declined");
 export const riderSetStatus = respond(async (req) => {
-  await orders.riderSetStatus(
-    req.user._id,
-    req.params.id,
-    req.body.status,
-    req.body.otp,
-  );
+  await orders.riderSetStatus(req.user._id, req.params.id, req.body.status);
   return riders.dashboard(req.user._id);
 }, statusMessage);
 export const riderHistory = respond((req) =>
@@ -102,20 +96,6 @@ export const adminUnassign = respond(
     ),
   "Rider unassigned; looking for another rider",
 );
-export const adminAssign = respond(
-  async (req) =>
-    asOrder(await orders.adminAssign(req.user._id, req.params.id, req.body.riderId)),
-  "Rider assigned",
-);
-export const adminResetDeliveryOtp = respond(
-  async (req) => asOrder(await orders.adminResetDeliveryOtp(req.params.id)),
-  "New delivery code sent to the customer",
-);
-export const customerTimeline = respond((req) =>
-  orders.customerTimeline(req.user._id, req.params.id),
-);
-export const adminTimeline = respond((req) => orders.adminTimeline(req.params.id));
-export const restaurantStats = respond((req) => orders.restaurantStats(req.user._id));
 export const adminRiderList = respond((req) =>
   riders.adminList(req.validatedQuery, page(req)),
 );

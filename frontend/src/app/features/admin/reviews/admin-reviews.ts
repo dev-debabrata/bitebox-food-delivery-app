@@ -3,7 +3,8 @@ import { form } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginatorModule } from '@angular/material/paginator';
-import { IconComponent, SelectOption, TabsComponent } from 'nexprime';
+import { MatTabsModule } from '@angular/material/tabs';
+import { IconComponent, SelectOption } from 'nexprime';
 import { ReviewService } from '../../../core/services/review.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
@@ -22,7 +23,7 @@ import {
 import { openAdminOrderReviews } from './order-dialog/admin-order-reviews-dialog';
 import { ReviewAnalyticsPanel } from './review-analytics/review-analytics';
 
-const TABS = ['all', 'reported', 'analytics'] as const;
+const TABS = ['reported', 'all', 'analytics'] as const;
 
 /** Reviews one row per order (reported orders first in the queue), and rating analytics. */
 @Component({
@@ -31,7 +32,7 @@ const TABS = ['all', 'reported', 'analytics'] as const;
     NP_FORM_FIELDS,
     MatButtonModule,
     MatPaginatorModule,
-    TabsComponent,
+    MatTabsModule,
     IconComponent,
     EmptyState,
     PageHeader,
@@ -90,18 +91,6 @@ export class AdminReviews {
     source: this.list.data,
     computation: (page, previous) => (page ? page.counts?.reported : previous?.value),
   });
-
-  /** All reviews first, then the moderation queue (with its count), then analytics. */
-  protected readonly tabItems = computed(() => [
-    { id: 'all', label: 'All reviews', content: '' },
-    { id: 'reported', label: 'Reported', content: '', badge: this.reportedCount() || undefined },
-    { id: 'analytics', label: 'Analytics', content: '' },
-  ]);
-
-  protected selectTabId(id: string): void {
-    const index = TABS.indexOf(id as (typeof TABS)[number]);
-    if (index >= 0) this.selectTab(index);
-  }
 
   protected selectTab(index: number): void {
     if (index === this.activeTab()) return;

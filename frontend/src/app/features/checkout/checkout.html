@@ -224,13 +224,7 @@
           </div>
         }
 
-        @if (!connection.online()) {
-          <div class="bb-alert info" role="status">
-            <np-icon name="wifi-off" class="mat-icon" matButtonIcon />
-            <span>You're offline. Placing an order and paying need an internet connection; your cart is kept.</span>
-          </div>
-        }
-        <button mat-flat-button class="place bb-btn-accent" type="button" (click)="placeOrder()" [disabled]="!q.canCheckout || placing() || cart.busy() || !connection.online()">
+        <button mat-flat-button class="place bb-btn-accent" type="button" (click)="placeOrder()" [disabled]="!q.canCheckout || placing() || cart.busy()">
           @if (placing()) {
             <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Placing order" />
           } @else {

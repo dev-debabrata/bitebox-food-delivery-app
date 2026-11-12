@@ -163,12 +163,6 @@ export const ordersPaths = {
             enum: ["confirmed", "rejected", "preparing", "ready_for_pickup"],
           },
           reason: { type: "string" },
-          prepMinutes: {
-            type: "integer",
-            minimum: 5,
-            maximum: 120,
-            description: "With confirmed: preparation time (default: the restaurant's usual time)",
-          },
         },
       }),
       responses: {
@@ -278,10 +272,7 @@ export const ordersPaths = {
   "/delivery/orders/{id}/status": {
     patch: {
       tags: T.rider,
-      summary:
-        "Arrived at the restaurant -> picked up -> on the way -> delivered (my delivery only)",
-      description:
-        "Delivered needs the customer's 4-digit code (otp) when DELIVERY_OTP_REQUIRED is on: 422 for a wrong code, 409 OTP_LOCKED after too many.",
+      summary: "Picked up -> on the way -> delivered (my delivery only)",
       security: bearer,
       parameters: [idParam],
       requestBody: body({
@@ -290,9 +281,8 @@ export const ordersPaths = {
         properties: {
           status: {
             type: "string",
-            enum: ["arrived_at_restaurant", "picked_up", "on_the_way", "delivered"],
+            enum: ["picked_up", "on_the_way", "delivered"],
           },
-          otp: { type: "string", pattern: "^\\d{4}$" },
         },
       }),
       responses: {
@@ -364,85 +354,6 @@ export const ordersPaths = {
       parameters: [idParam],
       requestBody: body(reason(false)),
       responses: { 200: order, 409: conflict },
-    },
-  },
-  "/admin/orders/{id}/assign": {
-    post: {
-      tags: T.admin,
-      summary: "Give a ready order to a chosen online rider (withdraws an open offer)",
-      security: bearer,
-      parameters: [idParam],
-      requestBody: body({
-        type: "object",
-        required: ["riderId"],
-        properties: { riderId: { type: "string" } },
-      }),
-      responses: {
-        200: order,
-        404: err("Order or rider not found"),
-        409: err("Not waiting for a rider (INVALID_TRANSITION) or rider busy (RIDER_UNAVAILABLE)"),
-      },
-    },
-  },
-  "/admin/orders/{id}/delivery-code": {
-    post: {
-      tags: T.admin,
-      summary: "Send the customer a new delivery code (after too many wrong tries)",
-      security: bearer,
-      parameters: [idParam],
-      responses: { 200: order, 409: err("No delivery code to reset") },
-    },
-  },
-  "/admin/orders/{id}/timeline": {
-    get: {
-      tags: T.admin,
-      summary: "The order's status changes with labels and who made them",
-      security: bearer,
-      parameters: [idParam],
-      responses: { 200: ok({ type: "object" }), 404: err("Not found") },
-    },
-  },
-  "/orders/{id}/timeline": {
-    get: {
-      tags: T.orders,
-      summary: "My order's status changes with labels and who made them",
-      security: bearer,
-      parameters: [idParam],
-      responses: { 200: ok({ type: "object" }), 404: err("Not found") },
-    },
-  },
-  "/my/restaurant/stats": {
-    get: {
-      tags: T.restaurant,
-      summary: "Dashboard figures: orders by state, today's orders, sales, average order, rating",
-      security: bearer,
-      responses: { 200: ok({ type: "object" }), 404: err("No restaurant yet") },
-    },
-  },
-  "/admin/dashboard": {
-    get: {
-      tags: T.admin,
-      summary: "Platform figures for the admin home; money figures need finance:view",
-      security: bearer,
-      responses: { 200: ok({ type: "object" }), 403: err("Not an admin") },
-    },
-  },
-  "/admin/users/{id}/logins": {
-    get: {
-      tags: T.admin,
-      summary: "Sign-in history of a customer, partner or rider (users:manage)",
-      security: bearer,
-      parameters: [idParam, ...paging],
-      responses: { 200: ok({ type: "object" }), 404: err("Not found") },
-    },
-  },
-  "/admin/admins/{id}/logins": {
-    get: {
-      tags: T.admin,
-      summary: "Sign-in history of a staff admin (admins:manage)",
-      security: bearer,
-      parameters: [idParam, ...paging],
-      responses: { 200: ok({ type: "object" }), 404: err("Not found") },
     },
   },
   "/admin/delivery-partners": {

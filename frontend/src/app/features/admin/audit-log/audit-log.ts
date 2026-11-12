@@ -2,7 +2,8 @@ import { TableLabels } from '../../../shared/list/table-labels';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { form } from '@angular/forms/signals';
-import { IconComponent, PaginationComponent, SelectOption } from 'nexprime';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { IconComponent, SelectOption } from 'nexprime';
 import { AdminStaffService } from '../../../core/services/admin/admin-staff.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
@@ -29,12 +30,12 @@ const ACTIONS: Record<string, string> = {
   'review.moderate': 'Review moderated',
   'ticket.update': 'Ticket updated',
   'ticket.escalate': 'Ticket escalated',
-  'push.promotion': 'Promotion pushed',
 };
 
 @Component({
   selector: 'bb-audit-log',
-  imports: [DatePipe, NP_FORM_FIELDS, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
+  imports: [
+    TableLabels,DatePipe, NP_FORM_FIELDS, MatPaginatorModule, IconComponent, EmptyState, PageHeader],
   templateUrl: './audit-log.html',
   styleUrl: './audit-log.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

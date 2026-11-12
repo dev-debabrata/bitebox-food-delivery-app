@@ -6,7 +6,6 @@ import { env } from "./config/env.js";
 import { logger } from "./config/logger.js";
 import { Order } from "./models/order.model.js";
 import { startDispatchLoop } from "./services/dispatch.service.js";
-import { startReconcileLoop } from "./services/payments/payment.service.js";
 import { startRewardsLoop } from "./services/rewards-jobs.service.js";
 import { attachRealtime } from "./sockets/index.js";
 
@@ -39,12 +38,10 @@ async function start() {
   );
   stopDispatch = startDispatchLoop();
   stopRewards = startRewardsLoop();
-  stopReconcile = startReconcileLoop();
 }
 
 let stopDispatch = () => {};
 let stopRewards = () => {};
-let stopReconcile = () => {};
 
 let shuttingDown = false;
 async function shutdown(signal) {
@@ -53,7 +50,6 @@ async function shutdown(signal) {
   logger.info(`${signal} received, shutting down gracefully`);
   stopDispatch();
   stopRewards();
-  stopReconcile();
   if (io) io.close();
 
   const forceExit = setTimeout(() => {

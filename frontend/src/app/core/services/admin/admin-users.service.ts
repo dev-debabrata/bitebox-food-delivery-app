@@ -16,7 +16,7 @@ export interface UserQuery {
 @Injectable({ providedIn: 'root' })
 export class AdminUsersService {
   private readonly http = inject(HttpClient);
-  private readonly url = `${environment.baseUrl}/admin/users`;
+  private readonly url = `${environment.apiUrl}/admin/users`;
 
   list(query: UserQuery = {}): Observable<Paginated<User>> {
     let params = new HttpParams();

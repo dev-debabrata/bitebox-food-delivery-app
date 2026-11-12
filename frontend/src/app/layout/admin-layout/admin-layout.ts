@@ -74,7 +74,6 @@ const NAV: Record<AdminRole, NavItem[]> = {
     },
     { label: 'Categories', icon: 'category', link: '/admin/categories' },
     { label: 'Coupons', icon: 'local_offer', link: '/admin/coupons' },
-    { label: 'Push promotions', icon: 'megaphone', link: '/admin/promotions' },
     { label: 'Users', icon: 'group', link: '/admin/users' },
     { label: 'Admin management', icon: 'user-cog', link: '/admin/admins' },
     { label: 'Audit log', icon: 'scroll-text', link: '/admin/audit-log' },

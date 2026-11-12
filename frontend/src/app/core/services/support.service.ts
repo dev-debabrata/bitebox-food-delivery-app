@@ -21,7 +21,7 @@ const ticket = <T>() => map((r: ApiResponse<{ ticket: T }>) => r.data.ticket);
 @Injectable({ providedIn: 'root' })
 export class SupportService {
   private readonly http = inject(HttpClient);
-  private readonly url = `${environment.baseUrl}/support/tickets`;
+  private readonly url = `${environment.apiUrl}/support/tickets`;
 
   mine = (query: { status?: 'open' | 'closed'; page?: number; limit?: number }) =>
     this.http.get<ApiResponse<Paginated<MyTicket>>>(this.url, { params: toParams(query) }).pipe(data());
@@ -37,7 +37,7 @@ export class SupportService {
 @Injectable({ providedIn: 'root' })
 export class SupportDeskService {
   private readonly http = inject(HttpClient);
-  private readonly url = `${environment.baseUrl}/admin/support`;
+  private readonly url = `${environment.apiUrl}/admin/support`;
   private readonly tickets = `${this.url}/tickets`;
 
   dashboard = (): Observable<SupportDashboard> =>

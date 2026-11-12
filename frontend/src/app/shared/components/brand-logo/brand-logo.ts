@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 @Component({
   selector: 'bb-brand-logo',
@@ -7,7 +7,9 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BrandLogo {
-  /** `light`: always the light-on-dark logo (dark brand surfaces). `default` follows the theme. */
   readonly variant = input<'default' | 'light'>('default');
   readonly height = input(36);
+  protected readonly src = computed(() =>
+    this.variant() === 'light' ? '/bitebox-logo-dark.svg' : '/bitebox-logo.svg',
+  );
 }

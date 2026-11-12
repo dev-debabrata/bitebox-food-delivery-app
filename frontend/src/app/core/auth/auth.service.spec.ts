@@ -7,7 +7,7 @@ import { User } from '../../shared/models/user.models';
 import { authInterceptor } from '../interceptors/auth.interceptor';
 import { AuthService } from './auth.service';
 
-const api = environment.baseUrl;
+const api = environment.apiUrl;
 const user: User = {
   id: 'u1',
   name: 'Asha Customer',

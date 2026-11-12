@@ -1,11 +1,11 @@
 import { Injectable, PLATFORM_ID, effect, inject, signal, untracked } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, Observable, Subject, switchMap } from 'rxjs';
+import { Socket, io } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth/auth.service';
 import { OrderStatus } from '../../shared/models/checkout.models';
 import { AppNotification } from '../../shared/models/payment.models';
-import { DjangoSocketTransport, RealtimeTransport, SocketIoTransport } from './realtime-transport';
 
 export interface OrderEvent {
   id: string;
@@ -34,20 +34,11 @@ export interface LocationAck {
     | 'NOT_CONNECTED';
 }
 
-/** The socket URL for the configured backend (the API's origin; Django serves it at /ws/). */
-export function realtimeUrl(): string {
-  if (environment.realtime === 'django') {
-    const api = new URL(environment.djangoUrl, window.location.origin);
-    return `${api.protocol === 'https:' ? 'wss:' : 'ws:'}//${api.host}/ws/`;
-  }
-  return new URL(environment.baseUrl, window.location.origin).origin;
-}
-
 @Injectable({ providedIn: 'root' })
 export class RealtimeService {
   private readonly auth = inject(AuthService);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
-  private readonly transport$ = new BehaviorSubject<RealtimeTransport | null>(null);
+  private readonly socket$ = new BehaviorSubject<Socket | null>(null);
   private readonly orders = new Subject<OrderEvent>();
   private readonly inbox = new Subject<AppNotification>();
   private retries = 0;
@@ -64,16 +55,9 @@ export class RealtimeService {
     });
   }
 
-  /** Swappable in tests. */
-  protected createTransport(): RealtimeTransport {
-    const token = () => this.auth.accessToken;
-    return environment.realtime === 'django'
-      ? new DjangoSocketTransport(realtimeUrl(), token)
-      : new SocketIoTransport(realtimeUrl(), token);
-  }
-
   private connect(): void {
     if (this.socket$.value) return;
+    this.retries = 0;
     const origin = new URL(environment.apiUrl, window.location.origin).origin;
     const socket = io(origin, {
       path: '/socket.io',
@@ -82,62 +66,68 @@ export class RealtimeService {
     });
     this.socket$.next(socket);
 
-    transport.on('connect', () => {
+    socket.on('connect', () => {
       this.retries = 0;
       this.connected.set(true);
     });
-    transport.on('order:updated', (event: OrderEvent) => this.orders.next(event));
-    transport.on('notification:new', (n: AppNotification) => this.inbox.next(n));
-    transport.on('disconnect', () => this.connected.set(false));
-    transport.on('unauthorized', () => {
+    socket.on('order:updated', (event: OrderEvent) => this.orders.next(event));
+    socket.on('notification:new', (n: AppNotification) => this.inbox.next(n));
+    socket.on('disconnect', (reason) => {
       this.connected.set(false);
-      this.reconnectWithFreshToken();
+      if (reason === 'io server disconnect') this.reconnectWithFreshToken();
+    });
+    socket.on('connect_error', () => {
+      this.connected.set(false);
+      if (!socket.active) this.reconnectWithFreshToken();
     });
   }
 
   private reconnectWithFreshToken(): void {
     const socket = this.socket$.value;
-    if (!socket || this.retries >= 5) return;
+    if (!socket) return;
+    // Out of retries: drop the dead socket, so the next session change (sign-in or a token
+    // refresh made by any API call) starts a fresh one instead of finding this one in place.
+    if (this.retries >= 5) return this.disconnect();
     const delay = Math.min(30_000, 1000 * 2 ** this.retries++);
     setTimeout(() => {
       if (this.socket$.value !== socket || !this.auth.user()) return;
-      this.auth.refresh().subscribe({ next: () => socket.connect(), error: () => undefined });
+      this.auth.refresh().subscribe({
+        next: () => socket.connect(),
+        error: () => this.reconnectWithFreshToken(), // e.g. a network blip: back off and retry
+      });
     }, delay);
   }
 
   private disconnect(): void {
-    this.transport$.value?.close();
-    this.transport$.next(null);
+    this.socket$.value?.disconnect();
+    this.socket$.next(null);
     this.connected.set(false);
   }
 
   track(orderId: string): Observable<RiderLocation> {
-    return this.transport$.pipe(
+    return this.socket$.pipe(
       switchMap(
-        (transport) =>
+        (socket) =>
           new Observable<RiderLocation>((subscriber) => {
-            if (!transport) return;
+            if (!socket) return;
             const join = () =>
-              transport
-                .request<{ ok: boolean; location?: RiderLocation | null }>(
-                  'track:join',
-                  { orderId },
-                  5000,
-                )
-                .then((ack) => {
+              socket
+                .timeout(5000)
+                .emitWithAck('track:join', { orderId })
+                .then((ack: { ok: boolean; location?: RiderLocation | null }) => {
                   if (ack.ok && ack.location) subscriber.next(ack.location);
                 })
                 .catch(() => undefined);
             const onLocation = (location: RiderLocation) => {
               if (location.orderId === orderId) subscriber.next(location);
             };
-            transport.on('order:location', onLocation);
-            transport.on('connect', join);
-            if (transport.isConnected) void join();
+            socket.on('order:location', onLocation);
+            socket.on('connect', join);
+            if (socket.connected) void join();
             return () => {
-              transport.off('order:location', onLocation);
-              transport.off('connect', join);
-              transport.send('track:leave', { orderId });
+              socket.off('order:location', onLocation);
+              socket.off('connect', join);
+              if (socket.connected) socket.emit('track:leave', { orderId });
             };
           }),
       ),
@@ -149,10 +139,10 @@ export class RealtimeService {
     longitude: number;
     accuracy?: number;
   }): Promise<LocationAck> {
-    const transport = this.transport$.value;
-    if (!transport?.isConnected) return { ok: false, error: 'NOT_CONNECTED' };
+    const socket = this.socket$.value;
+    if (!socket?.connected) return { ok: false, error: 'NOT_CONNECTED' };
     try {
-      return await transport.request<LocationAck>('rider:location', point, 5000);
+      return (await socket.timeout(5000).emitWithAck('rider:location', point)) as LocationAck;
     } catch {
       return { ok: false, error: 'NOT_CONNECTED' };
     }

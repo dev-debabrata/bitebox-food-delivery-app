@@ -1,9 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormRoot, form, maxLength, validate } from '@angular/forms/signals';
+import {
+  MAT_DIALOG_DATA,
+  MatDialog,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { Observable, filter } from 'rxjs';
-import { ButtonComponent } from 'nexprime';
+import { MatButtonModule } from '@angular/material/button';
 import { NP_FORM_FIELDS } from '../../forms/np-form-fields';
-import { BB_DIALOG_DATA, BbDialog, BbDialogRef, BbDialogTitle } from '../../dialog/bb-dialog';
 
 export interface ConfirmDialogData {
   title: string;
@@ -17,14 +22,14 @@ export interface ConfirmDialogData {
 
 @Component({
   selector: 'bb-confirm-dialog',
-  imports: [FormRoot, NP_FORM_FIELDS, BbDialogTitle, ButtonComponent],
+  imports: [FormRoot, NP_FORM_FIELDS, MatDialogModule, MatButtonModule],
   templateUrl: './confirm-dialog.html',
   styleUrl: './confirm-dialog.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfirmDialog {
-  protected readonly data = inject<ConfirmDialogData>(BB_DIALOG_DATA);
-  protected readonly ref = inject<BbDialogRef<true | string>>(BbDialogRef);
+  protected readonly data = inject<ConfirmDialogData>(MAT_DIALOG_DATA);
+  private readonly ref = inject(MatDialogRef<ConfirmDialog, true | string>);
 
   protected readonly model = signal({ reason: '' });
   protected readonly form = form(
@@ -47,18 +52,15 @@ export class ConfirmDialog {
   );
 }
 
-/**
- * Ask, then act: emits once if the user confirms (`true`, or the trimmed reason when
- * `reasonLabel` is set) and completes without emitting if they cancel or dismiss it.
- */
 export function confirmed(
-  dialog: BbDialog,
+  dialog: MatDialog,
   data: ConfirmDialogData,
   width = '440px',
 ): Observable<true | string> {
   return dialog
     .open<ConfirmDialog, ConfirmDialogData, true | string>(ConfirmDialog, { data, width })
-    .closed.pipe(
+    .afterClosed()
+    .pipe(
       filter(
         (result): result is true | string =>
           result === true || (typeof result === 'string' && result.length > 0),

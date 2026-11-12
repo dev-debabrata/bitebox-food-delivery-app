@@ -16,14 +16,13 @@ import {
   RiderDashboard,
   RiderOrder,
   RiderProfile,
-  RiderStats,
 } from '../../shared/models/order-management.models';
 import { toParams } from './http-params';
 
 @Injectable({ providedIn: 'root' })
 export class RestaurantOrdersService {
   private readonly http = inject(HttpClient);
-  private readonly url = `${environment.baseUrl}/my/restaurant/orders`;
+  private readonly url = `${environment.apiUrl}/my/restaurant/orders`;
 
   active(): Observable<RestaurantActiveOrders> {
     return this.http
@@ -39,16 +38,11 @@ export class RestaurantOrdersService {
       .pipe(map((r) => r.data));
   }
 
-  /** `extra.prepMinutes`: with "confirmed", how long the food takes (the Node API ignores it). */
-  setStatus(
-    id: string,
-    status: RestaurantAction,
-    extra: { reason?: string; prepMinutes?: number } = {},
-  ): Observable<RestaurantOrder> {
+  setStatus(id: string, status: RestaurantAction, reason?: string): Observable<RestaurantOrder> {
     return this.http
       .patch<ApiResponse<{ order: RestaurantOrder }>>(
         `${this.url}/${encodeURIComponent(id)}/status`,
-        { status, ...extra },
+        { status, reason },
       )
       .pipe(map((r) => r.data.order));
   }
@@ -57,15 +51,10 @@ export class RestaurantOrdersService {
 @Injectable({ providedIn: 'root' })
 export class RiderService {
   private readonly http = inject(HttpClient);
-  private readonly url = `${environment.baseUrl}/delivery`;
+  private readonly url = `${environment.apiUrl}/delivery`;
 
   dashboard(): Observable<RiderDashboard> {
     return this.http.get<ApiResponse<RiderDashboard>>(`${this.url}/me`).pipe(map((r) => r.data));
-  }
-
-  /** Today, this week and all-time figures (Django API only: the Node API answers 404). */
-  stats(): Observable<RiderStats> {
-    return this.http.get<ApiResponse<RiderStats>>(`${this.url}/stats`).pipe(map((r) => r.data));
   }
 
   saveVehicle(vehicleType: VehicleType, vehicleNumber: string): Observable<RiderProfile> {
@@ -117,12 +106,11 @@ export class RiderService {
       .pipe(map((r) => r.data));
   }
 
-  /** `otp`: the customer's delivery code, with "delivered" when the order needs one. */
-  setStatus(orderId: string, status: RiderAction, otp?: string): Observable<RiderDashboard> {
+  setStatus(orderId: string, status: RiderAction): Observable<RiderDashboard> {
     return this.http
       .patch<ApiResponse<RiderDashboard>>(
         `${this.url}/orders/${encodeURIComponent(orderId)}/status`,
-        { status, otp },
+        { status },
       )
       .pipe(map((r) => r.data));
   }
@@ -139,7 +127,7 @@ export class RiderService {
 @Injectable({ providedIn: 'root' })
 export class AdminOrdersService {
   private readonly http = inject(HttpClient);
-  private readonly api = `${environment.baseUrl}/admin`;
+  private readonly api = `${environment.apiUrl}/admin`;
 
   list(query: {
     status?: OrderStatus | 'active';
@@ -158,18 +146,20 @@ export class AdminOrdersService {
       .pipe(map((r) => r.data.order));
   }
 
-  cancel = (id: string, reason: string) => this.act(id, 'cancel', { reason });
-  unassign = (id: string, reason?: string) => this.act(id, 'unassign', { reason });
-  /** Manual assignment of a free, online rider (Django API). */
-  assign = (id: string, riderId: string) => this.act(id, 'assign', { riderId });
-  /** A new delivery code, sent to the customer (Django API). */
-  resetDeliveryCode = (id: string) => this.act(id, 'delivery-code', {});
-
-  private act(id: string, action: string, body: object): Observable<AdminOrder> {
+  cancel(id: string, reason: string): Observable<AdminOrder> {
     return this.http
       .post<ApiResponse<{ order: AdminOrder }>>(
-        `${this.api}/orders/${encodeURIComponent(id)}/${action}`,
-        body,
+        `${this.api}/orders/${encodeURIComponent(id)}/cancel`,
+        { reason },
+      )
+      .pipe(map((r) => r.data.order));
+  }
+
+  unassign(id: string, reason?: string): Observable<AdminOrder> {
+    return this.http
+      .post<ApiResponse<{ order: AdminOrder }>>(
+        `${this.api}/orders/${encodeURIComponent(id)}/unassign`,
+        { reason },
       )
       .pipe(map((r) => r.data.order));
   }

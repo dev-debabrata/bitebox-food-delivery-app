@@ -46,13 +46,6 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./coupons/admin-coupons').then((m) => m.AdminCoupons),
   },
 
-  {
-    path: 'promotions',
-    title: 'Push promotions | BiteBox Admin',
-    canActivate: [can('promotions:send')],
-    loadComponent: () => import('./promotions/push-promotions').then((m) => m.PushPromotionsPage),
-  },
-
   // Coins & rewards (reports need rewards:view; changing anything needs rewards:manage)
   {
     path: 'rewards',

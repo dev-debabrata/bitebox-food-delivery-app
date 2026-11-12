@@ -44,12 +44,6 @@ export const restaurantStatusRules = [
       "Status must be confirmed, rejected, preparing or ready_for_pickup",
     ),
   reason(),
-  // With "confirmed": how long the food takes (the restaurant's usual time when left out).
-  body("prepMinutes")
-    .optional({ values: "null" })
-    .isInt({ min: 5, max: 120 })
-    .withMessage("Preparation time must be 5 to 120 minutes")
-    .toInt(),
 ];
 
 // Rider
@@ -77,16 +71,8 @@ export const offerRules = [mongoIdParam()];
 export const riderStatusRules = [
   mongoIdParam(),
   body("status")
-    .isIn([S.ARRIVED_AT_RESTAURANT, S.PICKED_UP, S.ON_THE_WAY, S.DELIVERED])
-    .withMessage(
-      "Status must be arrived_at_restaurant, picked_up, on_the_way or delivered",
-    ),
-  // The customer's delivery code, needed with "delivered".
-  body("otp")
-    .optional({ values: "falsy" })
-    .isString()
-    .matches(/^\d{4}$/)
-    .withMessage("Enter the 4-digit code"),
+    .isIn([S.PICKED_UP, S.ON_THE_WAY, S.DELIVERED])
+    .withMessage("Status must be picked_up, on_the_way or delivered"),
 ];
 export const riderHistoryRules = paginationRules;
 
@@ -100,15 +86,6 @@ export const adminOrderListRules = [
 ];
 export const adminCancelRules = [mongoIdParam(), reason(true)];
 export const adminUnassignRules = [mongoIdParam(), reason()];
-export const adminAssignRules = [
-  mongoIdParam(),
-  body("riderId")
-    .exists({ values: "falsy" })
-    .withMessage("Choose a delivery partner")
-    .bail()
-    .isMongoId()
-    .withMessage("Choose a delivery partner"),
-];
 export const adminRiderListRules = [
   searchQuery(),
   booleanQuery("online"),

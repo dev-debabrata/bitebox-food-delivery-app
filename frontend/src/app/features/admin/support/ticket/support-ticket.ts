@@ -11,6 +11,7 @@ import {
 import { rxResource } from '@angular/core/rxjs-interop';
 import { FormRoot, TreeValidationResult, form } from '@angular/forms/signals';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { IconComponent, SelectOption, ToggleComponent } from 'nexprime';
 import { Observable, firstValueFrom } from 'rxjs';
@@ -35,7 +36,6 @@ import {
 } from '../../../../shared/models/admin-roles.models';
 import { ORDER_STATUS_LABEL } from '../../../../shared/models/checkout.models';
 import { InrPipe } from '../../../../shared/pipes/money.pipes';
-import { BbDialog } from '../../../../shared/dialog/bb-dialog';
 
 const HISTORY_LABEL: Record<string, string> = {
   created: 'Ticket opened',
@@ -63,7 +63,7 @@ const HISTORY_LABEL: Record<string, string> = {
 })
 export class SupportTicketPage {
   private readonly api = inject(SupportDeskService);
-  private readonly dialog = inject(BbDialog);
+  private readonly dialog = inject(MatDialog);
   private readonly notify = inject(NotificationService);
 
   /** Route parameter. */

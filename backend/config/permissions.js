@@ -22,8 +22,6 @@ export const PERMISSIONS = Object.freeze({
   // Coins, referral and campaign settings (super admin only), and read-only rewards reports.
   REWARDS_MANAGE: "rewards:manage",
   REWARDS_VIEW: "rewards:view",
-  // Push special offers to customers who opted in (super admin only).
-  PROMOTIONS_SEND: "promotions:send",
 });
 
 const P = PERMISSIONS;

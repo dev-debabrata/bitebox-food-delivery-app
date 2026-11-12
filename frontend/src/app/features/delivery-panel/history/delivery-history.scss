@@ -38,19 +38,3 @@
   font-weight: 700;
   text-align: right;
 }
-
-.amount {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-}
-
-.earned {
-  font-weight: 700;
-  color: var(--bb-success-ink);
-}
-
-.total {
-  font-size: 0.8rem;
-}
