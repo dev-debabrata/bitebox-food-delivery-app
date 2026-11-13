@@ -2,28 +2,23 @@ import { env } from "../config/env.js";
 import * as authService from "../services/auth.service.js";
 import { respond, sendSuccess } from "../utils/api-response.js";
 
+const isSecure = () => env.isProduction || Boolean(process.env.VERCEL);
 const cookieOptions = () => ({
   httpOnly: true,
-  secure: env.isProduction,
-  // The web app reaches the API through a same-origin /api proxy, so the cookie is first-party.
-  // Set COOKIE_SAMESITE=none only if the browser calls the API on a different site.
-  sameSite: process.env.COOKIE_SAMESITE || (process.env.VERCEL ? "none" : "lax"),
+  secure: isSecure(),
+  sameSite: process.env.COOKIE_SAMESITE || (isSecure() ? "none" : "lax"),
   path: "/api/v1/auth",
   maxAge: env.refreshToken.ttlDays * 86_400_000,
 });
 
 const requestMeta = (req) => ({ ip: req.ip, userAgent: req.get("user-agent") });
 
-const getRefreshToken = (req) => req.cookies?.[env.refreshToken.cookieName];
+const getRefreshToken = (req) =>
+  req.cookies?.[env.refreshToken.cookieName] || req.body?.refreshToken || req.get("x-refresh-token");
 
-function sendSession(
-  res,
-  { user, accessToken, refreshToken },
-  message,
-  statusCode = 200,
-) {
+function sendSession(res, { user, accessToken, refreshToken }, message, statusCode = 200) {
   res.cookie(env.refreshToken.cookieName, refreshToken, cookieOptions());
-  return sendSuccess(res, { statusCode, message, data: { user, accessToken } });
+  return sendSuccess(res, { statusCode, message, data: { user, accessToken, refreshToken } });
 }
 
 function clearSessionCookie(res) {

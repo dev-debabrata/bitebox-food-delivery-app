@@ -1,9 +1,0 @@
-Hi {{ name }},
-
-{{ title }}
-{% if body %}
-{{ body }}
-{% endif %}
-Open BiteBox: {{ url }}
-
-You get this email because of your BiteBox account. Change which emails you get in Account, Notifications.

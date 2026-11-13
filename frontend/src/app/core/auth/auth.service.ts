@@ -45,6 +45,7 @@ export interface SessionHint {
   email?: string;
 }
 const HINT_KEY = 'bb.session-hint';
+const REFRESH_KEY = 'bb_refresh_token';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -167,9 +168,10 @@ export class AuthService {
 
   refresh(): Observable<string> {
     if (!this.refreshInFlight$) {
+      const token = this.isBrowser ? localStorage.getItem(REFRESH_KEY) : null;
       const attempt = () =>
         this.http
-          .post<ApiResponse<AuthSession>>(`${this.baseUrl}/refresh`, {})
+          .post<ApiResponse<AuthSession>>(`${this.baseUrl}/refresh`, token ? { refreshToken: token } : {})
           .pipe(map((res) => (this.applySession(res.data), res.data.accessToken)));
 
       this.refreshInFlight$ = attempt().pipe(
@@ -193,15 +195,18 @@ export class AuthService {
   }
 
   logout(): Observable<void> {
+    const token = this.isBrowser ? localStorage.getItem(REFRESH_KEY) : null;
     const role = this._user()?.role ?? 'customer';
-    return this.http.post<ApiResponse<null>>(`${this.baseUrl}/logout`, {}).pipe(
-      catchError(() => of(null)),
-      map(() => undefined),
-      tap(() => {
-        this.clearSession();
-        void this.router.navigateByUrl(ROLE_META[role].login);
-      }),
-    );
+    return this.http
+      .post<ApiResponse<null>>(`${this.baseUrl}/logout`, token ? { refreshToken: token } : {})
+      .pipe(
+        catchError(() => of(null)),
+        map(() => undefined),
+        tap(() => {
+          this.clearSession();
+          void this.router.navigateByUrl(ROLE_META[role].login);
+        }),
+      );
   }
 
   forgotPassword(email: string): Observable<string> {
@@ -246,7 +251,10 @@ export class AuthService {
     this._user.set(null);
     this._accessToken.set(null);
     this._hint.set(null);
-    if (this.isBrowser) localStorage.removeItem(HINT_KEY);
+    if (this.isBrowser) {
+      localStorage.removeItem(HINT_KEY);
+      localStorage.removeItem(REFRESH_KEY);
+    }
   }
 
   /** The endpoints that text a code answer with its timings and a message to show. */
@@ -265,7 +273,10 @@ export class AuthService {
   private applySession(session: AuthSession): User {
     this._accessToken.set(session.accessToken);
     this._user.set(session.user);
-    if (this.isBrowser) writeHint(session.user);
+    if (this.isBrowser) {
+      writeHint(session.user);
+      if (session.refreshToken) localStorage.setItem(REFRESH_KEY, session.refreshToken);
+    }
     return session.user;
   }
 }

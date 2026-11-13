@@ -62,6 +62,7 @@ export interface CodeSent {
 export interface AuthSession {
   user: User;
   accessToken: string;
+  refreshToken?: string;
 }
 
 export interface LoginRequest {
