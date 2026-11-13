@@ -52,14 +52,15 @@
           </a>
         }
         <a
+          mat-flat-button
           routerLink="/"
           fragment="app-download"
           (click)="scrollToAppDownload($event)"
-          class="bb-btn-get-app hide-phone"
+          class="bb-btn-accent hide-phone"
           aria-label="Get the BiteBox App"
         >
-          <span>Get the App</span>
-          <np-icon name="arrow-up-right" class="mat-icon" matButtonIcon />
+          Get the App
+          <np-icon name="arrow-up-right" class="mat-icon" iconPositionEnd matButtonIcon />
         </a>
         <bb-notification-bell />
         @if (showCart()) {
@@ -155,16 +156,16 @@
           </button>
         </mat-menu>
       } @else {
-        <!-- <a mat-button routerLink="/login">Sign in</a> -->
         <a
+          mat-flat-button
           routerLink="/"
           fragment="app-download"
           (click)="scrollToAppDownload($event)"
-          class="bb-btn-get-app hide-phone"
+          class="bb-btn-accent hide-phone"
           aria-label="Get the BiteBox App"
         >
-          <span>Get the App</span>
-          <np-icon name="arrow-up-right" class="mat-icon" matButtonIcon />
+          Get the App
+          <np-icon name="arrow-up-right" class="mat-icon" iconPositionEnd matButtonIcon />
         </a>
 
         <a mat-flat-button routerLink="/login" class="bb-btn-accent">Sign in</a>
