@@ -12,10 +12,14 @@ describe('CustomerLayout', () => {
   let fixture: ComponentFixture<CustomerLayout>;
   const displayUser = signal<{ name: string; role: 'customer' | 'restaurant' | 'delivery' | 'admin' } | null>(null);
   const initialised = signal(false);
+  const cartItemCount = signal(0);
+  const cartEnabled = signal(true);
 
   beforeEach(async () => {
     displayUser.set(null);
     initialised.set(false);
+    cartItemCount.set(0);
+    cartEnabled.set(true);
 
     await TestBed.configureTestingModule({
       imports: [CustomerLayout],
@@ -36,8 +40,8 @@ describe('CustomerLayout', () => {
         {
           provide: CartService,
           useValue: {
-            enabled: signal(false),
-            itemCount: signal(0),
+            enabled: cartEnabled,
+            itemCount: cartItemCount,
           },
         },
         {
@@ -82,5 +86,23 @@ describe('CustomerLayout', () => {
     await fixture.whenStable();
 
     expect(partnerLink()).toBeUndefined();
+  });
+
+  it('hides the desktop cart icon when the cart is empty and reveals it when items are added', async () => {
+    initialised.set(true);
+    displayUser.set({ name: 'Debabrata Das', role: 'customer' });
+    cartItemCount.set(0);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('.cart-button')).toBeNull();
+
+    cartItemCount.set(3);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const cartBtn = fixture.nativeElement.querySelector('.cart-button');
+    expect(cartBtn).not.toBeNull();
+    expect(cartBtn.textContent).toContain('3');
   });
 });

@@ -63,7 +63,7 @@
           <np-icon name="arrow-up-right" class="mat-icon" iconPositionEnd matButtonIcon />
         </a>
         <bb-notification-bell />
-        @if (showCart()) {
+        @if (showCart() && cart.itemCount() > 0) {
           <a
             mat-icon-button
             routerLink="/checkout"
