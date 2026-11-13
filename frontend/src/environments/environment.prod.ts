@@ -1,6 +1,5 @@
 export const environment = {
   production: true,
-  // baseUrl: 'http://localhost:5000/api/v1',
   baseUrl: 'https://bitebox-backend-opal.vercel.app/api/v1',
   // For cloud deployments (e.g. Render / Railway / Vercel):
   // baseUrl: 'https://bitebox-backend-opal.vercel.app/api/v1',
