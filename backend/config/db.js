@@ -20,10 +20,8 @@ function registerListeners() {
 
 export const connectDB = async (uri) => {
   registerListeners();
-  if (mongoose.connection.readyState === 1) {
-    return mongoose.connection;
-  }
-  const conn = await mongoose.connect(uri, { serverSelectionTimeoutMS: 15000 });
+  if (mongoose.connection.readyState === 1) return mongoose.connection;
+  const conn = await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
   logger.info("MongoDB connected");
   return conn;
 };

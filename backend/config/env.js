@@ -39,12 +39,6 @@ if (jwtSecret.length < 32) {
   throw new Error("JWT_SECRET must be at least 32 characters long");
 }
 
-function fieldEncryptionKey() {
-  const key = process.env.FIELD_ENCRYPTION_KEY || "";
-  if (isProduction && !key) throw new Error("FIELD_ENCRYPTION_KEY must be set (32 bytes, base64)");
-  return key;
-}
-
 export const env = Object.freeze({
   nodeEnv,
   isTest,
@@ -52,7 +46,7 @@ export const env = Object.freeze({
   port: integer("PORT", 5000),
   mongoUri: required("MONGO_URI", "mongodb://127.0.0.1:27017/bitebox_test"),
 
-  clientUrls: (process.env.CLIENT_URL || "http://localhost:4200")
+  clientUrls: (process.env.CLIENT_URL || "http://localhost:4200,https://bitebox-dev.vercel.app")
     .split(",")
     .map((url) => url.trim().replace(/\/$/, ""))
     .filter(Boolean),
@@ -113,7 +107,7 @@ export const env = Object.freeze({
     ? "tmp/test-private-uploads"
     : process.env.PRIVATE_UPLOAD_DIR || "private-uploads",
   // AES-256-GCM key (32 bytes, base64) for bank and document numbers (utils/field-crypto.js).
-  fieldEncryptionKey: fieldEncryptionKey(),
+  fieldEncryptionKey: process.env.FIELD_ENCRYPTION_KEY || "",
   // A restaurant goes live only with its required documents approved and a bank account added.
   restaurantKycRequired: !isTest && process.env.RESTAURANT_KYC_REQUIRED !== "false",
   // A rider goes online only once approved: documents, bank account and address.

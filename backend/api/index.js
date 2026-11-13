@@ -4,21 +4,23 @@ import { env } from "../config/env.js";
 import { logger } from "../config/logger.js";
 
 const app = createApp();
-let connecting = null;
+let connecting;
 
 export default async function handler(req, res) {
   try {
-    await (connecting ??= connectDB(env.mongoUri).catch((err) => {
-      connecting = null; // let the next request try again
-      throw err;
-    }));
+    if (env.mongoUri) {
+      await (connecting ??= connectDB(env.mongoUri).catch((err) => {
+        connecting = null;
+        throw err;
+      }));
+    }
+    return app(req, res);
   } catch (err) {
-    logger.error({ err }, "MongoDB connection failed");
+    logger.error({ err }, "Backend handler error");
     return res.status(503).json({
       success: false,
-      message: "Service temporarily unavailable, please retry",
-      error: { code: "DATABASE_UNAVAILABLE" },
+      message: err.message || "Service temporarily unavailable",
+      error: { code: "SERVICE_UNAVAILABLE" },
     });
   }
-  return app(req, res);
 }

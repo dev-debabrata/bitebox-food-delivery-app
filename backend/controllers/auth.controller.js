@@ -7,7 +7,7 @@ const cookieOptions = () => ({
   secure: env.isProduction,
   // The web app reaches the API through a same-origin /api proxy, so the cookie is first-party.
   // Set COOKIE_SAMESITE=none only if the browser calls the API on a different site.
-  sameSite: process.env.COOKIE_SAMESITE || "strict",
+  sameSite: process.env.COOKIE_SAMESITE || (process.env.VERCEL ? "none" : "lax"),
   path: "/api/v1/auth",
   maxAge: env.refreshToken.ttlDays * 86_400_000,
 });

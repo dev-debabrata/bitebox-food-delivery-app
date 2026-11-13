@@ -1,10 +1,6 @@
 export const environment = {
   production: true,
   baseUrl: 'https://bitebox-backend-opal.vercel.app/api/v1',
-  // For cloud deployments (e.g. Render / Railway / Vercel):
-  // baseUrl: 'https://bitebox-backend-opal.vercel.app/api/v1',
-  // For same-origin deployment behind an nginx reverse proxy:
-  // baseUrl: '/api/v1',
 
   map: {
     tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
