@@ -28,7 +28,13 @@
   .header-content {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .header-titles {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
   }
 
@@ -38,17 +44,25 @@
     flex-shrink: 0;
   }
 
-  .dialog-title {
-    margin: 0;
+  .dialog-title,
+  h2.mat-mdc-dialog-title,
+  .mat-mdc-dialog-title {
+    margin: 0 !important;
+    padding: 0 !important;
     font-size: 1.25rem;
     font-weight: 800;
     line-height: 1.25;
     color: var(--bb-ink);
     letter-spacing: -0.01em;
+
+    &::before {
+      display: none !important;
+      content: none !important;
+    }
   }
 
   .dialog-subtitle {
-    margin: 3px 0 0;
+    margin: 2px 0 0;
     font-size: 0.85rem;
     color: var(--bb-ink-muted);
     line-height: 1.35;
@@ -163,15 +177,16 @@
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 6px 10px;
+    padding: 7px 10px;
     border: none;
     border-radius: 6px;
     background: transparent;
     color: var(--bb-ink-muted);
     font: inherit;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
+    white-space: nowrap;
     transition: all 150ms ease;
 
     &:hover {
@@ -182,6 +197,13 @@
       background: var(--bb-surface);
       color: var(--bb-ink);
       box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+    }
+
+    np-icon {
+      --bb-icon-size: 16px;
+      width: 16px !important;
+      height: 16px !important;
+      flex-shrink: 0;
     }
   }
 }
@@ -250,19 +272,26 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 7px;
+  gap: 5px;
+  padding: 2px 8px;
   border-radius: 4px;
   background: var(--bb-surface-alt);
   border: 1px solid var(--bb-border);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--bb-ink);
   vertical-align: middle;
   line-height: 1.2;
+  --bb-icon-size: 16px;
 
   np-icon {
-    font-size: 0.85rem;
+    --bb-icon-size: 16px;
+    width: 16px !important;
+    height: 16px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
 }
 

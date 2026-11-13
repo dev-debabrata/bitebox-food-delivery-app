@@ -2,7 +2,7 @@
   <div class="dialog-header">
     <div class="header-content">
       <img src="/icon-192.png" alt="" class="app-icon" width="44" height="44" />
-      <div>
+      <div class="header-titles">
         <h2 mat-dialog-title class="dialog-title">Install BiteBox</h2>
         <p class="dialog-subtitle">Fast ordering and live tracking on your home screen or desktop.</p>
       </div>
@@ -65,7 +65,7 @@
               [attr.aria-selected]="desktopBrowser() === 'chromium'"
               (click)="setDesktopBrowser('chromium')"
             >
-              <np-icon name="globe" class="mat-icon" /> Google Chrome / Edge / Brave
+              <np-icon name="globe" class="mat-icon" /> Chrome / Edge / Brave
             </button>
             <button
               type="button"
@@ -95,7 +95,7 @@
                   <div class="step-body">
                     <div class="step-title">Find the install icon</div>
                     <div class="step-desc">
-                      Look at the right side of the address bar (URL bar) in your browser.
+                      Look at the right side of the address bar (URL bar) in Google Chrome, Edge, or Brave.
                     </div>
                   </div>
                 </li>
@@ -104,7 +104,7 @@
                   <div class="step-body">
                     <div class="step-title">Click Install BiteBox</div>
                     <div class="step-desc">
-                      Click the <span class="badge"><np-icon name="download" class="mat-icon" /> Install BiteBox</span> or <span class="badge"><np-icon name="laptop" class="mat-icon" /> App available</span> icon.
+                      Click the <span class="badge"><np-icon name="download" class="mat-icon" /> Install BiteBox</span> or <span class="badge"><np-icon name="app-window" class="mat-icon" /> App available</span> icon.
                     </div>
                   </div>
                 </li>
