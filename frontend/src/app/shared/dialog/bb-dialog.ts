@@ -6,8 +6,7 @@ import { Observable, filter } from 'rxjs';
 /**
  * Dialogs without Angular Material: the CDK dialog (overlay, focus trap, Escape, backdrop,
  * focus restore) with BiteBox styling (`.bb-dialog-*` in styles.scss). NexPrime 0.1.5 has
- * no programmatic dialog opener, so this replaces `MatDialog` (see
- * docs/django-migration/05-frontend-plan.md §5.4).
+ * no programmatic dialog opener, so this replaces `MatDialog`.
  *
  * In a dialog component:
  * - `inject(BB_DIALOG_DATA)` for the data and `inject(BbDialogRef)` to close it;

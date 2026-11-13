@@ -113,7 +113,7 @@ export class PaymentService {
     return this.razorpay;
   }
 
-  /** Django API: the customer's payment history, with refunds. */
+  /** The customer's payment history, with refunds. */
   history(page = 1, limit = 10): Observable<Paginated<PaymentHistoryItem>> {
     return this.http
       .get<ApiResponse<Paginated<PaymentHistoryItem>>>(`${this.url}/mine`, {

@@ -66,7 +66,7 @@ export class RiderService {
     return this.http.get<ApiResponse<RiderDashboard>>(`${this.url}/me`).pipe(map((r) => r.data));
   }
 
-  /** Today, this week and all-time figures (Django API only: the Node API answers 404). */
+  /** Today, this week and all-time figures. */
   stats(): Observable<RiderStats> {
     return this.http.get<ApiResponse<RiderStats>>(`${this.url}/stats`).pipe(map((r) => r.data));
   }
@@ -177,9 +177,9 @@ export class AdminOrdersService {
 
   cancel = (id: string, reason: string) => this.act(id, 'cancel', { reason });
   unassign = (id: string, reason?: string) => this.act(id, 'unassign', { reason });
-  /** Manual assignment of a free, online rider (Django API). */
+  /** Manual assignment of a free, online rider. */
   assign = (id: string, riderId: string) => this.act(id, 'assign', { riderId });
-  /** A new delivery code, sent to the customer (Django API). */
+  /** A new delivery code, sent to the customer. */
   resetDeliveryCode = (id: string) => this.act(id, 'delivery-code', {});
 
   private act(id: string, action: string, body: object): Observable<AdminOrder> {

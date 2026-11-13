@@ -36,7 +36,7 @@ export class RestaurantDashboard {
   protected readonly toggling = signal(false);
   protected readonly orderStats = signal<RestaurantStats | null>(null);
   protected readonly statsError = signal<string | null>(null);
-  /** The API has no /my/restaurant/stats (the Node API; Django has it): hide the figures. */
+  /** When the API has no /my/restaurant/stats: hide the figures. */
   protected readonly statsUnavailable = signal(false);
 
   constructor() {

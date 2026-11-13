@@ -122,7 +122,7 @@ export class DeliveryDashboard {
   protected readonly availabilityError = signal<string | null>(null);
   protected readonly now = signal(Date.now());
   protected readonly stats = signal<RiderStats | null>(null);
-  /** The API has no /delivery/stats (the Node API; Django has it): hide the figures. */
+  /** When the API has no /delivery/stats: hide the figures. */
   protected readonly statsUnavailable = signal(false);
 
   protected readonly profile = computed(() => this.data()?.profile ?? null);

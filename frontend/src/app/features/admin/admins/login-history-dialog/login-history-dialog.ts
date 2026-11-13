@@ -64,7 +64,7 @@ export class LoginHistoryDialog {
       error: (err: unknown) => {
         this.error.set(
           err instanceof HttpErrorResponse && err.status === 404
-            ? 'Sign-in history is available once the app runs on the new (Django) API.'
+            ? 'Sign-in history is currently unavailable.'
             : errorMessage(err, 'Could not load the sign-in history.'),
         );
         this.loading.set(false);

@@ -19,7 +19,7 @@ export interface PaymentInfo {
   paidAt: string | null;
   refundedAt: string | null;
   failureReason: string | null;
-  /** Django API only: refunded so far (or under way), and the refunds themselves. */
+  /** Refunded so far (or under way), and the refunds themselves. */
   refundedPaise?: number;
   refunds?: RefundInfo[];
 }
@@ -145,11 +145,11 @@ export interface AdminPayment extends PaymentInfo {
   order: { id: string; orderNumber: string; status: OrderStatus } | null;
   customer: { id: string; name: string; email: string } | null;
   refundNeeded: boolean;
-  /** Django API only: what can still be refunded (absent on the Node API). */
+  /** What can still be refunded. */
   refundablePaise?: number;
 }
 
-/** `GET /admin/payments/:id` (Django API): the payment, its refunds and gateway events. */
+/** `GET /admin/payments/:id`: the payment, its refunds and gateway events. */
 export interface AdminPaymentDetail extends AdminPayment {
   refunds: RefundInfo[];
   events: { type: string; eventId: string; createdAt: string }[];

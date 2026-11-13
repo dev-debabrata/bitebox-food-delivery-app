@@ -496,7 +496,7 @@ np-icon[matChipAvatar] {
   border: 0;
 }
 
-// NexPrime-look buttons for what np-button can't be (docs/django-migration/08 §8.3): form submit
+// NexPrime-look buttons for what np-button can't be: form submit
 // buttons (<button type="submit">) and links styled as buttons (<a routerLink>). Same tokens and
 // sizes as np-button (medium), so both sit side by side. Variants: solid (default, brand
 // gradient), --outlined, --text, --soft, --accent (amber), --danger; --small; --icon (icon only).

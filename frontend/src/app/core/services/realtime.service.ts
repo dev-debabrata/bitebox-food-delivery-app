@@ -6,7 +6,7 @@ import { AuthService } from '../auth/auth.service';
 import { OrderStatus } from '../../shared/models/checkout.models';
 import { AppNotification } from '../../shared/models/payment.models';
 import {
-  DjangoSocketTransport,
+  NoopRealtimeTransport,
   RealtimeTransport,
   SocketIoTransport,
 } from './realtime-transport';
@@ -38,13 +38,8 @@ export interface LocationAck {
     | 'NOT_CONNECTED';
 }
 
-/** The socket URL for the configured backend (the API's origin; Django serves it at /ws/). */
+/** The socket URL for the configured backend (the API's origin). */
 export function realtimeUrl(): string {
-  const env = environment as { baseUrl: string; realtime?: string; djangoUrl?: string };
-  if (env.realtime === 'django' && env.djangoUrl) {
-    const api = new URL(env.djangoUrl, window.location.origin);
-    return `${api.protocol === 'https:' ? 'wss:' : 'ws:'}//${api.host}/ws/`;
-  }
   return new URL(environment.baseUrl, window.location.origin).origin;
 }
 
@@ -71,11 +66,11 @@ export class RealtimeService {
 
   /** Swappable in tests. */
   protected createTransport(): RealtimeTransport {
-    const token = () => this.auth.accessToken;
-    const env = environment as { realtime?: string };
-    return env.realtime === 'django'
-      ? new DjangoSocketTransport(realtimeUrl(), token)
-      : new SocketIoTransport(realtimeUrl(), token);
+    const env = environment as { realtime?: boolean | string };
+    if (env.realtime === false || env.realtime === 'none') {
+      return new NoopRealtimeTransport();
+    }
+    return new SocketIoTransport(realtimeUrl(), () => this.auth.accessToken);
   }
 
   private connect(): void {

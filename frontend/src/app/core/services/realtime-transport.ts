@@ -1,9 +1,9 @@
 import { Socket, io } from 'socket.io-client';
 
 /**
- * The live connection behind RealtimeService. Two implementations with one contract:
- * - `SocketIoTransport`: the Node API's Socket.IO server (until the switch-over).
- * - `DjangoSocketTransport`: the Django API's plain WebSocket at `/ws/` (Channels).
+ * The live connection behind RealtimeService:
+ * - `SocketIoTransport`: the Node API's Socket.IO server.
+ * - `NoopRealtimeTransport`: harmless no-op transport when realtime is disabled.
  *
  * Lifecycle events are delivered like server events: `connect` (signed in and ready),
  * `disconnect`, and `unauthorized` (the server refused the token: refresh it and `reconnect()`).
@@ -40,6 +40,18 @@ class Emitter {
   }
 }
 
+export class NoopRealtimeTransport implements RealtimeTransport {
+  readonly isConnected = false;
+  on(_event: string, _handler: (data: any) => void): void {}
+  off(_event: string, _handler: (data: any) => void): void {}
+  request<T>(_type: string, _data: unknown, _timeoutMs = 5000): Promise<T> {
+    return Promise.reject(new Error('Realtime transport is disabled'));
+  }
+  send(_type: string, _data: unknown): void {}
+  reconnect(): void {}
+  close(): void {}
+}
+
 /** Server events forwarded from Socket.IO. */
 const SERVER_EVENTS = ['order:updated', 'order:location', 'notification:new'];
 
@@ -52,6 +64,7 @@ export class SocketIoTransport implements RealtimeTransport {
       path: '/socket.io',
       auth: (cb) => cb({ token: token() }),
       transports: ['websocket', 'polling'],
+      reconnectionAttempts: 3,
     });
     this.socket.on('connect', () => this.events.fire('connect'));
     for (const event of SERVER_EVENTS)
@@ -60,9 +73,11 @@ export class SocketIoTransport implements RealtimeTransport {
       this.events.fire('disconnect');
       if (reason === 'io server disconnect') this.events.fire('unauthorized');
     });
-    this.socket.on('connect_error', () => {
+    this.socket.on('connect_error', (err) => {
       this.events.fire('disconnect');
-      if (!this.socket.active) this.events.fire('unauthorized');
+      if (err?.message && /unauthorized|jwt|token|forbidden/i.test(err.message)) {
+        this.events.fire('unauthorized');
+      }
     });
   }
 
@@ -92,170 +107,5 @@ export class SocketIoTransport implements RealtimeTransport {
 
   close(): void {
     this.socket.disconnect();
-  }
-}
-
-/** Close code the Django server uses for a missing, invalid or expired token. */
-export const CLOSE_UNAUTHORIZED = 4401;
-const HEARTBEAT_MS = 25_000;
-const MAX_BACKOFF_MS = 30_000;
-
-interface Pending {
-  resolve: (value: any) => void;
-  reject: (reason: Error) => void;
-  timer: ReturnType<typeof setTimeout>;
-}
-
-/**
- * Django Channels socket. Protocol (backend-django/apps/realtime/consumers.py):
- * `{type: 'auth', token}` first, then `{type: 'ready'}`; requests carry an `id` and are answered
- * by `{type: 'ack', id, data}`; server events are `{type: <event>, data}`.
- * Network drops reconnect with backoff; a 4401 close asks for a fresh token instead.
- */
-export class DjangoSocketTransport implements RealtimeTransport {
-  private readonly events = new Emitter();
-  private readonly pending = new Map<number, Pending>();
-  private ws: WebSocket | null = null;
-  private ready = false;
-  private closed = false;
-  private nextId = 1;
-  private attempts = 0;
-  private heartbeat: ReturnType<typeof setInterval> | null = null;
-  private retryTimer: ReturnType<typeof setTimeout> | null = null;
-
-  constructor(
-    private readonly url: string,
-    private readonly token: () => string | null,
-    private readonly createSocket: (url: string) => WebSocket = (u) => new WebSocket(u),
-  ) {
-    this.open();
-  }
-
-  get isConnected(): boolean {
-    return this.ready;
-  }
-
-  on(event: string, handler: Handler): void {
-    this.events.on(event, handler);
-  }
-
-  off(event: string, handler: Handler): void {
-    this.events.off(event, handler);
-  }
-
-  request<T>(type: string, data: unknown, timeoutMs: number): Promise<T> {
-    const ws = this.ws;
-    if (!this.ready || !ws) return Promise.reject(new Error('Not connected'));
-    const id = this.nextId++;
-    return new Promise<T>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        this.pending.delete(id);
-        reject(new Error('Timed out'));
-      }, timeoutMs);
-      this.pending.set(id, { resolve, reject, timer });
-      ws.send(JSON.stringify({ type, id, data }));
-    });
-  }
-
-  send(type: string, data: unknown): void {
-    if (this.ready) this.ws?.send(JSON.stringify({ type, data }));
-  }
-
-  reconnect(): void {
-    this.closed = false;
-    this.clearRetry();
-    this.drop();
-    this.open();
-  }
-
-  close(): void {
-    this.closed = true;
-    this.clearRetry();
-    this.drop();
-  }
-
-  private open(): void {
-    const ws = this.createSocket(this.url);
-    this.ws = ws;
-    ws.onopen = () => ws.send(JSON.stringify({ type: 'auth', token: this.token() }));
-    ws.onmessage = (message) => this.receive(message.data);
-    ws.onclose = (event) => {
-      if (this.ws !== ws) return; // an old socket we replaced
-      this.ws = null;
-      this.lost();
-      if (this.closed) return;
-      if (event.code === CLOSE_UNAUTHORIZED) this.events.fire('unauthorized');
-      else this.scheduleRetry();
-    };
-  }
-
-  private receive(raw: unknown): void {
-    let frame: { type?: string; id?: number; data?: unknown };
-    try {
-      frame = JSON.parse(String(raw));
-    } catch {
-      return;
-    }
-    switch (frame.type) {
-      case 'ready':
-        this.ready = true;
-        this.attempts = 0;
-        this.heartbeat = setInterval(() => this.ws?.send('{"type":"ping"}'), HEARTBEAT_MS);
-        this.events.fire('connect');
-        return;
-      case 'ack': {
-        const pending = frame.id === undefined ? undefined : this.pending.get(frame.id);
-        if (!pending) return;
-        clearTimeout(pending.timer);
-        this.pending.delete(frame.id!);
-        pending.resolve(frame.data);
-        return;
-      }
-      case 'pong':
-      case 'error':
-        return;
-      default:
-        if (frame.type) this.events.fire(frame.type, frame.data);
-    }
-  }
-
-  /** Detach and close the current socket without triggering a reconnect. */
-  private drop(): void {
-    const ws = this.ws;
-    this.ws = null;
-    if (ws) {
-      ws.onclose = null;
-      ws.onmessage = null;
-      ws.onopen = null;
-      ws.close(1000);
-    }
-    this.lost();
-  }
-
-  private lost(): void {
-    if (this.heartbeat) clearInterval(this.heartbeat);
-    this.heartbeat = null;
-    for (const [id, pending] of this.pending) {
-      clearTimeout(pending.timer);
-      pending.reject(new Error('Disconnected'));
-      this.pending.delete(id);
-    }
-    if (this.ready) {
-      this.ready = false;
-      this.events.fire('disconnect');
-    }
-  }
-
-  private scheduleRetry(): void {
-    const delay = Math.min(MAX_BACKOFF_MS, 1000 * 2 ** this.attempts++);
-    this.retryTimer = setTimeout(() => {
-      this.retryTimer = null;
-      if (!this.closed) this.open();
-    }, delay);
-  }
-
-  private clearRetry(): void {
-    if (this.retryTimer) clearTimeout(this.retryTimer);
-    this.retryTimer = null;
   }
 }

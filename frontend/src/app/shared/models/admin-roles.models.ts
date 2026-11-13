@@ -419,7 +419,7 @@ export const STAFF_ROLE_SUMMARY: Record<StaffAdminRole, string> = {
     'Support tickets from customers, restaurants and riders, review moderation, and read-only order details.',
 };
 
-/** GET /admin/dashboard (Django API only). Money only for roles with finance:view. */
+/** GET /admin/dashboard. Money only for roles with finance:view. */
 export interface PlatformSummary {
   customers: number;
   restaurants: number;
@@ -435,7 +435,7 @@ export interface PlatformSummary {
   };
 }
 
-/** One sign-in (a session family) from GET /admin/admins/{id}/logins (Django API only). */
+/** One sign-in (a session family) from GET /admin/admins/{id}/logins. */
 export interface LoginEntry {
   signedInAt: string;
   lastActiveAt: string;

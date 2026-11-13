@@ -14,7 +14,7 @@ import {
 } from '../../../shared/models/payment.models';
 import { InrPipe } from '../../../shared/pipes/money.pipes';
 
-/** The customer's payments and refunds (`GET /payments/mine`, Django API). */
+/** The customer's payments and refunds (`GET /payments/mine`). */
 @Component({
   selector: 'bb-payment-history',
   imports: [

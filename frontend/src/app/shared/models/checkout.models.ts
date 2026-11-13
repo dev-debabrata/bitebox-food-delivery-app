@@ -171,10 +171,10 @@ export interface Order {
   paymentStatus: PaymentStatus;
   /** When the restaurant received it (online orders: once paid). */
   submittedAt?: string | null;
-  /** Set when the restaurant accepts (Django API): preparation minutes and expected ready time. */
+  /** Set when the restaurant accepts: preparation minutes and expected ready time. */
   prepMinutes?: number | null;
   readyBy?: string | null;
-  /** The delivery code the customer gives the rider (Django API; picked up or on the way only). */
+  /** The delivery code the customer gives the rider (picked up or on the way only). */
   deliveryOtp?: string | null;
   /** Payment record state (customer and admin views). */
   payment?: PaymentInfo | null;

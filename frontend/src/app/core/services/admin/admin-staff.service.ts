@@ -38,7 +38,7 @@ export class AdminStaffService {
       .pipe(map((r) => r.data.user));
   }
 
-  /** Sign-ins of a staff admin, newest first (Django API only: the Node API answers 404). */
+  /** Sign-ins of a staff admin, newest first. */
   logins(id: string, page = 1, limit = 20): Observable<Paginated<LoginEntry>> {
     return this.http
       .get<ApiResponse<Paginated<LoginEntry>>>(`${this.url}/${encodeURIComponent(id)}/logins`, {
@@ -47,7 +47,7 @@ export class AdminStaffService {
       .pipe(map((r) => r.data));
   }
 
-  /** The admin home page's platform figures (Django API only: the Node API answers 404). */
+  /** The admin home page's platform figures. */
   summary(): Observable<PlatformSummary> {
     return this.http
       .get<ApiResponse<PlatformSummary>>(`${environment.baseUrl}/admin/dashboard`)

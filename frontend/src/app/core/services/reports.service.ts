@@ -65,14 +65,14 @@ export class ReportsService {
       .pipe(map((r) => r.data.payment));
   }
 
-  /** Django API: one payment with its refunds. */
+  /** One payment with its refunds. */
   payment(id: string): Observable<AdminPaymentDetail> {
     return this.http
       .get<ApiResponse<{ payment: AdminPaymentDetail }>>(`${this.paymentUrl(id)}`)
       .pipe(map((r) => r.data.payment));
   }
 
-  /** Django API: a full or partial refund. `key` makes a retried request safe. */
+  /** A full or partial refund. `key` makes a retried request safe. */
   refund(id: string, body: { amountPaise: number; reason: string }, key: string) {
     return this.http
       .post<ApiResponse<{ payment: AdminPaymentDetail }>>(`${this.paymentUrl(id)}/refunds`, body, {
@@ -81,7 +81,7 @@ export class ReportsService {
       .pipe(map((r) => r.data.payment));
   }
 
-  /** Django API: a cash refund was paid back by hand. */
+  /** A cash refund was paid back by hand. */
   markRefundPaid(refundId: string): Observable<AdminPaymentDetail> {
     return this.http
       .post<ApiResponse<{ payment: AdminPaymentDetail }>>(

@@ -95,17 +95,17 @@ export interface RiderOrder extends Omit<Order, 'deliveryAddress' | 'rider' | 'c
   };
   offerExpiresAt: string | null;
   offerWindowSeconds: number;
-  /** What the delivery pays the rider (Django API; absent from the Node API). */
+  /** What the delivery pays the rider. */
   estimatedEarningsPaise?: number;
-  /** Straight-line metres from the rider's last GPS fix to the restaurant (offers only; Django). */
+  /** Straight-line metres from the rider's last GPS fix to the restaurant (offers only). */
   pickupDistanceMeters?: number | null;
-  /** The rider's allowed next moves, main one first (Django API; absent from the Node API). */
+  /** The rider's allowed next moves, main one first. */
   nextStatuses?: RiderAction[];
-  /** "Delivered" needs the customer's 4-digit code (Django API). */
+  /** "Delivered" needs the customer's 4-digit code. */
   deliveryOtpRequired?: boolean;
 }
 
-/** GET /delivery/stats (Django API only). Money in paise. */
+/** GET /delivery/stats. Money in paise. */
 export interface RiderStats {
   today: { deliveries: number; earningsPaise: number };
   week: { deliveries: number; earningsPaise: number };
@@ -130,9 +130,9 @@ export interface AdminOrderList {
 
 export interface AdminOrder extends Order {
   offer: { rider: RiderCard | null; expiresAt: string } | null;
-  /** Django API: a rider can be assigned by hand (the order waits for one). */
+  /** Whether a rider can be assigned by hand (the order waits for one). */
   canAssign?: boolean;
-  /** Django API: the customer holds a delivery code; wrong tries so far. */
+  /** Whether the customer holds a delivery code; wrong tries so far. */
   deliveryOtpPending?: boolean;
   deliveryOtpAttempts?: number;
   /** Straight-line metres from the restaurant when the rider marked "arrived"; flagged if far. */
