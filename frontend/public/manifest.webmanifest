@@ -1,6 +1,6 @@
 {
   "id": "/",
-  "name": "BiteBox",
+  "name": "BiteBox - Food Delivery",
   "short_name": "BiteBox",
   "description": "Order food from your favourite local restaurants and track your delivery live.",
   "lang": "en",
@@ -8,7 +8,7 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
   "orientation": "any",
   "theme_color": "#ffffff",
   "background_color": "#2e1a3d",
@@ -20,6 +20,15 @@
     { "src": "/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
     { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "/bitebox-favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.png",
+      "sizes": "1280x900",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "BiteBox Restaurants on Desktop and Tablet"
+    }
   ],
   "shortcuts": [
     {

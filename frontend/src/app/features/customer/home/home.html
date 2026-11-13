@@ -7,10 +7,15 @@
       </span>
       <h1>Your favourite food, <span class="highlight">boxed</span> and on its way.</h1>
       <p class="lead">
-        BiteBox connects you with the best local restaurants and riders nearby. Order in a few taps and
-        follow your delivery live on the map.
+        BiteBox connects you with the best local restaurants and riders nearby. Order in a few taps
+        and follow your delivery live on the map.
       </p>
-      <form class="hero-search" role="search" [formRoot]="searchForm" (submit)="focusIfEmpty($event)">
+      <form
+        class="hero-search"
+        role="search"
+        [formRoot]="searchForm"
+        (submit)="focusIfEmpty($event)"
+      >
         <np-text-input
           [formField]="searchForm.search"
           ariaLabel="Search restaurants, cuisines or dishes"
@@ -67,10 +72,16 @@
         </div>
       </div>
       @for (icon of heroIcons; track icon; let i = $index) {
-        <span class="float float-{{ i }}"><np-icon [name]="(icon) | npIcon" class="mat-icon" matButtonIcon /></span>
+        <span class="float float-{{ i }}"
+          ><np-icon [name]="icon | npIcon" class="mat-icon" matButtonIcon
+        /></span>
       }
-      <span class="badge badge-track"><np-icon name="bike" class="mat-icon" matButtonIcon />Live tracking</span>
-      <span class="badge badge-coins"><np-icon name="coins" class="mat-icon" matButtonIcon />Earn coins</span>
+      <span class="badge badge-track"
+        ><np-icon name="bike" class="mat-icon" matButtonIcon />Live tracking</span
+      >
+      <span class="badge badge-coins"
+        ><np-icon name="coins" class="mat-icon" matButtonIcon />Earn coins</span
+      >
     </div>
   </div>
   <svg class="hero-wave" viewBox="0 0 1440 60" preserveAspectRatio="none" aria-hidden="true">
@@ -94,7 +105,12 @@
         (click)="showAllCategories.set(!showAllCategories())"
       >
         {{ showAllCategories() ? 'Show less' : 'View all' }}
-        <np-icon [name]="showAllCategories() ? 'chevron-up' : 'arrow-right'" class="mat-icon" iconPositionEnd matButtonIcon />
+        <np-icon
+          [name]="showAllCategories() ? 'chevron-up' : 'arrow-right'"
+          class="mat-icon"
+          iconPositionEnd
+          matButtonIcon
+        />
       </button>
     }
   </div>
@@ -111,9 +127,16 @@
           <a [routerLink]="['/restaurants']" [queryParams]="{ category: c.id }">
             <span class="craving-tile">
               @if (c.imageUrl) {
-                <img [src]="c.imageUrl" alt="" loading="lazy" decoding="async" width="112" height="112" />
+                <img
+                  [src]="c.imageUrl"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  width="112"
+                  height="112"
+                />
               } @else {
-                <np-icon [name]="(c.icon) | npIcon: 'utensils'" class="mat-icon" matButtonIcon />
+                <np-icon [name]="c.icon | npIcon: 'utensils'" class="mat-icon" matButtonIcon />
               }
             </span>
             <span class="craving-name">{{ c.name }}</span>
@@ -136,7 +159,11 @@
       </h2>
       <button type="button" class="bb-link-button location-link" (click)="chooseLocation()">
         <np-icon name="map-pin" class="mat-icon" matButtonIcon />
-        {{ deliveryLocation() ? 'Change location' : 'Set your location to see restaurants that deliver to you' }}
+        {{
+          deliveryLocation()
+            ? 'Change location'
+            : 'Set your location to see restaurants that deliver to you'
+        }}
       </button>
     </div>
     <a mat-stroked-button routerLink="/restaurants" class="see-all">
@@ -156,16 +183,23 @@
       }
     </div>
   } @else if (loaded() === false) {
-    <p class="bb-muted">Restaurants could not be loaded right now. <a routerLink="/restaurants">Try the restaurants page</a>.</p>
+    <p class="bb-muted">
+      Restaurants could not be loaded right now.
+      <a routerLink="/restaurants">Try the restaurants page</a>.
+    </p>
   } @else if (deliveryLocation(); as loc) {
     <div class="no-nearby bb-card">
       <np-icon name="map-pin-x" class="mat-icon" matButtonIcon />
       <div>
         <h3>No restaurants deliver to {{ loc.label }} yet</h3>
-        <p class="bb-muted">We're growing fast. Try another location, or browse every restaurant on BiteBox.</p>
+        <p class="bb-muted">
+          We're growing fast. Try another location, or browse every restaurant on BiteBox.
+        </p>
         <div class="actions">
           <button mat-flat-button type="button" (click)="chooseLocation()">Change location</button>
-          <a mat-button routerLink="/restaurants" [queryParams]="{ all: 'true' }">Browse all restaurants</a>
+          <a mat-button routerLink="/restaurants" [queryParams]="{ all: 'true' }"
+            >Browse all restaurants</a
+          >
         </div>
       </div>
     </div>
@@ -178,9 +212,14 @@
 <section class="bb-container section" aria-labelledby="rewards-title">
   <div class="rewards-banner">
     <div class="rewards-copy">
-      <span class="eyebrow dark"><np-icon name="gift" class="mat-icon" matButtonIcon />BiteBox rewards</span>
+      <span class="eyebrow dark"
+        ><np-icon name="gift" class="mat-icon" matButtonIcon />BiteBox rewards</span
+      >
       <h2 id="rewards-title">Every order earns you coins</h2>
-      <p>Collect coins on delivered orders and reviews, spend them at checkout, and earn more when friends join with your code.</p>
+      <p>
+        Collect coins on delivered orders and reviews, spend them at checkout, and earn more when
+        friends join with your code.
+      </p>
       <div class="actions spaced">
         @if (user()) {
           <a mat-flat-button routerLink="/account/coins">View my coins</a>
@@ -199,6 +238,57 @@
   </div>
 </section>
 
+<!-- App Download / Install Section -->
+<section class="bb-container section" aria-labelledby="app-download-title">
+  <div class="app-download-banner">
+    <div class="app-download-copy">
+      <span class="eyebrow dark">
+        <np-icon name="smartphone" class="mat-icon" matButtonIcon />
+        BiteBox on your device
+      </span>
+      <h2 id="app-download-title">Get the BiteBox app</h2>
+      <p>
+        Enjoy faster ordering, live GPS delivery tracking, and instant alerts. Install directly on
+        your desktop, mobile, or tablet — quick, free, and no app store needed.
+      </p>
+
+      <div class="app-features">
+        <span class="feature-pill"><np-icon name="zap" class="mat-icon" /> Fast ordering</span>
+        <span class="feature-pill"
+          ><np-icon name="map-pin" class="mat-icon" /> Live GPS tracking</span
+        >
+        <span class="feature-pill"><np-icon name="bell" class="mat-icon" /> Order alerts</span>
+      </div>
+
+      <div class="actions spaced">
+        <button mat-flat-button class="bb-btn-accent" type="button" (click)="installer.install()">
+          <np-icon name="download" class="mat-icon" matButtonIcon />
+          Install BiteBox
+        </button>
+        <button mat-button type="button" class="light" (click)="installer.showInstructions()">
+          <np-icon name="info" class="mat-icon" matButtonIcon />
+          How to install
+        </button>
+      </div>
+    </div>
+
+    <div class="app-download-art" aria-hidden="true">
+      <div class="art-card">
+        <img src="/icon-192.png" alt="" width="72" height="72" class="app-badge-img" />
+        <div class="art-info">
+          <strong>BiteBox App</strong>
+          <span>Free • All browsers</span>
+        </div>
+        <div class="devices-row">
+          <np-icon name="smartphone" title="Mobile" />
+          <np-icon name="tablet" title="Tablet" />
+          <np-icon name="monitor" title="Desktop" />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="bb-container section" aria-labelledby="how-title">
   <np-animate-on-scroll animation="fade-up" [stagger]="90">
     <div class="section-head">
@@ -211,7 +301,7 @@
       @for (step of steps; track step.icon; let i = $index) {
         <li>
           <span class="step-icon">
-            <np-icon [name]="(step.icon) | npIcon" class="mat-icon" matButtonIcon />
+            <np-icon [name]="step.icon | npIcon" class="mat-icon" matButtonIcon />
             <span class="step-num">{{ i + 1 }}</span>
           </span>
           <h3>{{ step.title }}</h3>
@@ -238,7 +328,9 @@
           <h3>Add your restaurant</h3>
           <p>Reach more hungry customers, manage your menu and orders from one simple dashboard.</p>
           <div class="actions spaced">
-            <a mat-flat-button routerLink="/restaurant/register" class="bb-btn-accent">Register restaurant</a>
+            <a mat-flat-button routerLink="/restaurant/register" class="bb-btn-accent"
+              >Register restaurant</a
+            >
             <a mat-button routerLink="/login" class="light">Partner sign in</a>
           </div>
         </article>

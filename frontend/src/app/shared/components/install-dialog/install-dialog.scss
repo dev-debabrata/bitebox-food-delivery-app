@@ -1,0 +1,332 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: inherit;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.install-dialog {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: inherit;
+  overflow: hidden;
+  color: var(--bb-ink);
+  background: var(--bb-surface);
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bb-space-3);
+  padding: 20px 24px 12px;
+  flex-shrink: 0;
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  .app-icon {
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+    flex-shrink: 0;
+  }
+
+  .dialog-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1.25;
+    color: var(--bb-ink);
+    letter-spacing: -0.01em;
+  }
+
+  .dialog-subtitle {
+    margin: 3px 0 0;
+    font-size: 0.85rem;
+    color: var(--bb-ink-muted);
+    line-height: 1.35;
+  }
+
+  .close-button {
+    color: var(--bb-ink-muted);
+    flex-shrink: 0;
+    margin: -4px -8px 0 0;
+    transition: color 150ms ease, background-color 150ms ease;
+
+    &:hover {
+      color: var(--bb-ink);
+      background-color: var(--bb-surface-alt);
+    }
+  }
+}
+
+.device-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 24px 12px;
+  padding: 4px 12px;
+  background: color-mix(in srgb, var(--bb-brand) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--bb-brand) 16%, transparent);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: var(--bb-ink);
+  align-self: flex-start;
+  flex-shrink: 0;
+
+  np-icon {
+    color: var(--bb-accent, #e23744);
+    font-size: 0.95rem;
+  }
+
+  strong {
+    font-weight: 700;
+  }
+}
+
+.tab-pills {
+  display: flex;
+  gap: 8px;
+  padding: 0 24px 12px;
+  border-bottom: 1px solid var(--bb-border);
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid transparent;
+    border-radius: var(--bb-radius, 8px);
+    background: var(--bb-surface-alt);
+    color: var(--bb-ink-muted);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 150ms ease;
+
+    &:hover {
+      background: color-mix(in srgb, var(--bb-ink) 8%, var(--bb-surface-alt));
+      color: var(--bb-ink);
+    }
+
+    &.active {
+      background: var(--bb-brand, #2e1a3d);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgb(0 0 0 / 15%);
+    }
+  }
+}
+
+.instructions-content {
+  padding: 16px 24px !important;
+  margin: 0 !important;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bb-border) transparent;
+}
+
+.tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-3);
+}
+
+.browser-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--bb-radius, 8px);
+  background: var(--bb-surface-alt);
+  border: 1px solid var(--bb-border);
+
+  .browser-tab-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--bb-ink-muted);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 150ms ease;
+
+    &:hover {
+      color: var(--bb-ink);
+    }
+
+    &.active {
+      background: var(--bb-surface);
+      color: var(--bb-ink);
+      box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+    }
+  }
+}
+
+.tab-intro {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--bb-ink-muted);
+  line-height: 1.4;
+}
+
+.step-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  .step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    .step-num {
+      display: inline-grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--bb-brand, #2e1a3d);
+      color: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .step-body {
+      flex: 1;
+      min-width: 0;
+
+      .step-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--bb-ink);
+        line-height: 1.35;
+      }
+
+      .step-desc {
+        margin-top: 2px;
+        font-size: 0.84rem;
+        color: var(--bb-ink-muted);
+        line-height: 1.45;
+
+        strong {
+          display: inline;
+          font-weight: 700;
+          color: var(--bb-ink);
+        }
+      }
+    }
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--bb-surface-alt);
+  border: 1px solid var(--bb-border);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--bb-ink);
+  vertical-align: middle;
+  line-height: 1.2;
+
+  np-icon {
+    font-size: 0.85rem;
+  }
+}
+
+kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 0.76rem;
+  font-family: inherit;
+  font-weight: 600;
+  color: var(--bb-ink);
+  background: var(--bb-surface-alt);
+  border: 1px solid var(--bb-border);
+  border-radius: 4px;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 10%);
+}
+
+.tip-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bb-surface-alt);
+  border-radius: var(--bb-radius, 8px);
+  border-left: 3px solid var(--bb-amber, #f5a623);
+  font-size: 0.82rem;
+  color: var(--bb-ink-muted);
+  line-height: 1.4;
+
+  np-icon {
+    color: var(--bb-amber, #f5a623);
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  strong {
+    font-weight: 700;
+    color: var(--bb-ink);
+  }
+}
+
+.dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 24px 16px !important;
+  border-top: 1px solid var(--bb-border);
+  margin: 0 !important;
+  flex-shrink: 0;
+  background: var(--bb-surface);
+
+  .close-ghost-btn {
+    color: var(--bb-ink-muted);
+
+    &:hover {
+      color: var(--bb-ink);
+      background: var(--bb-surface-alt);
+    }
+  }
+
+  button {
+    min-height: 40px;
+    padding-inline: 20px;
+    font-weight: 600;
+  }
+}

@@ -23,6 +23,7 @@ import { LocationPickerDialog } from '../../../shared/components/location-picker
 import { RestaurantCard } from '../../../shared/components/restaurant-card/restaurant-card';
 import { FoodCategory, Restaurant } from '../../../shared/models/catalog.models';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
+import { InstallPromptService } from '../../../core/services/install-prompt.service';
 
 @Component({
   selector: 'bb-home',
@@ -44,6 +45,7 @@ export class Home {
   private readonly catalog = inject(CatalogService);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  protected readonly installer = inject(InstallPromptService);
   protected readonly user = this.auth.displayUser;
   protected readonly sessionChecked = this.auth.initialised;
 

@@ -1,0 +1,282 @@
+<div class="install-dialog">
+  <div class="dialog-header">
+    <div class="header-content">
+      <img src="/icon-192.png" alt="" class="app-icon" width="44" height="44" />
+      <div>
+        <h2 mat-dialog-title class="dialog-title">Install BiteBox</h2>
+        <p class="dialog-subtitle">Fast ordering and live tracking on your home screen or desktop.</p>
+      </div>
+    </div>
+    <button mat-icon-button type="button" class="close-button" (click)="close()" aria-label="Close dialog">
+      <np-icon name="x" class="mat-icon" matButtonIcon />
+    </button>
+  </div>
+
+  <div class="device-pill" role="status">
+    <np-icon
+      [name]="platform.device === 'desktop' ? 'monitor' : platform.device === 'tablet' ? 'tablet' : 'smartphone'"
+      class="mat-icon"
+    />
+    <span>Detected: <strong>{{ platform.browserLabel }}</strong> ({{ platform.deviceLabel }})</span>
+  </div>
+
+  <div class="tab-pills" role="tablist" aria-label="Device platforms">
+    <button
+      type="button"
+      role="tab"
+      class="tab-pill"
+      [class.active]="activeTab() === 'desktop'"
+      [attr.aria-selected]="activeTab() === 'desktop'"
+      (click)="setTab('desktop')"
+    >
+      <np-icon name="monitor" class="mat-icon" /> Desktop (PC & Mac)
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="tab-pill"
+      [class.active]="activeTab() === 'ios'"
+      [attr.aria-selected]="activeTab() === 'ios'"
+      (click)="setTab('ios')"
+    >
+      <np-icon name="smartphone" class="mat-icon" /> iPhone & iPad
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="tab-pill"
+      [class.active]="activeTab() === 'android'"
+      [attr.aria-selected]="activeTab() === 'android'"
+      (click)="setTab('android')"
+    >
+      <np-icon name="tablet" class="mat-icon" /> Android
+    </button>
+  </div>
+
+  <mat-dialog-content class="instructions-content">
+    @switch (activeTab()) {
+      @case ('desktop') {
+        <div class="tab-panel" role="tabpanel">
+          <div class="browser-tabs" role="tablist" aria-label="Desktop browser">
+            <button
+              type="button"
+              class="browser-tab-btn"
+              [class.active]="desktopBrowser() === 'chromium'"
+              [attr.aria-selected]="desktopBrowser() === 'chromium'"
+              (click)="setDesktopBrowser('chromium')"
+            >
+              <np-icon name="globe" class="mat-icon" /> Google Chrome / Edge / Brave
+            </button>
+            <button
+              type="button"
+              class="browser-tab-btn"
+              [class.active]="desktopBrowser() === 'safari'"
+              [attr.aria-selected]="desktopBrowser() === 'safari'"
+              (click)="setDesktopBrowser('safari')"
+            >
+              <np-icon name="compass" class="mat-icon" /> Safari (Mac)
+            </button>
+            <button
+              type="button"
+              class="browser-tab-btn"
+              [class.active]="desktopBrowser() === 'firefox'"
+              [attr.aria-selected]="desktopBrowser() === 'firefox'"
+              (click)="setDesktopBrowser('firefox')"
+            >
+              <np-icon name="flame" class="mat-icon" /> Firefox
+            </button>
+          </div>
+
+          @switch (desktopBrowser()) {
+            @case ('chromium') {
+              <ol class="step-list">
+                <li class="step-item">
+                  <span class="step-num">1</span>
+                  <div class="step-body">
+                    <div class="step-title">Find the install icon</div>
+                    <div class="step-desc">
+                      Look at the right side of the address bar (URL bar) in your browser.
+                    </div>
+                  </div>
+                </li>
+                <li class="step-item">
+                  <span class="step-num">2</span>
+                  <div class="step-body">
+                    <div class="step-title">Click Install BiteBox</div>
+                    <div class="step-desc">
+                      Click the <span class="badge"><np-icon name="download" class="mat-icon" /> Install BiteBox</span> or <span class="badge"><np-icon name="laptop" class="mat-icon" /> App available</span> icon.
+                    </div>
+                  </div>
+                </li>
+                <li class="step-item">
+                  <span class="step-num">3</span>
+                  <div class="step-body">
+                    <div class="step-title">Confirm installation</div>
+                    <div class="step-desc">
+                      Click <strong>Install</strong> in the prompt. BiteBox will open directly in its own standalone desktop window!
+                    </div>
+                  </div>
+                </li>
+              </ol>
+              <div class="tip-box">
+                <np-icon name="sparkles" class="mat-icon" />
+                <span>You can also open the browser menu (⋮) and select <strong>Save and share &rarr; Install BiteBox</strong>.</span>
+              </div>
+            }
+
+            @case ('safari') {
+              <ol class="step-list">
+                <li class="step-item">
+                  <span class="step-num">1</span>
+                  <div class="step-body">
+                    <div class="step-title">Open the File menu</div>
+                    <div class="step-desc">
+                      In the macOS top menu bar, click <strong>File</strong>.
+                    </div>
+                  </div>
+                </li>
+                <li class="step-item">
+                  <span class="step-num">2</span>
+                  <div class="step-body">
+                    <div class="step-title">Add to Dock</div>
+                    <div class="step-desc">
+                      Select <span class="badge"><np-icon name="plus" class="mat-icon" /> Add to Dock…</span> from the menu list.
+                    </div>
+                  </div>
+                </li>
+                <li class="step-item">
+                  <span class="step-num">3</span>
+                  <div class="step-body">
+                    <div class="step-title">Confirm and Add</div>
+                    <div class="step-desc">
+                      Click <strong>Add</strong> to pin BiteBox to your Mac Dock as an app (requires macOS Sonoma / Safari 17+).
+                    </div>
+                  </div>
+                </li>
+              </ol>
+            }
+
+            @case ('firefox') {
+              <ol class="step-list">
+                <li class="step-item">
+                  <span class="step-num">1</span>
+                  <div class="step-body">
+                    <div class="step-title">Pin BiteBox tab</div>
+                    <div class="step-desc">
+                      Right-click the <strong>BiteBox</strong> tab and choose <span class="badge">Pin Tab</span> for instant access.
+                    </div>
+                  </div>
+                </li>
+                <li class="step-item">
+                  <span class="step-num">2</span>
+                  <div class="step-body">
+                    <div class="step-title">Bookmark the app</div>
+                    <div class="step-desc">
+                      Press <kbd>Ctrl+D</kbd> (or <kbd>Cmd+D</kbd> on Mac) to bookmark BiteBox for quick access.
+                    </div>
+                  </div>
+                </li>
+              </ol>
+              <div class="tip-box">
+                <np-icon name="sparkles" class="mat-icon" />
+                <span>For a full standalone desktop window experience on PC or Mac, we recommend opening BiteBox in <strong>Google Chrome</strong> or <strong>Microsoft Edge</strong>.</span>
+              </div>
+            }
+          }
+        </div>
+      }
+
+      @case ('ios') {
+        <div class="tab-panel" role="tabpanel">
+          <p class="tab-intro">
+            {{ platform.isIPad ? 'On iPad, the Share button is in Safari’s top toolbar next to the address bar.' : 'Install directly in Safari with no App Store download required.' }}
+          </p>
+          <ol class="step-list">
+            <li class="step-item">
+              <span class="step-num">1</span>
+              <div class="step-body">
+                <div class="step-title">Tap the Share button</div>
+                <div class="step-desc">
+                  Tap <span class="badge"><np-icon name="share" class="mat-icon" /> Share</span> in Safari (bottom bar on iPhone, top toolbar on iPad).
+                </div>
+              </div>
+            </li>
+            <li class="step-item">
+              <span class="step-num">2</span>
+              <div class="step-body">
+                <div class="step-title">Add to Home Screen</div>
+                <div class="step-desc">
+                  Scroll down the share sheet and tap <span class="badge"><np-icon name="plus" class="mat-icon" /> Add to Home Screen</span>.
+                </div>
+              </div>
+            </li>
+            <li class="step-item">
+              <span class="step-num">3</span>
+              <div class="step-body">
+                <div class="step-title">Tap Add</div>
+                <div class="step-desc">
+                  Tap <strong>Add</strong> in the top-right corner to place BiteBox on your home screen.
+                </div>
+              </div>
+            </li>
+          </ol>
+          <div class="tip-box">
+            <np-icon name="sparkles" class="mat-icon" />
+            <span>Using Chrome or Firefox on iOS? Tap Share/Menu, then select <strong>Add to Home Screen</strong>.</span>
+          </div>
+        </div>
+      }
+
+      @case ('android') {
+        <div class="tab-panel" role="tabpanel">
+          <p class="tab-intro">Install BiteBox on Android phones and tablets using Chrome, Edge, Samsung Internet, or Firefox.</p>
+          <ol class="step-list">
+            <li class="step-item">
+              <span class="step-num">1</span>
+              <div class="step-body">
+                <div class="step-title">Open browser menu</div>
+                <div class="step-desc">
+                  Tap the three dots menu <span class="badge"><np-icon name="ellipsis-vertical" class="mat-icon" /></span> in the top-right corner (or bottom in Samsung Internet).
+                </div>
+              </div>
+            </li>
+            <li class="step-item">
+              <span class="step-num">2</span>
+              <div class="step-body">
+                <div class="step-title">Select Install app</div>
+                <div class="step-desc">
+                  Tap <span class="badge"><np-icon name="download" class="mat-icon" /> Install app</span> or <strong>Add to Home screen</strong>.
+                </div>
+              </div>
+            </li>
+            <li class="step-item">
+              <span class="step-num">3</span>
+              <div class="step-body">
+                <div class="step-title">Confirm installation</div>
+                <div class="step-desc">
+                  Tap <strong>Install</strong> to add BiteBox to your app drawer and home screen.
+                </div>
+              </div>
+            </li>
+          </ol>
+          <div class="tip-box">
+            <np-icon name="sparkles" class="mat-icon" />
+            <span>Chrome and Edge often display an automatic <strong>Add to Home screen</strong> banner at the bottom.</span>
+          </div>
+        </div>
+      }
+    }
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="dialog-actions">
+    @if (canInstallDirectly()) {
+      <button mat-button type="button" class="close-ghost-btn" (click)="close()">Dismiss</button>
+      <button mat-flat-button class="bb-btn-accent" type="button" (click)="installNow()">
+        <np-icon name="download" class="mat-icon" matButtonIcon />
+        Install Now
+      </button>
+    } @else {
+      <button mat-flat-button class="bb-btn-accent" type="button" (click)="close()">Got it</button>
+    }
+  </mat-dialog-actions>
+</div>

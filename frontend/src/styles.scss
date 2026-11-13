@@ -768,6 +768,43 @@ np-menu.bb-menu-compact .menu.mi-panel {
   background: #141016;
 }
 
+// Install BiteBox dialog: rounded corners, smooth scrolling, and pinned bottom actions.
+.bb-install-dialog-panel {
+  .mat-mdc-dialog-container {
+    padding: 0;
+  }
+
+  .mat-mdc-dialog-surface {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--bb-radius-xl, 20px) !important;
+    max-height: min(88vh, 640px) !important;
+    overflow: hidden;
+    background: var(--bb-surface, #ffffff);
+    color: var(--bb-ink);
+    box-shadow: 0 24px 48px rgb(0 0 0 / 22%);
+  }
+
+  .mat-mdc-dialog-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--bb-border) transparent;
+    padding: 16px 24px !important;
+    margin: 0 !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none !important;
+    overflow-y: auto;
+  }
+
+  .mat-mdc-dialog-actions {
+    padding: 12px 24px 16px !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    flex-shrink: 0;
+    border-top: 1px solid var(--bb-border);
+  }
+}
+
 // BbDialog (shared/dialog/bb-dialog.ts): CDK dialogs styled like the Material ones they replace.
 // The dialog component is the container's only child; it and any <form> inside it are flex
 // columns so the content scrolls between a fixed title and fixed actions.
