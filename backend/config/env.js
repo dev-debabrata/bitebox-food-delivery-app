@@ -39,6 +39,12 @@ if (jwtSecret.length < 32) {
   throw new Error("JWT_SECRET must be at least 32 characters long");
 }
 
+function fieldEncryptionKey() {
+  const key = process.env.FIELD_ENCRYPTION_KEY || "";
+  if (isProduction && !key) throw new Error("FIELD_ENCRYPTION_KEY must be set (32 bytes, base64)");
+  return key;
+}
+
 export const env = Object.freeze({
   nodeEnv,
   isTest,
@@ -67,6 +73,20 @@ export const env = Object.freeze({
     ttlMinutes: integer("PASSWORD_RESET_TTL_MINUTES", 30),
   },
 
+  emailVerification: { ttlHours: integer("EMAIL_VERIFICATION_TTL_HOURS", 24) },
+  // Sign-up texts a code to the new number and creates the account only with it (while SMS is
+  // on). Tests register in one step unless they turn it on.
+  signupOtpRequired: !isTest && process.env.SIGNUP_OTP_REQUIRED !== "false",
+  // Phone sign-in codes (services/otp.service.js): 6 digits, 5 minutes, 5 tries, a new code after
+  // 30 s, at most 5 codes per number and 20 per IP address an hour.
+  otp: {
+    ttlSeconds: integer("OTP_TTL_SECONDS", 300),
+    maxAttempts: 5,
+    resendSeconds: integer("OTP_RESEND_SECONDS", 30),
+    perPhonePerHour: integer("OTP_PER_PHONE_PER_HOUR", 5),
+    perIpPerHour: integer("OTP_PER_IP_PER_HOUR", 20),
+  },
+
   bcryptRounds: integer("BCRYPT_ROUNDS", isTest ? 4 : 12),
 
   smtp: {
@@ -88,6 +108,16 @@ export const env = Object.freeze({
   uploadDir: isTest
     ? "tmp/test-uploads"
     : process.env.UPLOAD_DIR || "uploads",
+  // KYC documents (services/kyc.service.js): never served by URL, only through the API.
+  privateUploadDir: isTest
+    ? "tmp/test-private-uploads"
+    : process.env.PRIVATE_UPLOAD_DIR || "private-uploads",
+  // AES-256-GCM key (32 bytes, base64) for bank and document numbers (utils/field-crypto.js).
+  fieldEncryptionKey: fieldEncryptionKey(),
+  // A restaurant goes live only with its required documents approved and a bank account added.
+  restaurantKycRequired: !isTest && process.env.RESTAURANT_KYC_REQUIRED !== "false",
+  // A rider goes online only once approved: documents, bank account and address.
+  riderKycRequired: !isTest && process.env.RIDER_KYC_REQUIRED !== "false",
   publicBaseUrl: (
     process.env.PUBLIC_BASE_URL || `http://localhost:${integer("PORT", 5000)}`
   ).replace(/\/$/, ""),
@@ -114,6 +144,32 @@ export const env = Object.freeze({
   },
 
   reportTimezone: process.env.REPORT_TIMEZONE || "Asia/Kolkata",
+
+  // Delivery tracking: a rider's position is stored at most every sampleSeconds while they carry
+  // an order, kept retentionDays, and shown as stale after staleSeconds. An arrival further than
+  // arrivalFarMeters from the restaurant is allowed but flagged for admins.
+  tracking: {
+    sampleSeconds: Number(process.env.TRACKING_SAMPLE_SECONDS) || 15,
+    retentionDays: Number(process.env.TRACKING_RETENTION_DAYS) || 30,
+    staleSeconds: Number(process.env.TRACKING_STALE_SECONDS) || 90,
+    arrivalFarMeters: Number(process.env.ARRIVAL_FAR_METERS) || 200,
+  },
+
+  // Notification channels beside in-app and Web Push. Email uses SMTP (NOTIFICATION_EMAILS=false
+  // turns notification emails off); SMS uses MSG91 or the log ("console"); FCM (future native
+  // apps) needs a Firebase service account JSON file. Each is off until configured.
+  notifications: {
+    emails: process.env.NOTIFICATION_EMAILS !== "false",
+    // Unset outside production: "console" (codes are printed in the server log, nothing is sent).
+    smsProvider: isTest ? "" : (process.env.SMS_PROVIDER || "").trim(),
+    msg91AuthKey: process.env.MSG91_AUTH_KEY || "",
+    msg91TemplateId: process.env.MSG91_TEMPLATE_ID || "",
+    // OTP messages need their own DLT-approved template in India (falls back to the one above).
+    msg91OtpTemplateId: process.env.MSG91_OTP_TEMPLATE_ID || "",
+    fcmCredentialsFile: isTest ? "" : (process.env.FCM_CREDENTIALS_FILE || "").trim(),
+    // "Your rider is almost there" when the rider on the way comes this close to the customer.
+    approachMeters: Number(process.env.APPROACH_NOTIFY_METERS) || 500,
+  },
 
   // Delivery OTP: a 4-digit code made at pickup, shown to the customer, needed to mark delivered.
   deliveryOtp: {

@@ -1,0 +1,22 @@
+// Each day: name and open/closed on one line, the two times below (it sits in a narrow column).
+.days {
+  list-style: none;
+  margin: var(--bb-space-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--bb-space-2);
+
+  li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: end;
+    gap: var(--bb-space-2) var(--bb-space-3);
+    padding-bottom: var(--bb-space-2);
+    border-bottom: 1px solid var(--bb-border);
+  }
+}
+
+.name {
+  align-self: center;
+  font-weight: 600;
+}

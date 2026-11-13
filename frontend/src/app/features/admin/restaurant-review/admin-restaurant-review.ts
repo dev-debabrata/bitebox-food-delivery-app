@@ -27,6 +27,7 @@ import { InrPipe } from '../../../shared/pipes/money.pipes';
 import { ClockTimePipe } from '../../../shared/pipes/clock-time.pipe';
 import { ImageFallback, UsableImagePipe } from '../../../shared/images/broken-images';
 import { BbDialog } from '../../../shared/dialog/bb-dialog';
+import { KycReview } from '../../../shared/components/kyc/kyc-review/kyc-review';
 
 interface StatusAction {
   status: RestaurantStatus;
@@ -38,6 +39,24 @@ interface StatusAction {
 
 const ACTIONS: Record<RestaurantStatus, StatusAction[]> = {
   pending: [
+    {
+      status: 'approved',
+      label: 'Approve',
+      icon: 'check_circle',
+      needsReason: false,
+      danger: false,
+    },
+    {
+      status: 'resubmission_requested',
+      label: 'Ask for documents',
+      icon: 'upload',
+      needsReason: true,
+      danger: false,
+    },
+    { status: 'rejected', label: 'Reject', icon: 'cancel', needsReason: true, danger: true },
+  ],
+  // The owner is fixing documents; they can still be approved or rejected meanwhile.
+  resubmission_requested: [
     {
       status: 'approved',
       label: 'Approve',
@@ -70,6 +89,25 @@ const ACTIONS: Record<RestaurantStatus, StatusAction[]> = {
   ],
 };
 
+const HIDDEN = 'The restaurant will be hidden from customers. The owner will see your reason.';
+const CONFIRM_TEXT: Record<RestaurantStatus, string> = {
+  approved: 'The restaurant will become visible to customers.',
+  resubmission_requested:
+    'The owner is asked to fix what you describe and send the restaurant for review again.',
+  rejected: HIDDEN,
+  suspended: HIDDEN,
+  pending: '',
+};
+
+/** Status names as people read them. */
+export const RESTAURANT_STATUS_LABEL: Record<RestaurantStatus, string> = {
+  pending: 'Pending',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  suspended: 'Suspended',
+  resubmission_requested: 'Documents needed',
+};
+
 @Component({
   selector: 'bb-admin-restaurant-review',
   imports: [
@@ -82,6 +120,7 @@ const ACTIONS: Record<RestaurantStatus, StatusAction[]> = {
     ClockTimePipe,
     ImageFallback,
     UsableImagePipe,
+    KycReview,
   ],
   templateUrl: './admin-restaurant-review.html',
   styleUrl: './admin-restaurant-review.scss',
@@ -101,6 +140,7 @@ export class AdminRestaurantReview {
   protected readonly error = signal<string | null>(null);
   protected readonly acting = signal(false);
 
+  protected readonly statusLabel = RESTAURANT_STATUS_LABEL;
   protected readonly actions = computed(() => {
     const r = this.restaurant();
     return r ? ACTIONS[r.status] : [];
@@ -144,10 +184,7 @@ export class AdminRestaurantReview {
       this.bbDialog,
       {
         title: `${action.label} ${r.name}?`,
-        message:
-          action.status === 'approved'
-            ? 'The restaurant will become visible to customers.'
-            : 'The restaurant will be hidden from customers. The owner will see your reason.',
+        message: CONFIRM_TEXT[action.status],
         confirmLabel: action.label,
         danger: action.danger,
         reasonLabel: action.needsReason ? 'Reason (shown to the restaurant owner)' : undefined,

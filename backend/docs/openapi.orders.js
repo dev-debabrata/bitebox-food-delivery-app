@@ -445,6 +445,17 @@ export const ordersPaths = {
       responses: { 200: ok({ type: "object" }), 404: err("Not found") },
     },
   },
+  "/tracking/orders/{id}": {
+    get: {
+      tags: T.orders,
+      summary: "Rider's last position, staleness and recent path of a delivery",
+      description:
+        "For the order's customer, its rider, or staff with orders:view. The path is sent only while the order is assigned, at the restaurant, picked up or on the way.",
+      security: bearer,
+      parameters: [idParam],
+      responses: { 200: ok({ type: "object" }), 404: err("Not found") },
+    },
+  },
   "/admin/delivery-partners": {
     get: {
       tags: T.adminRiders,

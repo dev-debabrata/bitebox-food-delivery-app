@@ -12,6 +12,10 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/api-error.js";
 import { paginationMeta } from "../utils/pagination.js";
 import { paymentView } from "./payments/payment.service.js";
+import { CommissionRule } from "../models/commission-rule.model.js";
+import { postPayoutPaid, postRefund } from "./ledger.service.js";
+import { notify } from "./notification.service.js";
+import { rupees } from "./order-notifications.js";
 import { day, fillDays, since } from "./reports.service.js";
 
 const S = ORDER_STATUS;
@@ -22,7 +26,13 @@ const SIDE = {
   [PAYOUT_TYPES.RESTAURANT]: {
     link: "payouts.restaurant",
     payee: "$restaurant",
-    share: "$settlement.restaurantPaise",
+    // The restaurant's share net of refunds taken from it after delivery.
+    share: {
+      $subtract: [
+        "$settlement.restaurantPaise",
+        { $ifNull: ["$settlement.refundAdjustmentPaise", 0] },
+      ],
+    },
   },
   [PAYOUT_TYPES.RIDER]: {
     link: "payouts.rider",
@@ -263,6 +273,14 @@ export async function markPayoutPaid(actor, id, reference) {
     { new: true },
   );
   if (!payout) throw ApiError.conflict("Only a pending payout can be marked as paid");
+  await postPayoutPaid(payout);
+  // The "settlement processed" event.
+  await notify(payout.payee, {
+    type: "payout.paid",
+    title: `Payout of ${rupees(payout.amountPaise)} sent`,
+    body: `For ${payout.orders} orders. Bank reference ${reference}.`,
+    link: payout.type === PAYOUT_TYPES.RESTAURANT ? "/restaurant/earnings" : "/delivery/earnings",
+  });
   return payout.toJSON();
 }
 
@@ -375,7 +393,7 @@ export async function commission(days) {
   return {
     days,
     rates: {
-      restaurantCommissionPercent: EARNINGS.restaurantCommissionBasisPoints / 100,
+      restaurantCommissionPercent: (await globalRate()) / 100,
       riderBasePaise: EARNINGS.riderBasePaise,
       riderPerKmPaise: EARNINGS.riderPerKmPaise,
     },
@@ -387,4 +405,181 @@ export async function commission(days) {
     },
     items,
   };
+}
+
+// Commission rules ----------------------------------------------------------------------------
+
+async function globalRate() {
+  const rule = await CommissionRule.findOne({ restaurant: null, effectiveTo: null }).lean();
+  return rule?.basisPoints ?? EARNINGS.restaurantCommissionBasisPoints;
+}
+
+function ruleJson(r) {
+  return {
+    id: String(r._id),
+    restaurant: r.restaurant ? { id: String(r.restaurant._id), name: r.restaurant.name } : null,
+    basisPoints: r.basisPoints,
+    percent: r.basisPoints / 100,
+    effectiveFrom: r.effectiveFrom,
+    effectiveTo: r.effectiveTo ?? null,
+    note: r.note || null,
+    createdBy: r.createdBy?.name ?? null,
+  };
+}
+
+/** The global rate, every restaurant override in force, and the recent history. */
+export async function commissionRules() {
+  const populated = (q) => q.populate("restaurant", "name").populate("createdBy", "name").lean();
+  const [rate, overrides, history] = await Promise.all([
+    globalRate(),
+    populated(CommissionRule.find({ restaurant: { $ne: null }, effectiveTo: null })),
+    populated(CommissionRule.find().sort({ effectiveFrom: -1, _id: -1 }).limit(50)),
+  ]);
+  return {
+    global: {
+      basisPoints: rate,
+      percent: rate / 100,
+      defaultBasisPoints: EARNINGS.restaurantCommissionBasisPoints,
+    },
+    overrides: overrides
+      .map(ruleJson)
+      .sort((a, b) => a.restaurant.name.localeCompare(b.restaurant.name)),
+    history: history.map(ruleJson),
+  };
+}
+
+/** A new rate for a scope (restaurantId null = global): the open rule closes, a new one opens. */
+export async function setCommission(actor, restaurantId, basisPoints, note) {
+  if (restaurantId && !(await Restaurant.exists({ _id: restaurantId })))
+    throw ApiError.notFound("Restaurant not found");
+  const now = new Date();
+  const scope = { restaurant: restaurantId || null, effectiveTo: null };
+  await CommissionRule.updateOne(scope, { $set: { effectiveTo: now } });
+  await CommissionRule.create({
+    restaurant: restaurantId || null,
+    basisPoints,
+    effectiveFrom: now,
+    note,
+    createdBy: actor._id,
+  });
+  return commissionRules();
+}
+
+/** Removes a restaurant's own rate: the global one applies again. */
+export async function clearCommission(restaurantId) {
+  const { modifiedCount } = await CommissionRule.updateOne(
+    { restaurant: restaurantId, effectiveTo: null },
+    { $set: { effectiveTo: new Date() } },
+  );
+  if (!modifiedCount) throw ApiError.notFound("This restaurant has no commission of its own");
+  return commissionRules();
+}
+
+// Refund deductions -----------------------------------------------------------------------------
+
+/**
+ * A refund finished on a delivered order: it comes off the restaurant's share while that is not
+ * yet in a payout (never below zero); BiteBox carries the rest. Posted to the ledger once.
+ */
+export async function applyRefund(order, refundId, amount) {
+  if (!order.settlement?.at) return;
+  const { LedgerEntry } = await import("../models/ledger-entry.model.js");
+  if (await LedgerEntry.exists({ key: `refund:${refundId}` })) return;
+  let deducted = 0;
+  if (!order.payouts?.restaurant) {
+    const room = order.settlement.restaurantPaise - (order.settlement.refundAdjustmentPaise ?? 0);
+    deducted = Math.max(0, Math.min(amount, room));
+    if (deducted)
+      await Order.updateOne(
+        { _id: order._id, "payouts.restaurant": null },
+        { $inc: { "settlement.refundAdjustmentPaise": deducted } },
+      );
+  }
+  await postRefund(order, refundId, amount, deducted);
+}
+
+// Partner history and the settlement report --------------------------------------------------
+
+/** A partner's own payouts (`match`: { restaurant } or { type: "rider", payee }). */
+export const myPayouts = (match, pagination) => listPayoutsMatching(match, pagination);
+
+async function listPayoutsMatching(filter, pagination) {
+  const [items, total] = await Promise.all([
+    Payout.find(filter).sort({ createdAt: -1 }).skip(pagination.skip).limit(pagination.limit),
+    Payout.countDocuments(filter),
+  ]);
+  return { items: items.map((p) => p.toJSON()), pagination: paginationMeta(pagination, total) };
+}
+
+/** Per delivered order: what it paid this partner and whether it has been paid out. */
+export async function settlementHistory(type, match, pagination) {
+  const filter = { ...match, status: S.DELIVERED, "settlement.at": { $ne: null } };
+  const link = type === PAYOUT_TYPES.RESTAURANT ? "restaurant" : "rider";
+  const [orders, total] = await Promise.all([
+    Order.find(filter)
+      .sort({ "settlement.at": -1 })
+      .skip(pagination.skip)
+      .limit(pagination.limit)
+      .select("orderNumber pricing settlement payouts")
+      .populate(`payouts.${link}`, "status paidAt")
+      .lean(),
+    Order.countDocuments(filter),
+  ]);
+  return {
+    items: orders.map((o) => {
+      const s = o.settlement;
+      const food = o.pricing.subtotalPaise - (o.pricing.discountPaise ?? 0);
+      const adjustment = s.refundAdjustmentPaise ?? 0;
+      const payout = o.payouts?.[link];
+      return {
+        orderId: String(o._id),
+        orderNumber: o.orderNumber,
+        settledAt: s.at,
+        foodPaise: food,
+        commissionBp: s.commissionBp ?? EARNINGS.restaurantCommissionBasisPoints,
+        commissionPaise: food - s.restaurantPaise,
+        refundAdjustmentPaise: adjustment,
+        netPaise: type === PAYOUT_TYPES.RIDER ? s.riderPaise : s.restaurantPaise - adjustment,
+        payout: payout ? { id: String(payout._id), status: payout.status, paidAt: payout.paidAt ?? null } : null,
+      };
+    }),
+    pagination: paginationMeta(pagination, total),
+  };
+}
+
+/** Text a spreadsheet would run as a formula (starts with = + - @, tab or CR): quote it. */
+export const spreadsheetSafe = (text) => (/^[=+\-@\t\r]/.test(text) ? `'${text}` : text);
+
+/** The settlement report (one row per delivered order) for spreadsheets and accountants. */
+export async function settlementsCsv({ from, to } = {}) {
+  const at = { $ne: null, ...(from && { $gte: from }), ...(to && { $lte: to }) };
+  const orders = await Order.find({ status: S.DELIVERED, "settlement.at": at })
+    .sort({ "settlement.at": 1 })
+    .select("orderNumber restaurantSnapshot.name pricing settlement payouts")
+    .populate("payouts.restaurant payouts.rider", "status")
+    .lean();
+  const money = (p) => ((p ?? 0) / 100).toFixed(2);
+  const cell = (v) => (/[",\r\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
+  const rows = [
+    [
+      "Order", "Delivered at", "Restaurant", "Order total (₹)", "Tax (₹)", "Commission %",
+      "Restaurant share (₹)", "Refund deduction (₹)", "Rider pay (₹)", "BiteBox share (₹)",
+      "Restaurant payout", "Rider payout",
+    ],
+    ...orders.map((o) => [
+      o.orderNumber,
+      new Date(o.settlement.at).toISOString(),
+      spreadsheetSafe(o.restaurantSnapshot?.name ?? ""), // partner-written
+      money(o.pricing.totalPaise),
+      money(o.pricing.taxPaise),
+      (o.settlement.commissionBp ?? EARNINGS.restaurantCommissionBasisPoints) / 100,
+      money(o.settlement.restaurantPaise),
+      money(o.settlement.refundAdjustmentPaise),
+      money(o.settlement.riderPaise),
+      money(o.settlement.platformPaise),
+      o.payouts?.restaurant?.status ?? "due",
+      o.payouts?.rider?.status ?? "due",
+    ]),
+  ];
+  return rows.map((r) => r.map(cell).join(",")).join("\r\n") + "\r\n";
 }

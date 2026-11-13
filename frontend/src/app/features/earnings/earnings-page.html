@@ -46,6 +46,7 @@
       <bb-empty-state icon="savings" title="No earnings yet" message="Delivered orders in this period appear here." />
     }
   </section>
+  <bb-settlement-history [scope]="scope()" />
 } @else if (!report.error()) {
   <span class="bb-skeleton" style="height: 92px" aria-busy="true"></span>
   <span class="bb-skeleton" style="height: 300px"></span>

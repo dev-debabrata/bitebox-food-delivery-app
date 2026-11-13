@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { env } from "../../config/env.js";
 import { logger } from "../../config/logger.js";
 import {
+  ACTIVE_STATUSES,
   ORDER_STATUS,
   Order,
   PAYMENT_METHODS,
@@ -13,7 +14,13 @@ import { User } from "../../models/user.model.js";
 import { emitOrderUpdated } from "../../sockets/events.js";
 import { ApiError } from "../../utils/api-error.js";
 import { escapeRegex, paginationMeta } from "../../utils/pagination.js";
-import { notifyNewOrder, notifyRefund, rupees } from "../order-notifications.js";
+import {
+  notifyNewOrder,
+  notifyPaymentFailed,
+  notifyRefund,
+  notifyRefundStarted,
+  rupees,
+} from "../order-notifications.js";
 import { startSweepLoop } from "../../utils/sweep-loop.js";
 import * as rewardEvents from "../reward-events.js";
 import { mockProvider } from "./mock.provider.js";
@@ -345,11 +352,14 @@ async function markFailed(paymentId, reason) {
     { $set: { status: P.FAILED, failureReason: reason || "Payment failed" } },
     { returnDocument: "after" },
   );
-  if (payment)
-    await Order.updateOne(
+  if (payment) {
+    const order = await Order.findOneAndUpdate(
       { _id: payment.order, paymentStatus: P.PENDING },
       { $set: { paymentStatus: P.FAILED } },
+      { returnDocument: "after" },
     );
+    if (order) await notifyPaymentFailed(order, payment.failureReason);
+  }
   return payment ?? Payment.findById(paymentId);
 }
 
@@ -432,7 +442,11 @@ async function openRefund(payment, amountPaise, { key, reason, by = null }) {
     if (error.code === 11000) return Refund.findOne({ idempotencyKey: key }); // a racing twin
     throw error;
   }
-  if (!manual) await processRefund(refund._id);
+  if (!manual) {
+    const order = await Order.findById(payment.order);
+    if (order) await notifyRefundStarted(order, amountPaise);
+    await processRefund(refund._id);
+  }
   return refund;
 }
 
@@ -496,6 +510,11 @@ async function finishRefund(refund, ok) {
     );
   else await syncPaymentStatus(done.payment, now, done.providerRefundId);
   const order = await Order.findById(done.order);
+  if (ok && order?.status === ORDER_STATUS.DELIVERED) {
+    // A refund after delivery comes off the restaurant's unpaid share (finance.service).
+    const { applyRefund } = await import("../finance.service.js");
+    await applyRefund(order, done._id, done.amountPaise);
+  }
   logger.info(
     { orderId: String(done.order), refundId: String(done._id) },
     ok ? "Refund processed" : "Refund failed",
@@ -657,14 +676,25 @@ function adminRow(p) {
  * All payments, newest first, filterable by status, method, provider, date and a search over the
  * order number and the customer's name, email or phone. Includes the order number and customer.
  */
+/** `orderState` filter: where the order stands (finance finds cancelled orders still holding money). */
+const ORDER_STATES = Object.freeze({
+  active: ACTIVE_STATUSES,
+  delivered: [ORDER_STATUS.DELIVERED],
+  cancelled: [ORDER_STATUS.CANCELLED, ORDER_STATUS.REJECTED],
+});
+
 export async function adminList(
-  { status, method, provider, search, from, to },
+  { status, method, provider, orderState, search, from, to },
   pagination,
 ) {
   const filter = {};
   if (status) filter.status = status;
   if (method) filter.method = method;
   if (provider) filter.provider = provider;
+  if (orderState)
+    filter.order = {
+      $in: await Order.distinct("_id", { status: { $in: ORDER_STATES[orderState] } }),
+    };
   if (from || to)
     filter.createdAt = { ...(from && { $gte: from }), ...(to && { $lte: to }) };
   if (search) {

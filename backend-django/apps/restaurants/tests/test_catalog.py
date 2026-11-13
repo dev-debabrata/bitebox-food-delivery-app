@@ -272,7 +272,9 @@ def test_admin_lists_by_status_with_counts() -> None:
     assert len(items) == 1
     assert items[0]["owner"]["email"].endswith("@example.com")
     counts = admin.get("/api/v1/admin/restaurants/counts").json()["data"]["counts"]
-    assert counts == {"pending": 1, "approved": 1, "rejected": 0, "suspended": 0}
+    assert counts == {
+        "pending": 1, "approved": 1, "rejected": 0, "suspended": 0, "resubmission_requested": 0
+    }  # fmt: skip
 
 
 def test_non_admins_cannot_approve() -> None:

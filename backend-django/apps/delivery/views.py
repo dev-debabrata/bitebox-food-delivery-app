@@ -21,6 +21,7 @@ from apps.finance.views import DaysQuery
 from apps.orders import services as orders
 from apps.orders.views import STATUS_MESSAGE
 from apps.rbac.roles import Permission, Role
+from apps.restaurants.serializers import RestaurantAddressInput
 from apps.reviews import services as review_services
 from common.api import ok
 from common.fields import QueryBoolean
@@ -31,7 +32,7 @@ from common.throttling import rate_limit
 from common.validation import PageQuery, parse_id, validated
 
 from . import services
-from .models import VehicleType
+from .models import VehicleType, VerificationStatus
 
 RIDER = [role_required(Role.DELIVERY)]
 DASHBOARD = envelope("RiderDashboard")
@@ -256,6 +257,22 @@ class RiderStatsView(APIView):
 # ---------------------------------------------------------------------------
 class AdminRiderQuery(PageQuery):
     online = QueryBoolean()
+    verification = serializers.ChoiceField(choices=VerificationStatus.values, required=False)
+
+
+class AdminVerificationInput(serializers.Serializer):
+    status = serializers.ChoiceField(
+        choices=[
+            VerificationStatus.APPROVED,
+            VerificationStatus.REJECTED,
+            VerificationStatus.RESUBMISSION_REQUESTED,
+        ]
+    )
+    reason = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
+
+
+class RiderDetailsInput(serializers.Serializer):
+    address = RestaurantAddressInput()
 
 
 class AdminRiderStatusInput(serializers.Serializer):
@@ -300,3 +317,68 @@ class AdminRiderStatusView(APIView):
             {"user": user_json(user)},
             message="Rider reactivated" if user.status == UserStatus.ACTIVE else "Rider suspended",
         )
+
+
+class AdminRiderView(APIView):
+    permission_classes = RIDERS_ADMIN
+
+    @extend_schema(
+        tags=["Admin: delivery partners"],
+        operation_id="admin_delivery_partner_detail",
+        responses={200: RESULT, **errors(401, 403, 404)},
+    )
+    def get(self, request: Request, id: str) -> Response:
+        return ok(services.admin_get(parse_id(id)))
+
+
+class AdminRiderVerificationView(APIView):
+    """Approve a rider (once documents, bank account and address are in), ask for documents
+    again, or reject."""
+
+    permission_classes = RIDERS_ADMIN
+
+    @extend_schema(
+        tags=["Admin: delivery partners"],
+        request=AdminVerificationInput,
+        responses={200: RESULT, **errors(400, 401, 403, 404, 409, 422)},
+    )
+    @audited(
+        "rider.verification",
+        "user",
+        lambda req: f"Set rider verification to {req.data.get('status')}",
+    )
+    def patch(self, request: Request, id: str) -> Response:
+        data = validated(AdminVerificationInput, request.data)
+        result = services.admin_set_verification(
+            parse_id(id), data["status"], data["reason"].strip(), current_user(request)
+        )
+        return ok(result, message="Verification updated")
+
+
+# --- the rider's own verification ----------------------------------------------------------------
+
+
+class RiderDetailsView(APIView):
+    permission_classes = RIDER
+
+    @extend_schema(
+        tags=["Delivery"],
+        request=RiderDetailsInput,
+        responses={200: RESULT, **errors(401, 403, 422)},
+    )
+    def patch(self, request: Request) -> Response:
+        address = validated(RiderDetailsInput, request.data)["address"]
+        return ok(
+            {"profile": services.update_details(current_user(request), address)},
+            message="Details saved",
+        )
+
+
+class RiderResubmitView(APIView):
+    permission_classes = RIDER
+
+    @extend_schema(
+        tags=["Delivery"], request=None, responses={200: RESULT, **errors(401, 403, 409)}
+    )
+    def post(self, request: Request) -> Response:
+        return ok({"profile": services.resubmit(current_user(request))}, message="Sent for review")

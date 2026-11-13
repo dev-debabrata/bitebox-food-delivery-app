@@ -8,6 +8,7 @@ utils/upstream.js, which did this in one process's memory):
 - requests to each provider are spaced (about 1 per second), as the usage policies require.
 """
 
+import hashlib
 import json
 import time
 import urllib.parse
@@ -52,7 +53,8 @@ def _wait_for_slot(provider: str) -> None:
 
 
 def cached(provider: str, key: str, ttl_seconds: int, load: Callable[[], Any]) -> Any:
-    cache_key = f"upstream:{provider}:{key}"
+    # The key holds user input (search text): hashed, so it is always a valid, short cache key.
+    cache_key = f"upstream:{provider}:{hashlib.sha256(key.encode()).hexdigest()}"
     hit = cache.get(cache_key)
     if hit is not None:
         return hit

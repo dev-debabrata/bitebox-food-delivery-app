@@ -1,4 +1,4 @@
-import { Paginated } from './api.models';
+import { Paginated, Pagination } from './api.models';
 import { OrderStatus, PaymentStatus } from './checkout.models';
 import { PaymentInfo, PaymentMethod } from './payment.models';
 import { AdminRole, StaffAdminRole, User, UserStatus } from './user.models';
@@ -204,6 +204,50 @@ export interface Commission {
     restaurantPaise: number;
     platformPaise: number;
   }[];
+}
+
+export interface CommissionRule {
+  id: string;
+  restaurant: { id: string; name: string } | null;
+  basisPoints: number;
+  percent: number;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  note: string | null;
+  createdBy: string | null;
+}
+
+/** `GET /admin/finance/commission/rules`. */
+export interface CommissionRules {
+  global: { basisPoints: number; percent: number; defaultBasisPoints: number };
+  overrides: CommissionRule[];
+  history: CommissionRule[];
+}
+
+export type LedgerAccount =
+  | 'customer_payments'
+  | 'restaurant_payable'
+  | 'rider_payable'
+  | 'platform_revenue'
+  | 'tax_payable'
+  | 'payouts';
+
+/** `GET /admin/finance/ledger`: balances per account, the balance check and entries. */
+export interface LedgerSummary {
+  days: number;
+  accounts: { account: LedgerAccount; balancePaise: number; periodPaise: number }[];
+  balanced: boolean;
+  unbalancedGroups: number;
+  items: {
+    id: string;
+    group: string;
+    account: LedgerAccount;
+    amountPaise: number;
+    description: string;
+    orderNumber: string | null;
+    createdAt: string;
+  }[];
+  pagination: Pagination;
 }
 
 // ---------------------------------------------------------------------------

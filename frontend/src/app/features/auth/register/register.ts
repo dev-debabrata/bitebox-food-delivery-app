@@ -12,6 +12,9 @@ import { ROLE_META, SelfRegisterRole } from '../../../shared/models/user.models'
 import { serverErrors, shownError } from '../../../shared/forms/form-errors';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { emailRules, matchesField, passwordRules, phoneRules, requiredText } from '../../../shared/forms/form-rules';
+import { codeRules } from '../../../shared/forms/code-rules';
+import { countdown } from '../../../shared/forms/countdown';
+import { errorCode } from '../../../core/services/api-error';
 import { PhoneInput } from '../../../shared/components/phone-input/phone-input';
 
 const INTRO: Record<SelfRegisterRole, string> = {
@@ -50,13 +53,23 @@ export class Register {
     (path) => {
       requiredText(path.name, 'Name', { min: 2, max: 80 });
       emailRules(path.email);
-      phoneRules(path.phone, { optional: true });
+      phoneRules(path.phone); // the account is confirmed with a code texted to it
       passwordRules(path.password);
       matchesField(path.confirmPassword, path.password);
       pattern(path.referralCode, /^\s*([A-Za-z0-9-]{4,40})?\s*$/, { message: 'Enter a valid referral code' });
     },
-    { submission: { action: () => this.createAccount() } },
+    { submission: { action: () => this.sendCode() } },
   );
+
+  /** Step 2: the code texted to the number creates the account. */
+  protected readonly step = signal<'details' | 'code'>('details');
+  protected readonly notice = signal<string | null>(null);
+  private readonly timer = countdown();
+  protected readonly resendIn = this.timer.left;
+  protected readonly codeModel = signal({ code: '' });
+  protected readonly codeForm = form(this.codeModel, (p) => codeRules(p.code), {
+    submission: { action: () => this.createAccount(this.codeModel().code) },
+  });
 
   protected readonly error = signal<string | null>(null);
   protected readonly meta = computed(() => ROLE_META[this.role()]);
@@ -72,7 +85,35 @@ export class Register {
     });
   }
 
-  private async createAccount(): Promise<TreeValidationResult> {
+  /** Step 1: check the details, then text a code (or sign up at once while SMS is off). */
+  private async sendCode(): Promise<TreeValidationResult> {
+    this.error.set(null);
+    const { email, phone } = this.model();
+    try {
+      const sent = await firstValueFrom(this.auth.requestSignupCode(email, phone.trim()));
+      this.notice.set(`${sent.message}: ${phone.trim()}`);
+      this.codeForm().reset({ code: '' });
+      this.step.set('code');
+      this.timer.start(sent.resendInSeconds);
+      return undefined;
+    } catch (err) {
+      if (errorCode(err) === 'SMS_UNAVAILABLE') return this.createAccount();
+      this.error.set(errorMessage(err, 'Unable to create your account. Please try again.'));
+      return serverErrors(this.form, fieldErrors(err));
+    }
+  }
+
+  protected async resend(): Promise<void> {
+    this.step.set('details');
+    await this.sendCode();
+  }
+
+  protected editDetails(): void {
+    this.step.set('details');
+    this.error.set(null);
+  }
+
+  private async createAccount(smsCode?: string): Promise<TreeValidationResult> {
     this.error.set(null);
     const { confirmPassword: _confirm, phone, referralCode, ...rest } = this.model();
     const code = this.role() === 'customer' ? referralCode.trim().toUpperCase() : '';
@@ -82,6 +123,7 @@ export class Register {
           ...rest,
           ...(phone.trim() ? { phone: phone.trim() } : {}),
           ...(code ? { referralCode: code } : {}),
+          ...(smsCode ? { code: smsCode } : {}),
           role: this.role(),
         }),
       );
@@ -90,7 +132,11 @@ export class Register {
       return undefined;
     } catch (err) {
       this.error.set(errorMessage(err, 'Unable to create your account. Please try again.'));
-      return serverErrors(this.form, fieldErrors(err));
+      // A wrong code stays on the code step; a problem with the details goes back to them.
+      const fields = fieldErrors(err);
+      const onCode = fields.some((f) => f.field === 'code');
+      if (fields.length && !onCode) this.step.set('details');
+      return serverErrors(onCode ? this.codeForm : this.form, fields);
     }
   }
 }

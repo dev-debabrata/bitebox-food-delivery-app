@@ -13,6 +13,8 @@ if len(JWT_SECRET) < 32:
     raise ImproperlyConfigured("JWT_SECRET must be set (32+ characters)")
 if not SMTP_HOST:
     raise ImproperlyConfigured("SMTP_HOST must be set (password reset emails)")
+if not FIELD_ENCRYPTION_KEY:
+    raise ImproperlyConfigured("FIELD_ENCRYPTION_KEY must be set (32 bytes, base64)")
 if not ALLOWED_HOSTS:
     raise ImproperlyConfigured("DJANGO_ALLOWED_HOSTS must list the public host names")
 

@@ -20,6 +20,7 @@ export class RestaurantLayout {
       badge: this.board.pendingCount,
     },
     { label: 'Restaurant details', icon: 'storefront', link: '/restaurant/details' },
+    { label: 'Verification', icon: 'shield-check', link: '/restaurant/verification' },
     { label: 'Menu', icon: 'menu_book', link: '/restaurant/menu' },
     { label: 'Reviews', icon: 'star', link: '/restaurant/reviews' },
     { label: 'Earnings', icon: 'account_balance_wallet', link: '/restaurant/earnings' },

@@ -31,6 +31,7 @@ export function createAuthRouter({
     validate(rules.registerRules),
     auth.register,
   );
+  router.post("/register/code", authLimiter, validate(rules.signupCodeRules), auth.requestSignupCode);
   router.post("/login", authLimiter, validate(rules.loginRules), auth.login);
   router.post("/refresh", requireTrustedOrigin, auth.refresh);
   router.post("/logout", requireTrustedOrigin, auth.logout);
@@ -46,6 +47,15 @@ export function createAuthRouter({
     validate(rules.resetPasswordRules),
     auth.resetPassword,
   );
+
+  // Sign in with an SMS code; confirm a number or an email address.
+  router.get("/methods", auth.methods);
+  router.post("/otp/request", authLimiter, validate(rules.otpRequestRules), auth.requestOtp);
+  router.post("/otp/login", authLimiter, validate(rules.otpLoginRules), auth.otpLogin);
+  router.post("/phone/verification", authenticate, authLimiter, auth.requestPhoneVerification);
+  router.post("/phone/verify", authenticate, authLimiter, validate(rules.otpCodeRules), auth.verifyPhone);
+  router.post("/email/verification", authenticate, sensitiveLimiter, auth.resendEmailVerification);
+  router.post("/email/verify", authLimiter, validate(rules.emailVerifyRules), auth.verifyEmail);
 
   router.get("/me", authenticate, auth.me);
   router.patch(

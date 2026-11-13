@@ -9,6 +9,7 @@ import {
   MenuStats,
   Restaurant,
   RestaurantInput,
+  RestaurantUpdate,
 } from '../../shared/models/catalog.models';
 import { toParams } from './http-params';
 
@@ -50,9 +51,16 @@ export class MyRestaurantService {
       .pipe(map((res) => res.data.restaurant));
   }
 
-  update(input: Partial<RestaurantInput>): Observable<Restaurant> {
+  update(input: RestaurantUpdate): Observable<Restaurant> {
     return this.http
       .patch<ApiResponse<{ restaurant: Restaurant }>>(this.url, input)
+      .pipe(map((res) => res.data.restaurant));
+  }
+
+  /** After "documents needed" or a rejection: back to the review queue. */
+  resubmit(): Observable<Restaurant> {
+    return this.http
+      .post<ApiResponse<{ restaurant: Restaurant }>>(`${this.url}/resubmit`, {})
       .pipe(map((res) => res.data.restaurant));
   }
 

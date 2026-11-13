@@ -1,6 +1,7 @@
 import { Router } from "express";
 import * as c from "../controllers/checkout.controller.js";
 import * as orders from "../controllers/order-management.controller.js";
+import { orderInvoiceFor } from "../controllers/partner-finance.controller.js";
 import { env } from "../config/env.js";
 import { PERMISSIONS } from "../config/permissions.js";
 import { authenticate, authorize, can } from "../middleware/auth.middleware.js";
@@ -77,6 +78,7 @@ export const ordersRouter = Router()
   .get("/", validate(rules.listOrdersRules), c.listMyOrders)
   .get("/:id", validate([mongoIdParam()]), orders.customerGet)
   .get("/:id/timeline", validate([mongoIdParam()]), orders.customerTimeline)
+  .get("/:id/invoice", validate([mongoIdParam()]), orderInvoiceFor(true))
   .get(
     "/:id/reviews",
     validate([mongoIdParam()]),

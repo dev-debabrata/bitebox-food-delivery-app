@@ -112,6 +112,7 @@
               [rider]="t.rider()"
               [riderStale]="t.riderStale()"
               [route]="t.remaining()?.path ?? t.plannedRoute()?.path ?? null"
+              [trail]="t.trail()"
               [lineFrom]="t.rider() ?? t.restaurant()"
               [label]="
                 'Map of your delivery from ' +
@@ -308,6 +309,16 @@
             </ul>
           }
         </section>
+        @if (o.status === 'delivered') {
+          <section class="bb-card invoice" aria-labelledby="invoice-title">
+            <h2 class="bb-h3" id="invoice-title">Invoice</h2>
+            <p class="bb-muted small">Your tax invoice for this order, as a PDF.</p>
+            <button type="button" class="bb-btn bb-btn--outlined bb-btn--small" [disabled]="downloading()" (click)="downloadInvoice(o.id)">
+              <np-icon name="file-down" class="mat-icon" matButtonIcon />
+              {{ downloading() ? 'Preparing…' : 'Download invoice' }}
+            </button>
+          </section>
+        }
         @if (o.rider; as r) {
           <section class="bb-card rider" aria-labelledby="rider-title">
             <h2 class="bb-h3" id="rider-title">Your rider</h2>

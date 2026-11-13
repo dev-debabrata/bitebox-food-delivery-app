@@ -27,11 +27,15 @@ import {
   requiredText,
 } from '../../shared/forms/form-rules';
 import { PhoneInput } from '../../shared/components/phone-input/phone-input';
+import { ImageUpload } from '../../shared/components/image-upload/image-upload';
+import { AccountVerification } from './account-verification/account-verification';
 
 @Component({
   selector: 'bb-profile',
   imports: [
     PhoneInput,
+    ImageUpload,
+    AccountVerification,
     NP_FORM_FIELDS,
     DatePipe,
     FormRoot,
@@ -105,6 +109,14 @@ export class Profile {
       this.profileError.set(errorMessage(err));
       return serverErrors(this.profileForm, fieldErrors(err));
     }
+  }
+
+  /** A new photo was uploaded (or removed): save it on the profile. */
+  protected saveAvatar(url: string): void {
+    this.auth.updateProfile({ avatarUrl: url || null }).subscribe({
+      next: () => this.notify.success(url ? 'Photo updated' : 'Photo removed'),
+      error: (err: unknown) => this.notify.error(errorMessage(err)),
+    });
   }
 
   private async changePassword(): Promise<TreeValidationResult> {

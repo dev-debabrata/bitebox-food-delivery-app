@@ -36,7 +36,7 @@ import {
   adminRefundsRouter,
   adminReportsRouter,
 } from "./routes/admin-orders.routes.js";
-import notificationRoutes from "./routes/notification.routes.js";
+import notificationRoutes, { adminNotificationsRouter } from "./routes/notification.routes.js";
 import {
   paymentsRouter,
   razorpayWebhookRouter,
@@ -57,12 +57,14 @@ import { adminRewardsRouter } from "./routes/admin-rewards.routes.js";
 import { newsletterRouter } from "./routes/newsletter.routes.js";
 import { adminPushRouter, pushRouter } from "./routes/push.routes.js";
 import { adminFinanceRouter } from "./routes/admin-finance.routes.js";
+import { trackingRouter } from "./routes/tracking.routes.js";
 import {
   adminDashboardRouter,
   adminOperationsRouter,
 } from "./routes/admin-operations.routes.js";
 import { adminAuditRouter, adminStaffRouter } from "./routes/admin-staff.routes.js";
 import { adminSupportRouter, supportRouter } from "./routes/support.routes.js";
+import { adminKycRouter, kycRouter } from "./routes/kyc.routes.js";
 
 export function createApp(options = {}) {
   const app = express();
@@ -86,6 +88,8 @@ export function createApp(options = {}) {
         "Idempotency-Key",
       ],
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      // The file name of PDF and CSV downloads.
+      exposedHeaders: ["Content-Disposition"],
     }),
   );
   app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
@@ -144,6 +148,8 @@ export function createApp(options = {}) {
   app.use("/api/v1/admin/support", adminSupportRouter);
   app.use("/api/v1/admin/rewards", adminRewardsRouter);
   app.use("/api/v1/admin/push", adminPushRouter);
+  app.use("/api/v1/admin/notifications", adminNotificationsRouter);
+  app.use("/api/v1/admin/kyc", adminKycRouter);
   app.use("/api/v1/admin", adminCatalogRoutes);
   app.use("/api/v1/restaurants", restaurantsRouter);
   app.use("/api/v1/categories", categoriesRouter);
@@ -164,7 +170,9 @@ export function createApp(options = {}) {
   app.use("/api/v1/referrals", referralsRouter);
   app.use("/api/v1/rewards", rewardsRouter);
   app.use("/api/v1/newsletter", newsletterRouter);
+  app.use("/api/v1/kyc", kycRouter);
   app.use("/api/v1/geo", geoRoutes);
+  app.use("/api/v1/tracking", trackingRouter);
 
   app.use(notFound);
   app.use(errorHandler);

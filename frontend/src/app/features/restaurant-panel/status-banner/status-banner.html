@@ -9,6 +9,8 @@
     }
     @if (restaurant().status === 'rejected' && showFixLink()) {
       <a class="bb-btn bb-btn--outlined bb-btn--small" routerLink="/restaurant/details">Update details</a>
+    } @else if (restaurant().status === 'resubmission_requested' && showFixLink()) {
+      <a class="bb-btn bb-btn--outlined bb-btn--small" routerLink="/restaurant/verification">Open verification</a>
     }
   </div>
 </div>

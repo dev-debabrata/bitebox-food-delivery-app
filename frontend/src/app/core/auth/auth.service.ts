@@ -26,6 +26,7 @@ import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../../shared/models/api.models';
 import {
   AuthSession,
+  CodeSent,
   ChangePasswordRequest,
   LoginRequest,
   Permission,
@@ -36,6 +37,7 @@ import {
   User,
 } from '../../shared/models/user.models';
 import { errorCode } from '../services/api-error';
+import { inBackground } from '../services/page-loader';
 
 export interface SessionHint {
   name: string;
@@ -67,6 +69,26 @@ export class AuthService {
   readonly isAuthenticated = computed(() => this._user() !== null);
   readonly role = computed(() => this._user()?.role ?? null);
   private readonly permissions = computed(() => new Set(this._user()?.permissions ?? []));
+
+  private readonly _phoneCodes = signal<boolean | null>(null);
+  private methodsChecked = false;
+  /**
+   * Whether the API can text codes (phone sign-in, number verification): false while no SMS
+   * provider is set up (the pages then say so instead of failing), null until known. Call
+   * `checkMethods()` first.
+   */
+  readonly phoneCodes = this._phoneCodes.asReadonly();
+
+  checkMethods(): void {
+    if (!this.isBrowser || this.methodsChecked) return;
+    this.methodsChecked = true;
+    inBackground(
+      this.http.get<ApiResponse<{ phone: boolean }>>(`${this.baseUrl}/methods`),
+    ).subscribe({
+      next: (res) => this._phoneCodes.set(res.data.phone),
+      error: () => (this.methodsChecked = false),
+    });
+  }
 
   /** Admin permission check for menus and guards (the API enforces the real rule). */
   can(permission: Permission): boolean {
@@ -101,6 +123,46 @@ export class AuthService {
     return this.http
       .post<ApiResponse<AuthSession>>(`${this.baseUrl}/register`, request)
       .pipe(map((res) => this.applySession(res.data)));
+  }
+
+  /** Sign-up step 1: the API checks the email and number are free, then texts a code. */
+  requestSignupCode(email: string, phone: string): Observable<CodeSent> {
+    return this.sendCode('register/code', { email, phone });
+  }
+
+  /** Texts a sign-in code (the API answers the same whether or not the number has an account). */
+  requestLoginCode(phone: string): Observable<CodeSent> {
+    return this.sendCode('otp/request', { phone });
+  }
+
+  loginWithCode(phone: string, code: string): Observable<User> {
+    return this.http
+      .post<ApiResponse<AuthSession>>(`${this.baseUrl}/otp/login`, { phone, code })
+      .pipe(map((res) => this.applySession(res.data)));
+  }
+
+  requestPhoneVerification(): Observable<CodeSent> {
+    return this.sendCode('phone/verification', {});
+  }
+
+  verifyPhone(code: string): Observable<User> {
+    return this.http
+      .post<ApiResponse<{ user: User }>>(`${this.baseUrl}/phone/verify`, { code })
+      .pipe(map((res) => this.setUser(res.data.user)));
+  }
+
+  resendEmailVerification(): Observable<string> {
+    return this.http
+      .post<ApiResponse<null>>(`${this.baseUrl}/email/verification`, {})
+      .pipe(map((res) => res.message));
+  }
+
+  verifyEmail(token: string): Observable<string> {
+    return this.http.post<ApiResponse<null>>(`${this.baseUrl}/email/verify`, { token }).pipe(
+      map((res) => res.message),
+      // Signed in on this device: show the new state right away.
+      tap(() => this._user.update((u) => (u ? { ...u, emailVerified: true } : u))),
+    );
   }
 
   refresh(): Observable<string> {
@@ -155,13 +217,9 @@ export class AuthService {
   }
 
   updateProfile(request: UpdateProfileRequest): Observable<User> {
-    return this.http.patch<ApiResponse<{ user: User }>>(`${this.baseUrl}/me`, request).pipe(
-      map((res) => res.data.user),
-      tap((user) => {
-        this._user.set(user);
-        writeHint(user);
-      }),
-    );
+    return this.http
+      .patch<ApiResponse<{ user: User }>>(`${this.baseUrl}/me`, request)
+      .pipe(map((res) => this.setUser(res.data.user)));
   }
 
   changePassword(request: ChangePasswordRequest): Observable<string> {
@@ -189,6 +247,19 @@ export class AuthService {
     this._accessToken.set(null);
     this._hint.set(null);
     if (this.isBrowser) localStorage.removeItem(HINT_KEY);
+  }
+
+  /** The endpoints that text a code answer with its timings and a message to show. */
+  private sendCode(path: string, body: object): Observable<CodeSent> {
+    return this.http
+      .post<ApiResponse<Omit<CodeSent, 'message'>>>(`${this.baseUrl}/${path}`, body)
+      .pipe(map((res) => ({ ...res.data, message: res.message })));
+  }
+
+  private setUser(user: User): User {
+    this._user.set(user);
+    if (this.isBrowser) writeHint(user);
+    return user;
   }
 
   private applySession(session: AuthSession): User {

@@ -20,10 +20,28 @@ app.conf.beat_schedule = {
         "schedule": 15.0,  # apps/dispatch/config.py DISPATCH["sweep_interval_seconds"]
         "options": {"expires": 14},  # a backlog never runs stale sweeps
     },
+    # Notification deliveries whose retry time has come, and inbox rows past 90 days.
+    "notifications-retry": {
+        "task": "notifications.retry",
+        "schedule": 60.0,
+        "options": {"expires": 55},
+    },
+    "notifications-purge": {"task": "notifications.purge", "schedule": 24 * 60 * 60.0},
+    # Tracking points past their retention period (apps/tracking/services.py).
+    "tracking-purge": {"task": "tracking.purge", "schedule": 24 * 60 * 60.0},
+    # Expired refresh sessions and old sign-in codes (apps/accounts/tasks.py).
+    "accounts-purge": {"task": "accounts.purge", "schedule": 24 * 60 * 60.0},
     # Payments and refunds the browser and the webhooks missed (apps/payments/services.py).
     "payments-reconcile": {
         "task": "payments.reconcile",
         "schedule": 300.0,
         "options": {"expires": 290},
+    },
+    # Coin expiry, unclosed coin holds, referral windows, campaign dates, birthdays
+    # (apps/coins/tasks.py; Node REWARDS_JOBS.sweepIntervalMs).
+    "coins-rewards-sweep": {
+        "task": "coins.rewards_sweep",
+        "schedule": 120.0,
+        "options": {"expires": 110},
     },
 }

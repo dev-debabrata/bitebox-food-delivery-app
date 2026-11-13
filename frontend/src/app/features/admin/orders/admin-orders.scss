@@ -99,9 +99,21 @@
   font-weight: 700;
 }
 
-bb-order-status-chip {
+// Order status and whether it is paid: side by side on phones, stacked from tablet up.
+.badges {
   grid-area: status;
-  justify-self: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--bb-space-1) var(--bb-space-2);
+
+  @include bp.tablet-up {
+    flex-direction: column;
+  }
+}
+
+.pay {
+  font-size: 0.75rem;
 }
 
 .chev {

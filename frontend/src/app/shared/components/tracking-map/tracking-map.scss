@@ -63,3 +63,10 @@
     box-shadow: 0 0 0 14px rgb(31 138 76 / 0%);
   }
 }
+
+// The path the rider has already taken (a Leaflet SVG path, outside this view).
+:host ::ng-deep path.bb-track-trail {
+  stroke: var(--bb-teal-ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

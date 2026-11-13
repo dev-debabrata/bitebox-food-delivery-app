@@ -11,6 +11,9 @@ import { notify, notifyAdmins } from "./notification.service.js";
 import { escapeRegex, paginationMeta } from "../utils/pagination.js";
 import { toPoint } from "../utils/geo.js";
 import { uniqueSlug } from "../utils/slug.js";
+import { env } from "../config/env.js";
+import { User } from "../models/user.model.js";
+import * as kyc from "./kyc.service.js";
 
 const OWNER_FIELDS = [
   "name",
@@ -26,6 +29,13 @@ const OWNER_FIELDS = [
   "avgPrepTimeMinutes",
   "openingTime",
   "closingTime",
+  "ownerName",
+  "gstRegistered",
+  "gstin",
+  "fssaiNumber",
+  "fssaiValidUntil",
+  "photos",
+  "weeklyHours",
 ];
 
 const pick = (source, keys) =>
@@ -68,7 +78,42 @@ const STATUS_NOTICE = {
     title: "Your restaurant is suspended",
     body: "Customers cannot order until BiteBox reinstates it.",
   },
+  [RESTAURANT_STATUS.RESUBMISSION_REQUESTED]: {
+    title: "Please update your documents",
+    body: "Fix what is asked on the Verification page, then send it for review again.",
+  },
 };
+const NEEDS_REASON = [
+  RESTAURANT_STATUS.REJECTED,
+  RESTAURANT_STATUS.SUSPENDED,
+  RESTAURANT_STATUS.RESUBMISSION_REQUESTED,
+];
+
+let kycOverride = null;
+/** Tests: require verification before approval (true/false), or null for the configured behaviour. */
+export const useRestaurantKyc = (value) => (kycOverride = value);
+
+/** What stops approval: the FSSAI number, documents and the bank account (when required). */
+export async function kycGaps(restaurant) {
+  if (!(kycOverride ?? env.restaurantKycRequired)) return [];
+  const owner = await User.findById(restaurant.owner._id ?? restaurant.owner);
+  return [...(restaurant.fssaiNumber ? [] : ["FSSAI number"]), ...(await kyc.missing(owner))];
+}
+
+/** The owner fixed what was asked: back to the review queue. */
+export async function resubmit(ownerId) {
+  const restaurant = await requireOwnRestaurant(ownerId);
+  if (![RESTAURANT_STATUS.REJECTED, RESTAURANT_STATUS.RESUBMISSION_REQUESTED].includes(restaurant.status))
+    throw ApiError.conflict("Your restaurant is not waiting for changes");
+  restaurant.status = RESTAURANT_STATUS.PENDING;
+  restaurant.statusReason = undefined;
+  const saved = await restaurant.save();
+  await notifyAdmins(
+    reviewRequest(saved, "Restaurant resubmitted", "The owner sent it for review again."),
+    PERMISSIONS.RESTAURANTS_MANAGE,
+  );
+  return saved;
+}
 
 export async function createOwnRestaurant(ownerId, input) {
   if (await Restaurant.exists({ owner: ownerId })) {
@@ -198,12 +243,13 @@ export async function adminSetStatus(id, nextStatus, reason, adminId) {
       `Cannot change a ${current.status} restaurant to ${nextStatus}`,
     );
   }
-  if (
-    (nextStatus === RESTAURANT_STATUS.REJECTED ||
-      nextStatus === RESTAURANT_STATUS.SUSPENDED) &&
-    !reason
-  ) {
+  if (NEEDS_REASON.includes(nextStatus) && !reason) {
     throw ApiError.badRequest("A reason is required");
+  }
+  if (nextStatus === RESTAURANT_STATUS.APPROVED) {
+    const gaps = await kycGaps(await Restaurant.findById(id));
+    if (gaps.length)
+      throw ApiError.conflict(`Finish the verification first: ${gaps.join(", ")}`, "KYC_INCOMPLETE");
   }
 
   const updated = await Restaurant.findOneAndUpdate(
@@ -227,7 +273,7 @@ export async function adminSetStatus(id, nextStatus, reason, adminId) {
       type: `restaurant.${nextStatus}`,
       title: notice.title,
       body: reason ? `${notice.body} Reason: ${reason}` : notice.body,
-      link: "/restaurant",
+      link: nextStatus === RESTAURANT_STATUS.RESUBMISSION_REQUESTED ? "/restaurant/verification" : "/restaurant",
     });
   }
   return updated;
@@ -345,6 +391,10 @@ export function publicView(restaurant) {
     statusReason: _reason,
     reviewedAt: _at,
     reviewedBy: _by,
+    ownerName: _ownerName,
+    gstRegistered: _gst,
+    gstin: _gstin,
+    fssaiValidUntil: _fssaiUntil,
     ...rest
   } = json;
   return rest;

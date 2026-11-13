@@ -6,10 +6,13 @@ export const RESTAURANT_STATUS = Object.freeze({
   APPROVED: "approved",
   REJECTED: "rejected",
   SUSPENDED: "suspended",
+  // BiteBox asked for documents or details again; the owner fixes them and resubmits.
+  RESUBMISSION_REQUESTED: "resubmission_requested",
 });
 
 export const ADMIN_STATUS_TRANSITIONS = Object.freeze({
-  pending: ["approved", "rejected"],
+  pending: ["approved", "rejected", "resubmission_requested"],
+  resubmission_requested: ["approved", "rejected"],
   approved: ["suspended"],
   suspended: ["approved"],
   rejected: ["approved"],
@@ -102,6 +105,16 @@ const restaurantSchema = new mongoose.Schema(
     },
     avgPrepTimeMinutes: { type: Number, default: 25, min: 5, max: 180 },
 
+    // Legal and tax details (shown to admins; the FSSAI number is also shown to customers).
+    ownerName: { type: String, trim: true, maxlength: 80 },
+    gstRegistered: { type: Boolean, default: false },
+    gstin: { type: String, trim: true, uppercase: true, maxlength: 15 },
+    fssaiNumber: { type: String, trim: true, maxlength: 14 },
+    fssaiValidUntil: { type: Date },
+    photos: { type: [String], default: [] }, // up to 8 gallery images (our uploads)
+    // { mon: [{ open: "09:00", close: "23:00" }], ..., sun: [] }; unset: the daily hours below.
+    weeklyHours: { type: mongoose.Schema.Types.Mixed, default: undefined },
+    // Daily hours (one slot), used when there are no weekly hours.
     openingTime: { type: String, required: true, match: TIME_PATTERN },
     closingTime: { type: String, required: true, match: TIME_PATTERN },
     timezone: { type: String, default: "Asia/Kolkata" },
@@ -132,16 +145,20 @@ const restaurantSchema = new mongoose.Schema(
   },
 );
 
-function minutesNow(timezone) {
+export const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
+/** The minute of the day and the day of the week ("mon") in a time zone. */
+function localNow(timezone, now = new Date()) {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: timezone,
+    weekday: "short",
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
   })
-    .formatToParts(new Date())
+    .formatToParts(now)
     .reduce((acc, p) => ({ ...acc, [p.type]: p.value }), {});
-  return Number(parts.hour) * 60 + Number(parts.minute);
+  return { minute: Number(parts.hour) * 60 + Number(parts.minute), day: parts.weekday.toLowerCase().slice(0, 3) };
 }
 
 const toMinutes = (hhmm) => {
@@ -149,14 +166,30 @@ const toMinutes = (hhmm) => {
   return h * 60 + m;
 };
 
+/** The part of a slot on its own day (an overnight slot runs to midnight). */
+const openToday = ([open, close], now) =>
+  open === close || (open < close ? now >= open && now < close : now >= open); // equal: 24 hours
+
+/**
+ * Open within today's hours in the restaurant's time zone (same rules as Django). Weekly hours,
+ * when set, give each day its own slots; a slot ending after midnight still counts next morning.
+ */
+export function isOpenAt(r, now = new Date()) {
+  if (!r.isAcceptingOrders) return false;
+  const { minute, day } = localNow(r.timezone || "Asia/Kolkata", now);
+  const slots = (d) => (r.weeklyHours?.[d] ?? []).map((s) => [toMinutes(s.open), toMinutes(s.close)]);
+  let today, yesterday;
+  if (r.weeklyHours) {
+    today = slots(day);
+    yesterday = slots(DAYS[(DAYS.indexOf(day) + 6) % 7]);
+  } else if (r.openingTime && r.closingTime) {
+    today = yesterday = [[toMinutes(r.openingTime), toMinutes(r.closingTime)]];
+  } else return false;
+  return today.some((s) => openToday(s, minute)) || yesterday.some(([open, close]) => close < open && minute < close);
+}
+
 restaurantSchema.virtual("isOpenNow").get(function isOpenNow() {
-  if (!this.isAcceptingOrders || !this.openingTime || !this.closingTime)
-    return false;
-  const now = minutesNow(this.timezone || "Asia/Kolkata");
-  const open = toMinutes(this.openingTime);
-  const close = toMinutes(this.closingTime);
-  if (open === close) return true; // open 24 hours
-  return open < close ? now >= open && now < close : now >= open || now < close;
+  return isOpenAt(this);
 });
 
 restaurantSchema.index({ owner: 1 }, { unique: true });

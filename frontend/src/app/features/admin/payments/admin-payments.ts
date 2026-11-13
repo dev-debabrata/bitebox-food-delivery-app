@@ -6,12 +6,14 @@ import { errorMessage } from '../../../core/services/api-error';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ReportsService } from '../../../core/services/reports.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
+import { OrderStatusChip } from '../../../shared/components/order-status-chip/order-status-chip';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { pagedList } from '../../../shared/list/paged-list';
 import { PaymentStatus } from '../../../shared/models/checkout.models';
 import {
   AdminPayment,
+  OrderState,
   PAYMENT_STATUS_LABEL,
   PROVIDER_LABEL,
   PaymentMethod,
@@ -31,6 +33,7 @@ import { openRefund } from './refund-dialog/refund-dialog';
     IconComponent,
     PaginationComponent,
     EmptyState,
+    OrderStatusChip,
     PageHeader,
     InrPipe,
   ],
@@ -46,7 +49,7 @@ export class AdminPayments {
   protected readonly statusLabel = PAYMENT_STATUS_LABEL;
   protected readonly providerLabel = PROVIDER_LABEL;
   protected readonly canRefund = inject(AuthService).can('refunds:manage');
-  protected readonly filterModel = signal({ status: '', method: '', search: '' });
+  protected readonly filterModel = signal({ status: '', method: '', orderState: '', search: '' });
   protected readonly filters = form(this.filterModel);
   protected readonly statusOptions: SelectOption[] = [
     { value: '', label: 'Any status' },
@@ -60,14 +63,22 @@ export class AdminPayments {
     { value: 'cod', label: 'Cash on delivery' },
     { value: 'online', label: 'Online' },
   ];
+  // Cancelled and rejected orders that were paid still hold money: finance refunds them from here.
+  protected readonly orderStateOptions: SelectOption[] = [
+    { value: '', label: 'Any order' },
+    { value: 'active', label: 'Active orders' },
+    { value: 'delivered', label: 'Delivered' },
+    { value: 'cancelled', label: 'Cancelled or rejected' },
+  ];
   protected readonly refunding = signal<string | null>(null);
 
   protected readonly list = pagedList(
     (page, limit) => {
-      const { status, method, search } = this.filterModel();
+      const { status, method, orderState, search } = this.filterModel();
       return this.api.payments({
         status: (status || undefined) as PaymentStatus | undefined,
         method: (method || undefined) as PaymentMethod | undefined,
+        orderState: (orderState || undefined) as OrderState | undefined,
         search: search.trim() || undefined,
         page,
         limit,

@@ -23,7 +23,7 @@ import {
   customerStatusLabel,
 } from '../../../../shared/models/checkout.models';
 import { AdminOrder, TRACKED_STATUSES } from '../../../../shared/models/order-management.models';
-import { InrPipe } from '../../../../shared/pipes/money.pipes';
+import { DistancePipe, InrPipe } from '../../../../shared/pipes/money.pipes';
 import { PAYMENT_STATUS_LABEL, PROVIDER_LABEL } from '../../../../shared/models/payment.models';
 import {
   BB_DIALOG_DATA,
@@ -54,6 +54,7 @@ const CANCELLABLE: OrderStatus[] = [
     TrackingMap,
     VegBadge,
     InrPipe,
+    DistancePipe,
   ],
   templateUrl: './admin-order-dialog.html',
   styleUrl: './admin-order-dialog.scss',

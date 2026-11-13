@@ -115,6 +115,13 @@ export const ADMIN_ROUTES: Routes = [
       import('./operations/performance/delivery-performance').then((m) => m.DeliveryPerformancePage),
   },
   {
+    path: 'operations/notifications',
+    title: 'Notification log | BiteBox Admin',
+    canActivate: [can('operations:view')],
+    loadComponent: () =>
+      import('./operations/notification-log/notification-log').then((m) => m.NotificationLog),
+  },
+  {
     path: 'orders',
     title: 'Orders | BiteBox Admin',
     canActivate: [can('orders:view')],
@@ -146,6 +153,13 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () =>
       import('./delivery-partners/admin-delivery-partners').then((m) => m.AdminDeliveryPartners),
   },
+  {
+    path: 'delivery-partners/:id',
+    title: 'Delivery partner | BiteBox Admin',
+    canActivate: [can('riders:manage')],
+    loadComponent: () =>
+      import('./delivery-partners/rider-review/admin-rider-review').then((m) => m.AdminRiderReview),
+  },
 
   // Finance
   {
@@ -166,6 +180,12 @@ export const ADMIN_ROUTES: Routes = [
     title: 'Refunds | BiteBox Admin',
     canActivate: [can('finance:view')],
     loadComponent: () => import('./finance/refunds/refunds').then((m) => m.RefundsPage),
+  },
+  {
+    path: 'finance/ledger',
+    title: 'Ledger | BiteBox Admin',
+    canActivate: [can('finance:view')],
+    loadComponent: () => import('./finance/ledger/ledger').then((m) => m.LedgerPage),
   },
   {
     path: 'finance/commission',

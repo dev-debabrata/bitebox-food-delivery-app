@@ -10,6 +10,8 @@ import * as reviews from "../services/review.service.js";
 import { parsePagination } from "../utils/pagination.js";
 import { riderListRules } from "../validators/review.validators.js";
 import { respond } from "../utils/api-response.js";
+import * as partnerFinance from "../controllers/partner-finance.controller.js";
+import { mongoIdParam, paginationRules } from "../validators/common.validators.js";
 import * as rules from "../validators/order-management.validators.js";
 import { daysRules } from "../validators/payment.validators.js";
 
@@ -17,6 +19,8 @@ export default Router()
   .use(authenticate, authorize(ROLES.DELIVERY))
   .get("/me", c.riderDashboard)
   .put("/me/vehicle", validate(rules.vehicleRules), c.riderUpdateVehicle)
+  .patch("/me/details", validate(rules.riderDetailsRules), c.riderUpdateDetails)
+  .post("/me/resubmit", c.riderResubmit)
   .patch(
     "/me/availability",
     validate(rules.availabilityRules),
@@ -51,6 +55,9 @@ export default Router()
       ),
     ),
   )
+  .get("/payouts", validate(paginationRules), partnerFinance.myPayouts)
+  .get("/payouts/:id/statement", validate([mongoIdParam()]), partnerFinance.myStatement)
+  .get("/settlements", validate(paginationRules), partnerFinance.mySettlements)
   // Today, this week and all-time deliveries and earnings, plus the rating.
   .get("/stats", respond((req) => reports.riderStats(req.user._id)))
   .get(

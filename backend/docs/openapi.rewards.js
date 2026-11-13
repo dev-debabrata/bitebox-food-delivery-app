@@ -93,6 +93,7 @@ export const rewardsSchemas = {
     rewardCoins: { type: "integer" },
     startAt: { type: "string", format: "date-time" },
     endAt: { type: "string", format: "date-time" },
+    coinsExpireAt: { type: ["string", "null"], format: "date-time" },
     status: { type: "string", enum: ["DRAFT", "SCHEDULED", "ACTIVE", "PAUSED", "EXPIRED", "COMPLETED"] },
     conditions: { type: "object" },
     limits: { type: "object" },
@@ -109,6 +110,11 @@ export const rewardsSchemas = {
       rewardCoins: { type: "integer", minimum: 1 },
       startAt: { type: "string", format: "date-time" },
       endAt: { type: "string", format: "date-time" },
+      coinsExpireAt: {
+        type: ["string", "null"],
+        format: "date-time",
+        description: "When this campaign's coins expire (after endAt). null: the settings' expiry period",
+      },
       conditions: obj({
         customerGroup: { type: "string", enum: ["ALL", "NEW", "EXISTING", "INACTIVE"] },
         inactiveDays: { type: "integer" },

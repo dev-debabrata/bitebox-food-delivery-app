@@ -24,10 +24,22 @@ from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.cart.models import Cart, CartItem
+from apps.coins import events as reward_events
 from apps.menus.models import FoodItem
 from apps.orders import presenters
-from apps.orders.models import Order, OrderStatus, PaymentMethod, PaymentStatus
-from apps.orders.notifications import notify_new_order, notify_refund
+from apps.orders.models import (
+    ACTIVE_STATUSES,
+    Order,
+    OrderStatus,
+    PaymentMethod,
+    PaymentStatus,
+)
+from apps.orders.notifications import (
+    notify_new_order,
+    notify_payment_failed,
+    notify_refund,
+    notify_refund_started,
+)
 from apps.orders.notifications import rupees as _rupees
 from apps.orders.workflow import Actor, transition
 from apps.realtime.events import emit_order_updated
@@ -239,7 +251,7 @@ def abandon_unpaid(user: User, order_id: uuid.UUID) -> dict[str, bool]:
                 return {"restored": False}
             cart.restaurant_id = order.restaurant_id
             cart.coupon_code = order.coupon_code
-            cart.coins_to_redeem = 0
+            cart.coins_to_redeem = order.coins_redeemed or 0  # asked for again at checkout
             cart.save()
             CartItem.objects.bulk_create(
                 [CartItem(cart=cart, food_item_id=f, quantity=q) for f, q in lines if f in live]
@@ -281,6 +293,7 @@ def mark_paid(payment_id: uuid.UUID, provider_payment_id: str) -> Payment:
                 "Online payment received; order sent to the restaurant",
                 extra={"order_id": str(order.pk)},
             )
+            reward_events.order_paid(order)  # spend the coins it held (best-effort)
             notify_new_order(order, "paid online")
         else:
             Order.objects.filter(pk=payment.order_id).update(payment_status=P.PAID, updated_at=now)
@@ -304,6 +317,9 @@ def mark_failed(payment_id: uuid.UUID, reason: str | None) -> Payment:
         if failed:
             Order.objects.filter(pk=payment.order_id, payment_status=P.PENDING).update(
                 payment_status=P.FAILED
+            )
+            notify_payment_failed(
+                Order.objects.get(pk=payment.order_id), payment.failure_reason or "Payment failed"
             )
     return payment
 
@@ -457,6 +473,7 @@ def _open_refund(
         return Refund.objects.get(idempotency_key=key)
     if not manual:
         transaction.on_commit(lambda: process_refund(refund.pk))
+        notify_refund_started(Order.objects.get(pk=payment.order_id), amount_paise)
     return refund
 
 
@@ -511,6 +528,10 @@ def _finish_refund(refund: Refund, *, ok: bool) -> None:
             )
         _sync_payment_status(refund.payment_id, now)
     order = Order.objects.get(pk=Payment.objects.get(pk=refund.payment_id).order_id)
+    if ok and order.status == OrderStatus.DELIVERED:
+        from apps.finance.services import apply_refund
+
+        apply_refund(order, refund.pk, refund.amount_paise)
     logger.info(
         "Refund processed" if ok else "Refund failed",
         extra={"order_id": str(order.pk), "refund_id": str(refund.pk)},
@@ -658,13 +679,22 @@ def _admin_row(p: Payment) -> dict[str, Any]:
     }
 
 
+ORDER_STATES: dict[str, tuple[str, ...]] = {
+    "active": ACTIVE_STATUSES,
+    "delivered": (OrderStatus.DELIVERED,),
+    "cancelled": (OrderStatus.CANCELLED, OrderStatus.REJECTED),
+}
+
+
 def admin_list(query: dict[str, Any], page: Page) -> dict[str, Any]:
-    """Newest first; filters by status, method, provider, dates and a search over the order
-    number and the customer's name, email or phone."""
+    """Newest first; filters by status, method, provider, the order's state, dates and a search
+    over the order number and the customer's name, email or phone."""
     qs = Payment.objects.select_related("order", "user")
     for field in ("status", "method", "provider"):
         if query.get(field):
             qs = qs.filter(**{field: query[field]})
+    if query.get("order_state"):
+        qs = qs.filter(order__status__in=ORDER_STATES[query["order_state"]])
     if query.get("from"):
         qs = qs.filter(created_at__gte=query["from"])
     if query.get("to"):

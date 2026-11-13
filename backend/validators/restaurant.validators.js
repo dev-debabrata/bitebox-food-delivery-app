@@ -90,7 +90,45 @@ function restaurantRules({ partial }) {
       .toInt(),
     field("openingTime").matches(TIME).withMessage("Use 24-hour HH:mm"),
     field("closingTime").matches(TIME).withMessage("Use 24-hour HH:mm"),
+    // Legal and tax details, gallery and weekly hours (same rules as Django).
+    body("ownerName").optional().isString().trim().isLength({ max: 80 }),
+    body("gstRegistered").optional().isBoolean({ strict: true }),
+    body("gstin")
+      .optional()
+      .isString()
+      .trim()
+      .toUpperCase()
+      .custom((v) => v === "" || GSTIN.test(v))
+      .withMessage("Enter a valid 15-character GSTIN"),
+    body("gstin")
+      .if(body("gstRegistered").equals("true"))
+      .custom((v) => Boolean(v))
+      .withMessage("Enter your GSTIN"),
+    body("fssaiNumber")
+      .optional()
+      .isString()
+      .trim()
+      .custom((v) => v === "" || /^\d{14}$/.test(v))
+      .withMessage("An FSSAI number has 14 digits"),
+    body("fssaiValidUntil").optional({ values: "null" }).isISO8601().withMessage("Use a date").toDate(),
+    body("photos").optional().isArray({ max: 8 }).withMessage("Add up to 8 photos"),
+    imageUrlBody("photos.*"),
+    body("weeklyHours")
+      .optional({ values: "null" })
+      .custom(validWeeklyHours)
+      .withMessage("Give each day a list of opening times (HH:mm)"),
   ];
+}
+
+const GSTIN = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+function validWeeklyHours(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  if (Object.keys(value).some((d) => !DAYS.includes(d))) return false;
+  return DAYS.every((d) => {
+    const slots = value[d] ?? [];
+    return Array.isArray(slots) && slots.length <= 3 && slots.every((s) => TIME.test(s?.open) && TIME.test(s?.close));
+  });
 }
 
 export const createRestaurantRules = restaurantRules({ partial: false });

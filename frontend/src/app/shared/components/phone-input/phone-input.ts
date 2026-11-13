@@ -87,7 +87,7 @@ export class PhoneInput implements FormValueControl<string> {
   protected readonly national = signal('');
   protected readonly maxDigits = computed(() => maxMobileDigits(this.country()));
   protected readonly placeholder = computed(() =>
-    this.country() === 'IN' ? '9876543210' : `${this.maxDigits()}-digit mobile number`,
+    this.country() === 'IN' ? 'Enter mobile number' : `${this.maxDigits()}-digit mobile number`,
   );
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly numberInput = viewChild.required(TextInputComponent);

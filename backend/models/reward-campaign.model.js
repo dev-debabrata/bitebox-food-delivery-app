@@ -50,6 +50,8 @@ const campaignSchema = new mongoose.Schema(
     rewardCoins: whole(1, COIN_LIMITS.maxRewardCoins, { required: true }),
     startAt: { type: Date, required: true },
     endAt: { type: Date, required: true },
+    // When this campaign's coins expire. null = the expiry period in the reward settings.
+    coinsExpireAt: { type: Date, default: null },
     timezone: { type: String, default: "Asia/Kolkata", maxlength: 60 },
     status: { type: String, enum: Object.values(CAMPAIGN_STATUS), default: CAMPAIGN_STATUS.DRAFT },
     conditions: {
@@ -89,6 +91,8 @@ const campaignSchema = new mongoose.Schema(
 campaignSchema.pre("validate", function checkDates() {
   if (this.startAt && this.endAt && this.endAt <= this.startAt)
     this.invalidate("endAt", "The end must be after the start");
+  if (this.coinsExpireAt && this.endAt && this.coinsExpireAt <= this.endAt)
+    this.invalidate("coinsExpireAt", "Coins must stay valid until after the campaign ends");
 });
 
 campaignSchema.index({ status: 1, startAt: 1, endAt: 1 });

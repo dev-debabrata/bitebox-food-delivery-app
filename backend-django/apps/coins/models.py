@@ -408,6 +408,8 @@ class RewardCampaign(BaseModel):
     )
     start_at = models.DateTimeField()
     end_at = models.DateTimeField()
+    # When this campaign's coins expire; null = the expiry period in the reward settings.
+    coins_expire_at = models.DateTimeField(null=True, blank=True)
     timezone = models.CharField(max_length=60, default="Asia/Kolkata")
     status = models.CharField(
         max_length=10, choices=CampaignStatus.choices, default=CampaignStatus.DRAFT
@@ -449,6 +451,11 @@ class RewardCampaign(BaseModel):
             one_of("customer_group", CustomerGroup, "reward_campaigns_group_valid"),
             models.CheckConstraint(
                 condition=models.Q(end_at__gt=models.F("start_at")), name="reward_campaigns_dates"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(coins_expire_at__isnull=True)
+                | models.Q(coins_expire_at__gt=models.F("end_at")),
+                name="reward_campaigns_coins_expire_after_end",
             ),
             non_negative("min_order_paise", "reward_campaigns_min_order_non_negative"),
         ]
@@ -502,6 +509,12 @@ class RewardClaim(BaseModel):
         constraints = [
             one_of("reward_type", RewardType, "reward_claims_type_valid"),
             one_of("status", ClaimStatus, "reward_claims_status_valid"),
+            # One reward per campaign per order.
+            models.UniqueConstraint(
+                fields=["campaign", "order"],
+                condition=models.Q(campaign__isnull=False, order__isnull=False),
+                name="reward_claims_campaign_order",
+            ),
         ]
         indexes = [
             models.Index(fields=["user", "-created_at"], name="reward_claims_user"),
@@ -515,8 +528,8 @@ class RewardConfiguration(BaseModel):
     """
     The programme settings, one row (`key="global"`). `value` holds the nested settings in
     snake_case (earning, redemption, expiry, referral, birthday, welcome; the API shows them in
-    camelCase); missing values fall back to the defaults in apps/coins/quote.py. Validated by a
-    serializer on write (Phase 9).
+    camelCase); missing values fall back to the defaults in apps/coins/quote.py. Validated on
+    write by apps/coins/config.py.
     """
 
     key = models.CharField(max_length=20, unique=True, default="global", editable=False)

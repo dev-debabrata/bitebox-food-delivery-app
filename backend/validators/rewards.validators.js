@@ -106,6 +106,11 @@ const campaignFields = (required) => {
     need(body("rewardCoins")).isInt({ min: 1, max: COIN_LIMITS.maxRewardCoins }).withMessage("Reward: a whole number of coins").toInt(),
     need(body("startAt")).isISO8601().withMessage("Start: a date and time").toDate(),
     need(body("endAt")).isISO8601().withMessage("End: a date and time").toDate(),
+    body("coinsExpireAt")
+      .optional()
+      .custom((v) => v === null || (typeof v === "string" && !Number.isNaN(Date.parse(v))))
+      .withMessage("Coin expiry: a date and time, or empty")
+      .customSanitizer((v) => (v === null ? null : new Date(v))),
     body("timezone").optional().isString().trim().isLength({ max: 60 }),
     body("conditions.customerGroup").optional().isIn(Object.values(CUSTOMER_GROUPS)),
     body("conditions.inactiveDays").optional().isInt({ min: 1, max: 3650 }).toInt(),

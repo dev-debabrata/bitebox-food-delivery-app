@@ -3,6 +3,7 @@ import multer from "multer";
 import { env } from "../config/env.js";
 import { authenticate, authorize } from "../middleware/auth.middleware.js";
 import { createRateLimiter } from "../middleware/security.middleware.js";
+import { ALL_ROLES } from "../config/roles.js";
 import { ROLES } from "../models/user.model.js";
 import { MAX_IMAGE_BYTES, saveImage } from "../services/upload.service.js";
 import { ApiError } from "../utils/api-error.js";
@@ -50,5 +51,7 @@ const router = Router();
 router.post("/images", ...imageRoute([ROLES.RESTAURANT, ROLES.ADMIN], 60, "Image"));
 // Customers attach photos to reviews, with their own, tighter limit.
 router.post("/review-images", ...imageRoute([ROLES.CUSTOMER], 30, "Photo"));
+// A profile photo, for anyone signed in (saved with PATCH /auth/me avatarUrl).
+router.post("/avatars", ...imageRoute(ALL_ROLES, 30, "Photo"));
 
 export default router;

@@ -59,7 +59,9 @@ export async function seedUsers(password, { resetPasswords = false } = {}) {
   const passwordHash = await bcrypt.hash(password, env.bcryptRounds);
   const results = [];
   for (const seed of SEED_USERS) {
-    const update = { $setOnInsert: { ...seed, passwordHash } };
+    // Fictional development accounts: their email and phone count as verified.
+    const verified = { emailVerifiedAt: new Date(), phoneVerifiedAt: new Date() };
+    const update = { $setOnInsert: { ...seed, ...verified, passwordHash } };
     if (resetPasswords) {
       delete update.$setOnInsert.passwordHash;
       update.$set = { passwordHash };
@@ -321,6 +323,7 @@ export async function seedDeliveryData() {
         vehicleType: "motorbike",
         vehicleNumber: "KA 01 BB 0004",
         isOnline: false,
+        verificationStatus: "approved",
       },
     },
     { upsert: true },

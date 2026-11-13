@@ -13,6 +13,7 @@ export class DeliveryLayout {
     { label: 'History', icon: 'history', link: '/delivery/history' },
     { label: 'Ratings', icon: 'star', link: '/delivery/reviews' },
     { label: 'Earnings', icon: 'account_balance_wallet', link: '/delivery/earnings' },
+    { label: 'Verification', icon: 'shield-check', link: '/delivery/verification' },
     { label: 'Help & support', icon: 'life-buoy', link: '/delivery/support' },
     { label: 'Profile', icon: 'manage_accounts', link: '/delivery/profile' },
   ];

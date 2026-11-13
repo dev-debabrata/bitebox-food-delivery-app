@@ -1,0 +1,34 @@
+@use 'breakpoints' as bp;
+
+.grid {
+  display: grid;
+  gap: var(--bb-space-3);
+
+  @include bp.tablet-up {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.channel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-2);
+  margin: 0;
+  padding: var(--bb-space-3);
+  border: 1px solid var(--bb-border);
+  border-radius: var(--bb-radius-sm);
+
+  legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 4px;
+    font-weight: 600;
+    --bb-icon-size: 18px;
+  }
+}
+
+.small {
+  margin: 0;
+  font-size: 0.85rem;
+}

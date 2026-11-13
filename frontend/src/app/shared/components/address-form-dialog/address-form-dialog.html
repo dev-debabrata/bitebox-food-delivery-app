@@ -22,8 +22,8 @@
       <bb-place-search (picked)="pickPlace($event)">
         @if (geo.supported) {
           <button
-            mat-stroked-button
             type="button"
+            class="bb-btn bb-btn--outlined locate"
             (click)="useCurrentLocation()"
             [disabled]="locating()"
           >
@@ -167,15 +167,13 @@
       </div>
 
       <span class="label-title" id="label-title">Save as</span>
-      <mat-button-toggle-group
-        [formField]="form.label"
-        aria-labelledby="label-title"
+      <np-button-toggle
         class="labels"
-      >
-        <mat-button-toggle value="home"><np-icon name="house" class="mat-icon" matButtonIcon /> Home</mat-button-toggle>
-        <mat-button-toggle value="work"><np-icon name="briefcase" class="mat-icon" matButtonIcon /> Work</mat-button-toggle>
-        <mat-button-toggle value="other"><np-icon name="map-pin" class="mat-icon" matButtonIcon /> Other</mat-button-toggle>
-      </mat-button-toggle-group>
+        [formField]="form.label"
+        [options]="labelOptions"
+        aria-labelledby="label-title"
+        ariaLabel="Save as"
+      />
       <np-checkbox [formField]="form.isDefault" label="Make this my default address" />
     </section>
   </mat-dialog-content>

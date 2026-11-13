@@ -1,0 +1,50 @@
+@use 'breakpoints' as bp;
+
+h3 {
+  margin: 0 0 var(--bb-space-3);
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--bb-space-2) var(--bb-space-3);
+    padding: var(--bb-space-3) 0;
+  }
+
+  li + li {
+    border-top: 1px solid var(--bb-border);
+  }
+}
+
+.what {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 160px;
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+.code {
+  display: grid;
+  gap: var(--bb-space-2);
+  margin-top: var(--bb-space-3);
+
+  @include bp.tablet-up {
+    grid-template-columns: minmax(0, 260px) max-content; // the button only as wide as its label
+    justify-content: start;
+    align-items: start;
+
+    .bb-btn {
+      margin-top: 24px; // in line with the input under its label
+    }
+  }
+}

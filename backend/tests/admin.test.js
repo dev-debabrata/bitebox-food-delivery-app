@@ -325,6 +325,19 @@ describe("admin coupons, saved addresses and payment administration", () => {
       const row = list.body.data.items.find((p) => p.order?.id === orderId);
       assert.ok(row, "the payment is listed with its order");
       assert.equal(row.refundNeeded, true);
+      const byState = async (state) =>
+        (
+          await request(app)
+            .get(`/api/v1/admin/payments?orderState=${state}`)
+            .set(auth(admin.token))
+        ).body.data.items.map((p) => p.order?.id);
+      assert.ok((await byState("cancelled")).includes(orderId), "rejected counts as cancelled");
+      assert.ok(!(await byState("active")).includes(orderId));
+      assert.equal(
+        (await request(app).get("/api/v1/admin/payments?orderState=nope").set(auth(admin.token)))
+          .status,
+        422,
+      );
 
       const retried = await request(app)
         .post(`/api/v1/admin/payments/${row.id}/refund`)

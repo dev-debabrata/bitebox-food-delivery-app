@@ -54,6 +54,14 @@ class User(AbstractBaseUser, BaseModel):
         max_length=64, null=True, blank=True, db_index=True
     )
     password_reset_expires_at = models.DateTimeField(null=True, blank=True)
+    # Verification: set when the person proves they own the address or number.
+    email_verified_at = models.DateTimeField(null=True, blank=True)
+    email_verification_token_hash = models.CharField(
+        max_length=64, null=True, blank=True, db_index=True
+    )
+    email_verification_expires_at = models.DateTimeField(null=True, blank=True)
+    phone_verified_at = models.DateTimeField(null=True, blank=True)
+    avatar_url = models.URLField(max_length=500, null=True, blank=True)
     referral_code = models.CharField(max_length=40, null=True, blank=True)
     birth_date = models.DateField(null=True, blank=True)
     # Web Push categories (Node pushPreferences.*)
@@ -149,3 +157,33 @@ class Session(BaseModel):
     class Meta:
         db_table = "sessions"
         indexes = [models.Index(fields=["user", "revoked_at"], name="sessions_user_revoked")]
+
+
+class OtpPurpose(models.TextChoices):
+    LOGIN = "login"  # sign in with a phone number
+    VERIFY_PHONE = "verify_phone"  # a signed-in person confirms their number
+    REGISTER = "register"  # a new account confirms its number before it is created
+
+
+class OtpChallenge(BaseModel):
+    """
+    One 6-digit code sent by SMS (apps/accounts/otp.py). Only an HMAC of the code is stored; it
+    expires after OTP_TTL_SECONDS and allows OTP_MAX_ATTEMPTS tries, then a new code is needed.
+    Rows are also the rate-limit record (per number and per IP).
+    """
+
+    purpose = models.CharField(max_length=16, choices=OtpPurpose.choices)
+    phone = models.CharField(max_length=16)
+    code_hash = models.CharField(max_length=64)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    consumed_at = models.DateTimeField(null=True, blank=True)
+    ip = models.GenericIPAddressField(null=True, blank=True)
+
+    class Meta:
+        db_table = "otp_challenges"
+        indexes = [
+            models.Index(fields=["phone", "purpose", "-created_at"], name="otp_phone_recent"),
+            models.Index(fields=["ip", "-created_at"], name="otp_ip_recent"),
+        ]
+        constraints = [one_of("purpose", OtpPurpose, "otp_challenges_purpose_valid")]

@@ -19,6 +19,12 @@ export const RESTAURANT_ROUTES: Routes = [
     loadComponent: () => import('./details/restaurant-details').then((m) => m.RestaurantDetails),
   },
   {
+    path: 'verification',
+    title: 'Verification | BiteBox Restaurant',
+    loadComponent: () =>
+      import('./verification/restaurant-verification').then((m) => m.RestaurantVerification),
+  },
+  {
     path: 'menu',
     title: 'Menu | BiteBox Restaurant',
     loadComponent: () => import('./menu/restaurant-menu').then((m) => m.RestaurantMenu),

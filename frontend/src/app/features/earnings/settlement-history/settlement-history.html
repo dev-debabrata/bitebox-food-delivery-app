@@ -1,0 +1,86 @@
+<section class="bb-card history" aria-labelledby="settlements-title">
+  <header>
+    <h3 id="settlements-title">Settlements and payouts</h3>
+    <np-button-toggle [options]="views" [value]="view()" (valueChange)="select($event)" ariaLabel="Show" [showCheck]="false" />
+  </header>
+
+  @if (view() === 'settlements') {
+    @if (settlements.error(); as message) {
+      <p class="error" role="alert">{{ message }} <button class="bb-link-button" (click)="settlements.load(1)">Retry</button></p>
+    } @else if (settlements.empty()) {
+      <bb-empty-state icon="receipt" title="Nothing settled yet" message="Delivered orders appear here." />
+    } @else if (settlements.data(); as d) {
+      <ul class="rows" [class.bb-dim]="settlements.loading()">
+        @for (s of d.items; track s.orderId) {
+          <li>
+            <div class="main">
+              <strong>{{ s.orderNumber }}</strong>
+              <span class="bb-muted small">
+                {{ s.settledAt | date: 'd MMM, h:mm a' }}
+                @if (scope() === 'restaurant') {
+                  · food {{ s.foodPaise | inr }} · {{ s.commissionBp / 100 }}% commission {{ s.commissionPaise | inr }}
+                  @if (s.refundAdjustmentPaise) {
+                    · refund −{{ s.refundAdjustmentPaise | inr }}
+                  }
+                }
+              </span>
+            </div>
+            <strong class="amount">{{ s.netPaise | inr }}</strong>
+            <span class="bb-badge tone-{{ s.payout ? payoutTone[s.payout.status] : 'info' }}">
+              {{ s.payout ? payoutLabel[s.payout.status] : 'Due' }}
+            </span>
+          </li>
+        }
+      </ul>
+      <np-pagination
+        variant="compact"
+        [page]="d.pagination.page"
+        [rows]="d.pagination.limit"
+        [totalRecords]="d.pagination.total"
+        (pageChange)="settlements.goTo($event)"
+      />
+    }
+  } @else {
+    @if (payouts.error(); as message) {
+      <p class="error" role="alert">{{ message }} <button class="bb-link-button" (click)="payouts.load(1)">Retry</button></p>
+    } @else if (payouts.empty()) {
+      <bb-empty-state icon="landmark" title="No payouts yet" message="BiteBox pays out what you're owed regularly." />
+    } @else if (payouts.data(); as d) {
+      <ul class="rows" [class.bb-dim]="payouts.loading()">
+        @for (p of d.items; track p.id) {
+          <li>
+            <div class="main">
+              <strong>{{ p.orders }} {{ p.orders === 1 ? 'order' : 'orders' }}</strong>
+              <span class="bb-muted small">
+                {{ p.periodFrom | date: 'd MMM' }} – {{ p.periodTo | date: 'd MMM y' }}
+                @if (p.reference) {
+                  · ref {{ p.reference }}
+                }
+              </span>
+            </div>
+            <strong class="amount">{{ p.amountPaise | inr }}</strong>
+            <span class="bb-badge tone-{{ payoutTone[p.status] }}">{{ payoutLabel[p.status] }}</span>
+            @if (p.status !== 'cancelled') {
+              <np-button
+                size="small"
+                variant="text"
+                severity="secondary"
+                icon="file-down"
+                label=""
+                [ariaLabel]="'Download the statement for ' + p.orders + ' orders'"
+                (clicked)="statement(p)"
+              />
+            }
+          </li>
+        }
+      </ul>
+      <np-pagination
+        variant="compact"
+        [page]="d.pagination.page"
+        [rows]="d.pagination.limit"
+        [totalRecords]="d.pagination.total"
+        (pageChange)="payouts.goTo($event)"
+      />
+    }
+  }
+</section>

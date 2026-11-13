@@ -23,6 +23,12 @@ const COPY = {
     title: 'Application not approved',
     text: 'Update your restaurant details to re-submit for review.',
   },
+  resubmission_requested: {
+    icon: 'upload',
+    tone: 'info',
+    title: 'Documents needed',
+    text: 'BiteBox needs something updated before approving your restaurant. Fix it on the Verification page, then send it for review again.',
+  },
   suspended: {
     icon: 'block',
     tone: 'error',

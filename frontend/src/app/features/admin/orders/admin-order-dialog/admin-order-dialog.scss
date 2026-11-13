@@ -109,6 +109,21 @@ p {
   overflow: hidden;
 }
 
+// Where the rider marked "arrived" (far arrivals are allowed but flagged).
+.arrival {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--bb-ink-muted);
+  --bb-icon-size: 16px;
+
+  &.far {
+    color: var(--bb-warning-ink);
+    font-weight: 600;
+  }
+}
+
 .phone {
   color: var(--bb-plum);
   font-weight: 600;

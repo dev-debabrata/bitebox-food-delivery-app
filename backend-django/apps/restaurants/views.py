@@ -17,7 +17,7 @@ from apps.rbac.roles import Permission, Role
 from common.api import ApiError, ok
 from common.http import PublicCacheMixin
 from common.pagination import Page
-from common.permissions import permission_required, role_required
+from common.permissions import PUBLIC, permission_required, role_required
 from common.schema import envelope, errors
 from common.validation import parse_id, validated
 
@@ -50,6 +50,8 @@ def _slug_or_id(value: str) -> str:
 
 
 class PublicListView(PublicCacheMixin, APIView):
+    permission_classes = PUBLIC
+
     @extend_schema(
         tags=["Catalogue"],
         parameters=[
@@ -75,12 +77,16 @@ class PublicListView(PublicCacheMixin, APIView):
 
 
 class CuisinesView(PublicCacheMixin, APIView):
+    permission_classes = PUBLIC
+
     @extend_schema(tags=["Catalogue"], responses={200: ANY})
     def get(self, request: Request) -> Response:
         return ok({"cuisines": services.list_cuisines()})
 
 
 class PublicDetailView(PublicCacheMixin, APIView):
+    permission_classes = PUBLIC
+
     @extend_schema(
         tags=["Catalogue"],
         operation_id="restaurants_detail",
@@ -92,6 +98,8 @@ class PublicDetailView(PublicCacheMixin, APIView):
 
 
 class PublicMenuView(PublicCacheMixin, APIView):
+    permission_classes = PUBLIC
+
     @extend_schema(tags=["Catalogue"], responses={200: ANY, **errors(404, 422)})
     def get(self, request: Request, slug_or_id: str) -> Response:
         restaurant = services.get_public(_slug_or_id(slug_or_id))
@@ -140,6 +148,19 @@ class MyRestaurantView(APIView):
         data = validated(RestaurantInput, request.data, partial=True)
         restaurant = services.update_own(current_user(request), data)
         return ok({"restaurant": restaurant_json(restaurant)}, message="Restaurant details saved")
+
+
+class ResubmitView(APIView):
+    """After "documents needed" (or a rejection): send the restaurant for review again."""
+
+    permission_classes = PARTNER
+
+    @extend_schema(
+        tags=["Partner"], request=None, responses={200: ANY, **errors(401, 403, 404, 409)}
+    )
+    def post(self, request: Request) -> Response:
+        restaurant = services.resubmit(current_user(request))
+        return ok({"restaurant": restaurant_json(restaurant)}, message="Sent for review")
 
 
 class AcceptingOrdersView(APIView):

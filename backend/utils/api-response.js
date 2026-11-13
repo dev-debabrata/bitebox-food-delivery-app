@@ -16,3 +16,16 @@ export const respond =
       data,
     });
   };
+
+/** A file download (PDF invoices, CSV reports): `load(req)` resolves to { name, body, type }. */
+export const download = (load) => async (req, res) => {
+  const { name, body, type } = await load(req);
+  res
+    .status(200)
+    .set({
+      "Content-Type": type,
+      "Content-Disposition": `attachment; filename="${name}"`,
+      "Cache-Control": "private, no-store",
+    })
+    .send(body);
+};

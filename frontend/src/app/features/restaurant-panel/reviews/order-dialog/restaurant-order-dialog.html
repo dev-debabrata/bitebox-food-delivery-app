@@ -60,7 +60,7 @@
     </ul>
   </div>
   <div class="bb-dialog__actions">
-    <np-button severity="primary" variant="text" label="Close" (clicked)="ref.close(changed())" />
+    <np-button variant="soft" severity="secondary" label="Close" (clicked)="ref.close(changed())" />
   </div>
 } @else if (error(); as message) {
   <h2 bbDialogTitle class="bb-sr-only">Order reviews</h2>
@@ -71,7 +71,7 @@
     </div>
   </div>
   <div class="bb-dialog__actions">
-    <np-button severity="primary" variant="text" label="Close" (clicked)="ref.close(false)" />
+    <np-button variant="soft" severity="secondary" label="Close" (clicked)="ref.close(false)" />
   </div>
 } @else {
   <h2 bbDialogTitle class="bb-sr-only">Order reviews</h2>

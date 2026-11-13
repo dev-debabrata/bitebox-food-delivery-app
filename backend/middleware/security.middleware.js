@@ -14,7 +14,15 @@ function stripOperators(value) {
   return value;
 }
 
+const hasNul = (value) =>
+  typeof value === "string"
+    ? value.includes("\u0000")
+    : value !== null && typeof value === "object" && Object.values(value).some(hasNul); // arrays too
+
 export function mongoSanitize(req, _res, next) {
+  // A NUL character is never valid input, and MongoDB refuses it in regular expressions (500s).
+  if (hasNul(req.query) || hasNul(req.body))
+    return next(ApiError.badRequest("The request contains an invalid character"));
   if (req.body) stripOperators(req.body);
   if (req.params) stripOperators(req.params);
   next();

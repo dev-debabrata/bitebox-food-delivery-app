@@ -60,14 +60,39 @@
 
   <section class="bb-container menu-layout" [class.with-nav]="sections().length > 1">
     @if (sections().length > 1) {
-      <nav class="section-nav" aria-label="Menu sections">
-        <h2 class="bb-sr-only">Menu sections</h2>
+      <ng-template #sectionLinks>
         @for (s of visibleSections(); track sectionId(s)) {
-          <button type="button" (click)="scrollTo(s)">
+          <button type="button" class="section-link" (click)="jump(s)">
             {{ s.category?.name ?? 'Other' }} <span>{{ s.items.length }}</span>
           </button>
         }
+      </ng-template>
+
+      <!-- Desktop: a sticky sidebar. -->
+      <nav class="section-nav" aria-label="Menu sections">
+        <h2 class="bb-sr-only">Menu sections</h2>
+        <ng-container [ngTemplateOutlet]="sectionLinks" />
       </nav>
+
+      <!-- Phones and tablets: a floating "Menu" button opens the section list (food-app style). -->
+      <div class="menu-fab" [class.above-cart]="!!cartHere()" (document:keydown.escape)="closeMenu()">
+        @if (menuOpen()) {
+          <button type="button" class="menu-backdrop" aria-label="Close the menu list" (click)="menuOpen.set(false)"></button>
+          <div class="menu-sheet" id="menu-sheet" role="dialog" aria-label="Jump to a menu section">
+            <ng-container [ngTemplateOutlet]="sectionLinks" />
+          </div>
+        }
+        <button
+          type="button"
+          class="menu-fab-button"
+          [attr.aria-expanded]="menuOpen()"
+          aria-controls="menu-sheet"
+          (click)="toggleMenu()"
+        >
+          <np-icon [name]="menuOpen() ? 'x' : 'book-open'" class="mat-icon" matButtonIcon />
+          {{ menuOpen() ? 'Close' : 'Menu' }}
+        </button>
+      </div>
     }
 
     <div class="menu">

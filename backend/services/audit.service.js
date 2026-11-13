@@ -29,7 +29,7 @@ export const audited =
   (action, resourceType, describe) => (req, res, next) => {
     res.on("finish", () => {
       if (res.statusCode >= 400 || !req.user) return;
-      void record(
+      const write = record(
         req.user,
         {
           action,
@@ -38,10 +38,15 @@ export const audited =
           description: describe(req),
         },
         req.ip,
-      );
+      ).finally(() => pending.delete(write));
+      pending.add(write);
     });
     next();
   };
+
+// Audit rows are written after the response; tests await them with flushAudits().
+const pending = new Set();
+export const flushAudits = () => Promise.all([...pending]);
 
 export async function list({ action, role, search, from, to }, pagination) {
   const filter = {};

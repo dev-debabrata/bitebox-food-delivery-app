@@ -174,10 +174,19 @@ const orderSchema = new mongoose.Schema(
     // toJSON: the presenters decide who gets what.
     deliveryOtp: { type: String, default: null },
     deliveryOtpAttempts: { type: Number, default: 0 },
+    // Straight-line metres from the rider's last fix to the restaurant when they marked
+    // "arrived" (null without a fix). Admins only; far arrivals are flagged, not refused.
+    arrivalDistanceMeters: { type: Number, default: null },
+    // When the customer was told the rider is close (once per order).
+    approachNotifiedAt: { type: Date, default: null },
     settlement: {
       restaurantPaise: Number,
       riderPaise: Number,
       platformPaise: Number,
+      // The commission rate in effect at delivery, and refunds after delivery taken from the
+      // restaurant's share while not yet paid out.
+      commissionBp: Number,
+      refundAdjustmentPaise: Number,
       at: Date,
     },
     // The payout batch that paid each side of the settlement (null until finance pays it out).
@@ -214,6 +223,7 @@ const orderSchema = new mongoose.Schema(
         delete ret.declinedBy;
         delete ret.deliveryOtp;
         delete ret.deliveryOtpAttempts;
+        delete ret.arrivalDistanceMeters;
         return ret;
       },
     },

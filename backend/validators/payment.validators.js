@@ -29,6 +29,7 @@ export const adminPaymentListRules = [
   query("status").optional().isIn(Object.values(PAYMENT_STATUS)),
   query("method").optional().isIn(Object.values(PAYMENT_METHODS)),
   query("provider").optional().isIn(["cash_on_delivery", "razorpay", "mock"]),
+  query("orderState").optional().isIn(["active", "delivered", "cancelled"]),
   // Order number, or the customer's name, email or phone.
   query("search").optional().isString().trim().isLength({ max: 100 }),
   query("from").optional().isISO8601().toDate(),

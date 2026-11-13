@@ -1,0 +1,48 @@
+@if (prefs(); as p) {
+  <section class="bb-card settings" aria-labelledby="channels-title">
+    <header>
+      <span class="icon" aria-hidden="true"><np-icon name="mail" class="mat-icon" matButtonIcon /></span>
+      <div>
+        <h2 id="channels-title">Email and SMS</h2>
+        <p class="bb-muted">
+          Email brings receipts, refunds and account notices. SMS brings your delivery code and
+          urgent order news.
+        </p>
+      </div>
+    </header>
+
+    @if (error(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+
+    <div class="grid" role="group" aria-labelledby="channels-title">
+      @for (channel of channels; track channel.id) {
+        <fieldset class="channel">
+          <legend>
+            <np-icon [name]="channel.icon" class="mat-icon" matButtonIcon />
+            {{ channel.name }}
+          </legend>
+          @if (!p.available[channel.id]) {
+            <p class="bb-muted small">
+              @if (channel.id === 'sms') {
+                SMS isn't available.
+                <a routerLink="/account">Add a phone number</a> to your profile, if you haven't.
+              } @else {
+                Email isn't available right now.
+              }
+            </p>
+          } @else {
+            @for (category of p.categories; track category) {
+              <np-toggle
+                [label]="label[category]"
+                [checked]="p.channels[channel.id][category]"
+                [disabled]="saving() === channel.id + '.' + category"
+                (checkedChange)="toggle(channel.id, category, $event)"
+              />
+            }
+          }
+        </fieldset>
+      }
+    </div>
+  </section>
+}

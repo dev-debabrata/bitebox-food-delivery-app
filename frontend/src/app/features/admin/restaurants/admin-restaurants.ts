@@ -26,6 +26,7 @@ const TABS: { status: RestaurantStatus; label: string }[] = [
   { status: 'pending', label: 'Pending' },
   { status: 'approved', label: 'Approved' },
   { status: 'rejected', label: 'Rejected' },
+  { status: 'resubmission_requested', label: 'Documents needed' },
   { status: 'suspended', label: 'Suspended' },
 ];
 

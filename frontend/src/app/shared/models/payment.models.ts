@@ -155,6 +155,9 @@ export interface AdminPaymentDetail extends AdminPayment {
   events: { type: string; eventId: string; createdAt: string }[];
 }
 
+/** `GET /admin/payments?orderState=`: where the order stands (`cancelled` includes rejected). */
+export type OrderState = 'active' | 'delivered' | 'cancelled';
+
 export const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
   pending: 'Awaiting payment',
   paid: 'Paid',

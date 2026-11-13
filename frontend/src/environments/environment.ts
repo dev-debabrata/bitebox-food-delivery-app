@@ -1,15 +1,23 @@
+// Which API the web app talks to: 'django' (backend-django on :8000, PostgreSQL) or 'node'
+// (backend/ on :5000, MongoDB). Accounts live in each API's own database, so the whole app
+// switches together (sign-in, data and live updates).
+const backend = 'node' as 'node' | 'django';
+const api = {
+  node: 'http://localhost:5000/api/v1',
+  django: 'http://localhost:8000/api/v1',
+  // From a phone on the same Wi-Fi, use your PC's LAN IP instead, e.g.
+  // node: 'http://192.168.0.12:5000/api/v1', django: 'http://192.168.0.12:8000/api/v1',
+};
+
 export const environment = {
   production: false,
-  baseUrl: 'http://localhost:5000/api/v1', // Node API
-  // baseUrl: 'http://192.168.0.12:5000/api/v1', // from a phone on the same Wi-Fi (your PC's LAN IP)
+  baseUrl: api[backend],
 
-  // Django API: only the paths in djangoRoutes go here, everything else stays on baseUrl.
-  djangoUrl: 'http://localhost:8000/api/v1',
-  // djangoUrl: 'http://192.168.0.12:8000/api/v1',
+  // With backend 'node' only: these paths go to Django instead (step-by-step migration).
+  djangoUrl: api.django,
   djangoRoutes: ['/health'] as string[],
-  // Live updates: 'node' (Socket.IO on baseUrl) or 'django' (WebSocket at djangoUrl's /ws/).
-  // Switch together with /auth: the socket signs in with the same access token.
-  realtime: 'node' as 'node' | 'django',
+  // Live updates: Socket.IO on Node, or the WebSocket at djangoUrl's /ws/ on Django.
+  realtime: backend,
 
   map: {
     tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',

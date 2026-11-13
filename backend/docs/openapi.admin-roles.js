@@ -211,6 +211,43 @@ export const adminRolesPaths = {
       requestBody: body({ note: { type: "string" } }),
     }),
   },
+  "/admin/finance/payouts/{id}/statement": {
+    get: op(F, "Payout statement (PDF)", { who: "finance:view", params: [id] }),
+  },
+  "/admin/finance/commission/rules": {
+    get: op(F, "Global commission, per-restaurant overrides and history", { who: "finance:view" }),
+    put: op(F, "Set the global rate, or a restaurant's own (restaurantId), in basis points", {
+      who: "payouts:manage",
+      requestBody: body(
+        { restaurantId: { type: "string" }, basisPoints: { type: "integer", minimum: 0, maximum: 5000 }, note: { type: "string" } },
+        ["basisPoints"],
+      ),
+    }),
+  },
+  "/admin/finance/commission/rules/{id}": {
+    delete: op(F, "Remove a restaurant's own commission (the global rate applies)", { who: "payouts:manage", params: [id] }),
+  },
+  "/admin/finance/ledger": {
+    get: op(F, "Ledger balances per account, balance check and entries", { who: "finance:view", params: [days, ...paging] }),
+  },
+  "/admin/finance/settlements.csv": {
+    get: op(F, "Settlement report as CSV (one row per delivered order)", {
+      who: "finance:view",
+      params: [q("from", { type: "string", format: "date-time" }), q("to", { type: "string", format: "date-time" })],
+    }),
+  },
+  "/admin/orders/{id}/invoice": {
+    get: op(F, "An order's invoice (PDF)", { who: "finance:view", params: [id] }),
+  },
+  "/orders/{id}/invoice": {
+    get: { tags: ["Orders"], summary: "My delivered order's invoice (PDF)", security: bearer, parameters: [id], responses: { 200: ok("PDF"), 404: err("Not found"), 409: err("Not delivered yet") } },
+  },
+  "/my/restaurant/payouts": { get: { tags: ["Restaurant - Orders"], summary: "My payouts", security: bearer, parameters: paging, responses: { 200: ok() } } },
+  "/my/restaurant/payouts/{id}/statement": { get: { tags: ["Restaurant - Orders"], summary: "A payout statement (PDF)", security: bearer, parameters: [id], responses: { 200: ok("PDF") } } },
+  "/my/restaurant/settlements": { get: { tags: ["Restaurant - Orders"], summary: "Per-order settlements with payout status", security: bearer, parameters: paging, responses: { 200: ok() } } },
+  "/delivery/payouts": { get: { tags: ["Delivery"], summary: "My payouts", security: bearer, parameters: paging, responses: { 200: ok() } } },
+  "/delivery/payouts/{id}/statement": { get: { tags: ["Delivery"], summary: "A payout statement (PDF)", security: bearer, parameters: [id], responses: { 200: ok("PDF") } } },
+  "/delivery/settlements": { get: { tags: ["Delivery"], summary: "Per-delivery pay with payout status", security: bearer, parameters: paging, responses: { 200: ok() } } },
 
   "/admin/support/dashboard": {
     get: op(S, "Ticket counts", { who: "support:manage" }),

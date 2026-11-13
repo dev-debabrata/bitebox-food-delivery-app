@@ -12,6 +12,7 @@
     icon="search"
     clearable
   />
+  <np-select [formField]="filters.verification" ariaLabel="Verification" [options]="verificationOptions" />
   <np-toggle class="bb-toggle-success" [formField]="filters.onlineOnly" label="Online only" />
 </div>
 
@@ -40,7 +41,10 @@
               [attr.aria-label]="r.isOnline ? 'Online' : 'Offline'"
             ></span>
             <div>
-              <strong>{{ r.name }}</strong>
+              <a class="name" [routerLink]="['/admin/delivery-partners', r.id]">{{ r.name }}</a>
+              @if (r.verificationStatus; as v) {
+                <span class="bb-badge {{ verificationTone[v] }}">{{ verificationLabel[v] }}</span>
+              }
               <span class="bb-muted">{{ r.email }}{{ r.phone ? ' · ' + r.phone : '' }}</span>
             </div>
           </div>

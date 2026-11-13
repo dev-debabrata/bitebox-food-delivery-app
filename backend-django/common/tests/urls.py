@@ -11,7 +11,7 @@ from apps.rbac.roles import Permission, Role
 from common.api import ApiError, ok
 from common.exceptions import route_not_found
 from common.pagination import Page, paginate
-from common.permissions import permission_required, role_required
+from common.permissions import PUBLIC, permission_required, role_required
 
 
 class LineSerializer(serializers.Serializer):
@@ -31,6 +31,8 @@ class OrderInput(serializers.Serializer):
 
 
 class Echo(APIView):
+    permission_classes = PUBLIC
+
     def post(self, request: Request) -> Response:
         data = OrderInput(data=request.data)
         data.is_valid(raise_exception=True)
@@ -38,6 +40,7 @@ class Echo(APIView):
 
 
 class Boom(APIView):
+    permission_classes = PUBLIC
     kinds = {
         "api": ApiError.conflict("That order changed. Reload and try again.", code="ORDER_CHANGED"),
         "forbidden": PermissionDenied(),
@@ -51,6 +54,8 @@ class Boom(APIView):
 
 
 class Listing(APIView):
+    permission_classes = PUBLIC
+
     def get(self, request: Request) -> Response:
         items, meta = paginate(list(range(1, 46)), Page.from_query(request.query_params))
         return ok({"items": items, "pagination": meta})

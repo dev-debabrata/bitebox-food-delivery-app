@@ -17,6 +17,10 @@ RESPONSE_MAX = 1000
 REPORT_NOTE_MAX = 300
 MODERATION_REASON_MAX = 300
 MAX_IMAGES = 5
+# Node: config/reviews.js REVIEW_POLICY
+SUBMIT_WINDOW_DAYS = 30  # after delivery
+EDIT_WINDOW_DAYS = 30  # after posting
+MIN_REVIEWS_TO_RANK = 3  # admin analytics: top and bottom lists
 STARS = [MinValueValidator(1), MaxValueValidator(5)]
 
 

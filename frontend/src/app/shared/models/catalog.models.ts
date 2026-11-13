@@ -1,5 +1,25 @@
 import { RatingSummary } from './review.models';
-export type RestaurantStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
+/** `resubmission_requested`: BiteBox asked for documents or details again. */
+export type RestaurantStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'suspended'
+  | 'resubmission_requested';
+
+export const WEEK_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+export type WeekDay = (typeof WEEK_DAYS)[number];
+/** Opening slots per day (HH:mm); an empty list is closed. */
+export type WeeklyHours = Record<WeekDay, { open: string; close: string }[]>;
+
+/** Legal and tax details (owner and admin views; the FSSAI number is public). */
+export interface RestaurantLegal {
+  ownerName?: string;
+  gstRegistered?: boolean;
+  gstin?: string;
+  fssaiNumber?: string;
+  fssaiValidUntil?: string | null;
+}
 
 export interface Address {
   line1: string;
@@ -16,7 +36,7 @@ export interface GeoPoint {
   coordinates: [number, number];
 }
 
-export interface Restaurant {
+export interface Restaurant extends RestaurantLegal {
   id: string;
   name: string;
   slug: string;
@@ -33,6 +53,9 @@ export interface Restaurant {
   avgPrepTimeMinutes: number;
   openingTime: string;
   closingTime: string;
+  /** Per-day hours; when absent the daily opening and closing times apply. */
+  weeklyHours?: WeeklyHours | null;
+  photos?: string[];
   isAcceptingOrders: boolean;
   isOpenNow: boolean;
   status: RestaurantStatus;
@@ -72,7 +95,12 @@ export interface RestaurantInput {
   avgPrepTimeMinutes: number;
   openingTime: string;
   closingTime: string;
+  photos?: string[];
+  weeklyHours?: WeeklyHours | null;
 }
+
+/** PATCH /my/restaurant: any of the details, plus the legal ones. */
+export type RestaurantUpdate = Partial<RestaurantInput> & RestaurantLegal;
 
 export interface MenuStats {
   totalItems: number;

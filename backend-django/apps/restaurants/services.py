@@ -3,6 +3,7 @@
 import uuid
 from typing import Any
 
+from django.conf import settings
 from django.db import connection, transaction
 from django.db.models import Count, F, Q, QuerySet
 from django.db.models.fields import TextField
@@ -10,6 +11,7 @@ from django.db.models.functions import Cast
 from django.utils import timezone
 
 from apps.accounts.models import User
+from apps.kyc import services as kyc
 from apps.menus.models import FoodItem
 from apps.notifications.services import notify, notify_admins
 from apps.rbac.roles import Permission
@@ -35,7 +37,15 @@ OWNER_FIELDS = (
     "avg_prep_time_minutes",
     "opening_time",
     "closing_time",
+    "owner_name",
+    "gst_registered",
+    "gstin",
+    "fssai_number",
+    "fssai_valid_until",
+    "photos",
+    "weekly_hours",
 )
+NULLABLE = {"fssai_valid_until", "weekly_hours"}
 ADDRESS_FIELDS = ("line1", "line2", "area", "city", "state", "postal_code")
 
 STATUS_NOTICE = {
@@ -51,13 +61,23 @@ STATUS_NOTICE = {
         "Your restaurant is suspended",
         "Customers cannot order until BiteBox reinstates it.",
     ),
+    RestaurantStatus.RESUBMISSION_REQUESTED: (
+        "Please update your documents",
+        "Fix what is asked on the Verification page, then send it for review again.",
+    ),
 }
+NEEDS_REASON = (
+    RestaurantStatus.REJECTED,
+    RestaurantStatus.SUSPENDED,
+    RestaurantStatus.RESUBMISSION_REQUESTED,
+)
 
 
 def _apply(restaurant: Restaurant, data: dict[str, Any]) -> None:
     for field in OWNER_FIELDS:
         if field in data:
-            setattr(restaurant, field, data[field] if data[field] is not None else "")
+            empty = None if field in NULLABLE else ""
+            setattr(restaurant, field, data[field] if data[field] is not None else empty)
     if address := data.get("address"):
         for field in ADDRESS_FIELDS:
             setattr(restaurant, field, address.get(field, "") or "")
@@ -177,8 +197,12 @@ def admin_set_status(restaurant_id: uuid.UUID, status: str, reason: str, admin: 
         raise ApiError.not_found("Restaurant not found")
     if status not in ADMIN_STATUS_TRANSITIONS.get(current, frozenset()):
         raise ApiError.conflict(f"Cannot change a {current} restaurant to {status}")
-    if status in (RestaurantStatus.REJECTED, RestaurantStatus.SUSPENDED) and not reason:
+    if status in NEEDS_REASON and not reason:
         raise ApiError.bad_request("A reason is required")
+    if status == RestaurantStatus.APPROVED and (gaps := kyc_gaps(admin_get(restaurant_id))):
+        raise ApiError.conflict(
+            "Finish the verification first: " + ", ".join(gaps), code="KYC_INCOMPLETE"
+        )
 
     with transaction.atomic():
         # Only if nobody changed it in the meantime.
@@ -201,8 +225,37 @@ def admin_set_status(restaurant_id: uuid.UUID, status: str, reason: str, admin: 
             type=f"restaurant.{status}",
             title=title,
             body=f"{body} Reason: {reason}" if reason else body,
-            link="/restaurant",
+            link="/restaurant/verification"
+            if status == RestaurantStatus.RESUBMISSION_REQUESTED
+            else "/restaurant",
         )
+    return restaurant
+
+
+def kyc_gaps(restaurant: Restaurant) -> list[str]:
+    """What stops approval (RESTAURANT_KYC_REQUIRED): the FSSAI number, documents, bank account."""
+    if not settings.RESTAURANT_KYC_REQUIRED:
+        return []
+    gaps = [] if restaurant.fssai_number else ["FSSAI number"]
+    return gaps + kyc.missing(restaurant.owner)
+
+
+def resubmit(owner: User) -> Restaurant:
+    """The owner fixed what was asked: back to the review queue."""
+    restaurant = require_own_restaurant(owner)
+    if restaurant.status not in (
+        RestaurantStatus.REJECTED,
+        RestaurantStatus.RESUBMISSION_REQUESTED,
+    ):
+        raise ApiError.conflict("Your restaurant is not waiting for changes")
+    restaurant.status, restaurant.status_reason = RestaurantStatus.PENDING, ""
+    restaurant.save(update_fields=["status", "status_reason", "updated_at"])
+    notify_admins(
+        Permission.RESTAURANTS_MANAGE,
+        **_review_request(
+            restaurant, "Restaurant resubmitted", "The owner sent it for review again."
+        ),
+    )
     return restaurant
 
 

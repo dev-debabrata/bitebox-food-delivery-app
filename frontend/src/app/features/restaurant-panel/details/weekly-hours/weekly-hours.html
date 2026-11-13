@@ -1,0 +1,39 @@
+<np-toggle
+  [checked]="hours() !== null"
+  (checkedChange)="enable($event)"
+  label="Different hours on different days"
+/>
+
+@if (hours(); as h) {
+  <ul class="days">
+    @for (day of days; track day) {
+      @let slot = h[day][0];
+      <li>
+        <span class="name">{{ names[day] }}</span>
+        <np-toggle
+          [checked]="!!slot"
+          (checkedChange)="setOpen(day, $event)"
+          [label]="slot ? 'Open' : 'Closed'"
+        />
+        @if (slot) {
+          <np-time-picker
+            [value]="toDate(slot.open)"
+            (valueChange)="setTime(day, 'open', $event)"
+            label="Opens"
+            mode="list"
+            hourFormat="12"
+            [interval]="30"
+          />
+          <np-time-picker
+            [value]="toDate(slot.close)"
+            (valueChange)="setTime(day, 'close', $event)"
+            label="Closes"
+            mode="list"
+            hourFormat="12"
+            [interval]="30"
+          />
+        }
+      </li>
+    }
+  </ul>
+}

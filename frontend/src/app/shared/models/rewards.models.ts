@@ -201,6 +201,16 @@ export const CAMPAIGN_STATUS_LABEL: Record<CampaignStatus, string> = {
   COMPLETED: 'Completed',
 };
 
+/** Badge colour per status (`.bb-badge` tone class); ended campaigns are red. */
+export const CAMPAIGN_STATUS_TONE: Record<CampaignStatus, string> = {
+  DRAFT: '',
+  SCHEDULED: 'tone-info',
+  ACTIVE: 'tone-good',
+  PAUSED: 'tone-warn',
+  EXPIRED: 'tone-bad',
+  COMPLETED: '',
+};
+
 export const CAMPAIGN_TYPE_LABEL: Record<CampaignType, string> = {
   FESTIVAL: 'Festival',
   PROMOTIONAL: 'Promotional',
@@ -236,6 +246,8 @@ export interface CustomerCampaign {
   rewardCoins: number;
   startAt: string;
   endAt: string;
+  /** When this campaign's coins expire; null: the expiry period in the reward settings. */
+  coinsExpireAt: string | null;
   status: CampaignStatus;
   conditions: { minOrderPaise: number; firstOrderOnly: boolean; restaurantOnly: boolean };
   claimedTimes: number;
@@ -307,6 +319,8 @@ export interface AdminCampaign {
   rewardCoins: number;
   startAt: string;
   endAt: string;
+  /** When this campaign's coins expire; null: the expiry period in the reward settings. */
+  coinsExpireAt: string | null;
   status: CampaignStatus;
   conditions: {
     customerGroup: CustomerGroup;
@@ -330,6 +344,7 @@ export interface AdminCampaignInput {
   rewardCoins: number;
   startAt: string;
   endAt: string;
+  coinsExpireAt?: string | null;
   conditions: { customerGroup: CustomerGroup; inactiveDays: number; minOrderPaise: number; firstOrderOnly: boolean };
   limits: { maxClaimsPerCustomer: number; maxTotalClaims: number | null; maxTotalCoins: number | null };
 }

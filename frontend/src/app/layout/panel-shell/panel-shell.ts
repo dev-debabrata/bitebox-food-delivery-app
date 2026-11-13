@@ -77,6 +77,7 @@ export class PanelShell {
   protected readonly installer = inject(InstallPromptService);
   protected readonly themes = inject(ThemeService);
   protected readonly initials = computed(() => initialsOf(this.user()?.name) || '?');
+  protected readonly photo = computed(() => this.user()?.avatarUrl || null);
 
   private readonly url = currentUrl();
 

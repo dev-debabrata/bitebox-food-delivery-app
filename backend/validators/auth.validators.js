@@ -61,6 +61,8 @@ export const registerRules = [
     .toUpperCase()
     .matches(/^[A-Z0-9-]{4,40}$/)
     .withMessage("Enter a valid referral code"),
+  // The SMS code from POST /auth/register/code (needed while signupNeedsCode()).
+  body("code").optional().isString().bail().matches(/^\d{6}$/).withMessage("Enter the 6-digit code"),
 ];
 
 export const loginRules = [
@@ -102,4 +104,32 @@ export const updateProfileRules = [
     .trim()
     .custom((value) => value === "" || /^\+?[0-9]{10,15}$/.test(value))
     .withMessage("Enter a valid phone number (10-15 digits)"),
+  // null or "" removes the photo.
+  body("avatarUrl")
+    .optional()
+    .custom((v) => v === null || v === "" || (typeof v === "string" && v.length <= 500 && /^https?:\/\//.test(v)))
+    .withMessage("Enter a valid photo URL"),
+];
+
+const requiredPhone = () =>
+  body("phone")
+    .isString()
+    .withMessage("Enter your mobile number")
+    .bail()
+    .trim()
+    .matches(/^\+?[0-9]{10,15}$/)
+    .withMessage("Enter a valid phone number (10-15 digits)");
+const otpCode = () =>
+  body("code").isString().bail().matches(/^\d{6}$/).withMessage("Enter the 6-digit code");
+
+export const otpRequestRules = [requiredPhone()];
+export const signupCodeRules = [email(), requiredPhone()];
+export const otpLoginRules = [
+  requiredPhone(),
+  otpCode(),
+  body("portal").optional().isIn(ALL_ROLES).withMessage("Invalid portal"),
+];
+export const otpCodeRules = [otpCode()];
+export const emailVerifyRules = [
+  body("token").isString().bail().isLength({ min: 20, max: 200 }).withMessage("Verification token is required"),
 ];

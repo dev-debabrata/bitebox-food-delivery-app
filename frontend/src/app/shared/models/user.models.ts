@@ -44,8 +44,19 @@ export interface User {
   /** Admin roles only. */
   permissions?: Permission[];
   lastLoginAt?: string;
+  /** Set once the person confirmed the address (link) or the number (SMS code). */
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
+  avatarUrl?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/** POST /auth/otp/request and /auth/phone/verification. */
+export interface CodeSent {
+  message: string;
+  resendInSeconds: number;
+  expiresInSeconds: number;
 }
 
 export interface AuthSession {
@@ -67,11 +78,15 @@ export interface RegisterRequest {
   role: SelfRegisterRole;
   /** A friend's referral code (customers only). */
   referralCode?: string;
+  /** The SMS code from POST /auth/register/code. */
+  code?: string;
 }
 
 export interface UpdateProfileRequest {
   name?: string;
   phone?: string;
+  /** null removes the photo. */
+  avatarUrl?: string | null;
 }
 
 export interface ChangePasswordRequest {

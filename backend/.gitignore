@@ -47,3 +47,5 @@ Thumbs.db
 
 # Uploaded images (local storage)
 /uploads
+# KYC documents (local development)
+private-uploads/

@@ -1,0 +1,100 @@
+<bb-page-header
+  title="Verification"
+  subtitle="Your documents, address and the bank account BiteBox pays you into."
+/>
+
+@if (profile(); as p) {
+  <div
+    class="bb-alert {{
+      status() === 'approved' ? 'success' : status() === 'rejected' ? 'error' : 'info'
+    }} state"
+    role="status"
+  >
+    <np-icon
+      [name]="status() === 'approved' ? 'shield-check' : 'shield-alert'"
+      class="mat-icon"
+      matButtonIcon
+    />
+    <span>
+      <span class="bb-badge {{ tone[status()] }}">{{ label[status()] }}</span>
+      {{ copy[status()] }}
+      @if (p.verification?.reason; as reason) {
+        <span class="reason"><strong>Reason:</strong> {{ reason }}</span>
+      }
+    </span>
+    @if (canResubmit()) {
+      <button
+        type="button"
+        class="bb-btn bb-btn--small"
+        [disabled]="resubmitting()"
+        (click)="resubmit()"
+      >
+        {{ resubmitting() ? 'Sending…' : 'Send for review' }}
+      </button>
+    }
+  </div>
+
+  <div class="grid">
+    <section class="bb-card" aria-labelledby="address-title">
+      <h3 id="address-title">Home address</h3>
+      <form class="bb-form" [formRoot]="form">
+        <np-text-input
+          [formField]="form.line1"
+          label="House and street"
+          autocomplete="address-line1"
+          [error]="shownError(form.line1)"
+        />
+        <np-text-input
+          [formField]="form.area"
+          label="Area (optional)"
+          autocomplete="address-line2"
+        />
+        <div class="bb-form-row">
+          <np-text-input
+            [formField]="form.city"
+            label="City"
+            autocomplete="address-level2"
+            [error]="shownError(form.city)"
+          />
+          <np-text-input
+            [formField]="form.state"
+            label="State"
+            autocomplete="address-level1"
+            [error]="shownError(form.state)"
+          />
+        </div>
+        <np-text-input
+          [formField]="form.postalCode"
+          label="PIN code"
+          inputmode="numeric"
+          autocomplete="postal-code"
+          [error]="shownError(form.postalCode)"
+        />
+        <div>
+          <button type="submit" class="bb-btn" [disabled]="form().submitting() || !form().dirty()">
+            {{ form().submitting() ? 'Saving…' : 'Save address' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="bb-card" aria-labelledby="bank-title">
+      <h3 id="bank-title">Bank account</h3>
+      <bb-payout-account-form
+        [account]="summary()?.payoutAccount ?? null"
+        (saved)="kycData.set($event)"
+      />
+    </section>
+  </div>
+
+  <section class="bb-card" aria-labelledby="docs-title">
+    <h3 id="docs-title">Documents</h3>
+    @if (summary(); as s) {
+      <bb-kyc-documents [summary]="s" (changed)="kycData.reload()" />
+    } @else {
+      <span class="bb-skeleton" style="height: 160px"></span>
+    }
+  </section>
+} @else {
+  <span class="bb-skeleton" style="height: 240px"></span>
+}

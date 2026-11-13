@@ -16,10 +16,9 @@ import {
 } from '@angular/forms/signals';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { CheckboxComponent, IconComponent } from 'nexprime';
+import { ButtonToggleComponent, CheckboxComponent, IconComponent } from 'nexprime';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { errorMessage, fieldErrors } from '../../../core/services/api-error';
@@ -46,6 +45,7 @@ type AutoField = 'line1' | 'line2' | 'area' | 'city' | 'state' | 'postalCode';
 @Component({
   selector: 'bb-address-form-dialog',
   imports: [
+    ButtonToggleComponent,
     PhoneInput,
     PlaceSearch,
     CheckboxComponent,
@@ -53,7 +53,6 @@ type AutoField = 'line1' | 'line2' | 'area' | 'city' | 'state' | 'postalCode';
     NP_FORM_FIELDS,
     MatDialogModule,
     MatButtonModule,
-    MatButtonToggleModule,
     IconComponent,
     MatProgressBarModule,
     MatProgressSpinnerModule,
@@ -71,6 +70,11 @@ export class AddressFormDialog {
   private readonly places = inject(DeliveryLocationService);
   private readonly user = inject(AuthService).user;
   protected readonly shownError = shownError;
+  protected readonly labelOptions = [
+    { value: 'home', label: 'Home', icon: 'house' },
+    { value: 'work', label: 'Work', icon: 'briefcase' },
+    { value: 'other', label: 'Other', icon: 'map-pin' },
+  ];
 
   protected readonly locating = signal(false);
   protected readonly error = signal<string | null>(null);

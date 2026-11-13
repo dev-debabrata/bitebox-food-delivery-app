@@ -104,8 +104,18 @@ def rider_state(user: User) -> dict[str, Any]:
 
 
 def persist_location(
-    user: User, latitude: float, longitude: float, accuracy: float | None, at: datetime
+    user: User,
+    latitude: float,
+    longitude: float,
+    accuracy: float | None,
+    at: datetime,
+    order_id: Any = None,
 ) -> None:
+    """The rider's latest fix, plus a tracking point for the order they carry (sampled)."""
+    from apps.tracking.services import on_position
+
+    if order_id:
+        on_position(user.pk, order_id, latitude, longitude, accuracy, at)
     fields: dict[str, Any] = {
         "location": GeoPoint(lat=latitude, lng=longitude),
         "location_updated_at": at,

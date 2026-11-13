@@ -12,6 +12,18 @@
     </div>
   }
 } @else {
+  @if (verification(); as v) {
+    <div class="bb-alert {{ v.status === 'rejected' ? 'error' : 'info' }} verify" role="status">
+      <np-icon name="shield-alert" class="mat-icon" matButtonIcon />
+      <span>
+        <strong>{{ verifyCopy[v.status] }}</strong>
+        @if (v.reason) {
+          Reason: {{ v.reason }}
+        }
+      </span>
+      <a class="bb-btn bb-btn--small" routerLink="/delivery/verification">Open verification</a>
+    </div>
+  }
   <div class="layout">
     <div class="col">
       <!-- Availability -->

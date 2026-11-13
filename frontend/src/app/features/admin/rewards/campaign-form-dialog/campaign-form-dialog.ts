@@ -67,6 +67,7 @@ export class CampaignFormDialog {
     rewardCoins: (this.data?.rewardCoins ?? 50) as number | null,
     startAt: new Date(this.data?.startAt ?? this.now) as Date | null,
     endAt: new Date(this.data?.endAt ?? this.now.getTime() + 7 * DAY) as Date | null,
+    coinsExpireAt: (this.data?.coinsExpireAt ? new Date(this.data.coinsExpireAt) : null) as Date | null,
     customerGroup: (this.data?.conditions.customerGroup ?? 'ALL') as string,
     inactiveDays: (this.data?.conditions.inactiveDays ?? 30) as number | null,
     minOrder: (this.data ? this.data.conditions.minOrderPaise / 100 : 0) as number | null,
@@ -93,6 +94,12 @@ export class CampaignFormDialog {
         if (!value()) return { kind: 'required', message: 'Choose an end' };
         return start && value()! <= start ? { kind: 'order', message: 'The end must be after the start' } : undefined;
       });
+      validate(p.coinsExpireAt, ({ value, valueOf }) => {
+        const end = valueOf(p.endAt);
+        return value() && end && value()! <= end
+          ? { kind: 'order', message: 'Coins must stay valid until after the campaign ends' }
+          : undefined;
+      });
       const locked = () => this.running;
       disabled(p.type, locked);
       disabled(p.trigger, locked);
@@ -113,8 +120,15 @@ export class CampaignFormDialog {
       maxTotalClaims: v.maxTotalClaims ? Number(v.maxTotalClaims) : null,
       maxTotalCoins: v.maxTotalCoins ? Number(v.maxTotalCoins) : null,
     };
+    const coinsExpireAt = v.coinsExpireAt?.toISOString() ?? null;
     const input: Partial<AdminCampaignInput> = this.running
-      ? { name: v.name.trim(), description: v.description.trim(), endAt: v.endAt!.toISOString(), limits }
+      ? {
+          name: v.name.trim(),
+          description: v.description.trim(),
+          endAt: v.endAt!.toISOString(),
+          coinsExpireAt,
+          limits,
+        }
       : {
           name: v.name.trim(),
           description: v.description.trim(),
@@ -123,6 +137,7 @@ export class CampaignFormDialog {
           rewardCoins: Number(v.rewardCoins),
           startAt: v.startAt!.toISOString(),
           endAt: v.endAt!.toISOString(),
+          coinsExpireAt,
           conditions: {
             customerGroup: v.customerGroup as CustomerGroup,
             inactiveDays: Number(v.inactiveDays),

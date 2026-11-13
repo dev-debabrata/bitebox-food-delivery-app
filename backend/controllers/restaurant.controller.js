@@ -71,6 +71,11 @@ export async function updateMine(req, res) {
   });
 }
 
+export async function resubmit(req, res) {
+  const restaurant = await restaurantService.resubmit(req.user._id);
+  sendSuccess(res, { message: "Sent for review", data: { restaurant } });
+}
+
 export async function setAcceptingOrders(req, res) {
   const restaurant = await restaurantService.setAcceptingOrders(
     req.user._id,

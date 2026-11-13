@@ -1,0 +1,81 @@
+@use 'breakpoints' as bp;
+
+.rates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bb-space-3);
+  margin-bottom: var(--bb-space-4);
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+.current {
+  display: grid;
+  gap: var(--bb-space-3);
+
+  @include bp.tablet-up {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+}
+
+.global,
+.overrides {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--bb-space-3);
+  border: 1px solid var(--bb-border);
+  border-radius: var(--bb-radius-sm);
+}
+
+.global strong {
+  font-size: 1.6rem;
+}
+
+.override {
+  display: flex;
+  align-items: center;
+  gap: var(--bb-space-3);
+
+  span {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.set {
+  display: grid;
+  gap: var(--bb-space-3);
+  align-items: start;
+
+  @include bp.desktop-up {
+    grid-template-columns: minmax(0, 1.3fr) 160px minmax(0, 1fr) auto;
+
+    button {
+      margin-top: 22px; // line up with the labelled fields
+    }
+  }
+}
+
+.history {
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  ul {
+    margin: var(--bb-space-2) 0 0;
+    padding-left: var(--bb-space-4);
+    font-size: 0.9rem;
+
+    li + li {
+      margin-top: 4px;
+    }
+  }
+}

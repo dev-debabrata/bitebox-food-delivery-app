@@ -1,0 +1,37 @@
+@use 'breakpoints' as bp;
+
+:host {
+  display: grid;
+  gap: var(--bb-space-4);
+}
+
+h3 {
+  margin: 0 0 var(--bb-space-3);
+}
+
+.state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bb-space-2) var(--bb-space-3);
+
+  > span {
+    flex: 1;
+    min-width: 220px;
+  }
+}
+
+.reason {
+  display: block;
+  margin-top: 4px;
+}
+
+.grid {
+  display: grid;
+  gap: var(--bb-space-4);
+
+  @include bp.desktop-up {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}

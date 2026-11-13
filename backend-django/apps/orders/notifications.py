@@ -197,3 +197,33 @@ def notify_refund(order: Order, amount_paise: int, ok: bool) -> None:
         link=link,
         order=order,
     )
+
+
+def notify_payment_failed(order: Order, reason: str) -> None:
+    """The online payment did not go through (the customer can try again from the order)."""
+    _to_customer(
+        order,
+        f"Payment for {_ref(order)} did not go through",
+        f"{reason}. You have not been charged. Try again from your order.",
+        "payment.failed",
+    )
+
+
+def notify_refund_started(order: Order, amount_paise: int) -> None:
+    _to_customer(
+        order,
+        f"Refund of {rupees(amount_paise)} started",
+        f"For {_ref(order)}. We will tell you when your bank confirms it.",
+        "payment.refund_started",
+    )
+
+
+def notify_approaching(order: Order) -> None:
+    """The rider is close to the customer (sent once per order)."""
+    code = f" Keep your delivery code {order.delivery_otp} ready." if order.delivery_otp else ""
+    _to_customer(
+        order,
+        "Your rider is almost there",
+        f"{_ref(order)} is a few minutes away.{code}",
+        "order.approaching",
+    )

@@ -1,0 +1,76 @@
+@if (!editing()) {
+  @if (account(); as a) {
+    <dl class="saved">
+      <div>
+        <dt>Account holder</dt>
+        <dd>{{ a.holderName }}</dd>
+      </div>
+      <div>
+        <dt>Account</dt>
+        <dd>•••• {{ a.accountLast4 }}</dd>
+      </div>
+      <div>
+        <dt>IFSC</dt>
+        <dd>{{ a.ifsc }}</dd>
+      </div>
+      @if (a.bankName) {
+        <div>
+          <dt>Bank</dt>
+          <dd>{{ a.bankName }}</dd>
+        </div>
+      }
+    </dl>
+    <button type="button" class="bb-btn bb-btn--outlined bb-btn--small" (click)="edit(true)">
+      Change bank account
+    </button>
+  } @else {
+    <p class="bb-muted">Add the account BiteBox pays your earnings into.</p>
+    <button type="button" class="bb-btn bb-btn--small" (click)="edit(true)">
+      Add bank account
+    </button>
+  }
+} @else {
+  <form class="bb-form" [formRoot]="form">
+    <np-text-input
+      [formField]="form.holderName"
+      label="Account holder name"
+      autocomplete="name"
+      [error]="shownError(form.holderName)"
+    />
+    <div class="bb-form-row">
+      <np-text-input
+        [formField]="form.accountNumber"
+        label="Account number"
+        type="password"
+        inputmode="numeric"
+        autocomplete="off"
+        [error]="shownError(form.accountNumber)"
+      />
+      <np-text-input
+        [formField]="form.confirmNumber"
+        label="Confirm account number"
+        inputmode="numeric"
+        autocomplete="off"
+        [error]="shownError(form.confirmNumber)"
+      />
+    </div>
+    <div class="bb-form-row">
+      <np-text-input
+        [formField]="form.ifsc"
+        label="IFSC"
+        autocapitalize="characters"
+        [error]="shownError(form.ifsc)"
+      />
+      <np-text-input [formField]="form.bankName" label="Bank name (optional)" />
+    </div>
+    <p class="bb-muted small">Stored encrypted. Only the last 4 digits are shown again.</p>
+    <div class="buttons">
+      <button type="submit" class="bb-btn bb-btn--small" [disabled]="form().submitting()">
+        {{ form().submitting() ? 'Saving…' : 'Save bank account' }}
+      </button>
+      <button type="button" class="bb-btn bb-btn--soft bb-btn--small" (click)="edit(false)">
+        Cancel
+      </button>
+    </div>
+  </form>
+}

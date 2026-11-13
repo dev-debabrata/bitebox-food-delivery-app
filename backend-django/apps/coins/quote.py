@@ -1,12 +1,14 @@
 """
-Read-only coin rules for the cart quote (Node: coins.service.js redemptionQuote/assertRedeemable,
-reward-config.service.js, coin-wallet.service.js spendableCoins). Earning, reserving and spending
-coins (the ledger) arrive in Phase 9.
+Coin rules for the cart quote and the reward settings (Node: coins.service.js
+redemptionQuote/assertRedeemable, reward-config.service.js, coin-wallet.service.js
+spendableCoins). The ledger itself is apps/coins/wallet.py.
 """
 
 import copy
+from datetime import datetime
 from typing import Any
 
+from django.conf import settings
 from django.utils import timezone
 
 from common.api import ApiError
@@ -70,6 +72,7 @@ def get_reward_config() -> dict[str, Any]:
     """Defaults merged with the saved settings row (if any)."""
     row = RewardConfiguration.objects.filter(key="global").first()
     config = _merge(DEFAULT_REWARD_CONFIG, row.value if row else {})
+    config["timezone"] = settings.REPORT_TIMEZONE
     if row is not None:
         config["coins_enabled"] = row.coins_enabled
         config["timezone"] = row.timezone
@@ -90,11 +93,10 @@ def rupees(paise: int) -> str:
     return f"₹{text[:-3] if text.endswith('.00') else text}"
 
 
-def spendable_coins(user_id: Any, config: dict[str, Any]) -> int:
+def spendable_coins(user_id: Any, config: dict[str, Any], now: datetime | None = None) -> int:
     batches = CoinBatch.objects.filter(wallet__user_id=user_id, remaining__gt=0)
     if config["expiry"]["enabled"]:
-        now = timezone.now()
-        batches = batches.exclude(expires_at__lte=now)
+        batches = batches.exclude(expires_at__lte=now or timezone.now())
     return sum(batches.values_list("remaining", flat=True))
 
 

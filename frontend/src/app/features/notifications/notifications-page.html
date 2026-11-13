@@ -9,17 +9,16 @@
 </bb-page-header>
 
 <bb-push-settings />
+<bb-channel-settings />
 
-<mat-button-toggle-group
+<np-button-toggle
   class="tabs"
+  [options]="tabOptions"
   [value]="tab()"
-  (change)="tab.set($event.value)"
-  aria-label="Which notifications"
-  hideSingleSelectionIndicator
->
-  <mat-button-toggle value="all">All</mat-button-toggle>
-  <mat-button-toggle value="unread">Unread</mat-button-toggle>
-</mat-button-toggle-group>
+  (valueChange)="selectTab($event)"
+  ariaLabel="Which notifications"
+  [showCheck]="false"
+/>
 
 @if (list.error(); as message) {
   <div class="bb-alert error" role="alert">

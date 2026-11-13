@@ -13,8 +13,13 @@ import {
 import { ApiError } from "../utils/api-error.js";
 import { hashToken, randomToken, signAccessToken } from "../utils/tokens.js";
 import { sendMail } from "./mail.service.js";
-import { notifyAdmins } from "./notification.service.js";
+import { notify, notifyAdmins } from "./notification.service.js";
+import { CHANNELS } from "../models/notification-delivery.model.js";
+import { OTP_PURPOSES } from "../models/otp-challenge.model.js";
+import { channelEnabled } from "./notification-channels.js";
+import * as otp from "./otp.service.js";
 import * as referralService from "./referral.service.js";
+import { isUploadedImageUrl } from "./upload.service.js";
 import * as rewardEvents from "./reward-events.js";
 
 const ROTATION_GRACE_MS = 15_000;
@@ -79,7 +84,7 @@ const PARTNER_SIGNUP = {
 };
 
 export async function register(
-  { name, email, phone, password, role = ROLES.CUSTOMER, referralCode },
+  { name, email, phone, password, role = ROLES.CUSTOMER, referralCode, code },
   meta,
 ) {
   if (!SELF_REGISTER_ROLES.includes(role)) {
@@ -91,11 +96,14 @@ export async function register(
       ? await referralService.resolveCode(referralCode)
       : null;
 
-  const existing = await User.exists({ email });
-  if (existing)
-    throw ApiError.conflict("An account with this email already exists");
-  if (phone && (await User.exists({ phone }))) {
-    throw ApiError.conflict("An account with this phone number already exists");
+  await checkNewAccount(email, phone);
+  let phoneVerifiedAt;
+  if (signupNeedsCode()) {
+    // Step 2: the account is created only with the code texted to its number.
+    if (!phone) throw ApiError.badRequest("Enter your mobile number", [{ field: "phone", message: "Enter your mobile number" }]);
+    if (!code) throw ApiError.badRequest("Enter the code we sent to your phone", [{ field: "code", message: "Enter the 6-digit code" }]);
+    await otp.checkCode(phone, OTP_PURPOSES.REGISTER, code);
+    phoneVerifiedAt = new Date();
   }
 
   const user = await User.create({
@@ -103,9 +111,15 @@ export async function register(
     email,
     phone,
     role,
+    phoneVerifiedAt,
     passwordHash: await hashPassword(password),
   });
   logger.info({ userId: user.id, role }, "User registered");
+  await sendEmailVerification(user).catch((err) =>
+    logger.error({ err, userId: user.id }, "Could not send the verification email"),
+  );
+  const [title, welcomeBody, link] = WELCOME[role] ?? WELCOME.customer;
+  await notify(user._id, { type: "account.welcome", title: title(name), body: welcomeBody, link });
   if (role === ROLES.CUSTOMER)
     await rewardEvents.customerRegistered(user, { referral, ip: meta?.ip });
   const signup = PARTNER_SIGNUP[role];
@@ -119,6 +133,37 @@ export async function register(
   return issueTokens(user, meta);
 }
 
+async function checkNewAccount(email, phone) {
+  if (await User.exists({ email })) throw ApiError.conflict("An account with this email already exists");
+  if (phone && (await User.exists({ phone })))
+    throw ApiError.conflict("An account with this phone number already exists");
+}
+
+/** New accounts confirm their number by SMS first (env.signupOtpRequired, while SMS is on). */
+/** What the sign-in and profile pages may offer: SMS codes only when an SMS provider is set up. */
+export const authMethods = () => ({ phone: channelEnabled(CHANNELS.SMS) });
+export const signupNeedsCode = () => (signupOverride ?? env.signupOtpRequired) && channelEnabled(CHANNELS.SMS);
+let signupOverride = null;
+/** Tests: require the sign-up code (true/false), or null for the configured behaviour. */
+export const useSignupCode = (value) => (signupOverride = value);
+
+/** Step 1 of sign-up: the email and number are free, so text a code to the number. */
+export async function requestSignupCode({ email, phone }, ip) {
+  await checkNewAccount(email, phone);
+  return otp.sendCode(phone, OTP_PURPOSES.REGISTER, ip, true);
+}
+
+/** The welcome notification (in-app, and email when allowed) per role. */
+const WELCOME = {
+  customer: [(n) => `Welcome to BiteBox, ${n}!`, "Find a restaurant near you and order in minutes.", "/"],
+  restaurant: [
+    (n) => `Welcome to BiteBox, ${n}!`,
+    "Add your restaurant details to start receiving orders.",
+    "/restaurant/details",
+  ],
+  delivery: [(n) => `Welcome to BiteBox, ${n}!`, "Add your vehicle, go online and start earning.", "/delivery"],
+};
+
 export async function login({ email, password, portal }, meta) {
   const user = await User.findOne({ email }).select(
     "+passwordHash +tokenVersion",
@@ -130,16 +175,74 @@ export async function login({ email, password, portal }, meta) {
 
   if (!user || !passwordOk)
     throw ApiError.unauthorized("Invalid email or password");
+  return signedIn(user, portal, meta);
+}
+
+async function signedIn(user, portal, meta) {
   if (user.status !== USER_STATUS.ACTIVE)
     throw ApiError.forbidden("This account has been suspended");
   // Each panel has its own sign-in page; prevent e.g. a customer using the admin login.
   if (portal && user.role !== portal) {
     throw ApiError.forbidden("This account cannot sign in to this portal");
   }
-
   user.lastLoginAt = new Date();
   await user.save();
   return issueTokens(user, meta);
+}
+
+/** Sign in with the SMS code sent by otp.requestLoginCode (proves the number, too). */
+export async function loginWithCode({ phone, code, portal }, meta) {
+  await otp.checkCode(phone, OTP_PURPOSES.LOGIN, code);
+  const user = await otp.loginUser(phone);
+  if (!user) throw ApiError.unauthorized("That code is not right"); // no code was ever sent
+  user.phoneVerifiedAt ??= new Date();
+  return signedIn(user, portal, meta);
+}
+
+export const requestLoginCode = otp.requestLoginCode;
+
+export async function requestPhoneVerification(user, ip) {
+  if (!user.phone) throw ApiError.badRequest("Add a phone number to your profile first");
+  if (user.phoneVerifiedAt) throw ApiError.conflict("Your phone number is already verified");
+  return otp.sendCode(user.phone, OTP_PURPOSES.VERIFY_PHONE, ip, true);
+}
+
+export async function verifyPhone(user, code) {
+  if (!user.phone) throw ApiError.badRequest("Add a phone number to your profile first");
+  await otp.checkCode(user.phone, OTP_PURPOSES.VERIFY_PHONE, code);
+  return User.findByIdAndUpdate(user._id, { phoneVerifiedAt: new Date() }, { returnDocument: "after" });
+}
+
+/** Emails a one-time link (env.emailVerification.ttlHours) that confirms the address. */
+export async function sendEmailVerification(user) {
+  if (user.emailVerifiedAt) return;
+  const token = randomToken(32);
+  const hours = env.emailVerification.ttlHours;
+  await User.updateOne(
+    { _id: user._id },
+    { emailVerificationTokenHash: hashToken(token), emailVerificationExpiresAt: new Date(Date.now() + hours * 3_600_000) },
+  );
+  const link = `${env.clientUrls[0]}/verify-email?token=${encodeURIComponent(token)}`;
+  await sendMail({
+    to: user.email,
+    subject: "Confirm your BiteBox email",
+    text: `Hi ${user.name},\n\nConfirm this is your email address for BiteBox:\n\n${link}\n\nThe link works for ${hours} hours. If you did not create an account, ignore this email.`,
+    html: `<p>Hi ${escapeHtml(user.name)},</p><p>Confirm this is your email address for BiteBox.</p><p><a href="${link}">Confirm email</a></p><p>The link works for ${hours} hours. If you did not create an account, ignore this email.</p>`,
+  });
+}
+
+export async function resendEmailVerification(user) {
+  if (user.emailVerifiedAt) throw ApiError.conflict("Your email is already verified");
+  await sendEmailVerification(user);
+}
+
+export async function verifyEmail(token) {
+  // Consume the token atomically so it works once.
+  const user = await User.findOneAndUpdate(
+    { emailVerificationTokenHash: hashToken(token), emailVerificationExpiresAt: { $gt: new Date() } },
+    { $set: { emailVerifiedAt: new Date() }, $unset: { emailVerificationTokenHash: 1, emailVerificationExpiresAt: 1 } },
+  );
+  if (!user) throw ApiError.badRequest("This link is invalid or has expired. Ask for a new one");
 }
 
 /** Rotate a refresh token: the old one is atomically revoked and a new one issued. */
@@ -240,15 +343,21 @@ export async function changePassword(userId, currentPassword, newPassword) {
   await endSessions(user, "password-change");
 }
 
-export async function updateProfile(userId, { name, phone }) {
+export async function updateProfile(userId, { name, phone, avatarUrl }) {
   if (phone && (await User.exists({ phone, _id: { $ne: userId } }))) {
     throw ApiError.conflict("An account with this phone number already exists");
   }
+  if (avatarUrl && !isUploadedImageUrl(avatarUrl)) throw ApiError.badRequest("Upload the photo first");
+  const current = await User.findById(userId).select("phone");
   const set = {};
   const unset = {};
   if (name !== undefined) set.name = name;
   if (phone === "" || phone === null) unset.phone = 1;
   else if (phone !== undefined) set.phone = phone;
+  // A new number must be verified again.
+  if (phone !== undefined && (phone || null) !== (current?.phone ?? null)) unset.phoneVerifiedAt = 1;
+  if (avatarUrl === "" || avatarUrl === null) unset.avatarUrl = 1;
+  else if (avatarUrl !== undefined) set.avatarUrl = avatarUrl;
 
   const user = await User.findByIdAndUpdate(
     userId,

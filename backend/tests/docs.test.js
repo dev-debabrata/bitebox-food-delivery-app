@@ -1,38 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import express from "express";
+import { createApp } from "../app.js";
+import { openApiDocument } from "../docs/openapi.js";
+import { appWithRoutes, routeTable } from "./route-table.js";
 
-// Express 5 no longer exposes where a router is mounted, so record it while the app is built.
-const use = express.application.use;
-express.application.use = function (path, ...handlers) {
-  if (typeof path === "string")
-    for (const h of handlers.flat()) if (h?.stack) h.mountPath = path;
-  return use.call(this, path, ...handlers);
-};
-const { createApp } = await import("../app.js");
-const { openApiDocument } = await import("../docs/openapi.js");
-const app = createApp();
-express.application.use = use;
-
+const app = await appWithRoutes(createApp);
 /** "get /api/v1/orders/{id}" for every route the app serves. */
-function appRoutes(app) {
-  const routes = [];
-  const walk = (stack, prefix) => {
-    for (const layer of stack) {
-      if (layer.route) {
-        const path = (prefix + layer.route.path)
-          .replace(/\/$/, "")
-          .replace(/:(\w+)/g, "{$1}");
-        for (const method of Object.keys(layer.route.methods))
-          routes.push(`${method} ${path}`);
-      } else if (layer.handle?.stack) {
-        walk(layer.handle.stack, prefix + (layer.handle.mountPath ?? ""));
-      }
-    }
-  };
-  walk(app.router.stack, "");
-  return routes.filter((r) => r.includes("/api/v1/"));
-}
+const appRoutes = (app) => routeTable(app).map((r) => `${r.method} ${r.path}`);
 
 describe("API documentation", () => {
   const routes = appRoutes(app);

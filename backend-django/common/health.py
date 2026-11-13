@@ -22,6 +22,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.permissions import PUBLIC
 from config.celery import app as celery_app
 
 from .api import ok
@@ -91,6 +92,8 @@ HEALTH_FIELDS = {
 
 
 class HealthView(APIView):
+    permission_classes = PUBLIC
+
     @extend_schema(
         tags=["Health"],
         summary="API, database, Redis and worker health",
@@ -126,6 +129,8 @@ class HealthView(APIView):
 
 
 class LiveView(APIView):
+    permission_classes = PUBLIC
+
     @extend_schema(
         tags=["Health"],
         summary="Process is running",
@@ -136,6 +141,8 @@ class LiveView(APIView):
 
 
 class ReadyView(APIView):
+    permission_classes = PUBLIC
+
     @extend_schema(
         tags=["Health"],
         summary="Ready to serve (database and Redis reachable)",

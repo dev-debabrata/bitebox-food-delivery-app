@@ -22,7 +22,7 @@
     </div>
   </div>
   <div class="bb-dialog__actions">
-    <np-button variant="text" severity="secondary" label="Cancel" (clicked)="ref.close()" />
+    <np-button variant="soft" severity="secondary" label="Cancel" (clicked)="ref.close()" />
     <button type="submit" class="bb-btn" [disabled]="form().submitting()">
       {{ form().submitting() ? 'Checking…' : 'Complete delivery' }}
     </button>

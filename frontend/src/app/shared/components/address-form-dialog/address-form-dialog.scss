@@ -1,3 +1,18 @@
+// Scrolls without a visible scrollbar.
+.bb-form {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// "Current location" beside the search box: same height and corners as the field.
+.locate {
+  min-height: 44px;
+  border-radius: var(--ui-radius);
+}
+
 .block {
   display: flex;
   flex-direction: column;
@@ -28,7 +43,7 @@
   margin-bottom: var(--bb-space-3);
 
   > np-icon {
-    --bb-icon-size: 32px;
+    --bb-icon-size: 24px;
     flex-shrink: 0;
     color: var(--bb-amber-600);
   }

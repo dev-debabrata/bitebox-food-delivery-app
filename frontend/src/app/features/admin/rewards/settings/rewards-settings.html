@@ -196,8 +196,8 @@
         @if (c.updatedAt) {
           <span class="bb-muted small">Last saved {{ c.updatedAt | date: 'd MMM y, h:mm a' }}</span>
         }
-        <button mat-button type="button" (click)="discard()" [disabled]="form().submitting()">Discard changes</button>
-        <button mat-flat-button type="submit" [disabled]="form().submitting()">Save settings</button>
+        <np-button variant="soft" severity="secondary" label="Discard changes" [disabled]="form().submitting()" (clicked)="discard()" />
+        <button type="submit" class="bb-btn" [disabled]="form().submitting()">Save settings</button>
       </div>
     }
   </form>

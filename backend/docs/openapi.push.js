@@ -97,6 +97,62 @@ export const pushPaths = {
       responses: { 200: ok({ type: "object", properties: { removed: { type: "boolean" } } }) },
     },
   },
+  "/push/devices": {
+    post: {
+      tags,
+      summary: "Register a native app's FCM token (for future apps)",
+      security: bearer,
+      requestBody: body({
+        type: "object",
+        required: ["token", "platform"],
+        properties: { token: { type: "string" }, platform: { type: "string", enum: ["android", "ios"] } },
+      }),
+      responses: { 201: ok({ type: "object" }), 422: err("Validation failed") },
+    },
+    delete: {
+      tags,
+      summary: "Forget a native app's FCM token",
+      security: bearer,
+      requestBody: body({ type: "object", required: ["token"], properties: { token: { type: "string" } } }),
+      responses: { 200: ok({ type: "object" }) },
+    },
+  },
+  "/notifications/preferences": {
+    get: {
+      tags,
+      summary: "Every channel's switches per category (push, email, SMS) and what is available",
+      security: bearer,
+      responses: { 200: ok({ type: "object" }) },
+    },
+    put: {
+      tags,
+      summary: "Change channel switches, e.g. { sms: { orders: true } }",
+      security: bearer,
+      requestBody: body({ type: "object" }),
+      responses: { 200: ok({ type: "object" }), 422: err("Validation failed") },
+    },
+  },
+  "/admin/notifications/deliveries": {
+    get: {
+      tags,
+      summary: "Delivery log per channel: sent, failed (retrying), dead letters (operations:view)",
+      security: bearer,
+      parameters: [
+        { in: "query", name: "status", schema: { type: "string", enum: ["queued", "sent", "failed", "dead", "skipped"] } },
+        { in: "query", name: "channel", schema: { type: "string", enum: ["push", "fcm", "email", "sms"] } },
+      ],
+      responses: { 200: ok({ type: "object" }), 403: err("No permission") },
+    },
+  },
+  "/admin/notifications/deliveries/{id}/retry": {
+    post: {
+      tags,
+      summary: "Send a failed or dead delivery again",
+      security: bearer,
+      parameters: [{ in: "path", name: "id", required: true, schema: { type: "string" } }],
+      responses: { 200: ok({ type: "object" }), 409: err("Not failed or dead") },
+    },
+  },
   "/push/preferences": {
     get: {
       tags,

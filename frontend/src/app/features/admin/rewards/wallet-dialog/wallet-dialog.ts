@@ -24,6 +24,8 @@ export class WalletDialog {
   private readonly api = inject(AdminRewardsService);
   protected readonly sourceLabel = SOURCE_LABEL;
   protected readonly typeLabel = TXN_TYPE_LABEL;
+  private readonly now = Date.now();
+  protected isPast = (at: string | null) => !!at && new Date(at).getTime() <= this.now;
   protected readonly detail = rxResource({ stream: () => this.api.wallet(this.userId) });
   protected readonly data = resourceValue(this.detail);
   protected readonly error = resourceError(this.detail, 'Could not load the wallet.');

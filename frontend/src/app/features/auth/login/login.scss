@@ -1,0 +1,12 @@
+// Email or mobile number: a two-option switch the width of the form.
+.mode {
+  display: block;
+  margin-bottom: var(--bb-space-4);
+
+  ::ng-deep .toggle-group {
+    width: 100%;
+  }
+  ::ng-deep .toggle-button {
+    flex: 1;
+  }
+}

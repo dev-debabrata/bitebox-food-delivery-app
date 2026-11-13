@@ -37,6 +37,20 @@
         <bb-field-error [field]="form.endAt" />
       </div>
     </div>
+    <div class="bb-field">
+      <np-calendar
+        [formField]="form.coinsExpireAt"
+        label="Coins expire (optional)"
+        dateFormat="dd M yy"
+        showTime
+        hourFormat="12"
+        [minDate]="model().endAt"
+        showIcon
+        clearable
+      />
+      <bb-field-error [field]="form.coinsExpireAt" />
+      <span class="bb-muted hint">Leave empty to use the expiry days in Settings → Expiry. Applies to coins given from now on.</span>
+    </div>
 
     <h3 class="group-title">Who can get it</h3>
     <div class="bb-form-row">

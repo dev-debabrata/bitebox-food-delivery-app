@@ -554,8 +554,17 @@ def test_the_customers_payment_history(w: Shop) -> None:
 def test_admins_list_filter_and_open_payments(w: Shop) -> None:
     paid = w.place_online()["order"]["id"]
     w.mock_pay(paid, "success")
-    w.place_order()
+    cash = w.place_order()
+    Order.objects.filter(pk=cash).update(status="cancelled")  # test setup only
     finance = admin("finance_admin")
+    by_state = lambda s: [  # noqa: E731
+        p["order"]["id"]
+        for p in finance.get(f"/api/v1/admin/payments?orderState={s}").json()["data"]["items"]
+    ]
+    assert by_state("cancelled") == [cash]
+    assert by_state("active") == [paid]
+    assert by_state("delivered") == []
+    assert finance.get("/api/v1/admin/payments?orderState=nope").status_code == 422
     everything = finance.get("/api/v1/admin/payments").json()["data"]
     assert everything["pagination"]["total"] == 2
     online = finance.get("/api/v1/admin/payments?method=online").json()["data"]["items"]

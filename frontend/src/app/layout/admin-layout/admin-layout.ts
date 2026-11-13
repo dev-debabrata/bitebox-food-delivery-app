@@ -20,6 +20,7 @@ const NAV: Record<AdminRole, NavItem[]> = {
         { label: 'Delivery partners', icon: 'two_wheeler', link: '/admin/delivery-partners' },
         { label: 'Order monitoring', icon: 'monitor', link: '/admin/operations/monitoring' },
         { label: 'Delivery reports', icon: 'insights', link: '/admin/operations/reports' },
+        { label: 'Notification log', icon: 'bell', link: '/admin/operations/notifications' },
       ],
     },
     {
@@ -36,6 +37,7 @@ const NAV: Record<AdminRole, NavItem[]> = {
         { label: 'Rider payments', icon: 'two_wheeler', link: '/admin/finance/payouts/rider' },
         { label: 'Refunds', icon: 'undo-2', link: '/admin/finance/refunds' },
         { label: 'Commission', icon: 'percent', link: '/admin/finance/commission' },
+        { label: 'Ledger', icon: 'book-open', link: '/admin/finance/ledger' },
         { label: 'Financial reports', icon: 'chart-line', link: '/admin/reports' },
       ],
     },
@@ -87,6 +89,7 @@ const NAV: Record<AdminRole, NavItem[]> = {
     { label: 'Delivery management', icon: 'two_wheeler', link: '/admin/delivery-partners' },
     { label: 'Order monitoring', icon: 'monitor', link: '/admin/operations/monitoring' },
     { label: 'Reports', icon: 'insights', link: '/admin/operations/reports' },
+    { label: 'Notification log', icon: 'bell', link: '/admin/operations/notifications' },
     ...PROFILE,
   ],
   finance_admin: [
@@ -100,6 +103,7 @@ const NAV: Record<AdminRole, NavItem[]> = {
     },
     { label: 'Refund management', icon: 'undo-2', link: '/admin/finance/refunds' },
     { label: 'Commission management', icon: 'percent', link: '/admin/finance/commission' },
+    { label: 'Ledger', icon: 'book-open', link: '/admin/finance/ledger' },
     { label: 'Financial reports', icon: 'insights', link: '/admin/reports' },
     ...PROFILE,
   ],

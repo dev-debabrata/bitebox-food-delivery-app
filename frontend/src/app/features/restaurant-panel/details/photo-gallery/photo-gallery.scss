@@ -1,0 +1,10 @@
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--bb-space-3);
+}
+
+.small {
+  margin: var(--bb-space-2) 0 0;
+  font-size: 0.85rem;
+}

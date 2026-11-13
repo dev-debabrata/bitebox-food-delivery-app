@@ -58,6 +58,13 @@ export const routes: Routes = [
         'Forgot password',
       ),
       {
+        // Opened from the email link; works whether or not the person is signed in.
+        path: 'verify-email',
+        loadComponent: () =>
+          import('./features/auth/verify-email/verify-email').then((m) => m.VerifyEmail),
+        title: 'Confirm your email | BiteBox',
+      },
+      {
         path: 'reset-password',
         loadComponent: () =>
           import('./features/auth/reset-password/reset-password').then((m) => m.ResetPassword),

@@ -25,6 +25,7 @@ import { pagedList } from '../../../../shared/list/paged-list';
 import {
   AdminCampaign,
   CAMPAIGN_STATUS_LABEL,
+  CAMPAIGN_STATUS_TONE,
   CAMPAIGN_TYPE_LABEL,
   CampaignStatus,
   CampaignType,
@@ -51,6 +52,7 @@ export class RewardCampaignsPage {
   private readonly notify = inject(NotificationService);
   protected readonly canManage = inject(AuthService).can('rewards:manage');
   protected readonly statusLabel = CAMPAIGN_STATUS_LABEL;
+  protected readonly statusTone = CAMPAIGN_STATUS_TONE;
   protected readonly typeLabel = CAMPAIGN_TYPE_LABEL;
   protected readonly busy = signal<string | null>(null);
 
@@ -78,10 +80,6 @@ export class RewardCampaignsPage {
     },
     { filterKey: () => JSON.stringify(this.filterModel()), errorText: 'Could not load campaigns.' },
   );
-
-  protected tone(status: CampaignStatus): string {
-    return status === 'ACTIVE' ? 'tone-good' : status === 'SCHEDULED' ? 'tone-info' : status === 'PAUSED' ? 'tone-warn' : '';
-  }
 
   protected actions(c: AdminCampaign): Action[] {
     const moves: Record<CampaignStatus, Action[]> = {

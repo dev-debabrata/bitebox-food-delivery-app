@@ -21,10 +21,13 @@ from django.db.models import F
 from django.utils import timezone
 from django.utils.html import escape
 
+from apps.notifications.senders import sms_enabled
 from apps.rbac.roles import Role
+from apps.uploads.storage import is_uploaded_image_url
 from common.api import ApiError
 
-from .models import RevokedReason, Session, User, UserStatus
+from . import otp
+from .models import OtpPurpose, RevokedReason, Session, User, UserStatus
 from .serializers import user_json
 from .tokens import hash_token, random_token, sign_access_token
 
@@ -53,6 +56,10 @@ class IssuedSession:
 # sign-up.
 RegistrationHook = Callable[[User, dict[str, Any], RequestMeta], None]
 registration_hooks: list[RegistrationHook] = []
+# Checks that run before the account is created and may refuse it with an ApiError, or note what
+# they resolved in `data` for the hooks (a referral code: apps/coins/apps.py).
+RegistrationCheck = Callable[[dict[str, Any]], None]
+registration_checks: list[RegistrationCheck] = []
 
 
 def _create_session(user: User, meta: RequestMeta, family: str | None = None) -> str:
@@ -98,19 +105,53 @@ def _phone_taken(phone: str, exclude: uuid.UUID | None = None) -> bool:
     return (qs.exclude(pk=exclude) if exclude else qs).exists()
 
 
-def register(data: dict[str, Any], meta: RequestMeta) -> IssuedSession:
-    role = data.get("role") or Role.CUSTOMER
-    email, phone = data["email"], data.get("phone") or None
+def _check_new_account(email: str, phone: str | None) -> None:
     if User.objects.filter(email=email).exists():
         raise ApiError.conflict("An account with this email already exists")
     if phone and _phone_taken(phone):
         raise ApiError.conflict("An account with this phone number already exists")
 
+
+def signup_needs_code() -> bool:
+    """New accounts confirm their number by SMS first (SIGNUP_OTP_REQUIRED, while SMS is on)."""
+    return bool(settings.SIGNUP_OTP_REQUIRED) and sms_enabled()
+
+
+def request_signup_code(email: str, phone: str, ip: str | None) -> dict[str, Any]:
+    """Step 1 of sign-up: the email and number are free, so text a code to the number."""
+    _check_new_account(email, phone)
+    return otp.send_code(phone, OtpPurpose.REGISTER, ip, True)
+
+
+def register(data: dict[str, Any], meta: RequestMeta) -> IssuedSession:
+    role = data.get("role") or Role.CUSTOMER
+    email, phone = data["email"], data.get("phone") or None
+    for check in registration_checks:
+        check(data)
+    _check_new_account(email, phone)
+    phone_verified_at = None
+    if signup_needs_code():
+        # Step 2: the account is created only with the code texted to its number.
+        if not phone:
+            raise ApiError.bad_request(
+                "Enter your mobile number",
+                [{"field": "phone", "message": "Enter your mobile number"}],
+            )
+        if not data.get("code"):
+            raise ApiError.bad_request(
+                "Enter the code we sent to your phone",
+                [{"field": "code", "message": "Enter the 6-digit code"}],
+            )
+        otp.check_code(phone, OtpPurpose.REGISTER, data["code"])
+        phone_verified_at = timezone.now()
+
     with transaction.atomic():
         user = User.objects.create_user(
-            email, data["password"], data["name"], phone=phone, role=role
-        )
+            email, data["password"], data["name"], phone=phone, role=role,
+            phone_verified_at=phone_verified_at,
+        )  # fmt: skip
         session = _issue(user, meta)
+        transaction.on_commit(_safe(lambda u, *_: send_email_verification(u), user))
         for hook in registration_hooks:
             transaction.on_commit(_safe(hook, user, data, meta))
     logger.info("User registered", extra={"user_id": str(user.pk), "role": role})
@@ -129,6 +170,99 @@ def _safe(hook: RegistrationHook, *args: Any) -> Callable[[], None]:
     return run
 
 
+def _signed_in(user: User, portal: str | None, meta: RequestMeta, *fields: str) -> IssuedSession:
+    if user.status != UserStatus.ACTIVE:
+        raise ApiError.forbidden("This account has been suspended")
+    # Each panel has its own sign-in page: a customer can't use the admin login, and so on.
+    if portal and user.role != portal:
+        raise ApiError.forbidden("This account cannot sign in to this portal")
+    user.last_login = timezone.now()
+    user.save(update_fields=["last_login", *fields, "updated_at"])
+    return _issue(user, meta)
+
+
+def login_with_code(phone: str, code: str, portal: str | None, meta: RequestMeta) -> IssuedSession:
+    """Sign in with the SMS code sent by otp.request_login_code (proves the number, too)."""
+    otp.check_code(phone, OtpPurpose.LOGIN, code)
+    user = otp.login_user(phone)
+    if user is None:  # no code was ever sent to this number, so this cannot happen honestly
+        raise ApiError.unauthorized("That code is not right")
+    user.phone_verified_at = user.phone_verified_at or timezone.now()
+    return _signed_in(user, portal, meta, "phone_verified_at")
+
+
+def request_phone_verification(user: User, ip: str | None) -> dict[str, Any]:
+    if not user.phone:
+        raise ApiError.bad_request("Add a phone number to your profile first")
+    if user.phone_verified_at:
+        raise ApiError.conflict("Your phone number is already verified")
+    return otp.send_code(user.phone, OtpPurpose.VERIFY_PHONE, ip, True)
+
+
+def verify_phone(user: User, code: str) -> User:
+    if not user.phone:
+        raise ApiError.bad_request("Add a phone number to your profile first")
+    otp.check_code(user.phone, OtpPurpose.VERIFY_PHONE, code)
+    user.phone_verified_at = timezone.now()
+    user.save(update_fields=["phone_verified_at", "updated_at"])
+    return user
+
+
+def send_email_verification(user: User) -> None:
+    """Emails a one-time link (EMAIL_VERIFICATION_TTL_HOURS) that confirms the address."""
+    if user.email_verified_at:
+        return
+    token = random_token(32)
+    hours = settings.EMAIL_VERIFICATION_TTL_HOURS
+    user.email_verification_token_hash = hash_token(token)
+    user.email_verification_expires_at = timezone.now() + timedelta(hours=hours)
+    user.save(
+        update_fields=[
+            "email_verification_token_hash",
+            "email_verification_expires_at",
+            "updated_at",
+        ]
+    )
+    link = f"{settings.CLIENT_URLS[0]}/verify-email?token={token}"
+    send_mail(
+        subject="Confirm your BiteBox email",
+        message=(
+            f"Hi {user.name},\n\nConfirm this is your email address for BiteBox:\n\n{link}\n\n"
+            f"The link works for {hours} hours. If you did not create an account, ignore this "
+            "email."
+        ),
+        html_message=(
+            f"<p>Hi {escape(user.name)},</p><p>Confirm this is your email address for BiteBox.</p>"
+            f'<p><a href="{escape(link)}">Confirm email</a></p>'
+            f"<p>The link works for {hours} hours. If you did not create an account, ignore this "
+            "email.</p>"
+        ),
+        from_email=None,
+        recipient_list=[user.email],
+    )
+
+
+def resend_email_verification(user: User) -> None:
+    if user.email_verified_at:
+        raise ApiError.conflict("Your email is already verified")
+    send_email_verification(user)
+
+
+def verify_email(token: str) -> None:
+    # Consume the token atomically so it works once.
+    done = User.objects.filter(
+        email_verification_token_hash=hash_token(token),
+        email_verification_expires_at__gt=timezone.now(),
+    ).update(
+        email_verified_at=timezone.now(),
+        email_verification_token_hash=None,
+        email_verification_expires_at=None,
+        updated_at=timezone.now(),
+    )
+    if not done:
+        raise ApiError.bad_request("This link is invalid or has expired. Ask for a new one")
+
+
 def login(data: dict[str, Any], meta: RequestMeta) -> IssuedSession:
     user = User.objects.filter(email=data["email"]).first()
     # Always check a hash, so unknown emails and wrong passwords take the same time.
@@ -139,16 +273,7 @@ def login(data: dict[str, Any], meta: RequestMeta) -> IssuedSession:
     )
     if not user or not ok:
         raise ApiError.unauthorized("Invalid email or password")
-    if user.status != UserStatus.ACTIVE:
-        raise ApiError.forbidden("This account has been suspended")
-    # Each panel has its own sign-in page: a customer can't use the admin login, and so on.
-    portal = data.get("portal")
-    if portal and user.role != portal:
-        raise ApiError.forbidden("This account cannot sign in to this portal")
-
-    user.last_login = timezone.now()
-    user.save(update_fields=["last_login", "updated_at"])
-    return _issue(user, meta)
+    return _signed_in(user, data.get("portal"), meta)
 
 
 def refresh(raw_token: str | None, meta: RequestMeta) -> IssuedSession:
@@ -264,8 +389,15 @@ def update_profile(user: User, data: dict[str, Any]) -> User:
         phone = data["phone"] or None
         if phone and _phone_taken(phone, exclude=user.pk):
             raise ApiError.conflict("An account with this phone number already exists")
-        user.phone = phone
-        fields.append("phone")
+        if phone != user.phone:
+            user.phone, user.phone_verified_at = phone, None  # a new number must be verified again
+            fields += ["phone", "phone_verified_at"]
+    if "avatar_url" in data:
+        url = data["avatar_url"] or None
+        if url and not is_uploaded_image_url(url):
+            raise ApiError.bad_request("Upload the photo first")
+        user.avatar_url = url
+        fields.append("avatar_url")
     if fields:
         user.save(update_fields=[*fields, "updated_at"])
     return user

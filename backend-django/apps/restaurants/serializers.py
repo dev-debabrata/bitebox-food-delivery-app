@@ -6,6 +6,7 @@ from typing import Any
 from rest_framework import serializers
 
 from apps.accounts.serializers import EmailField
+from apps.restaurants.presenters import DAYS
 from common.fields import ImageUrlField, PaiseField, QueryBoolean, UUIDRef
 from common.validation import PageQuery
 
@@ -13,6 +14,7 @@ from .models import RestaurantStatus
 
 TIME = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 PHONE = re.compile(r"^\+?[0-9]{10,15}$")
+GSTIN = re.compile(r"^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$")
 POSTAL = re.compile(r"^[A-Za-z0-9 -]{3,10}$")
 
 
@@ -128,6 +130,53 @@ class RestaurantInput(serializers.Serializer):
     )
     opening_time = TimeField()
     closing_time = TimeField()
+    # Legal and tax details, gallery and weekly hours.
+    owner_name = serializers.CharField(max_length=80, required=False, allow_blank=True)
+    gst_registered = serializers.BooleanField(required=False)
+    gstin = serializers.RegexField(
+        GSTIN,
+        required=False,
+        allow_blank=True,
+        error_messages={"invalid": "Enter a valid 15-character GSTIN"},
+    )
+    fssai_number = serializers.RegexField(
+        r"^\d{14}$",
+        required=False,
+        allow_blank=True,
+        error_messages={"invalid": "An FSSAI number has 14 digits"},
+    )
+    fssai_valid_until = serializers.DateField(required=False, allow_null=True)
+    photos = serializers.ListField(
+        child=ImageUrlField(), max_length=8, required=False,
+        error_messages={"max_length": "Add up to 8 photos"},
+    )  # fmt: skip
+    weekly_hours = serializers.JSONField(required=False, allow_null=True)
+
+    def validate_weekly_hours(self, value: Any) -> Any:
+        if value is None:
+            return None
+        bad = serializers.ValidationError("Give each day a list of opening times (HH:mm)")
+        if not isinstance(value, dict) or set(value) - set(DAYS):
+            raise bad
+        clean: dict[str, list[dict[str, str]]] = {}
+        for day in DAYS:
+            slots = value.get(day) or []
+            if not isinstance(slots, list) or len(slots) > 3:
+                raise bad
+            for slot in slots:
+                if not isinstance(slot, dict) or not all(
+                    TIME.match(str(slot.get(k, ""))) for k in ("open", "close")
+                ):
+                    raise bad
+            clean[day] = [{"open": s["open"], "close": s["close"]} for s in slots]
+        return clean
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        if attrs.get("gst_registered") and not attrs.get(
+            "gstin", getattr(self.instance, "gstin", "")
+        ):
+            raise serializers.ValidationError({"gstin": "Enter your GSTIN"})
+        return attrs
 
     def to_internal_value(self, data: Any) -> Any:
         value = super().to_internal_value(data)

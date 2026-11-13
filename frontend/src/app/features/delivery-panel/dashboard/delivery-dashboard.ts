@@ -50,6 +50,7 @@ import {
   RiderOrder,
   RiderStats,
   AT_OR_TO_RESTAURANT,
+  RIDER_VERIFICATION_COPY,
 } from '../../../shared/models/order-management.models';
 import { ItemCountPipe } from '../../../shared/pipes/item-count.pipe';
 import { InrPipe, formatDistance } from '../../../shared/pipes/money.pipes';
@@ -126,6 +127,12 @@ export class DeliveryDashboard {
 
   protected readonly profile = computed(() => this.data()?.profile ?? null);
   protected readonly online = computed(() => this.profile()?.isOnline ?? false);
+  /** Shown until BiteBox has verified the rider (they cannot go online before). */
+  protected readonly verification = computed(() => {
+    const v = this.profile()?.verification;
+    return v && v.status !== 'approved' ? v : null;
+  });
+  protected readonly verifyCopy = RIDER_VERIFICATION_COPY;
   protected readonly onlineSwitch = linkedSignal(() => this.online());
   protected readonly offer = computed(() => this.data()?.offer ?? null);
   protected readonly active = computed(() => this.data()?.activeOrder ?? null);

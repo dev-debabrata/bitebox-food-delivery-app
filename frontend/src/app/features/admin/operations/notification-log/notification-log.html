@@ -1,0 +1,74 @@
+<bb-page-header
+  title="Notification log"
+  subtitle="Push, email, SMS and app notifications. Failures are retried automatically; ones that gave up can be sent again here."
+/>
+
+<div class="filters">
+  <np-select [formField]="filters.status" ariaLabel="Delivery status" [options]="statusOptions" />
+  <np-select [formField]="filters.channel" ariaLabel="Channel" [options]="channelOptions" />
+</div>
+
+@if (list.data()?.counts; as counts) {
+  <p class="bb-muted counts">
+    {{ counts.sent ?? 0 }} sent · {{ counts.failed ?? 0 }} retrying · {{ counts.dead ?? 0 }} gave up ·
+    {{ counts.skipped ?? 0 }} skipped
+  </p>
+}
+
+@if (list.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+  </div>
+}
+
+<div class="bb-card list-card" [attr.aria-busy]="list.loading()">
+  @if (list.showSkeleton()) {
+    @for (i of [1, 2, 3, 4]; track i) {
+      <span class="bb-skeleton row-skeleton"></span>
+    }
+  } @else if (list.empty()) {
+    <bb-empty-state icon="circle-check" title="Nothing here" message="No notifications match these filters." />
+  } @else if (list.data(); as data) {
+    <ul class="rows" [class.bb-dim]="list.loading()">
+      @for (d of data.items; track d.id) {
+        <li class="row">
+          <div class="main">
+            <strong>{{ d.notification?.title ?? 'Notification removed' }}</strong>
+            <span class="bb-muted small">
+              {{ channelLabel[d.channel] }} · {{ d.user?.name ?? 'Unknown' }} ·
+              {{ d.createdAt | date: 'd MMM, h:mm a' }} · {{ d.attempts }}
+              {{ d.attempts === 1 ? 'try' : 'tries' }}
+            </span>
+            @if (d.lastError) {
+              <span class="reason">{{ d.lastError }}</span>
+            }
+          </div>
+          <span class="bb-badge {{ status[d.status].tone }}">{{ status[d.status].label }}</span>
+          <div class="action">
+            @if (d.status === 'dead' || d.status === 'failed') {
+              <np-button
+                size="small"
+                variant="outlined"
+                severity="primary"
+                icon="rotate-ccw"
+                label="Send again"
+                [disabled]="retrying() === d.id"
+                (clicked)="retry(d)"
+              />
+            }
+          </div>
+        </li>
+      }
+    </ul>
+    <np-pagination
+      variant="compact"
+      [page]="data.pagination.page"
+      [rows]="data.pagination.limit"
+      [totalRecords]="data.pagination.total"
+      [rowsOptions]="[20, 50, 100]"
+      (pageChange)="list.goTo($event)"
+      (rowsChange)="list.goTo(1, $event)"
+    />
+  }
+</div>

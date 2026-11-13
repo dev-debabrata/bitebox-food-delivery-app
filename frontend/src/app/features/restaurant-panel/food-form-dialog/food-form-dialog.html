@@ -52,7 +52,7 @@
     <bb-image-upload [(url)]="imageUrl" label="Add a dish photo" aspectRatio="4 / 3" />
   </div>
   <div class="bb-dialog__actions">
-    <np-button variant="text" severity="secondary" label="Cancel" (clicked)="ref.close()" />
+    <np-button variant="soft" severity="secondary" label="Cancel" (clicked)="ref.close()" />
     <button type="submit" class="bb-btn" [disabled]="form().submitting()">
       @if (form().submitting()) {
         <np-spinner size="small" label="Saving" />

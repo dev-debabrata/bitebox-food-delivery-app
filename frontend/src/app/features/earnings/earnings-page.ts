@@ -9,6 +9,7 @@ import { StatTile } from '../../shared/components/stat-tile/stat-tile';
 import { NP_FORM_FIELDS } from '../../shared/forms/np-form-fields';
 import { periodReport } from '../../shared/list/period-report';
 import { InrPipe, formatDistance, formatPaise } from '../../shared/pipes/money.pipes';
+import { SettlementHistory } from './settlement-history/settlement-history';
 
 @Component({
   selector: 'bb-earnings-page',
@@ -21,6 +22,7 @@ import { InrPipe, formatDistance, formatPaise } from '../../shared/pipes/money.p
     PageHeader,
     StatTile,
     InrPipe,
+    SettlementHistory,
   ],
   templateUrl: './earnings-page.html',
   styleUrl: './earnings-page.scss',

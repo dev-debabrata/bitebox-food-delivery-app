@@ -29,16 +29,41 @@ def _minutes(hhmm: str) -> int:
     return int(hours) * 60 + int(minutes)
 
 
+DAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+
+
+def _slot(s: dict[str, str]) -> tuple[int, int]:
+    return _minutes(s["open"]), _minutes(s["close"])
+
+
+def _open_today(opens: int, closes: int, current: int) -> bool:
+    """The part of a slot that falls on its own day (an overnight slot runs to midnight)."""
+    if opens == closes:
+        return True  # open 24 hours
+    return opens <= current < closes if opens < closes else current >= opens
+
+
 def is_open_now(r: Restaurant, now: datetime | None = None) -> bool:
-    """Open within today's hours in the restaurant's time zone (overnight hours wrap)."""
-    if not r.is_accepting_orders or not r.opening_time or not r.closing_time:
+    """
+    Open within today's hours in the restaurant's time zone. Weekly hours, when set, give each
+    day its own slots; a slot that ends after midnight still counts the next morning.
+    """
+    if not r.is_accepting_orders:
         return False
     local = (now or timezone.now()).astimezone(ZoneInfo(r.timezone or "Asia/Kolkata"))
     current = local.hour * 60 + local.minute
-    opens, closes = _minutes(r.opening_time), _minutes(r.closing_time)
-    if opens == closes:
-        return True  # open 24 hours
-    return opens <= current < closes if opens < closes else current >= opens or current < closes
+    if r.weekly_hours:
+        today = [_slot(s) for s in r.weekly_hours.get(DAYS[local.weekday()]) or []]
+        yesterday = [_slot(s) for s in r.weekly_hours.get(DAYS[local.weekday() - 1]) or []]
+    elif r.opening_time and r.closing_time:
+        slot = (_minutes(r.opening_time), _minutes(r.closing_time))
+        today = yesterday = [slot]
+    else:
+        return False
+    return any(_open_today(o, c, current) for o, c in today) or any(
+        c < o and current < c
+        for o, c in yesterday  # last night's slot, after midnight
+    )
 
 
 def _compact(data: dict[str, Any]) -> dict[str, Any]:
@@ -52,6 +77,11 @@ def _compact(data: dict[str, Any]) -> dict[str, Any]:
         "reviewed_by",
         "line2",
         "area",
+        "weekly_hours",
+        "fssai_number",
+        "owner_name",
+        "gstin",
+        "fssai_valid_until",
     }
     return {k: v for k, v in data.items() if not (k in optional and v in ("", None))}
 
@@ -96,6 +126,9 @@ def restaurant_json(
         "timezone": r.timezone,
         "is_accepting_orders": r.is_accepting_orders,
         "is_open_now": is_open_now(r),
+        "weekly_hours": r.weekly_hours,
+        "photos": list(r.photos or []),
+        "fssai_number": r.fssai_number,
         "status": r.status,
         "rating": rating_json(r),
         "created_at": r.created_at,
@@ -105,6 +138,12 @@ def restaurant_json(
         data["status_reason"] = r.status_reason
         data["reviewed_at"] = r.reviewed_at
         data["reviewed_by"] = str(r.reviewed_by_id) if r.reviewed_by_id else None
+        data.update(
+            owner_name=r.owner_name,
+            gst_registered=r.gst_registered,
+            gstin=r.gstin,
+            fssai_valid_until=r.fssai_valid_until,
+        )
         if owner == "admin":
             o = r.owner
             data["owner"] = {

@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from common.api import ok
 from common.geo import GeoPoint
-from common.permissions import IsSignedIn
+from common.permissions import PUBLIC, IsSignedIn
 from common.schema import envelope, errors
 from common.throttling import rate_limit
 from common.validation import validated
@@ -57,6 +57,7 @@ class RouteQuery(serializers.Serializer):
 
 
 class SearchView(APIView):
+    permission_classes = PUBLIC
     throttle_classes = [GeoLimit]
 
     @extend_schema(
@@ -69,6 +70,7 @@ class SearchView(APIView):
 
 
 class ReverseView(APIView):
+    permission_classes = PUBLIC
     throttle_classes = [GeoLimit]
 
     @extend_schema(

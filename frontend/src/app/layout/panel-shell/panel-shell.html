@@ -81,7 +81,13 @@
       <bb-notification-bell />
 
       <button mat-button class="user-button" [matMenuTriggerFor]="userMenu">
-        <span class="bb-avatar avatar" aria-hidden="true">{{ initials() }}</span>
+        <span class="bb-avatar avatar" aria-hidden="true">
+          @if (photo(); as src) {
+            <img [src]="src" alt="" />
+          } @else {
+            {{ initials() }}
+          }
+        </span>
         <span class="user-name">{{ user()?.name }}</span>
         <span class="bb-sr-only">account menu</span>
         <np-icon name="chevron-down" class="mat-icon" iconPositionEnd matButtonIcon />

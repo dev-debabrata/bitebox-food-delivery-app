@@ -1,6 +1,6 @@
 """
-Restaurants (Node: models/restaurant.model.js).
-KYC, weekly hours and bank details come in later phases.
+Restaurants (Node: models/restaurant.model.js). Verification documents and the bank account
+are in apps/kyc; the legal and tax details (GST, FSSAI) are here.
 """
 
 from django.conf import settings
@@ -21,11 +21,22 @@ class RestaurantStatus(models.TextChoices):
     APPROVED = "approved"
     REJECTED = "rejected"
     SUSPENDED = "suspended"
+    # BiteBox asked for documents or details again; the owner fixes them and resubmits.
+    RESUBMISSION_REQUESTED = "resubmission_requested"
 
 
 # Which status changes an admin may make (Node ADMIN_STATUS_TRANSITIONS).
 ADMIN_STATUS_TRANSITIONS: dict[str, frozenset[str]] = {
-    RestaurantStatus.PENDING: frozenset({RestaurantStatus.APPROVED, RestaurantStatus.REJECTED}),
+    RestaurantStatus.PENDING: frozenset(
+        {
+            RestaurantStatus.APPROVED,
+            RestaurantStatus.REJECTED,
+            RestaurantStatus.RESUBMISSION_REQUESTED,
+        }
+    ),
+    RestaurantStatus.RESUBMISSION_REQUESTED: frozenset(
+        {RestaurantStatus.APPROVED, RestaurantStatus.REJECTED}
+    ),
     RestaurantStatus.APPROVED: frozenset({RestaurantStatus.SUSPENDED}),
     RestaurantStatus.SUSPENDED: frozenset({RestaurantStatus.APPROVED}),
     RestaurantStatus.REJECTED: frozenset({RestaurantStatus.APPROVED}),
@@ -59,7 +70,16 @@ class Restaurant(BaseModel, RatingSummary):
     avg_prep_time_minutes = models.PositiveSmallIntegerField(
         default=25, validators=[MinValueValidator(5), MaxValueValidator(180)]
     )
-    # Daily hours (one slot) in `timezone`. Weekly slots and holidays replace these in release 2.
+    # Legal and tax details (shown to admins; the FSSAI number is also shown to customers).
+    owner_name = models.CharField(max_length=80, blank=True, default="")
+    gst_registered = models.BooleanField(default=False)
+    gstin = models.CharField(max_length=15, blank=True, default="")
+    fssai_number = models.CharField(max_length=14, blank=True, default="")
+    fssai_valid_until = models.DateField(null=True, blank=True)
+    photos = models.JSONField(default=list)  # up to 8 gallery image URLs (our uploads)
+    # {"mon": [{"open": "09:00", "close": "23:00"}], ..., "sun": []}; null: the daily hours below.
+    weekly_hours = models.JSONField(null=True, blank=True)
+    # Daily hours (one slot) in `timezone`, used when there are no weekly hours.
     opening_time = models.CharField(max_length=5, validators=[TIME_OF_DAY])
     closing_time = models.CharField(max_length=5, validators=[TIME_OF_DAY])
     timezone = models.CharField(max_length=60, default="Asia/Kolkata")

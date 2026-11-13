@@ -7,7 +7,7 @@
   margin-bottom: var(--bb-space-4);
 
   @include bp.tablet-up {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) 200px auto;
   }
 }
 
@@ -154,4 +154,9 @@
   &.status-suspended {
     color: var(--bb-danger);
   }
+}
+
+.name {
+  font-weight: 700;
+  color: inherit;
 }

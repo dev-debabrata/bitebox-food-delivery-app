@@ -10,7 +10,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { DOCUMENT, DecimalPipe } from '@angular/common';
+import { DOCUMENT, DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -38,6 +38,7 @@ import { ImageFallback, UsableImagePipe } from '../../../shared/images/broken-im
 @Component({
   selector: 'bb-restaurant-detail',
   imports: [
+    NgTemplateOutlet,
     ToggleComponent,
     NP_FORM_FIELDS,
     RouterLink,
@@ -165,7 +166,25 @@ export class RestaurantDetail {
     return `menu-${section.category?.slug ?? 'other'}`;
   }
 
-  protected scrollTo(section: MenuSection): void {
+  /** The phone menu list (floating "Menu" button). */
+  protected readonly menuOpen = signal(false);
+
+  protected toggleMenu(): void {
+    this.menuOpen.update((open) => !open);
+    // Opening moves focus into the list; closing is handled by closeMenu().
+    if (this.menuOpen())
+      setTimeout(() => this.document.querySelector<HTMLElement>('#menu-sheet button')?.focus());
+  }
+
+  protected closeMenu(): void {
+    if (!this.menuOpen()) return;
+    this.menuOpen.set(false);
+    this.document.querySelector<HTMLElement>('.menu-fab-button')?.focus();
+  }
+
+  /** A section link (sidebar or phone list): close the list and scroll to the section. */
+  protected jump(section: MenuSection): void {
+    this.menuOpen.set(false);
     this.document
       .getElementById(this.sectionId(section))
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });

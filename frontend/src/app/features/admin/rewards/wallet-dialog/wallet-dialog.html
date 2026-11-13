@@ -39,7 +39,7 @@
                 <td>{{ sourceLabel[b.source] }}</td>
                 <td class="num">{{ b.remaining }} / {{ b.original }}</td>
                 <td>{{ b.earnedAt | date: 'd MMM y' }}</td>
-                <td>{{ b.expiresAt ? (b.expiresAt | date: 'd MMM y') : 'Never' }}</td>
+                <td [class.expired]="isPast(b.expiresAt)">{{ b.expiresAt ? (b.expiresAt | date: 'd MMM y') : 'Never' }}</td>
               </tr>
             }
           </tbody>

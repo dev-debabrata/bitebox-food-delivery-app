@@ -192,16 +192,9 @@
   font-size: 0.8rem;
 }
 
-// Phones: every stage stays visible as wrapping pills instead of a clipped scroll strip.
+// Phones: every stage stays visible as wrapping pills (global .bb-toggle-wrap), not a scroll strip.
 @include bp.phone-only {
   .tabs-scroll {
-    overflow: visible;
-  }
-  .tabs {
-    flex-wrap: wrap;
-    gap: var(--bb-space-2);
-    border: 0;
-    border-radius: 0;
     overflow: visible;
   }
 }

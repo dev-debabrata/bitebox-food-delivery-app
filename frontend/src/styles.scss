@@ -421,6 +421,17 @@ np-icon[matChipAvatar] {
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+  overflow: hidden;
+  // Centred next to text: with a photo there is no text baseline to line up with.
+  vertical-align: middle;
+
+  // The profile photo, when there is one, fills the circle instead of the initials.
+  img {
+    display: block; // no inline baseline gap under the photo
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
 
 .bb-count-badge {
@@ -591,6 +602,12 @@ np-button .np-button:is(.np-button--solid, .np-button--outlined, .np-button--tex
 
 np-button .np-button.np-button--solid {
   box-shadow: none;
+
+  // NexPrime adds a coloured glow on hover (a more specific rule, hence the extra pseudo-classes);
+  // keep the keyboard focus ring.
+  &:hover:not(:disabled):not(:focus-visible) {
+    box-shadow: none;
+  }
 }
 
 // Solid red and green np-buttons (Reject, Accept, Delivered): the solid tokens stay deep in dark
@@ -638,6 +655,33 @@ np-pagination {
 
 // np-tabs used as a tab strip only: its panel takes text content, so screens render their own
 // content below and the built-in (empty) panel is hidden.
+// A segmented np-button-toggle that would overflow on phones (e.g. order stages): there it
+// becomes wrapping pills so every option stays visible. Selectors outrank NexPrime's emulated ones.
+@include bp.phone-only {
+  np-button-toggle.bb-toggle-wrap .toggle-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--bb-space-2);
+    overflow: visible;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  np-button-toggle.bb-toggle-wrap .toggle-group .toggle-button {
+    height: 36px;
+    padding-inline: 14px;
+    border: 1px solid var(--ui-border-strong);
+    border-radius: 999px;
+    background: var(--ui-surface);
+  }
+
+  np-button-toggle.bb-toggle-wrap .toggle-group .toggle-button--selected {
+    border-color: var(--ui-primary);
+    background: var(--ui-primary-soft);
+  }
+}
+
 np-tabs.bb-tab-strip .tab-panel {
   display: none;
 }
@@ -774,14 +818,23 @@ np-menu.bb-menu-compact .menu.mi-panel {
   padding: var(--bb-space-3) var(--bb-space-5) var(--bb-space-5);
 }
 
-// Dialog actions: "Cancel" (a text button) is outlined and as tall as the primary action beside it.
+// Dialog actions: "Cancel"/"Close" (a text button) is as tall as the primary action beside it and
+// filled like NexPrime's soft secondary button, so Material and NexPrime dialogs match.
 .mat-mdc-dialog-actions .mat-mdc-button-base,
 .bb-dialog__actions .mat-mdc-button-base {
   --mat-button-text-container-height: 40px;
   --mat-button-text-horizontal-padding: 18px;
 
   &.mat-mdc-button {
-    border: 1px solid var(--bb-border);
+    --soft: var(--ui-text-muted);
+    --mat-button-text-hover-state-layer-opacity: 0; // the fill below changes instead
+    border-radius: var(--bb-btn-radius);
+    color: var(--ui-text);
+    background: color-mix(in srgb, var(--soft) 14%, var(--ui-surface));
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--soft) 22%, var(--ui-surface));
+    }
   }
 }
 
@@ -870,6 +923,11 @@ np-time-picker .time-picker-field {
   --mat-snack-bar-container-color: var(--bb-danger-solid);
   --mat-snack-bar-supporting-text-color: #fff;
   --mat-snack-bar-button-color: #fff;
+}
+
+// Phones: snackbars at the top, clear of the notch (NotificationService).
+.bb-snack-top.mat-mdc-snack-bar-container {
+  margin-top: max(8px, env(safe-area-inset-top));
 }
 
 // Skeleton loading placeholder
@@ -991,6 +1049,16 @@ np-time-picker .time-picker-field {
     color: var(--bb-ink-muted);
     margin: 0;
   }
+}
+
+// Small links under a form step, e.g. "Resend code" and "Change details".
+.bb-form-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--bb-space-2);
+  margin: 0;
+  font-size: 0.9rem;
 }
 
 .bb-form-footer {

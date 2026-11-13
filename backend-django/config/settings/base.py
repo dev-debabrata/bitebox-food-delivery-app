@@ -57,6 +57,8 @@ INSTALLED_APPS = [
     "apps.newsletter",
     "apps.uploads",
     "apps.geo",
+    "apps.tracking",
+    "apps.kyc",
 ]
 
 # Argon2id first; bcrypt only verifies hashes imported from the Node API (re-hashed on next login).
@@ -160,6 +162,7 @@ CLIENT_URLS: list[str] = env.list("CLIENT_URL", default=["http://localhost:4200"
 CORS_ALLOWED_ORIGINS = CLIENT_URLS
 CORS_ALLOW_CREDENTIALS = True  # the refresh-token cookie (Phase 5)
 CORS_URLS_REGEX = r"^/api/.*$"
+CORS_EXPOSE_HEADERS = ["Content-Disposition"]  # the file name of PDF and CSV downloads
 CORS_ALLOW_HEADERS = [
     "accept",
     "authorization",
@@ -185,6 +188,16 @@ REFRESH_COOKIE_PATH = "/api/v1/auth"
 REFRESH_COOKIE_SAMESITE = env.str("COOKIE_SAMESITE", default="Strict")
 REFRESH_COOKIE_SECURE = True  # development settings turn this off (http://localhost)
 PASSWORD_RESET_TTL_MINUTES = env.int("PASSWORD_RESET_TTL_MINUTES", default=30)
+EMAIL_VERIFICATION_TTL_HOURS = env.int("EMAIL_VERIFICATION_TTL_HOURS", default=24)
+# Sign-up texts a code to the new number and creates the account only with it (while SMS is on).
+SIGNUP_OTP_REQUIRED = env.bool("SIGNUP_OTP_REQUIRED", default=True)
+# Phone sign-in codes (apps/accounts/otp.py): 6 digits, 5 minutes, 5 tries, a new code after 30 s,
+# at most 5 codes per number and 20 per IP address an hour.
+OTP_TTL_SECONDS = env.int("OTP_TTL_SECONDS", default=300)
+OTP_MAX_ATTEMPTS = 5
+OTP_RESEND_SECONDS = env.int("OTP_RESEND_SECONDS", default=30)
+OTP_PER_PHONE_PER_HOUR = env.int("OTP_PER_PHONE_PER_HOUR", default=5)
+OTP_PER_IP_PER_HOUR = env.int("OTP_PER_IP_PER_HOUR", default=20)
 # Rate limits per client IP: "<requests>/<seconds>s" (Node: 20 and 5 per 15 minutes).
 AUTH_RATE_LIMIT = env.str("AUTH_RATE_LIMIT", default="20/900s")
 SENSITIVE_RATE_LIMIT = env.str("SENSITIVE_RATE_LIMIT", default="5/900s")
@@ -210,14 +223,26 @@ EMAIL_BACKEND = (
 PUBLIC_BASE_URL = env.str("PUBLIC_BASE_URL", default="http://localhost:8000").rstrip("/")
 UPLOAD_DIR = Path(env.str("UPLOAD_DIR", default=str(BASE_DIR / "uploads")))
 MAX_IMAGE_BYTES = 2 * 1024 * 1024
+# KYC documents (apps/kyc): never public; only the owner and reviewing admins can read them.
+PRIVATE_UPLOAD_DIR = Path(env.str("PRIVATE_UPLOAD_DIR", default=str(BASE_DIR / "private-uploads")))
+MAX_DOCUMENT_BYTES = 5 * 1024 * 1024
+# AES-256-GCM key (32 bytes, base64) for bank and document numbers (common/crypto.py).
+FIELD_ENCRYPTION_KEY = env.str("FIELD_ENCRYPTION_KEY", default="")
+# A restaurant goes live only with its required documents approved and a bank account added.
+RESTAURANT_KYC_REQUIRED = env.bool("RESTAURANT_KYC_REQUIRED", default=True)
+# A rider goes online only once approved: documents, bank account and address (apps/delivery).
+RIDER_KYC_REQUIRED = env.bool("RIDER_KYC_REQUIRED", default=True)
 CLOUDINARY_CLOUD_NAME = env.str("CLOUDINARY_CLOUD_NAME", default="")
 CLOUDINARY_API_KEY = env.str("CLOUDINARY_API_KEY", default="")
 CLOUDINARY_API_SECRET = env.str("CLOUDINARY_API_SECRET", default="")
 CLOUDINARY_FOLDER = env.str("CLOUDINARY_FOLDER", default="bitebox")
 IMAGE_UPLOAD_RATE_LIMIT = env.str("IMAGE_UPLOAD_RATE_LIMIT", default="60/3600s")
 REVIEW_IMAGE_UPLOAD_RATE_LIMIT = env.str("REVIEW_IMAGE_UPLOAD_RATE_LIMIT", default="30/3600s")
+# Writing and reporting reviews (Node: review.routes.js limiters).
+REVIEW_RATE_LIMIT = env.str("REVIEW_RATE_LIMIT", default="20/60s")
+REVIEW_REPORT_RATE_LIMIT = env.str("REVIEW_REPORT_RATE_LIMIT", default="20/900s")
 # Files bigger than this are rejected before they are fully read into memory.
-FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_IMAGE_BYTES + 64 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_DOCUMENT_BYTES + 64 * 1024
 
 # Free map services (Node: GEOCODER_URL, ROUTING_URL...). Their usage policies ask for an
 # identifying User-Agent and about one request per second; self-host them for real traffic.
@@ -232,7 +257,11 @@ ROUTING_PROFILE = env.str("ROUTING_PROFILE", default="driving")
 UPSTREAM_MIN_GAP_SECONDS = 1.1
 GEO_RATE_LIMIT = env.str("GEO_RATE_LIMIT", default="30/60s")
 COUPON_RATE_LIMIT = env.str("COUPON_RATE_LIMIT", default="30/900s")
+# POST /referrals/validate is public (the sign-up form): slow down code guessing.
+REFERRAL_RATE_LIMIT = env.str("REFERRAL_RATE_LIMIT", default="30/900s")
 ORDER_RATE_LIMIT = env.str("ORDER_RATE_LIMIT", default="10/60s")
+# Newsletter sign-up from the site footer (Node: newsletter.routes.js limiter).
+NEWSLETTER_RATE_LIMIT = env.str("NEWSLETTER_RATE_LIMIT", default="10/900s")
 # Delivery OTP: a 4-digit code made at pickup, shown to the customer, required to mark delivered.
 DELIVERY_OTP_REQUIRED = env.bool("DELIVERY_OTP_REQUIRED", default=True)
 DELIVERY_OTP_MAX_ATTEMPTS = env.int("DELIVERY_OTP_MAX_ATTEMPTS", default=5)
@@ -243,6 +272,48 @@ RAZORPAY_KEY_ID = env.str("RAZORPAY_KEY_ID", default="")
 RAZORPAY_KEY_SECRET = env.str("RAZORPAY_KEY_SECRET", default="")
 RAZORPAY_WEBHOOK_SECRET = env.str("RAZORPAY_WEBHOOK_SECRET", default="")
 PAYMENTS_MOCK_ENABLED = env.bool("PAYMENTS_MOCK", default=True)
+
+# Delivery tracking: a rider's position is stored at most every TRACKING_SAMPLE_SECONDS while
+# they carry an order, kept TRACKING_RETENTION_DAYS, and shown as stale after
+# TRACKING_STALE_SECONDS (the frontend uses the same 90 s). An arrival further than
+# ARRIVAL_FAR_METERS from the restaurant is allowed but flagged for admins.
+TRACKING_SAMPLE_SECONDS = env.int("TRACKING_SAMPLE_SECONDS", default=15)
+TRACKING_RETENTION_DAYS = env.int("TRACKING_RETENTION_DAYS", default=30)
+TRACKING_STALE_SECONDS = env.int("TRACKING_STALE_SECONDS", default=90)
+ARRIVAL_FAR_METERS = env.int("ARRIVAL_FAR_METERS", default=200)
+# "Your rider is almost there" when the rider on the way comes this close to the customer.
+APPROACH_NOTIFY_METERS = env.int("APPROACH_NOTIFY_METERS", default=500)
+
+# Notifications (apps/notifications). Web Push needs both VAPID keys (`npx web-push
+# generate-vapid-keys`; the same keys as the Node API, so browsers stay subscribed). Push
+# endpoints must be on PUSH_ALLOWED_HOSTS (SSRF guard). Email goes through the SMTP settings
+# below; SMS through MSG91 (SMS_PROVIDER=msg91) or the log (console); FCM needs a service
+# account JSON file. Each external channel is off until configured.
+VAPID_PUBLIC_KEY = env.str("VAPID_PUBLIC_KEY", default="").strip()
+VAPID_PRIVATE_KEY = env.str("VAPID_PRIVATE_KEY", default="").strip()
+VAPID_SUBJECT = env.str("VAPID_SUBJECT", default="mailto:support@bitebox.local")
+PUSH_ALLOWED_HOSTS: list[str] = [
+    h.strip().lower()
+    for h in env.list(
+        "PUSH_ALLOWED_HOSTS",
+        default=[
+            "fcm.googleapis.com",
+            "push.services.mozilla.com",
+            "notify.windows.com",
+            "push.apple.com",
+        ],
+    )
+    if h.strip()
+]
+NOTIFICATION_EMAILS = env.bool("NOTIFICATION_EMAILS", default=True)
+SMS_PROVIDER = env.str("SMS_PROVIDER", default="")  # "", "console" or "msg91"
+MSG91_AUTH_KEY = env.str("MSG91_AUTH_KEY", default="")
+MSG91_TEMPLATE_ID = env.str("MSG91_TEMPLATE_ID", default="")
+# OTP messages need their own DLT-approved template in India (falls back to the one above).
+MSG91_OTP_TEMPLATE_ID = env.str("MSG91_OTP_TEMPLATE_ID", default="")
+FCM_CREDENTIALS_FILE = env.str("FCM_CREDENTIALS_FILE", default="")
+PUSH_RATE_LIMIT = "30/900s"
+PROMOTION_RATE_LIMIT = "10/3600s"
 LOCATION_RATE_LIMIT = env.str("LOCATION_RATE_LIMIT", default="30/60s")
 
 # Rate-limit counters. Production uses Redis so every API instance shares them.
@@ -263,7 +334,8 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
     # Bearer access tokens; views opt in to protection with permission classes.
     "DEFAULT_AUTHENTICATION_CLASSES": ["apps.accounts.authentication.BearerAuthentication"],
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
+    # Deny by default; public views say `permission_classes = PUBLIC` (common/permissions.py).
+    "DEFAULT_PERMISSION_CLASSES": ["common.permissions.IsSignedIn"],
     "UNAUTHENTICATED_USER": None,
     # Proxies in front of the API (nginx = 1), so rate limits see the real client IP.
     "NUM_PROXIES": env.int("TRUST_PROXY", default=0),
@@ -271,7 +343,14 @@ REST_FRAMEWORK = {
 }
 
 # line1 stays line1 (not line_1) in both directions, like the Node field names.
-JSON_CAMEL_CASE = {"JSON_UNDERSCOREIZE": {"no_underscore_before_number": True}}
+# Maps keyed by a status ("ready_for_pickup": 3) keep their keys: the frontend looks them up by
+# status value, as with the Node API.
+JSON_CAMEL_CASE = {
+    "JSON_UNDERSCOREIZE": {
+        "no_underscore_before_number": True,
+        "ignore_fields": ("counts", "by_status", "moderation_actions"),
+    }
+}
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "BiteBox API",
@@ -309,7 +388,10 @@ LOGGING = {
     "formatters": {
         "line": {"format": "%(asctime)s %(levelname)s %(name)s %(message)s"},
     },
-    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "line"}},
+    "filters": {"redact": {"()": "common.log_redaction.RedactSecrets"}},  # tokens, passwords
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "line", "filters": ["redact"]}
+    },
     "root": {"handlers": ["console"], "level": LOG_LEVEL},
     "loggers": {
         "django.request": {"level": "ERROR"},

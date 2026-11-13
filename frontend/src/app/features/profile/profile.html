@@ -3,7 +3,15 @@
 @if (user(); as u) {
   <div class="layout">
     <aside class="bb-card summary">
-      <div class="avatar" aria-hidden="true">{{ u.name.charAt(0).toUpperCase() }}</div>
+      <div class="photo">
+        <bb-image-upload
+          [url]="u.avatarUrl ?? ''"
+          (urlChange)="saveAvatar($event)"
+          endpoint="avatars"
+          aspectRatio="1 / 1"
+          label="Add a photo"
+        />
+      </div>
       <h2>{{ u.name }}</h2>
       <span class="role-chip">{{ roleLabel() }}</span>
       <dl>
@@ -62,6 +70,8 @@
           </div>
         </form>
       </section>
+
+      <bb-account-verification />
 
       <section class="bb-card" aria-labelledby="password-title">
         <h3 id="password-title">Change password</h3>

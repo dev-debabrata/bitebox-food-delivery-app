@@ -18,7 +18,10 @@
           icon="search"
           enterkeyhint="search"
         />
-        <button mat-flat-button class="bb-btn-accent" type="submit">Search</button>
+        <button mat-flat-button class="bb-btn-accent" type="submit" aria-label="Search">
+          <np-icon name="arrow-right" class="mat-icon phone-icon" matButtonIcon />
+          <span class="label">Search</span>
+        </button>
       </form>
 
       @if (quickPicks().length) {

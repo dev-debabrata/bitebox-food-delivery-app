@@ -23,7 +23,7 @@
       }
       <div>
         <h1>{{ r.name }}</h1>
-        <span class="status status-{{ r.status }}">{{ r.status }}</span>
+        <span class="status status-{{ r.status }}">{{ statusLabel[r.status] }}</span>
       </div>
     </div>
     <div class="actions">
@@ -145,6 +145,28 @@
     </section>
 
     <section class="bb-card">
+      <h3>Legal and tax</h3>
+      <dl>
+        <div>
+          <dt>Owner or business</dt>
+          <dd>{{ r.ownerName || '—' }}</dd>
+        </div>
+        <div>
+          <dt>FSSAI</dt>
+          <dd>{{ r.fssaiNumber || 'Not given' }}</dd>
+        </div>
+        <div>
+          <dt>FSSAI valid until</dt>
+          <dd>{{ r.fssaiValidUntil ? (r.fssaiValidUntil | date: 'd MMM y') : '—' }}</dd>
+        </div>
+        <div>
+          <dt>GST</dt>
+          <dd>{{ r.gstRegistered ? r.gstin : 'Not registered' }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="bb-card">
       <h3>Menu & history</h3>
       <dl>
         @if (stats(); as s) {
@@ -166,9 +188,13 @@
           <dd>{{ r.reviewedAt ? (r.reviewedAt | date: 'medium') : 'Not yet' }}</dd>
         </div>
       </dl>
-      <a class="bb-btn bb-btn--text" routerLink="/admin/foods" [queryParams]="{ restaurant: r.id }"
-        ><np-icon name="book-open" />View menu items</a
+      <a class="bb-btn bb-btn--outlined bb-btn--small menu-link" routerLink="/admin/foods" [queryParams]="{ restaurant: r.id }"
+        ><np-icon name="book-open" class="mat-icon" matButtonIcon />View menu items</a
       >
     </section>
   </div>
+
+  @if (r.owner.id ?? r.owner._id; as ownerId) {
+    <bb-kyc-review class="kyc" [partnerId]="ownerId" />
+  }
 }

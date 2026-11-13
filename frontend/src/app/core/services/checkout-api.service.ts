@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
+import { FileDownloadService } from './file-download.service';
 import { environment } from '../../../environments/environment';
 import { ApiResponse, Paginated } from '../../shared/models/api.models';
 import {
@@ -59,6 +60,15 @@ export interface PlaceOrderRequest {
 export class OrderService {
   private readonly http = inject(HttpClient);
   private readonly api = environment.baseUrl;
+  private readonly files = inject(FileDownloadService);
+
+  /** The PDF invoice of a delivered order. */
+  invoice(orderId: string): Promise<void> {
+    return this.files.save(
+      `${this.api}/orders/${encodeURIComponent(orderId)}/invoice`,
+      'BiteBox-invoice.pdf',
+    );
+  }
 
   place(
     request: PlaceOrderRequest,

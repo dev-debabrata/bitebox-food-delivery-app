@@ -247,3 +247,31 @@ export const notifyNewDeliveryOtp = (order) =>
     `Your new code is ${order.deliveryOtp}. Share it with the rider at your door.`,
     "order.delivery_code",
   );
+
+/** The online payment did not go through (the customer can try again from the order). */
+export const notifyPaymentFailed = (order, reason) =>
+  toCustomer(
+    order,
+    `Payment for ${ref(order)} did not go through`,
+    `${reason}. You have not been charged. Try again from your order.`,
+    "payment.failed",
+  );
+
+export const notifyRefundStarted = (order, amountPaise) =>
+  toCustomer(
+    order,
+    `Refund of ${rupees(amountPaise)} started`,
+    `For ${ref(order)}. We will tell you when your bank confirms it.`,
+    "payment.refund_started",
+  );
+
+/** The rider is close to the customer (sent once per order). */
+export const notifyApproaching = (order) =>
+  toCustomer(
+    order,
+    "Your rider is almost there",
+    `${ref(order)} is a few minutes away.${
+      order.deliveryOtp ? ` Keep your delivery code ${order.deliveryOtp} ready.` : ""
+    }`,
+    "order.approaching",
+  );

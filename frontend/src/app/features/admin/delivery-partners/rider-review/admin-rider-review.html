@@ -1,0 +1,85 @@
+<a class="back" routerLink="/admin/delivery-partners"
+  ><np-icon name="arrow-left" class="mat-icon" matButtonIcon />All delivery partners</a
+>
+
+@if (loadError(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ message }}</span>
+  </div>
+} @else if (data(); as d) {
+  <header class="head">
+    <div>
+      <h1>{{ d.user.name }}</h1>
+      <span class="bb-badge {{ tone[status()] }}">{{ label[status()] }}</span>
+      @if (d.user.status === 'suspended') {
+        <span class="bb-badge tone-bad">Account suspended</span>
+      }
+    </div>
+    <div class="actions">
+      @for (dec of decisions(); track dec.status) {
+        <button
+          type="button"
+          class="bb-btn"
+          [class.bb-btn--danger]="dec.danger"
+          (click)="decide(dec)"
+        >
+          {{ dec.label }}
+        </button>
+      }
+    </div>
+  </header>
+  @if (d.profile.verification?.reason; as reason) {
+    <p class="reason"><strong>Reason given:</strong> {{ reason }}</p>
+  }
+
+  <div class="grid">
+    <section class="bb-card">
+      <h3>Rider</h3>
+      <dl>
+        <div>
+          <dt>Email</dt>
+          <dd>{{ d.user.email }}</dd>
+        </div>
+        <div>
+          <dt>Phone</dt>
+          <dd>{{ d.user.phone || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Joined</dt>
+          <dd>{{ d.user.createdAt | date: 'd MMM y' }}</dd>
+        </div>
+        <div>
+          <dt>Deliveries</dt>
+          <dd>{{ d.profile.completedDeliveries }}</dd>
+        </div>
+      </dl>
+    </section>
+    <section class="bb-card">
+      <h3>Vehicle and address</h3>
+      <dl>
+        <div>
+          <dt>Vehicle</dt>
+          <dd>
+            {{ d.profile.vehicleType ? vehicleLabel[d.profile.vehicleType] : 'Not added' }}
+            {{ d.profile.vehicleNumber ? '· ' + d.profile.vehicleNumber : '' }}
+          </dd>
+        </div>
+        <div class="wide">
+          <dt>Address</dt>
+          <dd>
+            @if (d.profile.address; as a) {
+              {{ a.line1 }}{{ a.area ? ', ' + a.area : '' }}, {{ a.city }}, {{ a.state }}
+              {{ a.postalCode }}
+            } @else {
+              Not added
+            }
+          </dd>
+        </div>
+      </dl>
+    </section>
+  </div>
+
+  <bb-kyc-review class="kyc" [partnerId]="d.user.id" />
+} @else {
+  <span class="bb-skeleton" style="height: 240px"></span>
+}

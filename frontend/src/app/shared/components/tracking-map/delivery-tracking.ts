@@ -1,6 +1,7 @@
 import { DestroyRef, Signal, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { EMPTY, distinctUntilChanged, interval, switchMap } from 'rxjs';
+import { EMPTY, distinctUntilChanged, filter, interval, merge, switchMap } from 'rxjs';
+import { OrderTrackingService } from '../../../core/services/order-tracking.service';
 import { RealtimeService, RiderLocation } from '../../../core/services/realtime.service';
 import {
   Point,
@@ -18,6 +19,10 @@ export const STALE_AFTER_MS = 90_000;
 const REROUTE_AFTER_M = 250;
 /** ...or this long. */
 const REROUTE_AFTER_MS = 60_000;
+
+/** The trail keeps a point only after the rider moved this far, and at most this many. */
+const TRAIL_STEP_M = 15;
+const TRAIL_MAX = 300;
 
 /** Statuses in which an order can gain a rider worth watching live. */
 const WATCHABLE: OrderStatus[] = ['ready_for_pickup', ...TRACKED_STATUSES];
@@ -91,16 +96,49 @@ export function deliveryTracking(order: Signal<TrackableOrder | null>) {
   );
 
   const location = signal<RiderLocation | null>(null);
-  // Watch live while the order can have a rider; re-join when it moves into that stage.
+  /** Where the rider has been on this delivery (stored points, then live ones). */
+  const trail = signal<Point[]>([]);
+  const show = (l: RiderLocation) => {
+    const current = location();
+    if (current && new Date(current.at) > new Date(l.at)) return; // never go back in time
+    location.set(l);
+    const p = { latitude: l.latitude, longitude: l.longitude };
+    trail.update((t) =>
+      t.length && distanceMeters(t[t.length - 1], p) < TRAIL_STEP_M
+        ? t
+        : [...t, p].slice(-TRAIL_MAX),
+    );
+  };
+
+  // While the order can have a rider: live positions, plus the stored trail and last position as
+  // soon as watching starts (even with the socket down) and again after every reconnect.
+  const tracking = inject(OrderTrackingService);
+  const connected = toObservable(realtime.connected);
   toObservable(
     computed(() => (order() && WATCHABLE.includes(order()!.status) ? order()!.id : null)),
   )
     .pipe(
       distinctUntilChanged(),
-      switchMap((id) => (id ? realtime.track(id) : EMPTY)),
+      switchMap((id) =>
+        id
+          ? merge(
+              realtime.track(id),
+              connected.pipe(
+                filter((up, i) => i === 0 || up),
+                switchMap(() => tracking.get(id)),
+              ),
+            )
+          : EMPTY,
+      ),
       takeUntilDestroyed(destroyRef),
     )
-    .subscribe((l) => location.set(l));
+    .subscribe((event) => {
+      if (!event) return; // the tracking endpoint was unavailable
+      if (!('recentPath' in event)) return show(event); // a live position
+      if (!event.tracking) return;
+      trail.set(event.recentPath.map(([latitude, longitude]) => ({ latitude, longitude })));
+      if (event.lastPoint) show({ orderId: event.orderId, ...event.lastPoint });
+    });
 
   const rider = computed<Point | null>(() => {
     const l = location();
@@ -153,6 +191,8 @@ export function deliveryTracking(order: Signal<TrackableOrder | null>) {
     rider,
     riderStale,
     riderSeenSeconds,
+    /** Where the rider has been on this delivery (empty until it is assigned). */
+    trail: computed(() => (rider() ? trail() : [])),
     plannedRoute,
     remaining,
     straightLineToTarget,

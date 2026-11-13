@@ -53,7 +53,7 @@
                 <span class="sub">{{ c.startAt | date: 'h:mm a' }} – {{ c.endAt | date: 'h:mm a' }}</span>
               </td>
               <td class="num">{{ c.rewardCoins }}</td>
-              <td><span class="bb-badge {{ tone(c.status) }}">{{ statusLabel[c.status] }}</span></td>
+              <td><span class="bb-badge {{ statusTone[c.status] }}">{{ statusLabel[c.status] }}</span></td>
               <td class="num">
                 <span class="given">{{ c.stats.claims.toLocaleString('en-IN') }} {{ c.stats.claims === 1 ? 'claim' : 'claims' }}</span>
                 <span class="sub">{{ c.stats.coins.toLocaleString('en-IN') }} coins</span>

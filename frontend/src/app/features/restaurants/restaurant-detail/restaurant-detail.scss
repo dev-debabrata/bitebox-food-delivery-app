@@ -113,54 +113,49 @@
   }
 }
 
-// Section jump links: horizontal scroller on phones/tablets, sticky sidebar on desktop.
+// Section jump links: a sticky sidebar on desktop; phones and tablets get the floating "Menu"
+// button and its list (below). Both use `.section-link`.
 .section-nav {
-  display: flex;
-  gap: var(--bb-space-2);
-  overflow-x: auto;
-  position: sticky;
-  top: 64px;
-  z-index: 2;
-  background: var(--bb-bg);
-  padding-block: var(--bb-space-2);
+  display: none;
 
   @include bp.desktop-up {
+    display: flex;
     flex-direction: column;
+    gap: 2px;
+    position: sticky;
     top: 88px;
-    overflow: visible;
+    z-index: 2;
+    padding: var(--bb-space-2) var(--bb-space-3) var(--bb-space-2) 0;
     border-right: 1px solid var(--bb-border);
-    padding-right: var(--bb-space-3);
+  }
+}
+
+.section-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--bb-space-3);
+  min-height: 40px;
+  padding: 0 var(--bb-space-3);
+  border: 0;
+  border-radius: var(--bb-radius-sm);
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--bb-ink);
+  text-align: left;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--bb-plum-100);
+    outline: none;
   }
 
-  button {
-    flex-shrink: 0;
-    display: flex;
-    justify-content: space-between;
-    gap: var(--bb-space-2);
-    background: var(--bb-surface);
-    border: 1px solid var(--bb-border);
-    border-radius: 999px;
-    padding: 6px 14px;
-    font: inherit;
-    font-weight: 600;
-    color: var(--bb-ink);
-    cursor: pointer;
-
-    @include bp.desktop-up {
-      border: 0;
-      border-radius: var(--bb-radius-sm);
-      background: transparent;
-      text-align: left;
-    }
-
-    &:hover {
-      background: var(--bb-plum-100);
-    }
-
-    span {
-      color: var(--bb-ink-muted);
-      font-weight: 400;
-    }
+  span {
+    color: var(--bb-ink-muted);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -437,5 +432,85 @@
 
   h2 {
     outline: none;
+  }
+}
+
+// Phones and tablets: the floating "Menu" button and its section list, above the bottom tab bar
+// (and above the cart bar when the cart has dishes from this restaurant).
+// Centred without a transform: a transformed parent would trap the fixed backdrop inside it.
+// The full-width wrapper lets taps through; only its children take them.
+.menu-fab {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--bb-tab-bar) + var(--bb-space-4));
+  z-index: 6;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--bb-space-2);
+
+  &.above-cart {
+    bottom: calc(var(--bb-tab-bar) + 72px);
+  }
+
+  @include bp.desktop-up {
+    display: none;
+  }
+}
+
+.menu-fab-button,
+.menu-backdrop,
+.menu-sheet {
+  pointer-events: auto;
+}
+
+.menu-fab-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--bb-btn-radius);
+  background: var(--bb-brand);
+  color: var(--bb-on-brand);
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: var(--bb-shadow);
+  cursor: pointer;
+  --bb-icon-size: 18px;
+
+  &:focus-visible {
+    outline: 2px solid var(--bb-amber);
+    outline-offset: 2px;
+  }
+}
+
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  border: 0;
+  background: color-mix(in srgb, var(--bb-ink) 25%, transparent);
+  cursor: default;
+}
+
+.menu-sheet {
+  display: flex;
+  flex-direction: column;
+  width: min(300px, calc(100vw - 32px));
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+  padding: var(--bb-space-2);
+  border-radius: var(--bb-radius);
+  background: var(--bb-surface);
+  border: 1px solid var(--bb-border);
+  box-shadow: var(--bb-shadow);
+
+  .section-link {
+    min-height: 44px; // touch target
   }
 }

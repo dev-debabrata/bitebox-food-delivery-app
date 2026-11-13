@@ -1,4 +1,5 @@
 import { TableLabels } from '../../../../shared/list/table-labels';
+import { CommissionRates } from './commission-rates/commission-rates';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { IconComponent } from 'nexprime';
 import { FinanceService } from '../../../../core/services/admin/finance.service';
@@ -12,13 +13,23 @@ import { InrPipe, formatPaise } from '../../../../shared/pipes/money.pipes';
 @Component({
   selector: 'bb-commission',
   imports: [
-    TableLabels,IconComponent, NP_FORM_FIELDS, PageHeader, StatTile, InrPipe],
+    TableLabels,
+    IconComponent,
+    NP_FORM_FIELDS,
+    PageHeader,
+    StatTile,
+    InrPipe,
+    CommissionRates,
+  ],
   templateUrl: './commission.html',
   styleUrl: './commission.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CommissionPage {
   private readonly api = inject(FinanceService);
-  protected readonly report = periodReport((days) => this.api.commission(days), 'Could not load commission.');
+  protected readonly report = periodReport(
+    (days) => this.api.commission(days),
+    'Could not load commission.',
+  );
   protected readonly money = (paise: number) => formatPaise(paise) || '₹0';
 }

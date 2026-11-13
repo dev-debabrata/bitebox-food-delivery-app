@@ -120,9 +120,12 @@
                   @if (upcoming(c)) {
                     Starts {{ c.startAt | date: 'd MMM, h:mm a' }}
                   } @else {
-                    Valid until {{ c.endAt | date: 'd MMM y, h:mm a' }}
+                    Claim by {{ c.endAt | date: 'd MMM y, h:mm a' }}
                   }
                 </li>
+                @if (c.coinsExpireAt) {
+                  <li>Coins valid until {{ c.coinsExpireAt | date: 'd MMM y' }}</li>
+                }
               </ul>
               <footer>
                 @if (c.canClaim) {

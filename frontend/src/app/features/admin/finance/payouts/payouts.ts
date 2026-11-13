@@ -3,9 +3,7 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { form } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { IconComponent, SelectOption } from 'nexprime';
+import { ButtonComponent, IconComponent, PaginationComponent, SelectOption } from 'nexprime';
 import { Observable } from 'rxjs';
 import { FinanceService } from '../../../../core/services/admin/finance.service';
 import { errorMessage, resourceError } from '../../../../core/services/api-error';
@@ -45,8 +43,8 @@ const COPY: Record<PayoutType, { title: string; subtitle: string; payee: string 
     TableLabels,
     DatePipe,
     NP_FORM_FIELDS,
-    MatButtonModule,
-    MatPaginatorModule,
+    ButtonComponent,
+    PaginationComponent,
     IconComponent,
     EmptyState,
     PageHeader,
@@ -120,6 +118,10 @@ export class PayoutsPage {
     }).subscribe((reference) =>
       this.run(p.id, this.api.markPaid(p.id, String(reference)), 'Payout marked as paid'),
     );
+  }
+
+  protected statement(p: Payout): void {
+    this.api.statement(p.id).catch((err: Error) => this.notify.error(err.message));
   }
 
   protected cancel(p: Payout): void {

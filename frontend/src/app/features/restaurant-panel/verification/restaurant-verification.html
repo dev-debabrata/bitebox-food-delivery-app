@@ -1,0 +1,95 @@
+<bb-page-header
+  title="Verification"
+  subtitle="Legal details, documents and the bank account BiteBox pays you into."
+/>
+
+@if (restaurant() === null) {
+  <div class="bb-card empty">
+    <p>Create your restaurant first, then come back to verify it.</p>
+    <a routerLink="/restaurant/details" class="bb-btn">Add restaurant details</a>
+  </div>
+} @else if (restaurant(); as r) {
+  <bb-status-banner [restaurant]="r" [showFixLink]="false" />
+  @if (canResubmit()) {
+    <div class="resubmit">
+      <span class="bb-muted">Fixed everything that was asked?</span>
+      <button type="button" class="bb-btn" [disabled]="resubmitting()" (click)="resubmit()">
+        {{ resubmitting() ? 'Sending…' : 'Send for review' }}
+      </button>
+    </div>
+  }
+
+  <div class="grid">
+    <section class="bb-card" aria-labelledby="legal-title">
+      <h3 id="legal-title">Legal and tax details</h3>
+      <form class="bb-form" [formRoot]="form">
+        <np-text-input
+          [formField]="form.ownerName"
+          label="Owner or business name (as on documents)"
+          autocomplete="organization"
+        />
+        <div class="bb-form-row">
+          <np-text-input
+            [formField]="form.fssaiNumber"
+            label="FSSAI licence number"
+            inputmode="numeric"
+            hint="14 digits. Customers see it on your page."
+            [error]="shownError(form.fssaiNumber)"
+          />
+          <div class="bb-field">
+            <np-calendar
+              [formField]="form.fssaiValidUntil"
+              label="FSSAI valid until"
+              dateFormat="dd M yy"
+              showIcon
+            />
+          </div>
+        </div>
+        <np-toggle
+          [checked]="model().gstRegistered"
+          (checkedChange)="setGst($event)"
+          label="Registered for GST"
+        />
+        @if (model().gstRegistered) {
+          <np-text-input
+            [formField]="form.gstin"
+            label="GSTIN"
+            autocapitalize="characters"
+            [error]="shownError(form.gstin)"
+          />
+        }
+        <div>
+          <button type="submit" class="bb-btn" [disabled]="form().submitting() || !form().dirty()">
+            {{ form().submitting() ? 'Saving…' : 'Save details' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="bb-card" aria-labelledby="bank-title">
+      <h3 id="bank-title">Bank account</h3>
+      <bb-payout-account-form
+        [account]="summary()?.payoutAccount ?? null"
+        (saved)="bankSaved($event)"
+      />
+    </section>
+  </div>
+
+  <section class="bb-card" aria-labelledby="docs-title">
+    <header class="docs-head">
+      <h3 id="docs-title">Documents</h3>
+      @if (summary(); as s) {
+        <span class="bb-badge {{ s.complete ? 'tone-good' : 'tone-warn' }}">
+          {{ s.complete ? 'All approved' : 'In progress' }}
+        </span>
+      }
+    </header>
+    @if (summary(); as s) {
+      <bb-kyc-documents [summary]="s" (changed)="kycData.reload()" />
+    } @else {
+      <span class="bb-skeleton" style="height: 160px"></span>
+    }
+  </section>
+} @else {
+  <span class="bb-skeleton" style="height: 240px"></span>
+}

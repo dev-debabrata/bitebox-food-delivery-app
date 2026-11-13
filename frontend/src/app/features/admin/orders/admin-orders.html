@@ -37,12 +37,15 @@
             <div class="main">
               <strong>{{ o.orderNumber }}</strong>
               <span class="bb-muted meta"
-                >{{ o.restaurantSnapshot.name }} · {{ o | itemCount }} ·
+                >{{ o.restaurantSnapshot.name }} · {{ o | itemCount }} · {{ o.paymentMethod === 'cod' ? 'Cash' : 'Online' }} ·
                 <span class="when">{{ o.createdAt | date: 'd MMM, h:mm a' }}</span></span
               >
             </div>
             <span class="amount">{{ o.pricing.totalPaise | inr }}</span>
-            <bb-order-status-chip [status]="o.status" [label]="statusLabel(o)" />
+            <div class="badges">
+              <bb-order-status-chip [status]="o.status" [label]="statusLabel(o)" />
+              <span class="bb-badge pay {{ payment[o.paymentStatus][1] }}">{{ payment[o.paymentStatus][0] }}</span>
+            </div>
             <np-icon name="chevron-right" class="mat-icon chev" matButtonIcon />
           </button>
         </li>

@@ -8,6 +8,7 @@ import {
   AdminOrder,
   AdminOrderList,
   AdminRider,
+  AdminRiderDetail,
   RestaurantAction,
   RestaurantActiveOrders,
   RestaurantOrder,
@@ -15,7 +16,9 @@ import {
   RiderAction,
   RiderDashboard,
   RiderOrder,
+  RiderAddress,
   RiderProfile,
+  RiderVerificationStatus,
   RiderStats,
 } from '../../shared/models/order-management.models';
 import { toParams } from './http-params';
@@ -74,6 +77,20 @@ export class RiderService {
         vehicleType,
         vehicleNumber: vehicleNumber || undefined,
       })
+      .pipe(map((r) => r.data.profile));
+  }
+
+  /** The home address, needed for verification. */
+  saveDetails(address: RiderAddress): Observable<RiderProfile> {
+    return this.http
+      .patch<ApiResponse<{ profile: RiderProfile }>>(`${this.url}/me/details`, { address })
+      .pipe(map((r) => r.data.profile));
+  }
+
+  /** After "documents needed" or a rejection: back to the review queue. */
+  resubmit(): Observable<RiderProfile> {
+    return this.http
+      .post<ApiResponse<{ profile: RiderProfile }>>(`${this.url}/me/resubmit`, {})
       .pipe(map((r) => r.data.profile));
   }
 
@@ -174,9 +191,29 @@ export class AdminOrdersService {
       .pipe(map((r) => r.data.order));
   }
 
+  rider(id: string): Observable<AdminRiderDetail> {
+    return this.http
+      .get<ApiResponse<AdminRiderDetail>>(`${this.api}/delivery-partners/${encodeURIComponent(id)}`)
+      .pipe(map((r) => r.data));
+  }
+
+  setRiderVerification(
+    id: string,
+    status: Exclude<RiderVerificationStatus, 'pending'>,
+    reason = '',
+  ): Observable<AdminRiderDetail> {
+    return this.http
+      .patch<ApiResponse<AdminRiderDetail>>(
+        `${this.api}/delivery-partners/${encodeURIComponent(id)}/verification`,
+        { status, reason },
+      )
+      .pipe(map((r) => r.data));
+  }
+
   riders(query: {
     search?: string;
     online?: boolean;
+    verification?: RiderVerificationStatus;
     page?: number;
     limit?: number;
   }): Observable<Paginated<AdminRider>> {

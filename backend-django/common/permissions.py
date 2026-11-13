@@ -11,10 +11,15 @@ own delivery) is enforced in selectors from `request.user`, never from ids sent 
 
 from typing import Any
 
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import AllowAny, BasePermission
 from rest_framework.request import Request
 
 from apps.rbac.roles import Permission, Role, has_permission
+
+# Deny by default: views without `permission_classes` need a signed-in user (REST_FRAMEWORK
+# DEFAULT_PERMISSION_CLASSES). Public endpoints opt in with `permission_classes = PUBLIC`, and
+# tests/test_access_control.py keeps the list of public routes explicit.
+PUBLIC: list[type[BasePermission]] = [AllowAny]
 
 
 def _user_role(request: Request) -> str | None:

@@ -1,0 +1,66 @@
+@if (error()) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ error() }}</span>
+  </div>
+}
+
+@if (step() === 'phone') {
+  <form class="bb-form" [formRoot]="phoneForm">
+    <bb-phone-input
+      [formField]="phoneForm.phone"
+      label="Mobile number"
+      /* hint="We will text you a 6-digit code" */
+      [error]="shownError(phoneForm.phone)"
+    />
+    <div class="bb-form-actions">
+      <button mat-flat-button type="submit" [disabled]="phoneForm().submitting()">
+        @if (phoneForm().submitting()) {
+          <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Sending the code" />
+        } @else {
+          Send code
+        }
+      </button>
+    </div>
+  </form>
+} @else {
+  @if (notice()) {
+    <div class="bb-alert info" role="status">
+      <np-icon name="message-square" class="mat-icon" matButtonIcon />
+      <span>{{ notice() }}</span>
+    </div>
+  }
+  <form class="bb-form" [formRoot]="codeForm">
+    <np-text-input
+      [formField]="codeForm.code"
+      label="6-digit code"
+      icon="key-round"
+      placeholder="••••••"
+      autocomplete="one-time-code"
+      inputmode="numeric"
+      [error]="shownError(codeForm.code)"
+    />
+    <div class="bb-form-actions">
+      <button mat-flat-button type="submit" [disabled]="codeForm().submitting()">
+        @if (codeForm().submitting()) {
+          <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Signing in" />
+        } @else {
+          Verify and sign in
+        }
+      </button>
+    </div>
+    <p class="bb-form-links">
+      <button
+        type="button"
+        class="bb-link-button"
+        [disabled]="resendIn() > 0 || sending()"
+        (click)="resend()"
+      >
+        {{ resendIn() > 0 ? 'Resend code in ' + resendIn() + ' s' : 'Resend code' }}
+      </button>
+      <button type="button" class="bb-link-button" (click)="changeNumber()">
+        Use a different number
+      </button>
+    </p>
+  </form>
+}

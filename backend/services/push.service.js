@@ -8,15 +8,15 @@ import { DAY_MS } from "../utils/dates.js";
 
 /**
  * Web Push (browser notifications). Every in-app notification also goes out as a push to the
- * person's subscribed browsers (notification.service.js#notify calls `pushToUsers`), filtered by
- * their push preferences. Sending is best-effort and never fails the caller.
+ * person's subscribed browsers (a notification delivery calls `pushToUser` once their push
+ * preferences allow it). Sending is best-effort and never fails the caller.
  *
  * The payload uses the Angular service worker format ({ notification: {...} }), so the browser
  * shows it and a click opens `link` in the app without any custom worker code.
  */
 
 export const PUSH_CATEGORIES = Object.freeze(["orders", "account", "promotions"]);
-const DEFAULT_PREFERENCES = Object.freeze({ orders: true, account: true, promotions: false });
+export const DEFAULT_PREFERENCES = Object.freeze({ orders: true, account: true, promotions: false });
 const MAX_DEVICES_PER_USER = 10;
 const MAX_FAILURES = 5;
 const SEND_CONCURRENCY = 10;
@@ -44,7 +44,7 @@ export function usePushSender(send, publicKey = "test-vapid-public-key") {
   testPublicKey = send ? publicKey : null;
 }
 
-const isPushEnabled = () =>
+export const isPushEnabled = () =>
   Boolean(testSender) || Boolean(env.push.vapidPublicKey && env.push.vapidPrivateKey);
 
 function assertEnabled() {
@@ -228,6 +228,7 @@ function payloadFor({ type, title, body, link, order }) {
   });
 }
 
+/** True when the push service accepted it. */
 async function sendOne(sub, payload, options) {
   try {
     await send({ endpoint: sub.endpoint, keys: sub.keys }, payload, options);
@@ -236,6 +237,7 @@ async function sendOne(sub, payload, options) {
         { _id: sub._id },
         { $set: { lastSuccessAt: new Date(), failures: 0 } },
       );
+    return true;
   } catch (error) {
     const status = error?.statusCode;
     // Gone (the browser unsubscribed or it expired), or failing for too long: forget it.
@@ -245,6 +247,7 @@ async function sendOne(sub, payload, options) {
       await PushSubscription.updateOne({ _id: sub._id }, { $inc: { failures: 1 } });
     }
     if (status !== 404 && status !== 410) logger.warn({ status, err: error?.message }, "Web push failed");
+    return false;
   }
 }
 
@@ -257,53 +260,41 @@ async function sendAll(subscriptions, notification) {
     // Collapses still-undelivered updates about the same order into the latest one.
     ...(notification.order && { topic: `o${notification.order}` }),
   };
+  let sent = 0;
   for (let i = 0; i < subscriptions.length; i += SEND_CONCURRENCY)
-    await Promise.all(subscriptions.slice(i, i + SEND_CONCURRENCY).map((s) => sendOne(s, payload, options)));
+    for (const ok of await Promise.all(
+      subscriptions.slice(i, i + SEND_CONCURRENCY).map((s) => sendOne(s, payload, options)),
+    ))
+      sent += ok ? 1 : 0;
+  return sent;
 }
 
 const SUBSCRIPTION_FIELDS = "user endpoint keys failures lastSuccessAt";
 
-/** Subscriptions of those users who are active and allow this category (most have none). */
-async function subscriptionsFor(userIds, category) {
-  const subscriptions = await PushSubscription.find({ user: { $in: userIds } })
-    .select(SUBSCRIPTION_FIELDS)
-    .lean();
-  if (!subscriptions.length) return [];
-  const allowed = await User.find({
-    _id: { $in: [...new Set(subscriptions.map((s) => String(s.user)))] },
-    status: USER_STATUS.ACTIVE,
-    [`pushPreferences.${category}`]: DEFAULT_PREFERENCES[category] ? { $ne: false } : true,
-    ...(category === "promotions" && { role: ROLES.CUSTOMER }),
-  }).distinct("_id");
-  const ok = new Set(allowed.map(String));
-  return subscriptions.filter((s) => ok.has(String(s.user)));
-}
-
 const pending = new Set();
 
 /** Runs `task` in the background: never throws, never delays the caller. */
-function inBackground(task, type) {
+export function runInBackground(task, label) {
   const run = task()
-    .catch((error) => logger.error({ err: error, type }, "Could not send push"))
+    .catch((error) => logger.error({ err: error, label }, "Background notification work failed"))
     .finally(() => pending.delete(run));
   pending.add(run);
 }
 
 /**
- * Pushes `notification` ({ type, title, body, link, order }) to the users' browsers in the
- * background. Does nothing when push is off.
+ * One notification ({ type, title, body, link, order }) to every browser of one person (the
+ * notification delivery checks preferences first). Returns { browsers, sent }.
  */
-export function pushToUsers(userIds, notification) {
-  if (!isPushEnabled()) return;
-  const ids = [...new Set([userIds].flat().filter(Boolean).map(String))];
-  if (!ids.length) return;
-  inBackground(
-    async () => sendAll(await subscriptionsFor(ids, categoryOf(notification.type)), notification),
-    notification.type,
-  );
+export async function pushToUser(userId, notification) {
+  const subscriptions = await PushSubscription.find({ user: userId })
+    .select(SUBSCRIPTION_FIELDS)
+    .lean();
+  if (!subscriptions.length) return { browsers: 0, sent: 0 };
+  const sent = await sendAll(subscriptions, notification);
+  return { browsers: await PushSubscription.countDocuments({ user: userId }), sent };
 }
 
-/** Tests: waits for background pushes started so far. */
+/** Tests: waits for background pushes and notification deliveries started so far. */
 export async function flushPush() {
   while (pending.size) await Promise.allSettled([...pending]);
 }
@@ -323,6 +314,6 @@ export async function sendPromotion({ title, body, link }) {
     .select(SUBSCRIPTION_FIELDS)
     .lean();
   const notification = { type: "promo.offer", title, body, link };
-  inBackground(() => sendAll(subscriptions, notification), notification.type);
+  runInBackground(() => sendAll(subscriptions, notification), notification.type);
   return { recipients: new Set(subscriptions.map((s) => String(s.user))).size };
 }

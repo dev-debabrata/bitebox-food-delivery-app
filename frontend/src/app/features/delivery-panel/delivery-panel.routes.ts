@@ -29,6 +29,12 @@ export const DELIVERY_ROUTES: Routes = [
     loadComponent: () => import('../notifications/notifications-page').then((m) => m.NotificationsPage),
   },
   {
+    path: 'verification',
+    title: 'Verification | BiteBox Rider',
+    loadComponent: () =>
+      import('./verification/rider-verification').then((m) => m.RiderVerification),
+  },
+  {
     path: 'profile',
     title: 'Profile | BiteBox Delivery',
     loadComponent: () => import('../profile/profile').then((m) => m.Profile),

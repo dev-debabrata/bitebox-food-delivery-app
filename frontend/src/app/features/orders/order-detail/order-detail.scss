@@ -367,3 +367,15 @@ address {
     flex-direction: column;
   }
 }
+
+.invoice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--bb-space-2);
+
+  h2,
+  p {
+    margin: 0;
+  }
+}

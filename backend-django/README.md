@@ -2,7 +2,7 @@
 
 The Django + DRF + Channels + Celery backend that replaces the Node API in `../backend`, phase by phase. The plan, decisions and data model are in [`docs/django-migration/`](../docs/django-migration/README.md). Until the switch-over, the Node API remains the one the web app uses.
 
-**Status: Phase 12 (payments).** Phases follow the user's 19-phase list from Phase 8 on (see the migration README).
+**Status: onboarding, part 3 (delivery partner registration and verification) after Phase 16.** Phases follow the user's 19-phase list from Phase 8 on (see the migration README).
 - **Built:** the skeleton (settings, envelope and errors, pagination, permissions, health, OpenAPI, Celery, Docker, CI), the parity schema (45 tables, see [03 §3.5](../docs/django-migration/03-data-model.md#35-phase-4-implementation-notes-what-changed-from-the-plan-above)), sign-in and admin accounts, the catalogue and cart, and orders: placing them, the status workflow, dispatch to riders, the sweep (Celery Beat) and live updates over `/ws/`.
 - **Not yet:** online payments (Phase 8; cash on delivery works), coins, reviews, notifications inbox and push.
 
@@ -129,8 +129,21 @@ This creates the same fictional accounts as the Node seed (`admin@`, `customer@`
 - `apps/payments/services.py` owns every payment state change; `apps/payments/providers.py` picks the provider: Razorpay when `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are set, otherwise the simulated provider (`PAYMENTS_MOCK`, always off in production). Tests swap it with `use_online_provider(...)` and a fake Razorpay client.
 - Online orders keep `submitted_at` null until paid, so restaurants never see them; the sweep cancels them after 15 min. Payment is confirmed only server-side: the checkout signature plus the payment fetched from Razorpay, or a webhook (`POST /payments/webhooks/razorpay`, HMAC over the raw body, each event id stored once in `payment_webhook_events`). A payment that lands after the order closed is refunded at once.
 - **Refunds** are rows (`refunds`). Opening one reserves its amount on `payments.refunded_paise` (a CHECK caps it at the amount paid) in the caller's transaction; the gateway is called after commit. Statuses: `pending → processing → processed | failed`; cash refunds are `manual_pending → manual_done` (`POST /admin/refunds/{id}/paid`). Finance refunds any amount up to what is left: `POST /admin/payments/{id}/refunds {amountPaise, reason}` (an `Idempotency-Key` header makes a retry safe). The payment becomes `partially_refunded` or `refunded`.
+- **Finance** (`apps/finance`): commission rules (`CommissionRule`, per restaurant or global, effective dates) feed `earnings.settlement_for`, which stores the rate on `OrderSettlement`. `ledger.py` posts balanced, immutable `LedgerEntry` rows (a trigger rejects edits) on delivery, payout and post-delivery refunds, keyed so retries are no-ops. `invoices.py` draws PDF invoices and payout statements (`common/pdf.py`) numbered per financial year via `InvoiceSequence`.
 - **Reconciliation:** Celery Beat runs `payments.reconcile` every 5 min: unpaid online payments the gateway reports as captured, refunds whose gateway call never happened, and refunds the bank has not confirmed yet.
 - Customers see their history at `GET /payments/mine`; admins at `GET /admin/payments` and `/admin/payments/{id}` (refunds and gateway events).
+
+### Tracking
+
+- `apps/tracking`: `TrackingPoint` rows (rider, order, position, accuracy, time), stored by `record()` at most every `TRACKING_SAMPLE_SECONDS` per rider and only while the rider carries an order in a tracked status. Both the socket (`rider:location`) and `PUT /delivery/me/location` record. Celery Beat runs `tracking.purge` daily (`TRACKING_RETENTION_DAYS`, BRIN index on `recorded_at`).
+- `GET /tracking/orders/{id}` (customer, rider of the order, or `orders:view`): `{ tracking, lastPoint, ageSeconds, stale, recentPath }`, the path only while tracked.
+- Marking "arrived" stores `arrival_distance_m` (straight line from the rider's last fix); admins see `arrivalDistanceMeters` and `arrivedFar` (over `ARRIVAL_FAR_METERS`).
+
+### Notifications
+
+- `apps/notifications/services.py#notify` writes the inbox row, then plans a `NotificationDelivery` per external channel (`content.py`: which types use email and SMS; preferences on the user for push and in `ChannelPreference` for email/SMS) and queues `notifications.deliver` after commit. `attempt()` claims a delivery with a lease, sends it (`senders.py`: pywebpush, FCM HTTP v1, Django email, MSG91/console SMS) and records `sent`, `skipped`, `failed` (back-off 1/5/15/60 min) or `dead` after 5 tries. Celery Beat: `notifications.retry` (every minute), `notifications.purge` (daily, 90 days).
+- Endpoints: the inbox (`/notifications`), Web Push (`/push/*`, `/admin/push/promotions`, Node parity), `/notifications/preferences`, `/push/devices` (FCM) and the admin delivery log (`/admin/notifications/deliveries`, retry).
+- Tests swap senders with `senders.use_sender(channel, fn)` (or `"webpush"` for the per-browser call); email uses the locmem backend and SMS the `test` provider.
 
 ## Conventions (same contract as the Node API)
 

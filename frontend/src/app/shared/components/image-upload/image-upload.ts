@@ -12,7 +12,11 @@ import {
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ImageUploadComponent } from 'nexprime';
 import { errorMessage } from '../../../core/services/api-error';
-import { MAX_IMAGE_BYTES, UploadService } from '../../../core/services/upload.service';
+import {
+  MAX_IMAGE_BYTES,
+  UploadEndpoint,
+  UploadService,
+} from '../../../core/services/upload.service';
 import { BrokenImages } from '../../images/broken-images';
 
 @Component({
@@ -29,6 +33,7 @@ export class ImageUpload {
   readonly url = model<string>('');
   readonly label = input('Upload image');
   readonly aspectRatio = input<string | number>('16 / 9');
+  readonly endpoint = input<UploadEndpoint>('images');
 
   protected readonly maxBytes = MAX_IMAGE_BYTES;
   protected readonly preview = signal('');
@@ -58,7 +63,7 @@ export class ImageUpload {
     }
     this.error.set(null);
     this.uploading.set(true);
-    this.uploads.uploadImage(file).subscribe({
+    this.uploads.uploadImage(file, this.endpoint()).subscribe({
       next: (serverUrl) => {
         this.uploading.set(false);
         this.url.set(serverUrl);

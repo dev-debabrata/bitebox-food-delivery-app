@@ -38,7 +38,7 @@
               <td>{{ r.from | date: 'd MMM' }} – {{ r.to | date: 'd MMM' }}</td>
               <td class="num"><strong>{{ r.amountPaise | inr }}</strong></td>
               <td class="actions">
-                <button mat-flat-button type="button" [disabled]="busy() === r.payeeId" (click)="payOut(r)">Pay out</button>
+                <np-button size="small" severity="primary" label="Pay out" [disabled]="busy() === r.payeeId" (clicked)="payOut(r)" />
               </td>
             </tr>
           }
@@ -98,8 +98,19 @@
               </td>
               <td class="actions">
                 @if (p.status === 'pending') {
-                  <button mat-flat-button type="button" [disabled]="busy() === p.id" (click)="markPaid(p)">Mark paid</button>
-                  <button mat-button type="button" [disabled]="busy() === p.id" (click)="cancel(p)">Cancel</button>
+                  <np-button size="small" severity="primary" label="Mark paid" [disabled]="busy() === p.id" (clicked)="markPaid(p)" />
+                  <np-button size="small" variant="text" severity="secondary" label="Cancel" [disabled]="busy() === p.id" (clicked)="cancel(p)" />
+                }
+                @if (p.status !== 'cancelled') {
+                  <np-button
+                    size="small"
+                    variant="text"
+                    severity="secondary"
+                    icon="file-down"
+                    label="Statement"
+                    [ariaLabel]="'Download the statement for ' + p.payeeName"
+                    (clicked)="statement(p)"
+                  />
                 }
               </td>
             </tr>
@@ -107,13 +118,14 @@
         </tbody>
       </table>
     </div>
-    <mat-paginator
-      [length]="history.data()!.pagination.total"
-      [pageIndex]="history.data()!.pagination.page - 1"
-      [pageSize]="history.data()!.pagination.limit"
-      [pageSizeOptions]="[20, 50, 100]"
-      (page)="history.onPage($event)"
-      aria-label="Payout pages"
+    <np-pagination
+      variant="compact"
+      [page]="history.data()!.pagination.page"
+      [rows]="history.data()!.pagination.limit"
+      [totalRecords]="history.data()!.pagination.total"
+      [rowsOptions]="[20, 50, 100]"
+      (pageChange)="history.goTo($event)"
+      (rowsChange)="history.goTo(1, $event)"
     />
   }
 </section>

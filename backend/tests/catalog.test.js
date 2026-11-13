@@ -343,6 +343,7 @@ describe("Restaurants, categories and food", () => {
         approved: 1,
         rejected: 0,
         suspended: 0,
+        resubmission_requested: 0,
       });
     });
 

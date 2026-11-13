@@ -10,6 +10,7 @@ import {
 import { Restaurant } from "../models/restaurant.model.js";
 import { ROLES } from "../models/user.model.js";
 import { fromPoint, haversineMeters, toPoint } from "../utils/geo.js";
+import { onPosition } from "../services/tracking.service.js";
 import { rooms } from "./events.js";
 
 const S = ORDER_STATUS;
@@ -158,6 +159,9 @@ export function registerTracking(io, socket) {
       const at = new Date(now);
       if (now - persistedAt >= LIMITS.persistEveryMs) {
         persistedAt = now;
+        // The delivery's trail (sampled again inside record()).
+        if (trackedOrderId)
+          await onPosition(user.id, trackedOrderId, { latitude, longitude, accuracy }, at);
         await DeliveryPartner.updateOne(
           { user: user.id },
           {

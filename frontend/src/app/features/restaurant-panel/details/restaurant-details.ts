@@ -50,19 +50,14 @@ import {
   requiredText,
 } from '../../../shared/forms/form-rules';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
-import { Restaurant, RestaurantInput } from '../../../shared/models/catalog.models';
+import { Restaurant, RestaurantInput, WeeklyHours } from '../../../shared/models/catalog.models';
 import { rupeesToPaise } from '../../../shared/pipes/money.pipes';
 import { StatusBanner } from '../status-banner/status-banner';
 import { PhoneInput } from '../../../shared/components/phone-input/phone-input';
+import { dateToTime, timeToDate } from '../../../shared/forms/time-of-day';
+import { PhotoGallery } from './photo-gallery/photo-gallery';
+import { WeeklyHoursEditor } from './weekly-hours/weekly-hours';
 
-function timeToDate(time: string): Date {
-  const [h, m] = time.split(':').map(Number);
-  const date = new Date();
-  date.setHours(h, m, 0, 0);
-  return date;
-}
-const dateToTime = (date: Date) =>
-  `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
 function emptyModel() {
   return {
@@ -86,6 +81,8 @@ function emptyModel() {
   selector: 'bb-restaurant-details',
   imports: [
     PhoneInput,
+    PhotoGallery,
+    WeeklyHoursEditor,
     PlaceSearch,
     ToggleComponent,
     FormRoot,
@@ -117,8 +114,24 @@ export class RestaurantDetails {
   protected readonly locating = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly imageUrl = signal('');
+  protected readonly photos = signal<string[]>([]);
+  protected readonly weeklyHours = signal<WeeklyHours | null>(null);
   private readonly saved = signal('');
-  private readonly snapshot = () => JSON.stringify({ ...this.model(), imageUrl: this.imageUrl() });
+  private readonly snapshot = () =>
+    JSON.stringify({
+      ...this.model(),
+      imageUrl: this.imageUrl(),
+      photos: this.photos(),
+      weeklyHours: this.weeklyHours(),
+    });
+  /** The daily hours, as the starting point for each day's hours. */
+  protected readonly dailyHours = computed(() => {
+    const { openingTime, closingTime } = this.model();
+    return {
+      open: openingTime ? dateToTime(openingTime) : '10:00',
+      close: closingTime ? dateToTime(closingTime) : '23:00',
+    };
+  });
   protected readonly changed = computed(
     () => this.restaurant() === null || this.snapshot() !== this.saved(),
   );
@@ -181,6 +194,8 @@ export class RestaurantDetails {
   private fill(r: Restaurant): void {
     this.restaurant.set(r);
     this.imageUrl.set(r.imageUrl ?? '');
+    this.photos.set(r.photos ?? []);
+    this.weeklyHours.set(r.weeklyHours ?? null);
     this.form().reset({
       name: r.name,
       description: r.description ?? '',
@@ -307,6 +322,8 @@ export class RestaurantDetails {
       avgPrepTimeMinutes: Number(v.avgPrepTimeMinutes),
       openingTime: dateToTime(v.openingTime!),
       closingTime: dateToTime(v.closingTime!),
+      photos: this.photos(),
+      weeklyHours: this.weeklyHours(),
     };
 
     const creating = this.restaurant() === null;

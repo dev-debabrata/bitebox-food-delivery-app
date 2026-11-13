@@ -4,6 +4,7 @@
   <np-text-input [formField]="filters.search" ariaLabel="Search transactions" placeholder="Order number, customer name, email or phone" icon="search" clearable />
   <np-select [formField]="filters.status" ariaLabel="Payment status" [options]="statusOptions" />
   <np-select [formField]="filters.method" ariaLabel="Payment method" [options]="methodOptions" />
+  <np-select [formField]="filters.orderState" ariaLabel="Order status" [options]="orderStateOptions" />
 </div>
 
 @if (list.error(); as message) {
@@ -25,11 +26,14 @@
       @for (p of list.data()!.items; track p.id) {
         <li class="row">
           <div class="main">
-            @if (p.order; as o) {
-              <button type="button" class="bb-link-button order" (click)="details(p)">{{ o.orderNumber }}</button>
-            } @else {
-              <strong>Order removed</strong>
-            }
+            <div class="head">
+              @if (p.order; as o) {
+                <button type="button" class="bb-link-button order" (click)="details(p)">{{ o.orderNumber }}</button>
+                <bb-order-status-chip [status]="o.status" />
+              } @else {
+                <strong>Order removed</strong>
+              }
+            </div>
             <span class="bb-muted meta">
               @if (p.customer) {
                 {{ p.customer.name }} ·

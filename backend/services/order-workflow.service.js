@@ -14,7 +14,8 @@ import {
 } from "../models/order.model.js";
 import { emitOrderUpdated } from "../sockets/events.js";
 import { ApiError } from "../utils/api-error.js";
-import { settlementFor } from "./earnings.service.js";
+import { commissionBpFor, settlementFor } from "./earnings.service.js";
+import { postSettlement } from "./ledger.service.js";
 import { notifyStatusChange } from "./order-notifications.js";
 import { settleCancelledPayment } from "./payments/payment.service.js";
 import * as rewardEvents from "./reward-events.js";
@@ -122,7 +123,11 @@ export async function transition(
   }
   if (to === S.DELIVERED) {
     set.paymentStatus = PAYMENT_STATUS.PAID; // cash collected on delivery (online orders are already paid)
-    set.settlement = { ...settlementFor(order), at: now };
+    set.settlement = {
+      ...settlementFor(order, await commissionBpFor(order.restaurant)),
+      refundAdjustmentPaise: 0,
+      at: now,
+    };
   }
   if (to === S.PICKED_UP && env.deliveryOtp.required) {
     // The customer reads this code to the rider at the door (order-management#riderSetStatus).
@@ -195,6 +200,7 @@ async function afterTransition(order) {
         { $set: { activeOrder: null }, $inc: { completedDeliveries: 1 } },
       ),
       rewardEvents.orderDelivered(order),
+      postSettlement(order),
     );
   }
   const results = await Promise.allSettled(tasks);

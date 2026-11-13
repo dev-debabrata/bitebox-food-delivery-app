@@ -139,6 +139,27 @@ describe("special rewards", () => {
       assert.equal(history.items[0].campaign.name, "Diwali Dhamaka");
     });
 
+    it("gives coins that expire on the campaign's own date, else after the settings' period", async () => {
+      const expires = new Date(Date.now() + 10 * DAY);
+      const c = await campaign({ coinsExpireAt: expires });
+      const a = await signUp();
+      assert.equal((await w.api(a.token).get("/api/v1/rewards/campaigns")).body.data.items[0].coinsExpireAt, expires.toISOString());
+      assert.equal((await claimAs(a.token, c.id)).status, 201);
+      const credit = await CoinTransaction.findOne({ user: a.user.id, source: "FESTIVAL_REWARD" }).lean();
+      assert.equal(credit.expiresAt.getTime(), expires.getTime());
+
+      const plain = await campaign({ name: "Holi Hungama" });
+      assert.equal((await claimAs(a.token, plain.id)).status, 201);
+      const later = await CoinTransaction.findOne({ user: a.user.id, campaign: plain.id }).lean();
+      assert.ok(later.expiresAt > new Date(Date.now() + 170 * DAY), "180 days by default");
+
+      // The coins must outlast the campaign.
+      await assert.rejects(
+        campaign({ coinsExpireAt: new Date(Date.now() + DAY) }),
+        (e) => e.statusCode === 422 && e.details.some((d) => d.field === "coinsExpireAt"),
+      );
+    });
+
     it("never pays a customer twice under concurrent claims", async () => {
       const c = await campaign();
       const a = await signUp();

@@ -28,6 +28,13 @@ const LABEL: Record<MarkerKind, string> = {
 };
 const GLIDE_MS = 900;
 
+/** Road route, straight-line fallback (dashed) and the rider's trail (coloured in the SCSS). */
+const LINE: Record<'road' | 'straight' | 'trail', Leaflet.PolylineOptions> = {
+  road: { color: '#2e1a3d', weight: 5, opacity: 0.8 },
+  straight: { color: '#6b5a78', weight: 3, opacity: 0.7, dashArray: '6 8' },
+  trail: { className: 'bb-track-trail', weight: 4, opacity: 0.9, interactive: false },
+};
+
 @Component({
   selector: 'bb-tracking-map',
   templateUrl: './tracking-map.html',
@@ -41,6 +48,8 @@ export class TrackingMap {
   readonly riderStale = input(false);
   readonly route = input<Point[] | null>(null);
   readonly lineFrom = input<Point | null>(null);
+  /** Where the rider has already been (drawn under the route). */
+  readonly trail = input<Point[]>([]);
   readonly label = input('Delivery map');
 
   protected readonly loadError = signal<string | null>(null);
@@ -52,6 +61,7 @@ export class TrackingMap {
   private readonly markers: Partial<Record<MarkerKind, Leaflet.Marker>> = {};
   private svgs: Partial<Record<MarkerKind, string>> = {};
   private line?: Leaflet.Polyline;
+  private trailLine?: Leaflet.Polyline;
   private fitted = false;
   private glide?: number;
   private resizeObserver?: ResizeObserver;
@@ -81,12 +91,18 @@ export class TrackingMap {
     });
 
     effect(() => {
+      const trail = this.trail().filter(isValidPoint);
+      if (this.ready()) this.trailLine = this.polyline(this.trailLine, trail, LINE.trail);
+    });
+
+    effect(() => {
       if (!this.ready()) return;
       const route = (this.route() ?? []).filter(isValidPoint);
-      if (route.length > 1) return this.drawLine(route, true);
       const from = isValidPoint(this.lineFrom()) ? this.lineFrom() : this.stops().restaurant;
       const to = this.stops().home;
-      this.drawLine(from && to ? [from, to] : [], false);
+      const road = route.length > 1;
+      const path = road ? route : from && to ? [from, to] : [];
+      this.line = this.polyline(this.line, path, road ? LINE.road : LINE.straight);
     });
   }
 
@@ -175,17 +191,20 @@ export class TrackingMap {
     this.glide = requestAnimationFrame(step);
   }
 
-  private drawLine(path: Point[], isRoad: boolean): void {
-    this.line?.remove();
-    this.line = undefined;
-    if (path.length < 2) return;
-    this.line = this.L!.polyline(
-      path.map((p) => [p.latitude, p.longitude] as [number, number]),
-      isRoad
-        ? { color: '#2e1a3d', weight: 5, opacity: 0.8 }
-        : { color: '#6b5a78', weight: 3, opacity: 0.7, dashArray: '6 8' },
-    ).addTo(this.map!);
-    this.line.bringToBack();
+  /** Replaces `old` with a line through `points` (none for fewer than two), under the markers. */
+  private polyline(
+    old: Leaflet.Polyline | undefined,
+    points: Point[],
+    style: Leaflet.PolylineOptions,
+  ): Leaflet.Polyline | undefined {
+    old?.remove();
+    if (points.length < 2) return undefined;
+    return this.L!.polyline(
+      points.map((p) => [p.latitude, p.longitude] as [number, number]),
+      style,
+    )
+      .addTo(this.map!)
+      .bringToBack();
   }
 
   private keepInView(points: {

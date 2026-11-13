@@ -45,6 +45,38 @@ export interface RestaurantOrderHistory {
 export type RestaurantAction = 'confirmed' | 'rejected' | 'preparing' | 'ready_for_pickup';
 
 // Rider
+/** `resubmission_requested`: BiteBox asked for documents again. Riders go online once approved. */
+export type RiderVerificationStatus = 'pending' | 'approved' | 'rejected' | 'resubmission_requested';
+
+export const RIDER_VERIFICATION_LABEL: Record<RiderVerificationStatus, string> = {
+  pending: 'In review',
+  approved: 'Verified',
+  rejected: 'Not approved',
+  resubmission_requested: 'Documents needed',
+};
+/** What the rider is told on the dashboard and the Verification page. */
+export const RIDER_VERIFICATION_COPY: Record<RiderVerificationStatus, string> = {
+  pending: 'Upload your documents: you can go online once BiteBox verifies them.',
+  approved: 'You are verified. Keep your documents up to date.',
+  rejected: 'Your verification was not approved. Fix what is asked, then send it again.',
+  resubmission_requested: 'BiteBox needs updated documents before you can go online.',
+};
+export const RIDER_VERIFICATION_TONE: Record<RiderVerificationStatus, string> = {
+  pending: 'tone-warn',
+  approved: 'tone-good',
+  rejected: 'tone-bad',
+  resubmission_requested: 'tone-warn',
+};
+
+export interface RiderAddress {
+  line1: string;
+  line2?: string;
+  area?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+}
+
 export interface RiderProfile {
   id: string;
   vehicleType?: VehicleType;
@@ -53,6 +85,8 @@ export interface RiderProfile {
   locationUpdatedAt?: string;
   completedDeliveries: number;
   rating?: RatingSummary;
+  address?: RiderAddress | null;
+  verification?: { status: RiderVerificationStatus; reason: string | null; verifiedAt: string | null };
 }
 
 export interface RiderOrder extends Omit<Order, 'deliveryAddress' | 'rider' | 'cancellation'> {
@@ -101,6 +135,9 @@ export interface AdminOrder extends Order {
   /** Django API: the customer holds a delivery code; wrong tries so far. */
   deliveryOtpPending?: boolean;
   deliveryOtpAttempts?: number;
+  /** Straight-line metres from the restaurant when the rider marked "arrived"; flagged if far. */
+  arrivalDistanceMeters?: number | null;
+  arrivedFar?: boolean;
 }
 
 export interface AdminRider {
@@ -117,4 +154,11 @@ export interface AdminRider {
   completedDeliveries: number;
   rating: RatingSummary | null;
   activeOrder: { id: string; orderNumber: string; status: OrderStatus } | null;
+  verificationStatus?: RiderVerificationStatus;
+}
+
+/** GET /admin/delivery-partners/{id}. */
+export interface AdminRiderDetail {
+  user: { id: string; name: string; email: string; phone?: string; status: 'active' | 'suspended'; avatarUrl?: string; createdAt: string };
+  profile: RiderProfile;
 }

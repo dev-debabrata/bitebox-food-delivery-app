@@ -113,12 +113,20 @@ def _choice(choices: tuple[Role, ...], message: str, **kwargs: Any) -> serialize
     )
 
 
+OTP_CODE: dict[str, Any] = {
+    "invalid": "Enter the 6-digit code",
+    "required": "Enter the 6-digit code",
+}
+
+
 class RegisterInput(serializers.Serializer):
     name = NameField()
     email = EmailField()
     phone = PhoneField()
     password = NewPasswordField()
     role = _choice(SELF_REGISTER_ROLES, "Invalid role", required=False)
+    # The SMS code from POST /auth/register/code (needed while signup_needs_code()).
+    code = serializers.RegexField(r"^\d{6}$", required=False, error_messages=OTP_CODE)
     referral_code = serializers.RegexField(
         r"^[A-Za-z0-9-]{4,40}$",
         required=False,
@@ -136,6 +144,41 @@ class LoginInput(serializers.Serializer):
         error_messages={"required": "Password is required", "blank": "Password is required"},
     )
     portal = _choice(ALL_ROLES, "Invalid portal", required=False)
+
+
+ENTER_PHONE = "Enter your mobile number"
+
+
+def _required_phone() -> PhoneField:
+    return PhoneField(
+        required=True, allow_blank=False, allow_null=False,
+        error_messages={"required": ENTER_PHONE, "blank": ENTER_PHONE},
+    )  # fmt: skip
+
+
+class SignupCodeInput(serializers.Serializer):
+    email = EmailField()
+    phone = _required_phone()
+
+
+class OtpRequestInput(serializers.Serializer):
+    phone = _required_phone()
+
+
+class OtpLoginInput(serializers.Serializer):
+    phone = _required_phone()
+    code = serializers.RegexField(r"^\d{6}$", error_messages=OTP_CODE)
+    portal = _choice(ALL_ROLES, "Invalid portal", required=False)
+
+
+class OtpCodeInput(serializers.Serializer):
+    code = serializers.RegexField(r"^\d{6}$", error_messages=OTP_CODE)
+
+
+class EmailVerifyInput(serializers.Serializer):
+    token = serializers.CharField(
+        min_length=20, max_length=200, error_messages={"required": "Verification token is required"}
+    )
 
 
 class ForgotPasswordInput(serializers.Serializer):
@@ -165,6 +208,9 @@ class ChangePasswordInput(serializers.Serializer):
 class UpdateProfileInput(serializers.Serializer):
     name = NameField(required=False)
     phone = PhoneField()
+    avatar_url = serializers.URLField(
+        max_length=500, required=False, allow_null=True, allow_blank=True
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -220,6 +266,8 @@ def user_json(user: User) -> dict[str, Any]:
         "status": user.status,
         "created_at": user.created_at,
         "updated_at": user.updated_at,
+        "email_verified": user.email_verified_at is not None,
+        "phone_verified": user.phone_verified_at is not None,
     }
     # Optional fields are left out when empty, as MongoDB documents omitted them.
     optional = {
@@ -227,6 +275,7 @@ def user_json(user: User) -> dict[str, Any]:
         "last_login_at": user.last_login,
         "referral_code": user.referral_code,
         "birth_date": user.birth_date,
+        "avatar_url": user.avatar_url,
     }
     data.update({k: v for k, v in optional.items() if v})
     if user.role in ADMIN_ROLES:
@@ -246,6 +295,9 @@ class UserOut(serializers.Serializer):
     last_login_at = serializers.DateTimeField(required=False)
     referral_code = serializers.CharField(required=False)
     birth_date = serializers.DateField(required=False)
+    avatar_url = serializers.URLField(required=False)
+    email_verified = serializers.BooleanField()
+    phone_verified = serializers.BooleanField()
     permissions = serializers.ListField(child=serializers.CharField(), required=False)
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()

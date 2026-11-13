@@ -15,4 +15,8 @@ redis==8.1.0
 celery==5.7.0
 channels==4.3.2
 channels-redis==4.3.0
+# Web Push (VAPID) for browser notifications.
+pywebpush==2.5.0
 uvicorn[standard]==0.54.0
+# AES-GCM for bank and document numbers (common/crypto.py).
+cryptography==50.0.2

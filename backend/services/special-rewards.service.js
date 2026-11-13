@@ -41,7 +41,8 @@ const conflict = (message, code) => ApiError.conflict(message, code);
 // ---------------------------------------------------------------------------
 
 /** Credits a claim's coins and marks it issued. Safe to repeat (sweep recovery). */
-async function issue(claim, { description, title, link = "/account/rewards" }) {
+/** `campaign`: a campaign's own coin expiry date wins over the settings' expiry period. */
+async function issue(claim, { description, title, link = "/account/rewards", campaign = null }) {
   const { txn, created } = await wallet.credit(claim.user, {
     coins: claim.coins,
     source: SOURCE_FOR[claim.rewardType],
@@ -49,6 +50,7 @@ async function issue(claim, { description, title, link = "/account/rewards" }) {
     campaign: claim.campaign ?? undefined,
     order: claim.order ?? undefined,
     description,
+    expiresAt: campaign?.coinsExpireAt ?? undefined,
   });
   const issued = await RewardClaim.findOneAndUpdate(
     { _id: claim._id, status: CLAIM_STATUS.PENDING },
@@ -281,6 +283,7 @@ async function claimCampaign(campaign, userId, { order = null, now = new Date() 
     }
     await completeIfFull(counted);
     return issue(claim, {
+      campaign,
       description: campaign.name,
       title: `You earned ${campaign.rewardCoins} coins`,
     });
@@ -356,8 +359,8 @@ export async function campaignSweep({ now = new Date(), limit = 200 } = {}) {
   let recovered = 0;
   for (const c of pending) {
     try {
-      const campaign = c.campaign ? await RewardCampaign.findById(c.campaign).select("name") : null;
-      await issue(c, { description: campaign?.name ?? `${c.rewardType.toLowerCase()} reward` });
+      const campaign = c.campaign ? await RewardCampaign.findById(c.campaign).select("name coinsExpireAt") : null;
+      await issue(c, { campaign, description: campaign?.name ?? `${c.rewardType.toLowerCase()} reward` });
       recovered++;
     } catch (err) {
       logger.error({ err, claimId: String(c._id) }, "Could not finish a reward claim");
@@ -392,6 +395,7 @@ function campaignForCustomer(c, used, blocker) {
     rewardCoins: c.rewardCoins,
     startAt: c.startAt,
     endAt: c.endAt,
+    coinsExpireAt: c.coinsExpireAt ?? null,
     status: c.status === CS.ACTIVE && c.startAt > new Date() ? CS.SCHEDULED : c.status,
     conditions: {
       minOrderPaise: c.conditions.minOrderPaise,
@@ -495,9 +499,10 @@ export async function history(userId, { rewardType } = {}, pagination) {
 // Admin
 // ---------------------------------------------------------------------------
 
-const EDITABLE = ["name", "description", "type", "trigger", "rewardCoins", "startAt", "endAt", "timezone", "conditions", "limits"];
-// Running campaigns keep their promise to customers: only wording, the end date and limits change.
-const EDITABLE_WHILE_RUNNING = ["name", "description", "endAt", "limits"];
+const EDITABLE = ["name", "description", "type", "trigger", "rewardCoins", "startAt", "endAt", "coinsExpireAt", "timezone", "conditions", "limits"];
+// Running campaigns keep their promise to customers: only wording, the dates and limits change
+// (a new coin expiry applies to coins given from then on).
+const EDITABLE_WHILE_RUNNING = ["name", "description", "endAt", "coinsExpireAt", "limits"];
 
 function pick(input, fields) {
   const out = {};

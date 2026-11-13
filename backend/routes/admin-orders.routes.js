@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as c from "../controllers/order-management.controller.js";
+import { orderInvoiceFor } from "../controllers/partner-finance.controller.js";
 import { PERMISSIONS } from "../config/permissions.js";
 import { authenticate, can } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
@@ -50,7 +51,8 @@ export const adminOrdersRouter = Router()
     audited("order.delivery_code", "order", () => "Issued a new delivery code"),
     c.adminResetDeliveryOtp,
   )
-  .get("/:id/timeline", can(P.ORDERS_VIEW), validate([mongoIdParam()]), c.adminTimeline);
+  .get("/:id/timeline", can(P.ORDERS_VIEW), validate([mongoIdParam()]), c.adminTimeline)
+  .get("/:id/invoice", can(P.FINANCE_VIEW), validate([mongoIdParam()]), orderInvoiceFor(false));
 
 /** /api/v1/admin/payments: every payment; retry a failed refund. */
 export const adminPaymentsRouter = Router()
@@ -131,6 +133,13 @@ export const adminReportsRouter = Router()
 export const adminDeliveryPartnersRouter = Router()
   .use(authenticate, can(P.RIDERS_MANAGE))
   .get("/", validate(rules.adminRiderListRules), c.adminRiderList)
+  .get("/:id", validate([mongoIdParam()]), c.adminRiderGet)
+  .patch(
+    "/:id/verification",
+    validate(rules.adminRiderVerificationRules),
+    audited("rider.verification", "user", (req) => `Set rider verification to ${req.body.status}`),
+    c.adminRiderSetVerification,
+  )
   .patch(
     "/:id/status",
     validate(rules.adminRiderStatusRules),

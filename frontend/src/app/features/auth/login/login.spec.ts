@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -20,12 +21,17 @@ describe('Login', () => {
   let fixture: ComponentFixture<Login>;
   let login: ReturnType<typeof vi.fn>;
   let navigate: ReturnType<typeof vi.spyOn>;
+  const phoneCodes = signal<boolean | null>(false);
 
   beforeEach(async () => {
     login = vi.fn();
+    phoneCodes.set(false);
     await TestBed.configureTestingModule({
       imports: [Login],
-      providers: [provideRouter([]), { provide: AuthService, useValue: { login } }],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: { login, phoneCodes, checkMethods: vi.fn() } },
+      ],
     }).compileComponents();
     navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     fixture = TestBed.createComponent(Login);
@@ -62,6 +68,16 @@ describe('Login', () => {
     await submit();
     expect(login).toHaveBeenCalledWith({ email: 'admin@bitebox.test', password: 'Secret123' });
     expect(navigate).toHaveBeenCalledWith('/admin');
+  });
+
+  it('always offers a mobile number, and says so while the API cannot text codes', async () => {
+    expect(el().querySelector('np-button-toggle')?.textContent).toContain('Mobile number');
+    (fixture.componentInstance as unknown as { setMode(v: string): void }).setMode('phone');
+    await fixture.whenStable();
+    expect(el().textContent).toContain('not available yet');
+    phoneCodes.set(true);
+    await fixture.whenStable();
+    expect(el().querySelector('bb-phone-login')).not.toBeNull();
   });
 
   it('shows the server error message on failure', async () => {

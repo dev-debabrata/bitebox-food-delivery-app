@@ -5,6 +5,8 @@ import { authenticate, can } from "../middleware/auth.middleware.js";
 import { createRateLimiter } from "../middleware/security.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { audited } from "../services/audit.service.js";
+import { body } from "express-validator";
+import { registerDevice, unregisterDevice } from "../services/notification.service.js";
 import * as push from "../services/push.service.js";
 import { respond } from "../utils/api-response.js";
 import {
@@ -42,6 +44,20 @@ export const pushRouter = Router()
     ),
   )
   .get("/preferences", respond((req) => push.getPreferences(req.user._id)))
+  // FCM registration tokens of the native apps (for when they exist).
+  .post(
+    "/devices",
+    validate([
+      body("token").isString().trim().isLength({ min: 20, max: 500 }).withMessage("Invalid token"),
+      body("platform").isIn(["android", "ios"]).withMessage("Platform must be android or ios"),
+    ]),
+    respond((req) => registerDevice(req.user._id, req.body), "Device registered", 201),
+  )
+  .delete(
+    "/devices",
+    validate([body("token").isString().trim().isLength({ min: 20, max: 500 })]),
+    respond((req) => unregisterDevice(req.user._id, req.body.token)),
+  )
   .put(
     "/preferences",
     validate(preferencesRules),

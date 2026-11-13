@@ -1,0 +1,68 @@
+@if (user(); as u) {
+  <section class="bb-card" aria-labelledby="verify-title">
+    <h3 id="verify-title">Verification</h3>
+    <ul class="rows">
+      <li>
+        <np-icon name="mail" class="mat-icon" matButtonIcon />
+        <span class="what">
+          <strong>Email</strong>
+          <span class="bb-muted small">{{ u.email }}</span>
+        </span>
+        @if (u.emailVerified) {
+          <span class="bb-badge tone-good">Verified</span>
+        } @else {
+          <span class="bb-badge tone-warn">Not verified</span>
+          <np-button
+            size="small"
+            variant="soft"
+            severity="secondary"
+            label="Send link again"
+            [disabled]="busy() === 'email'"
+            (clicked)="resendLink()"
+          />
+        }
+      </li>
+      <li>
+        <np-icon name="smartphone" class="mat-icon" matButtonIcon />
+        <span class="what">
+          <strong>Mobile number</strong>
+          <span class="bb-muted small">{{ u.phone || 'Not added' }}</span>
+        </span>
+        @if (!u.phone) {
+          <span class="bb-muted small">Add it under Personal details</span>
+        } @else if (u.phoneVerified) {
+          <span class="bb-badge tone-good">Verified</span>
+        } @else {
+          <span class="bb-badge tone-warn">Not verified</span>
+          <np-button
+            size="small"
+            variant="soft"
+            severity="secondary"
+            [label]="codeSent() ? 'Send a new code' : 'Verify'"
+            [disabled]="busy() === 'phone' || phoneCodes() === false"
+            (clicked)="sendCode()"
+          />
+        }
+      </li>
+    </ul>
+
+    @if (phoneCodes() === false && u.phone && !u.phoneVerified) {
+      <p class="bb-muted small">Verification by SMS is not available yet.</p>
+    }
+    @if (codeSent() && u.phone && !u.phoneVerified) {
+      <form class="code" [formRoot]="codeForm">
+        <np-text-input
+          [formField]="codeForm.code"
+          label="Code from the SMS"
+          placeholder="6 digits"
+          autocomplete="one-time-code"
+          inputmode="numeric"
+          [error]="shownError(codeForm.code)"
+        />
+        <button type="submit" class="bb-btn" [disabled]="codeForm().submitting()">
+          Confirm number
+        </button>
+      </form>
+    }
+  </section>
+}

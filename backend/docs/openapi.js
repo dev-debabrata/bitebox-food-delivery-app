@@ -24,6 +24,7 @@ import {
   rewardsSchemas,
   rewardsTags,
 } from "./openapi.rewards.js";
+import { kycPaths, kycTags } from "./openapi.kyc.js";
 import { pushPaths, pushSchemas, pushTags } from "./openapi.push.js";
 import {
   reviewsPaths,
@@ -95,6 +96,7 @@ export const openApiDocument = {
     ...reviewsTags,
     ...rewardsTags,
     ...pushTags,
+    ...kycTags,
   ],
   components: {
     securitySchemes: {
@@ -230,6 +232,7 @@ export const openApiDocument = {
     ...reviewsPaths,
     ...rewardsPaths,
     ...pushPaths,
+    ...kycPaths,
     "/health": {
       get: {
         tags: ["Health"],
@@ -390,6 +393,95 @@ export const openApiDocument = {
           400: err("Current password incorrect"),
           422: err("Validation failed"),
         },
+      },
+    },
+    "/auth/methods": {
+      get: {
+        tags: ["Auth"],
+        security: [],
+        summary: "Which sign-in options are on (phone: SMS codes, only when an SMS provider is set up)",
+        responses: { 200: ok({ type: "object", properties: { phone: { type: "boolean" } } }) },
+      },
+    },
+    "/auth/register/code": {
+      post: {
+        tags: ["Auth"],
+        summary: "Sign-up step 1: text a code to the new number (then POST /auth/register with code)",
+        requestBody: { content: { "application/json": { schema: { type: "object", required: ["email", "phone"], properties: { email: { type: "string" }, phone: { type: "string" } } } } } },
+        responses: {
+          200: ok({ type: "object", properties: { resendInSeconds: { type: "integer" }, expiresInSeconds: { type: "integer" } } }),
+          409: err("Email or phone already registered"),
+          429: err("Wait before asking again"),
+          503: err("SMS is off (sign-up is one step then)"),
+        },
+      },
+    },
+    "/auth/otp/request": {
+      post: {
+        tags: ["Auth"],
+        summary: "Text a sign-in code (same answer whether or not the number has an account)",
+        requestBody: { content: { "application/json": { schema: { type: "object", required: ["phone"], properties: { phone: { type: "string" } } } } } },
+        responses: {
+          200: ok({ type: "object", properties: { resendInSeconds: { type: "integer" }, expiresInSeconds: { type: "integer" } } }),
+          422: err("Validation failed"),
+          429: err("Wait before asking again, or hourly limit reached"),
+          503: err("SMS is off"),
+        },
+      },
+    },
+    "/auth/otp/login": {
+      post: {
+        tags: ["Auth"],
+        summary: "Sign in with the SMS code (5 tries, 5 minutes)",
+        requestBody: { content: { "application/json": { schema: { type: "object", required: ["phone", "code"], properties: { phone: { type: "string" }, code: { type: "string", pattern: "^\\d{6}$" }, portal: { type: "string" } } } } } },
+        responses: {
+          200: ok({ type: "object", properties: { user: { $ref: "#/components/schemas/User" }, accessToken: { type: "string" } } }),
+          400: err("Wrong or expired code"),
+          403: err("Suspended, or wrong portal"),
+          429: err("Too many wrong codes"),
+        },
+      },
+    },
+    "/auth/phone/verification": {
+      post: {
+        tags: ["Auth"],
+        summary: "Text a code to confirm your phone number",
+        security: [{ bearerAuth: [] }],
+        responses: { 200: ok({ type: "object" }), 400: err("No phone number"), 409: err("Already verified"), 429: err("Too many codes") },
+      },
+    },
+    "/auth/phone/verify": {
+      post: {
+        tags: ["Auth"],
+        summary: "Confirm your phone number with the code",
+        security: [{ bearerAuth: [] }],
+        requestBody: { content: { "application/json": { schema: { type: "object", required: ["code"], properties: { code: { type: "string" } } } } } },
+        responses: { 200: ok({ type: "object", properties: { user: { $ref: "#/components/schemas/User" } } }), 400: err("Wrong or expired code") },
+      },
+    },
+    "/auth/email/verification": {
+      post: {
+        tags: ["Auth"],
+        summary: "Send a new email verification link",
+        security: [{ bearerAuth: [] }],
+        responses: { 200: ok({ type: "null" }), 409: err("Already verified"), 429: err("Too many requests") },
+      },
+    },
+    "/auth/email/verify": {
+      post: {
+        tags: ["Auth"],
+        summary: "Confirm an email address with the token from the link",
+        requestBody: { content: { "application/json": { schema: { type: "object", required: ["token"], properties: { token: { type: "string" } } } } } },
+        responses: { 200: ok({ type: "null" }), 400: err("Invalid or expired link") },
+      },
+    },
+    "/uploads/avatars": {
+      post: {
+        tags: ["Auth"],
+        summary: "Upload a profile photo (JPEG, PNG or WebP, 2 MB; metadata removed)",
+        security: [{ bearerAuth: [] }],
+        requestBody: { content: { "multipart/form-data": { schema: { type: "object", properties: { image: { type: "string", format: "binary" } } } } } },
+        responses: { 201: ok({ type: "object", properties: { url: { type: "string" } } }), 413: err("Too large"), 415: err("Not an image") },
       },
     },
     "/admin/users": {

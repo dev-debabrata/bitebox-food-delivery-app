@@ -7,5 +7,7 @@ __pycache__/
 .ruff_cache/
 staticfiles/
 *.sqlite3
-uploads/
+# Local image storage (UPLOAD_DIR), not the apps/uploads source code.
+/uploads/
+/private-uploads/
 .test-uploads/

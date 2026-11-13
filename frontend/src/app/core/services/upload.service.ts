@@ -7,6 +7,8 @@ import { ApiResponse } from '../../shared/models/api.models';
 export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 
+export type UploadEndpoint = 'images' | 'review-images' | 'avatars';
+
 @Injectable({ providedIn: 'root' })
 export class UploadService {
   private readonly http = inject(HttpClient);
@@ -17,8 +19,8 @@ export class UploadService {
     return null;
   }
 
-  /** `review-images` is the customers' endpoint for review photos; `images` is for partners. */
-  uploadImage(file: File, endpoint: 'images' | 'review-images' = 'images'): Observable<string> {
+  /** `images` for partners, `review-images` for customers' review photos, `avatars` for anyone. */
+  uploadImage(file: File, endpoint: UploadEndpoint = 'images'): Observable<string> {
     const form = new FormData();
     form.append('image', file);
     return this.http

@@ -5,6 +5,7 @@ import cloudinary, { cloudinaryEnabled } from "../config/cloudinary.js";
 import { env } from "../config/env.js";
 import { logger } from "../config/logger.js";
 import { ApiError } from "../utils/api-error.js";
+import { stripMetadata } from "../utils/image-metadata.js";
 
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 
@@ -106,12 +107,16 @@ export async function saveImage(file) {
     throw new ApiError(415, "Only JPEG, PNG or WebP images are allowed", {
       code: "UNSUPPORTED_MEDIA_TYPE",
     });
+  let data;
   try {
-    return {
-      url: await storage.save(file.buffer, type),
-      bytes: file.size,
-      type,
-    };
+    data = stripMetadata(file.buffer, type); // no GPS, device or time data in public photos
+  } catch {
+    throw new ApiError(415, "This image file is damaged. Try another one.", {
+      code: "UNSUPPORTED_MEDIA_TYPE",
+    });
+  }
+  try {
+    return { url: await storage.save(data, type), bytes: data.length, type };
   } catch (error) {
     logger.error({ err: error }, "Image upload failed");
     throw new ApiError(

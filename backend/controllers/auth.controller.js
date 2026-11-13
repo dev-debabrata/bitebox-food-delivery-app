@@ -1,6 +1,6 @@
 import { env } from "../config/env.js";
 import * as authService from "../services/auth.service.js";
-import { sendSuccess } from "../utils/api-response.js";
+import { respond, sendSuccess } from "../utils/api-response.js";
 
 const cookieOptions = () => ({
   httpOnly: true,
@@ -83,6 +83,39 @@ export async function changePassword(req, res) {
   );
   clearSessionCookie(res);
   sendSuccess(res, { message: "Password changed. Please sign in again" });
+}
+
+// Phone codes and email verification.
+export const methods = respond(() => authService.authMethods(), "Sign-in methods");
+export const requestSignupCode = respond(
+  (req) => authService.requestSignupCode(req.body, req.ip),
+  "We have sent a code to your phone",
+);
+// The same answer whether or not the number has an account.
+export const requestOtp = respond(
+  (req) => authService.requestLoginCode(req.body.phone, req.ip),
+  "If this number has a BiteBox account, we have sent a code",
+);
+export const requestPhoneVerification = respond(
+  (req) => authService.requestPhoneVerification(req.user, req.ip),
+  "We have sent a code to your phone",
+);
+export const verifyPhone = respond(
+  async (req) => ({ user: (await authService.verifyPhone(req.user, req.body.code)).toJSON() }),
+  "Phone number verified",
+);
+export const resendEmailVerification = respond(
+  (req) => authService.resendEmailVerification(req.user).then(() => null),
+  "We have sent you a new link",
+);
+export const verifyEmail = respond(
+  (req) => authService.verifyEmail(req.body.token).then(() => null),
+  "Email verified",
+);
+
+export async function otpLogin(req, res) {
+  const session = await authService.loginWithCode(req.body, requestMeta(req));
+  sendSession(res, session, "Signed in successfully");
 }
 
 export function me(req, res) {

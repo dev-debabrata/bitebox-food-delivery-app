@@ -299,6 +299,15 @@ export const paymentsPaths = {
         { in: "query", name: "status", schema: { type: "string" } },
         { in: "query", name: "method", schema: { type: "string" } },
         { in: "query", name: "provider", schema: { type: "string" } },
+        {
+          in: "query",
+          name: "orderState",
+          schema: {
+            type: "string",
+            enum: ["active", "delivered", "cancelled"],
+          },
+          description: "Where the order stands; cancelled includes rejected",
+        },
         ...paging,
       ],
       responses: { 200: ok({ type: "object" }), 403: err("Not an admin") },

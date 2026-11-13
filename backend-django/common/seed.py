@@ -150,7 +150,12 @@ def seed(password: str, *, reset_passwords: bool = False) -> SeedReport:
     for name, email, phone, role in SEED_USERS:
         user = User.objects.filter(email=email).first()
         if user is None:
-            User.objects.create_user(email, password, name, phone=phone, role=role)
+            # Fictional development accounts: their email and phone count as verified.
+            now = timezone.now()
+            User.objects.create_user(
+                email, password, name, phone=phone, role=role,
+                email_verified_at=now, phone_verified_at=now,
+            )  # fmt: skip
             users_created.append(email)
         elif reset_passwords:
             user.set_password(password)
@@ -224,7 +229,7 @@ def seed(password: str, *, reset_passwords: bool = False) -> SeedReport:
 
     rider = User.objects.get(email="rider@bitebox.test")
     partner, rider_created = DeliveryPartner.objects.get_or_create(
-        user=rider, defaults={"is_online": False}
+        user=rider, defaults={"is_online": False, "verification_status": "approved"}
     )
     RiderVehicle.objects.get_or_create(
         partner=partner, defaults={"vehicle_type": "motorbike", "vehicle_number": "KA 01 BB 0004"}

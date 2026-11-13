@@ -1,8 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormRoot, TreeValidationResult, form, validate } from '@angular/forms/signals';
-import { MatButtonModule } from '@angular/material/button';
-import { IconComponent, SelectOption, ToggleComponent } from 'nexprime';
+import { ButtonComponent, IconComponent, SelectOption, ToggleComponent } from 'nexprime';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AdminRewardsService } from '../../../../core/services/admin/admin-rewards.service';
@@ -113,7 +112,7 @@ const RUPEES_MAX = 1_000_000;
 /** Coins configuration: earning, redemption, expiry, referral, birthday and welcome rules. */
 @Component({
   selector: 'bb-rewards-settings',
-  imports: [DatePipe, FormRoot, NP_FORM_FIELDS, ToggleComponent, MatButtonModule, IconComponent, PageHeader],
+  imports: [DatePipe, FormRoot, NP_FORM_FIELDS, ToggleComponent, ButtonComponent, IconComponent, PageHeader],
   templateUrl: './rewards-settings.html',
   styleUrl: './rewards-settings.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

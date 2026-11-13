@@ -4,6 +4,8 @@ from . import views, views_admin
 
 auth_urls = [
     path("auth/register", views.RegisterView.as_view()),
+    path("auth/methods", views.AuthMethodsView.as_view()),
+    path("auth/register/code", views.SignupCodeView.as_view()),
     path("auth/login", views.LoginView.as_view()),
     path("auth/refresh", views.RefreshView.as_view()),
     path("auth/logout", views.LogoutView.as_view()),
@@ -11,6 +13,12 @@ auth_urls = [
     path("auth/reset-password", views.ResetPasswordView.as_view()),
     path("auth/me", views.MeView.as_view()),
     path("auth/change-password", views.ChangePasswordView.as_view()),
+    path("auth/otp/request", views.OtpRequestView.as_view()),
+    path("auth/otp/login", views.OtpLoginView.as_view()),
+    path("auth/phone/verification", views.PhoneVerificationView.as_view()),
+    path("auth/phone/verify", views.PhoneVerifyView.as_view()),
+    path("auth/email/verification", views.EmailVerificationView.as_view()),
+    path("auth/email/verify", views.EmailVerifyView.as_view()),
 ]
 
 admin_urls = [

@@ -1,0 +1,16 @@
+<div class="tiles">
+  @for (photo of photos(); track photo; let i = $index) {
+    <bb-image-upload
+      [url]="photo"
+      (urlChange)="set(i, $event)"
+      aspectRatio="4 / 3"
+      label="Replace photo"
+    />
+  }
+  @if (canAdd()) {
+    <bb-image-upload url="" (urlChange)="add($event)" aspectRatio="4 / 3" label="Add a photo" />
+  }
+</div>
+<p class="bb-muted small">
+  {{ photos().length }} of {{ max }} photos. Customers see them on your page.
+</p>

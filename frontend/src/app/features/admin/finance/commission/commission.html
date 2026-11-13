@@ -13,12 +13,13 @@
   <section class="rates bb-card" aria-labelledby="rates-title">
     <h2 class="bb-h3" id="rates-title">Current rates</h2>
     <ul>
-      <li><strong>{{ d.rates.restaurantCommissionPercent }}%</strong> of each order's food value (after coupons)</li>
+      <li><strong>{{ d.rates.restaurantCommissionPercent }}%</strong> of each order's food value (after coupons), unless a restaurant has its own rate (below)</li>
       <li>Riders earn <strong>{{ money(d.rates.riderBasePaise) }}</strong> per delivery plus <strong>{{ money(d.rates.riderPerKmPaise) }}</strong> per km (straight line, rounded up)</li>
       <li>BiteBox keeps the commission plus the delivery and platform fees, minus rider pay</li>
     </ul>
-    <p class="bb-muted note">Rates are set in the API's earnings configuration and apply to orders delivered after a change.</p>
   </section>
+
+  <bb-commission-rates />
 
   <section class="bb-grid cols-4" aria-label="Totals" [class.bb-dim]="report.resource.isLoading()">
     <bb-stat-tile icon="task_alt" label="Delivered orders" [value]="d.totals.orders" />

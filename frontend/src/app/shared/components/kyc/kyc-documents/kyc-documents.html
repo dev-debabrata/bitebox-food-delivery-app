@@ -1,0 +1,89 @@
+<ul class="rows">
+  @for (row of rows(); track row.kind) {
+    <li>
+      <div class="head">
+        <np-icon [name]="row.doc ? 'file-check' : 'file-plus'" class="mat-icon" matButtonIcon />
+        <span class="what">
+          <strong>{{ row.label }}</strong>
+          @if (row.doc; as d) {
+            <span class="bb-muted small">
+              Uploaded {{ d.uploadedAt | date: 'd MMM y' }}
+              @if (d.numberLast4) {
+                · ending {{ d.numberLast4 }}
+              }
+            </span>
+          } @else {
+            <span class="bb-muted small">Not uploaded yet</span>
+          }
+        </span>
+        @if (row.status; as s) {
+          <span class="bb-badge {{ tone[s] }}">{{ statusLabel[s] }}</span>
+        }
+        <span class="actions">
+          @if (row.doc; as d) {
+            <np-button
+              size="small"
+              variant="text"
+              severity="secondary"
+              label="View"
+              (clicked)="view(d)"
+            />
+          }
+          @if (editing() !== row.kind) {
+            <np-button
+              size="small"
+              variant="soft"
+              severity="primary"
+              [label]="row.doc ? 'Replace' : 'Upload'"
+              (clicked)="edit(row.kind)"
+            />
+          }
+        </span>
+      </div>
+      @if (row.doc?.reviewNote; as note) {
+        <p class="note" role="status">
+          <np-icon name="circle-alert" class="mat-icon" matButtonIcon />{{ note }}
+        </p>
+      }
+
+      @if (editing() === row.kind) {
+        <form class="upload" [formRoot]="form">
+          @if (hints[row.kind]; as hint) {
+            <np-text-input
+              [formField]="form.number"
+              [label]="hint"
+              autocapitalize="characters"
+              [error]="shownError(form.number)"
+            />
+          }
+          <div class="bb-field">
+            <label class="file-label" [for]="'file-' + row.kind"
+              >PDF, JPEG, PNG or WebP, up to 5 MB</label
+            >
+            <input
+              [id]="'file-' + row.kind"
+              type="file"
+              [accept]="accept"
+              (change)="pick($event)"
+            />
+            @if (fileError(); as message) {
+              <span class="error" role="alert">{{ message }}</span>
+            }
+          </div>
+          <div class="buttons">
+            <button type="submit" class="bb-btn bb-btn--small" [disabled]="form().submitting()">
+              {{ form().submitting() ? 'Uploading…' : 'Upload' }}
+            </button>
+            <np-button
+              size="small"
+              variant="soft"
+              severity="secondary"
+              label="Cancel"
+              (clicked)="edit(null)"
+            />
+          </div>
+        </form>
+      }
+    </li>
+  }
+</ul>

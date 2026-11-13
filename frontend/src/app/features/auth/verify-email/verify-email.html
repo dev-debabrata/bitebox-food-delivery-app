@@ -1,0 +1,32 @@
+<header class="bb-form-heading">
+  <h1>Confirm your email</h1>
+</header>
+
+@switch (state()) {
+  @case ('working') {
+    <p class="bb-muted" role="status">Confirming your email…</p>
+  }
+  @case ('done') {
+    <div class="bb-alert success" role="status">
+      <np-icon name="circle-check" class="mat-icon" matButtonIcon />
+      <span>Your email is confirmed. Thank you!</span>
+    </div>
+  }
+  @case ('failed') {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>{{ message() }}</span>
+    </div>
+    <p class="bb-muted">You can ask for a new link on your profile page.</p>
+  }
+}
+
+@if (state() !== 'working') {
+  <div class="actions">
+    @if (profile(); as url) {
+      <a [routerLink]="url" class="bb-btn">Go to your profile</a>
+    } @else {
+      <a routerLink="/login" class="bb-btn">Sign in</a>
+    }
+  </div>
+}

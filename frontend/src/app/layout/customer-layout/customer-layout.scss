@@ -246,6 +246,15 @@
     bottom: calc(var(--bb-tab-bar) + 18px);
     right: 16px;
   }
+
+  // NexPrime's button is a fixed 52px (66px with the ring): smaller on phones, scaled as a
+  // whole so the progress ring stays centred on it.
+  @include bp.phone-only {
+    transform: scale(0.72);
+    transform-origin: bottom right;
+    bottom: calc(var(--bb-tab-bar) + 12px);
+    right: 12px;
+  }
 }
 
 // Wrapper carrying the cart count badge; sized like the icon inside it.

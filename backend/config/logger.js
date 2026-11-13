@@ -2,7 +2,7 @@ import { Writable } from "node:stream";
 import pino from "pino";
 import { env } from "./env.js";
 
-const redactOptions = {
+export const redactOptions = {
   paths: [
     "req.headers.authorization",
     "req.headers.cookie",
@@ -11,6 +11,11 @@ const redactOptions = {
     "*.passwordHash",
     "*.token",
     "*.refreshToken",
+    "*.accessToken",
+    "*.otp",
+    "*.secret",
+    "*.accountNumber",
+    "*.headers.authorization",
   ],
   censor: "[REDACTED]",
 };

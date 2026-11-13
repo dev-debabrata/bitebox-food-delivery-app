@@ -59,6 +59,7 @@ export class CustomerLayout {
   );
   protected readonly firstName = computed(() => this.shown()?.name.split(' ')[0] ?? '');
   protected readonly initials = computed(() => initialsOf(this.shown()?.name));
+  protected readonly photo = computed(() => this.auth.user()?.avatarUrl || null);
   private readonly url = currentUrl();
   /** Checkout gets the compact footer (no links pulling the customer away from paying). */
   protected readonly onCheckout = computed(() => this.url().startsWith('/checkout'));

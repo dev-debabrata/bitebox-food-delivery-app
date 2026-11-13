@@ -86,6 +86,11 @@ export async function presentWithRider(order, { forCustomer = false } = {}) {
   else {
     json.deliveryOtpPending = otpPending;
     json.deliveryOtpAttempts = order.deliveryOtpAttempts ?? 0;
+    // Where the rider was when they marked "arrived" (far arrivals are flagged, not refused).
+    json.arrivalDistanceMeters = order.arrivalDistanceMeters ?? null;
+    json.arrivedFar =
+      json.arrivalDistanceMeters !== null &&
+      json.arrivalDistanceMeters > env.tracking.arrivalFarMeters;
   }
   return json;
 }
@@ -364,12 +369,26 @@ async function checkDeliveryOtp(userId, orderId, otp) {
   ]);
 }
 
+/** Straight-line metres from the rider's last fix to the order's restaurant (null if unknown). */
+async function distanceToRestaurant(userId, orderId) {
+  const [profile, order] = await Promise.all([
+    DeliveryPartner.findOne({ user: userId }).select("location"),
+    Order.findById(orderId).select("restaurantSnapshot.location"),
+  ]);
+  return order ? pickupDistanceMeters(profile, order) : null;
+}
+
 /** Arrived → picked up → on the way → delivered (with the customer's code), own orders only. */
 export async function riderSetStatus(userId, orderId, status, otp) {
   if (!RIDER_STATUSES.includes(status))
     throw ApiError.badRequest("Unknown delivery status");
   if (status === S.DELIVERED) await checkDeliveryOtp(userId, orderId, otp);
+  const update =
+    status === S.ARRIVED_AT_RESTAURANT
+      ? { $set: { arrivalDistanceMeters: await distanceToRestaurant(userId, orderId) } }
+      : {};
   const { order } = await transition(orderId, {
+    update,
     to: status,
     actor: ACTORS.DELIVERY,
     userId,

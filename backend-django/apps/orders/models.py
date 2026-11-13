@@ -120,6 +120,11 @@ class Order(BaseModel):
     # Set by the restaurant when it accepts: how long the food takes, and when it should be ready.
     prep_minutes = models.PositiveSmallIntegerField(null=True, blank=True)
     ready_by = models.DateTimeField(null=True, blank=True)
+    # Straight-line metres from the rider's last fix to the restaurant when they marked "arrived"
+    # (null without a fix). Far arrivals are allowed but flagged for admins.
+    arrival_distance_m = models.PositiveIntegerField(null=True, blank=True)
+    # When the customer was told the rider is close (once per order).
+    approach_notified_at = models.DateTimeField(null=True, blank=True)
 
     # Delivery OTP (master prompt §6 step 23): created when the rider picks the order up, shown to
     # the customer only, and required to mark it delivered. Wrong tries are counted and capped.

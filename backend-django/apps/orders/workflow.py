@@ -202,7 +202,11 @@ def transition(
             OrderCancellation.objects.create(order_id=order.pk, by=str(actor), reason=reason or "")
         order.refresh_from_db()
         if to == S.DELIVERED:
-            OrderSettlement.objects.create(order=order, settled_at=now, **settlement_for(order))
+            from apps.finance.ledger import post_settlement
+
+            post_settlement(
+                OrderSettlement.objects.create(order=order, settled_at=now, **settlement_for(order))
+            )
         if on_change is not None:
             on_change(order)
         _after_transition(order, now)
@@ -226,6 +230,8 @@ def _step(name: str, order: Order, work: Callable[[], Any]) -> None:
 
 
 def _after_transition(order: Order, now: Any) -> None:
+    from apps.coins import events as reward_events
+
     if order.status in (S.REJECTED, S.CANCELLED):
         _step("coupon", order, lambda: release_coupon(order))
         _step("payment", order, lambda: settle_cancelled_payment(order))
@@ -237,6 +243,7 @@ def _after_transition(order: Order, now: Any) -> None:
                 order=order, status__in=[s.value for s in LIVE_STATUSES]
             ).update(status=AssignmentStatus.CANCELLED, responded_at=now),
         )
+        reward_events.order_closed(order)  # coins back, referral waits again (best-effort)
     if order.status == S.DELIVERED:
         _step(
             "payment",
@@ -261,6 +268,7 @@ def _after_transition(order: Order, now: Any) -> None:
                 order=order, status=AssignmentStatus.ACCEPTED
             ).update(status=AssignmentStatus.COMPLETED, responded_at=now),
         )
+        reward_events.order_delivered(order)  # order reward, referral, campaigns (best-effort)
 
 
 def release_coupon(order: Order) -> None:

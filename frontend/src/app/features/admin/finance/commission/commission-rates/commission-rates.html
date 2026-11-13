@@ -1,0 +1,75 @@
+<section class="bb-card rates" aria-labelledby="commission-rates-title">
+  <h2 class="bb-h3" id="commission-rates-title">Commission rates</h2>
+
+  @if (loadError(); as message) {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon /><span>{{ message }}</span>
+    </div>
+  } @else if (data(); as d) {
+    <div class="current">
+      <div class="global">
+        <span class="bb-muted small">Global rate</span>
+        <strong>{{ d.global.percent }}%</strong>
+        <span class="bb-muted small">of each order's food value, after coupons</span>
+      </div>
+      <div class="overrides">
+        <span class="bb-muted small">Restaurants with their own rate</span>
+        @for (o of d.overrides; track o.id) {
+          <div class="override">
+            <span>{{ o.restaurant?.name }}</span>
+            <strong>{{ o.percent }}%</strong>
+            @if (canEdit) {
+              <np-button
+                size="small"
+                variant="text"
+                severity="danger"
+                label="Remove"
+                [disabled]="removing() === o.id"
+                (clicked)="remove(o)"
+              />
+            }
+          </div>
+        } @empty {
+          <span class="small">None: every restaurant pays the global rate.</span>
+        }
+      </div>
+    </div>
+
+    @if (canEdit) {
+      <form class="set" [formRoot]="form" novalidate>
+        <div class="bb-field scope">
+          <np-select [formField]="form.scope" label="Applies to" [options]="scopeOptions()" />
+        </div>
+        <div class="bb-field percent">
+          <np-input-number [formField]="form.percent" label="Commission" suffix=" %" [maxFractionDigits]="2" />
+          <bb-field-error [field]="form.percent" />
+        </div>
+        <np-text-input class="note" [formField]="form.note" label="Note (optional)" placeholder="e.g. Launch offer" />
+        <button type="submit" class="bb-btn" [disabled]="form().submitting()">
+          {{ form().submitting() ? 'Saving…' : 'Save rate' }}
+        </button>
+      </form>
+      <p class="bb-muted small">A new rate applies to orders delivered from now on. Delivered orders keep the rate they had.</p>
+    }
+
+    @if (d.history.length) {
+      <details class="history">
+        <summary>History</summary>
+        <ul>
+          @for (h of d.history.slice(0, 10); track h.id) {
+            <li>
+              <strong>{{ h.percent }}%</strong> {{ h.restaurant ? 'for ' + h.restaurant.name : 'global' }}
+              <span class="bb-muted">
+                · from {{ h.effectiveFrom | date: 'd MMM y, h:mm a' }}
+                {{ h.effectiveTo ? 'to ' + (h.effectiveTo | date: 'd MMM y, h:mm a') : '(in force)' }}
+                {{ h.createdBy ? '· by ' + h.createdBy : '' }}{{ h.note ? ' · ' + h.note : '' }}
+              </span>
+            </li>
+          }
+        </ul>
+      </details>
+    }
+  } @else {
+    <span class="bb-skeleton" style="height: 120px"></span>
+  }
+</section>

@@ -116,6 +116,15 @@ export class OrderDetail {
   protected readonly vehicleLabel = VEHICLE_LABEL;
   protected readonly cancelling = signal(false);
   protected readonly tracking = deliveryTracking(this.order);
+  protected readonly downloading = signal(false);
+
+  protected downloadInvoice(id: string): void {
+    this.downloading.set(true);
+    this.orders
+      .invoice(id)
+      .catch((err: Error) => this.notify.error(err.message))
+      .finally(() => this.downloading.set(false));
+  }
   protected readonly minutes = etaMinutes;
 
   private readonly locale = inject(LOCALE_ID);

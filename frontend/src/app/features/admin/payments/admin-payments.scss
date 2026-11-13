@@ -6,7 +6,19 @@
   margin-bottom: var(--bb-space-4);
 
   @include bp.tablet-up {
-    grid-template-columns: minmax(0, 1fr) 200px 200px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    > :first-child {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @include bp.desktop-up {
+    grid-template-columns: minmax(0, 1fr) repeat(3, 180px);
+
+    > :first-child {
+      grid-column: auto;
+    }
   }
 }
 
@@ -79,6 +91,15 @@
 
 .when {
   white-space: nowrap;
+}
+
+// Order number with where the order stands (placed, delivered, cancelled).
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--bb-space-1) var(--bb-space-2);
+  min-width: 0;
 }
 
 .order {

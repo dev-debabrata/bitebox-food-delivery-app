@@ -11,6 +11,7 @@ import {
   Earnings,
   PaymentInfo,
   PaymentMethod,
+  OrderState,
   PaymentProvider,
 } from '../../shared/models/payment.models';
 import { toParams } from './http-params';
@@ -39,6 +40,8 @@ export class ReportsService {
     status?: PaymentStatus;
     method?: PaymentMethod;
     provider?: PaymentProvider;
+    /** Where the order stands (`cancelled` includes rejected). */
+    orderState?: OrderState;
     /** Order number, or the customer's name, email or phone. */
     search?: string;
     from?: string;

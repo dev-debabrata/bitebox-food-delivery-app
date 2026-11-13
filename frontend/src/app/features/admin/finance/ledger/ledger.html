@@ -1,0 +1,75 @@
+<bb-page-header title="Ledger" subtitle="Every delivered order, payout and refund after delivery, as balanced double-entry rows.">
+  <np-button
+    severity="primary"
+    variant="outlined"
+    icon="file-spreadsheet"
+    label="Export settlements (CSV)"
+    [disabled]="exporting()"
+    (clicked)="exportCsv()"
+  />
+</bb-page-header>
+
+@if (list.error(); as message) {
+  <div class="bb-alert error" role="alert">
+    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+    <span>{{ message }} <button class="bb-link-button" (click)="list.load(1)">Retry</button></span>
+  </div>
+}
+
+@if (list.data(); as d) {
+  <p class="check" [class.bad]="!d.balanced" role="status">
+    <np-icon [name]="d.balanced ? 'circle-check' : 'triangle-alert'" class="mat-icon" matButtonIcon />
+    {{ d.balanced ? 'Balanced: every entry group sums to zero.' : d.unbalancedGroups + ' entry groups do not balance. Contact engineering.' }}
+  </p>
+
+  <section class="accounts" aria-label="Balances">
+    @for (a of d.accounts; track a.account) {
+      <div class="bb-card account">
+        <span class="bb-muted small">{{ account[a.account].label }}</span>
+        <strong>{{ a.balancePaise * account[a.account].sign || 0 | inr }}</strong>
+        <span class="bb-muted small">{{ account[a.account].hint }}</span>
+      </div>
+    }
+  </section>
+
+  <section class="bb-card list-card" aria-labelledby="entries-title" [attr.aria-busy]="list.loading()">
+    <h2 class="bb-h3" id="entries-title">Entries</h2>
+    @if (d.items.length) {
+      <div class="bb-table-scroll" [class.bb-dim]="list.loading()">
+        <table class="bb-table">
+          <thead>
+            <tr>
+              <th scope="col">When</th>
+              <th scope="col">Event</th>
+              <th scope="col">Account</th>
+              <th scope="col" class="num">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of d.items; track e.id) {
+              <tr>
+                <td>{{ e.createdAt | date: 'd MMM, h:mm a' }}</td>
+                <td>{{ e.description }}</td>
+                <td>{{ account[e.account].label }}</td>
+                <td class="num" [class.neg]="e.amountPaise < 0">{{ e.amountPaise | inr }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <np-pagination
+        variant="compact"
+        [page]="d.pagination.page"
+        [rows]="d.pagination.limit"
+        [totalRecords]="d.pagination.total"
+        [rowsOptions]="[20, 50, 100]"
+        (pageChange)="list.goTo($event)"
+        (rowsChange)="list.goTo(1, $event)"
+      />
+    } @else {
+      <bb-empty-state icon="book-open" title="No entries yet" message="Delivered orders appear here." />
+    }
+  </section>
+} @else if (!list.error()) {
+  <span class="bb-skeleton" style="height: 300px"></span>
+}

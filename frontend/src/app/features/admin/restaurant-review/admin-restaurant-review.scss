@@ -45,7 +45,8 @@
   padding: 3px 12px;
   border-radius: 999px;
 
-  &.status-pending {
+  &.status-pending,
+  &.status-resubmission_requested {
     background: var(--bb-amber-100);
     color: var(--bb-warning-ink);
   }
@@ -104,6 +105,11 @@ dd {
   }
 }
 
+// Below the details, on their left edge (not indented like a text button).
+.menu-link {
+  margin-top: var(--bb-space-2);
+}
+
 address {
   font-style: normal;
   line-height: 1.6;
@@ -112,4 +118,9 @@ address {
 .coords {
   font-size: 0.85rem;
   margin-top: var(--bb-space-2);
+}
+
+.kyc {
+  display: block;
+  margin-top: var(--bb-space-4);
 }

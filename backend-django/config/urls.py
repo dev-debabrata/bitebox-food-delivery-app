@@ -20,8 +20,14 @@ api_v1: list[URLPattern | URLResolver] = [
     path("", include("apps.orders.urls")),
     path("", include("apps.delivery.urls")),
     path("", include("apps.reviews.urls")),
+    path("", include("apps.coins.urls")),
     path("", include("apps.finance.urls")),
     path("", include("apps.payments.urls")),
+    path("", include("apps.tracking.urls")),
+    path("", include("apps.kyc.urls")),
+    path("", include("apps.notifications.urls")),
+    path("", include("apps.support.urls")),
+    path("", include("apps.newsletter.urls")),
 ]
 
 urlpatterns = [

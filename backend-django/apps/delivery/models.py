@@ -1,6 +1,6 @@
 """
-Delivery partners (Node: models/delivery-partner.model.js).
-KYC documents and bank details come in a later phase.
+Delivery partners (Node: models/delivery-partner.model.js). Their documents and bank account are
+in apps/kyc; the verification decision is here.
 """
 
 from django.conf import settings
@@ -15,6 +15,31 @@ class VehicleType(models.TextChoices):
     SCOOTER = "scooter"
     MOTORBIKE = "motorbike"
     CAR = "car"
+
+
+class VerificationStatus(models.TextChoices):
+    PENDING = "pending"  # documents uploaded or on the way, waiting for BiteBox
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    RESUBMISSION_REQUESTED = "resubmission_requested"  # "documents needed"
+
+
+# Which verification changes an admin may make.
+VERIFICATION_TRANSITIONS: dict[str, frozenset[str]] = {
+    VerificationStatus.PENDING: frozenset(
+        {
+            VerificationStatus.APPROVED,
+            VerificationStatus.REJECTED,
+            VerificationStatus.RESUBMISSION_REQUESTED,
+        }
+    ),
+    VerificationStatus.RESUBMISSION_REQUESTED: frozenset(
+        {VerificationStatus.APPROVED, VerificationStatus.REJECTED}
+    ),
+    VerificationStatus.REJECTED: frozenset({VerificationStatus.APPROVED}),
+    # e.g. a licence expired: ask for it again (the rider cannot go online meanwhile).
+    VerificationStatus.APPROVED: frozenset({VerificationStatus.RESUBMISSION_REQUESTED}),
+}
 
 
 class DeliveryPartner(BaseModel, RatingSummary):
@@ -34,9 +59,25 @@ class DeliveryPartner(BaseModel, RatingSummary):
     )
     last_assigned_at = models.DateTimeField(null=True, blank=True)
     completed_deliveries = models.PositiveIntegerField(default=0)
+    # Home address {line1, area, city, state, postal_code}, for verification.
+    address = models.JSONField(null=True, blank=True)
+    # Riders go online only once approved (RIDER_KYC_REQUIRED).
+    verification_status = models.CharField(
+        max_length=24, choices=VerificationStatus.choices, default=VerificationStatus.PENDING
+    )
+    verification_reason = models.CharField(max_length=500, blank=True, default="")
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
 
     class Meta:
         db_table = "delivery_partners"
+        constraints = [
+            one_of(
+                "verification_status", VerificationStatus, "delivery_partners_verification_valid"
+            )
+        ]
         indexes = [
             models.Index(
                 fields=["is_online", "active_order", "current_offer"], name="delivery_partners_free"

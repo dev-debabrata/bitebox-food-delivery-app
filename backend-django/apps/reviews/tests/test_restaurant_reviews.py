@@ -2,8 +2,8 @@
 Port of the restaurant-panel parts of the Node API's tests/reviews.test.js ("lets the restaurant
 read, filter and reply", "groups reviews by order") and the earnings part of tests/payments.test.js.
 
-Customers cannot write reviews through the Django API yet, so reviews are stored directly with
-the same fields the Node review service writes, then the cached ratings are rebuilt.
+Reviews are stored directly with the same fields the review service writes, then the cached
+ratings are rebuilt (the customer API itself is tested in test_reviews.py).
 """
 
 from datetime import timedelta

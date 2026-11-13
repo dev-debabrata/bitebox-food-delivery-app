@@ -44,16 +44,10 @@
   }
 }
 
-.avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 1.8rem;
-  font-weight: 800;
-  background: var(--bb-brand);
-  color: var(--bb-amber);
+// Profile photo: a square upload box (shows the initial-free placeholder until a photo is added).
+.photo {
+  width: 140px;
+  max-width: 100%;
 }
 
 .role-chip {

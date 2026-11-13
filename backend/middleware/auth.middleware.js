@@ -37,20 +37,26 @@ export async function authenticate(req, _res, next) {
   next();
 }
 
-export const authorize =
-  (...roles) =>
-  (req, _res, next) => {
-    if (!req.user) return next(ApiError.unauthorized());
-    if (!roles.includes(req.user.role)) return next(ApiError.forbidden());
-    next();
-  };
+// `roles` / `permissions` on the guards let tests/security-access.test.js read every route's
+// access rules from the route table (the access-control matrix).
+export const authorize = (...roles) =>
+  Object.assign(
+    (req, _res, next) => {
+      if (!req.user) return next(ApiError.unauthorized());
+      if (!roles.includes(req.user.role)) return next(ApiError.forbidden());
+      next();
+    },
+    { roles },
+  );
 
 /** Allows the request when the signed-in user's role has any of the given permissions. */
-export const can =
-  (...permissions) =>
-  (req, _res, next) => {
-    if (!req.user) return next(ApiError.unauthorized());
-    if (!permissions.some((p) => hasPermission(req.user.role, p)))
-      return next(ApiError.forbidden("You do not have access to this area"));
-    next();
-  };
+export const can = (...permissions) =>
+  Object.assign(
+    (req, _res, next) => {
+      if (!req.user) return next(ApiError.unauthorized());
+      if (!permissions.some((p) => hasPermission(req.user.role, p)))
+        return next(ApiError.forbidden("You do not have access to this area"));
+      next();
+    },
+    { permissions },
+  );

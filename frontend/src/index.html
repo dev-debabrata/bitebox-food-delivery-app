@@ -13,8 +13,8 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#ffffff" />
     <!-- Dark theme before the first paint (no light flash). Same key and rules as core/services/theme.service.ts.
-         If a Content-Security-Policy is added, allow this script by its hash. -->
-    <script>
+         The SSR server swaps CSP_NONCE for a fresh nonce on every page (src/server.ts, Content-Security-Policy). -->
+    <script nonce="CSP_NONCE">
       (function () {
         try {
           var stored = localStorage.getItem('bb-theme');
@@ -42,7 +42,7 @@
     />
   </head>
   <body class="mat-typography">
-    <app-root></app-root>
+    <app-root ngCspNonce="CSP_NONCE"></app-root>
     <noscript>BiteBox needs JavaScript to run. Please enable it in your browser settings.</noscript>
   </body>
 </html>

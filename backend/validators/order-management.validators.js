@@ -1,5 +1,5 @@
 import { body, query } from "express-validator";
-import { VEHICLE_TYPES } from "../models/delivery-partner.model.js";
+import { VEHICLE_TYPES, VERIFICATION_STATUS } from "../models/delivery-partner.model.js";
 import { ORDER_STATUS } from "../models/order.model.js";
 import { USER_STATUS } from "../models/user.model.js";
 import {
@@ -112,7 +112,24 @@ export const adminAssignRules = [
 export const adminRiderListRules = [
   searchQuery(),
   booleanQuery("online"),
+  query("verification").optional().isIn(Object.values(VERIFICATION_STATUS)),
   ...paginationRules,
+];
+export const adminRiderVerificationRules = [
+  mongoIdParam(),
+  body("status")
+    .isIn([VERIFICATION_STATUS.APPROVED, VERIFICATION_STATUS.REJECTED, VERIFICATION_STATUS.RESUBMISSION_REQUESTED])
+    .withMessage("Choose approved, rejected or resubmission_requested"),
+  body("reason").optional().isString().trim().isLength({ max: 500 }),
+];
+const text = (name, min, max, message) => body(name).isString().trim().isLength({ min, max }).withMessage(message);
+export const riderDetailsRules = [
+  text("address.line1", 3, 120, "Street address is required"),
+  body("address.line2").optional().isString().trim().isLength({ max: 120 }),
+  body("address.area").optional().isString().trim().isLength({ max: 80 }),
+  text("address.city", 2, 60, "City is required"),
+  text("address.state", 2, 60, "State is required"),
+  body("address.postalCode").isString().trim().matches(/^[A-Za-z0-9 -]{3,10}$/).withMessage("Enter a valid postal code"),
 ];
 export const adminRiderStatusRules = [
   mongoIdParam(),

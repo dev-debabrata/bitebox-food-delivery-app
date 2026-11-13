@@ -9,9 +9,13 @@
     @let c = d.campaign;
     <p class="bb-muted">{{ c.description }}</p>
     <dl class="facts">
-      <div><dt>Status</dt><dd>{{ statusLabel[c.status] }}</dd></div>
+      <div><dt>Status</dt><dd><span class="bb-badge {{ statusTone[c.status] }}">{{ statusLabel[c.status] }}</span></dd></div>
       <div><dt>Reward</dt><dd>{{ c.rewardCoins }} coins · {{ c.trigger === 'CLAIM' ? 'claimed' : 'on delivered orders' }}</dd></div>
       <div><dt>Runs</dt><dd>{{ c.startAt | date: 'd MMM y, h:mm a' }} – {{ c.endAt | date: 'd MMM y, h:mm a' }}</dd></div>
+      <div>
+        <dt>Coins expire</dt>
+        <dd>{{ c.coinsExpireAt ? (c.coinsExpireAt | date: 'd MMM y, h:mm a') : 'As set in Settings → Expiry' }}</dd>
+      </div>
       <div><dt>Customers</dt><dd>{{ groupLabel[c.conditions.customerGroup] }}</dd></div>
       @if (c.trigger === 'ORDER') {
         <div>

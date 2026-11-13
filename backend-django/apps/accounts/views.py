@@ -9,20 +9,26 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.notifications.senders import sms_enabled
 from common.api import ApiError, ok
-from common.permissions import IsSignedIn
+from common.permissions import PUBLIC, IsSignedIn
 from common.schema import envelope, errors
 from common.throttling import rate_limit
 from common.validation import validated
 
-from . import services
+from . import otp, services
 from .authentication import current_user
 from .serializers import (
     ChangePasswordInput,
+    EmailVerifyInput,
     ForgotPasswordInput,
     LoginInput,
+    OtpCodeInput,
+    OtpLoginInput,
+    OtpRequestInput,
     RegisterInput,
     ResetPasswordInput,
+    SignupCodeInput,
     UpdateProfileInput,
     UserOut,
     user_json,
@@ -41,6 +47,16 @@ SESSION = envelope(
 )
 USER = envelope("UserResponse", inline_serializer(name="UserData", fields={"user": UserOut()}))
 EMPTY = envelope("Empty")
+CODE_SENT = envelope(
+    "CodeSent",
+    inline_serializer(
+        name="CodeSentData",
+        fields={
+            "resend_in_seconds": serializers.IntegerField(),
+            "expires_in_seconds": serializers.IntegerField(),
+        },
+    ),
+)
 
 
 def _meta(request: Request) -> services.RequestMeta:
@@ -96,6 +112,7 @@ def _refresh_cookie(request: Request) -> str | None:
 
 
 class RegisterView(APIView):
+    permission_classes = PUBLIC
     throttle_classes = [AuthLimit]
 
     @extend_schema(
@@ -109,6 +126,7 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
+    permission_classes = PUBLIC
     throttle_classes = [AuthLimit]
 
     @extend_schema(
@@ -120,6 +138,7 @@ class LoginView(APIView):
 
 
 class RefreshView(APIView):
+    permission_classes = PUBLIC
     authentication_classes: list[Any] = []  # uses the refresh cookie, not a bearer token
 
     @extend_schema(
@@ -147,6 +166,7 @@ class RefreshView(APIView):
 
 
 class LogoutView(APIView):
+    permission_classes = PUBLIC
     authentication_classes: list[Any] = []
 
     @extend_schema(tags=["Auth"], request=None, responses={200: EMPTY, **errors(403)})
@@ -157,6 +177,7 @@ class LogoutView(APIView):
 
 
 class ForgotPasswordView(APIView):
+    permission_classes = PUBLIC
     throttle_classes = [SensitiveLimit]
 
     @extend_schema(
@@ -168,6 +189,7 @@ class ForgotPasswordView(APIView):
 
 
 class ResetPasswordView(APIView):
+    permission_classes = PUBLIC
     throttle_classes = [SensitiveLimit]
 
     @extend_schema(
@@ -212,3 +234,117 @@ class ChangePasswordView(APIView):
             current_user(request), data["current_password"], data["new_password"]
         )
         return _clear_cookie(ok(message="Password changed. Please sign in again"))
+
+
+# --- phone codes and email verification ---------------------------------------------------------
+
+
+class AuthMethodsView(APIView):
+    """What the sign-in and profile pages may offer: SMS codes only when SMS is set up."""
+
+    permission_classes = PUBLIC
+
+    @extend_schema(
+        tags=["Auth"],
+        responses={
+            200: envelope(
+                "AuthMethodsResponse",
+                inline_serializer("AuthMethods", {"phone": serializers.BooleanField()}),
+            )
+        },
+    )
+    def get(self, request: Request) -> Response:
+        return ok({"phone": sms_enabled()}, message="Sign-in methods")
+
+
+class SignupCodeView(APIView):
+    permission_classes = PUBLIC
+    throttle_classes = [AuthLimit]
+
+    @extend_schema(
+        tags=["Auth"],
+        request=SignupCodeInput,
+        responses={200: CODE_SENT, **errors(409, 422, 429, 503)},
+    )
+    def post(self, request: Request) -> Response:
+        data = validated(SignupCodeInput, request.data)
+        sent = services.request_signup_code(data["email"], data["phone"], _meta(request).ip)
+        return ok(sent, message="We have sent a code to your phone")
+
+
+class OtpRequestView(APIView):
+    permission_classes = PUBLIC
+    throttle_classes = [AuthLimit]
+
+    @extend_schema(
+        tags=["Auth"], request=OtpRequestInput, responses={200: CODE_SENT, **errors(422, 429, 503)}
+    )
+    def post(self, request: Request) -> Response:
+        phone = validated(OtpRequestInput, request.data)["phone"]
+        data = otp.request_login_code(phone, _meta(request).ip)
+        # The same answer whether or not the number has an account.
+        return ok(data, message="If this number has a BiteBox account, we have sent a code")
+
+
+class OtpLoginView(APIView):
+    permission_classes = PUBLIC
+    throttle_classes = [AuthLimit]
+
+    @extend_schema(
+        tags=["Auth"],
+        request=OtpLoginInput,
+        responses={200: SESSION, **errors(400, 401, 403, 422, 429)},
+    )
+    def post(self, request: Request) -> Response:
+        data = validated(OtpLoginInput, request.data)
+        session = services.login_with_code(
+            data["phone"], data["code"], data.get("portal"), _meta(request)
+        )
+        return _send_session(session, "Signed in successfully")
+
+
+class PhoneVerificationView(APIView):
+    permission_classes = [IsSignedIn]
+    throttle_classes = [AuthLimit]
+
+    @extend_schema(
+        tags=["Auth"], request=None, responses={200: CODE_SENT, **errors(400, 401, 409, 429, 503)}
+    )
+    def post(self, request: Request) -> Response:
+        data = services.request_phone_verification(current_user(request), _meta(request).ip)
+        return ok(data, message="We have sent a code to your phone")
+
+
+class PhoneVerifyView(APIView):
+    permission_classes = [IsSignedIn]
+    throttle_classes = [AuthLimit]
+
+    @extend_schema(
+        tags=["Auth"], request=OtpCodeInput, responses={200: USER, **errors(400, 401, 422, 429)}
+    )
+    def post(self, request: Request) -> Response:
+        code = validated(OtpCodeInput, request.data)["code"]
+        user = services.verify_phone(current_user(request), code)
+        return ok({"user": user_json(user)}, message="Phone number verified")
+
+
+class EmailVerificationView(APIView):
+    permission_classes = [IsSignedIn]
+    throttle_classes = [SensitiveLimit]
+
+    @extend_schema(tags=["Auth"], request=None, responses={200: EMPTY, **errors(401, 409, 429)})
+    def post(self, request: Request) -> Response:
+        services.resend_email_verification(current_user(request))
+        return ok(message="We have sent you a new link")
+
+
+class EmailVerifyView(APIView):
+    permission_classes = PUBLIC
+    throttle_classes = [AuthLimit]
+
+    @extend_schema(
+        tags=["Auth"], request=EmailVerifyInput, responses={200: EMPTY, **errors(400, 422, 429)}
+    )
+    def post(self, request: Request) -> Response:
+        services.verify_email(validated(EmailVerifyInput, request.data)["token"])
+        return ok(message="Email verified")

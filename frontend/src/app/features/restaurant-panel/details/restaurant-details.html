@@ -190,6 +190,8 @@
       <section class="bb-card" aria-labelledby="photo-title">
         <h2 class="bb-h3" id="photo-title">Cover photo</h2>
         <bb-image-upload [(url)]="imageUrl" label="Add a cover photo" />
+        <h3 class="gallery-title">More photos</h3>
+        <bb-photo-gallery [(photos)]="photos" />
       </section>
 
       <section class="bb-card" aria-labelledby="hours-title">
@@ -216,6 +218,7 @@
             <bb-field-error [field]="form.closingTime" />
           </div>
         </div>
+        <bb-weekly-hours [(hours)]="weeklyHours" [daily]="dailyHours()" />
         <div class="bb-field">
           <np-input-number
             [formField]="form.costForTwo"

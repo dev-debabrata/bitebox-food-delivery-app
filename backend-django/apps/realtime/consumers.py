@@ -175,9 +175,9 @@ class RealtimeConsumer(AsyncJsonWebsocketConsumer):
             await self._ack(content, {"ok": False, "error": "OFFLINE"})
             return
         at = datetime.now(UTC)
-        if limiter.should_persist(now):
-            await persist_location(self.user, latitude, longitude, accuracy, at)
         tracked = state.get("tracked_order_id")
+        if limiter.should_persist(now):
+            await persist_location(self.user, latitude, longitude, accuracy, at, tracked)
         if tracked and self.channel_layer is not None:
             await self.channel_layer.group_send(
                 order_group(tracked),

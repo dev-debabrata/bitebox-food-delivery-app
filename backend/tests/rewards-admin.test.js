@@ -7,6 +7,7 @@ import { Referral } from "../models/referral.model.js";
 import * as wallet from "../services/coin-wallet.service.js";
 import { buildApp, createAndLogin, PASSWORD, request, resetDb, setupTestDb, teardownTestDb } from "./helpers.js";
 import { orderWorld } from "./rewards-helpers.js";
+import { flushAudits } from "../services/audit.service.js";
 
 const DAY = 86_400_000;
 
@@ -29,7 +30,7 @@ describe("coins & rewards administration", () => {
   });
 
   const me = () => w.customer.user.id;
-  const audits = (action) => AuditLog.countDocuments({ action });
+  const audits = async (action) => (await flushAudits(), AuditLog.countDocuments({ action }));
 
   describe("access", () => {
     it("is limited to the super admin", async () => {

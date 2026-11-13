@@ -12,7 +12,14 @@ import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { NP_FORM_FIELDS } from '../../../shared/forms/np-form-fields';
 import { pagedList } from '../../../shared/list/paged-list';
 import { OrderStatus, VEHICLE_LABEL } from '../../../shared/models/checkout.models';
-import { AdminRider } from '../../../shared/models/order-management.models';
+import {
+  AdminRider,
+  RIDER_VERIFICATION_LABEL,
+  RIDER_VERIFICATION_TONE,
+  RiderVerificationStatus,
+} from '../../../shared/models/order-management.models';
+import { RouterLink } from '@angular/router';
+import { SelectOption } from 'nexprime';
 import { openAdminOrder } from '../orders/admin-order-dialog/admin-order-dialog';
 import { BbDialog } from '../../../shared/dialog/bb-dialog';
 
@@ -29,6 +36,7 @@ const RIDER_EVENTS: OrderStatus[] = [
 @Component({
   selector: 'bb-admin-delivery-partners',
   imports: [
+    RouterLink,
     DatePipe,
     NP_FORM_FIELDS,
     IconComponent,
@@ -47,23 +55,33 @@ export class AdminDeliveryPartners {
   private readonly bbDialog = inject(BbDialog);
   private readonly notify = inject(NotificationService);
 
-  protected readonly filterModel = signal({ search: '', onlineOnly: false });
+  protected readonly filterModel = signal({ search: '', onlineOnly: false, verification: '' });
+  protected readonly verificationLabel = RIDER_VERIFICATION_LABEL;
+  protected readonly verificationTone = RIDER_VERIFICATION_TONE;
+  protected readonly verificationOptions: SelectOption[] = [
+    { value: '', label: 'Any verification' },
+    ...(Object.keys(RIDER_VERIFICATION_LABEL) as RiderVerificationStatus[]).map((s) => ({
+      value: s,
+      label: RIDER_VERIFICATION_LABEL[s],
+    })),
+  ];
   protected readonly filters = form(this.filterModel);
   protected readonly busyId = signal<string | null>(null);
   protected readonly vehicleLabel = VEHICLE_LABEL;
 
   protected readonly list = pagedList(
     (page, limit) => {
-      const { search, onlineOnly } = this.filterModel();
+      const { search, onlineOnly, verification } = this.filterModel();
       return this.api.riders({
         search: search.trim() || undefined,
         online: onlineOnly || undefined,
+        verification: (verification || undefined) as RiderVerificationStatus | undefined,
         page,
         limit,
       });
     },
     {
-      filterKey: () => `${this.filterModel().onlineOnly}|${this.filterModel().search.trim()}`,
+      filterKey: () => JSON.stringify(this.filterModel()),
       pollMs: 60_000,
       when: (e) => RIDER_EVENTS.includes(e.status),
       errorText: 'Could not load delivery partners.',

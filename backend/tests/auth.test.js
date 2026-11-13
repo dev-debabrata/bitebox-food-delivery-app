@@ -288,9 +288,11 @@ describe("Authentication", () => {
   });
 
   describe("password reset", () => {
+    // Sign-up also sends a welcome email: look at the reset emails only.
+    const resetEmails = () => testOutbox.filter((m) => m.subject.startsWith("Reset your"));
     const tokenFromEmail = () =>
       new URL(
-        testOutbox.at(-1).text.match(/https?:\/\/\S+/)[0],
+        resetEmails().at(-1).text.match(/https?:\/\/\S+/)[0],
       ).searchParams.get("token");
 
     it("responds identically for known and unknown emails", async () => {
@@ -304,7 +306,7 @@ describe("Authentication", () => {
       assert.equal(known.status, 200);
       assert.equal(unknown.status, 200);
       assert.equal(known.body.message, unknown.body.message);
-      assert.equal(testOutbox.length, 1);
+      assert.equal(resetEmails().length, 1);
     });
 
     it("stores only a hash of the reset token", async () => {

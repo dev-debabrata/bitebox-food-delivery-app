@@ -7,6 +7,7 @@ import contextlib
 import uuid
 from typing import Any
 
+from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -14,15 +15,33 @@ from django.utils import timezone
 from apps.accounts.models import RevokedReason, User, UserStatus
 from apps.accounts.serializers import user_json
 from apps.accounts.services import end_sessions
+from apps.kyc import services as kyc
+from apps.notifications.services import notify, notify_admins
 from apps.orders import presenters
 from apps.orders.models import Order, OrderStatus
-from apps.rbac.roles import Role
+from apps.rbac.roles import Permission, Role
 from apps.restaurants.presenters import geo_json, rating_json
 from common.api import ApiError
 from common.geo import GeoPoint, haversine_m
 from common.pagination import Page, paginate
 
-from .models import DeliveryPartner, RiderVehicle
+from .models import VERIFICATION_TRANSITIONS, DeliveryPartner, RiderVehicle, VerificationStatus
+
+V = VerificationStatus
+# (notification type, title, body) per decision.
+VERIFICATION_NOTICE = {
+    V.APPROVED: ("rider.verified", "You are verified", "You can go online and start delivering."),
+    V.REJECTED: (
+        "rider.rejected",
+        "Your verification was not approved",
+        "See the reason on the Verification page.",
+    ),
+    V.RESUBMISSION_REQUESTED: (
+        "rider.documents_needed",
+        "Please update your documents",
+        "Fix what is asked on the Verification page, then send it for review again.",
+    ),
+}
 
 
 def get_or_create_profile(user: User) -> DeliveryPartner:
@@ -55,6 +74,12 @@ def profile_json(profile: DeliveryPartner) -> dict[str, Any]:
         "last_assigned_at": profile.last_assigned_at,
         "completed_deliveries": profile.completed_deliveries,
         "rating": rating_json(profile),
+        "address": profile.address,
+        "verification": {
+            "status": profile.verification_status,
+            "reason": profile.verification_reason or None,
+            "verified_at": profile.verified_at,
+        },
         "created_at": profile.created_at,
         "updated_at": profile.updated_at,
     }
@@ -132,6 +157,12 @@ def set_availability(
 ) -> dict[str, Any]:
     profile = get_or_create_profile(user)
     if is_online:
+        if settings.RIDER_KYC_REQUIRED and profile.verification_status != V.APPROVED:
+            raise ApiError(
+                403,
+                "BiteBox is still verifying your documents. You can go online once approved.",
+                code="RIDER_NOT_VERIFIED",
+            )
         if _vehicle(profile) is None:
             raise ApiError.bad_request("Add your vehicle details before going online")
         if latitude is None or longitude is None:
@@ -174,6 +205,10 @@ def update_location(user: User, latitude: float, longitude: float) -> dict[str, 
     )
     if not updated:
         raise ApiError(409, "Go online to share your location", code="OFFLINE")
+    from apps.tracking.services import on_position, tracked_order_id
+
+    if order_id := tracked_order_id(user.pk):
+        on_position(user.pk, order_id, latitude, longitude, None, now)
     return {"location_updated_at": now}
 
 
@@ -197,6 +232,8 @@ def admin_list(query: dict[str, Any], page: Page) -> dict[str, Any]:
         )
     if query.get("online") is True:
         users = users.filter(delivery_partner__is_online=True)
+    if verification := query.get("verification"):
+        users = users.filter(delivery_partner__verification_status=verification)
     rows, meta = paginate(users.order_by("-created_at"), page)
     profiles = {
         p.user_id: p
@@ -215,6 +252,7 @@ def admin_list(query: dict[str, Any], page: Page) -> dict[str, Any]:
                 "vehicle_type": vehicle.vehicle_type if vehicle else None,
                 "vehicle_number": (vehicle.vehicle_number or None) if vehicle else None,
                 "is_online": p.is_online if p else False,
+                "verification_status": p.verification_status if p else V.PENDING,
                 "location_updated_at": p.location_updated_at if p else None,
                 "completed_deliveries": p.completed_deliveries if p else 0,
                 "rating": rating_json(p) if p else None,
@@ -248,3 +286,86 @@ def admin_set_status(user_id: uuid.UUID, status: str) -> User:
         fields=("status",),
     )
     return user
+
+
+# --- verification ---------------------------------------------------------------------------------
+
+
+def update_details(user: User, address: dict[str, Any]) -> dict[str, Any]:
+    profile = get_or_create_profile(user)
+    profile.address = address
+    profile.save(update_fields=["address", "updated_at"])
+    return profile_json(profile)
+
+
+def resubmit(user: User) -> dict[str, Any]:
+    """The rider fixed what was asked: back to the review queue."""
+    profile = get_or_create_profile(user)
+    if profile.verification_status not in (V.REJECTED, V.RESUBMISSION_REQUESTED):
+        raise ApiError.conflict("Your verification is not waiting for changes")
+    profile.verification_status, profile.verification_reason = V.PENDING, ""
+    profile.save(update_fields=["verification_status", "verification_reason", "updated_at"])
+    notify_admins(
+        Permission.RIDERS_MANAGE,
+        type="rider.review",
+        title=f"Rider resubmitted: {user.name}",
+        body="Their documents are ready for another look.",
+        link=f"/admin/delivery-partners/{user.pk}",
+    )
+    return profile_json(profile)
+
+
+def verification_gaps(user: User, profile: DeliveryPartner) -> list[str]:
+    """What stops approval (RIDER_KYC_REQUIRED): documents, bank account, address."""
+    if not settings.RIDER_KYC_REQUIRED:
+        return []
+    return kyc.missing(user) + ([] if profile.address else ["Address"])
+
+
+def admin_get(user_id: uuid.UUID) -> dict[str, Any]:
+    user = User.objects.filter(pk=user_id, role=Role.DELIVERY).first()
+    if user is None:
+        raise ApiError.not_found("Delivery partner not found")
+    return {"user": user_json(user), "profile": profile_json(get_or_create_profile(user))}
+
+
+def admin_set_verification(
+    user_id: uuid.UUID, status: str, reason: str, admin: User
+) -> dict[str, Any]:
+    user = User.objects.filter(pk=user_id, role=Role.DELIVERY).first()
+    if user is None:
+        raise ApiError.not_found("Delivery partner not found")
+    profile = get_or_create_profile(user)
+    current = profile.verification_status
+    if status not in VERIFICATION_TRANSITIONS.get(current, frozenset()):
+        raise ApiError.conflict(f"Cannot change a {current} rider to {status}")
+    if status != V.APPROVED and not reason:
+        raise ApiError.bad_request("A reason is required")
+    if status == V.APPROVED and (gaps := verification_gaps(user, profile)):
+        raise ApiError.conflict(
+            "Finish the verification first: " + ", ".join(gaps), code="KYC_INCOMPLETE"
+        )
+    with transaction.atomic():
+        changed = DeliveryPartner.objects.filter(pk=profile.pk, verification_status=current).update(
+            verification_status=status,
+            verification_reason=reason if status != V.APPROVED else "",
+            verified_at=timezone.now(),
+            verified_by=admin,
+            updated_at=timezone.now(),
+        )
+        if not changed:
+            raise ApiError.conflict(
+                "This rider was updated by someone else. Refresh and try again."
+            )
+    if status != V.APPROVED:  # no longer allowed online
+        with contextlib.suppress(ApiError):
+            take_offline(user, DeliveryPartner.objects.get(pk=profile.pk), "")
+    kind, title, body = VERIFICATION_NOTICE[V(status)]
+    notify(
+        user.pk,
+        type=kind,
+        title=title,
+        body=f"{body} Reason: {reason}" if reason and status != V.APPROVED else body,
+        link="/delivery/verification",
+    )
+    return admin_get(user_id)

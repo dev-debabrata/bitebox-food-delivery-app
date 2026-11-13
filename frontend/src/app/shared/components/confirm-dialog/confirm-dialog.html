@@ -14,7 +14,7 @@
     }
   </div>
   <div class="bb-dialog__actions">
-    <np-button variant="text" severity="secondary" label="Cancel" (clicked)="ref.close()" />
+    <np-button variant="soft" severity="secondary" label="Cancel" (clicked)="ref.close()" />
     <button type="submit" class="bb-btn" [class.bb-btn--danger]="data.danger">
       {{ data.confirmLabel ?? 'Confirm' }}
     </button>

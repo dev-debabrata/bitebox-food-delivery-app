@@ -1,15 +1,15 @@
 import { NpIconPipe } from '../../shared/icons/np-icon-name';
-import { IconComponent } from 'nexprime';
+import { ButtonToggleComponent, IconComponent } from 'nexprime';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { InboxService } from '../../core/services/inbox.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { EmptyState } from '../../shared/components/empty-state/empty-state';
 import { PageHeader } from '../../shared/components/page-header/page-header';
+import { ChannelSettings } from '../../shared/components/channel-settings/channel-settings';
 import { PushSettings } from '../../shared/components/push-settings/push-settings';
 import { pagedList } from '../../shared/list/paged-list';
 import { AppNotification, notificationIcon } from '../../shared/models/payment.models';
@@ -19,13 +19,14 @@ import { AppNotification, notificationIcon } from '../../shared/models/payment.m
   imports: [
     DatePipe,
     MatButtonModule,
-    MatButtonToggleModule,
+    ButtonToggleComponent,
     IconComponent,
     NpIconPipe,
     MatPaginatorModule,
     EmptyState,
     PageHeader,
     PushSettings,
+    ChannelSettings,
   ],
   templateUrl: './notifications-page.html',
   styleUrl: './notifications-page.scss',
@@ -36,6 +37,15 @@ export class NotificationsPage {
   protected readonly icon = notificationIcon;
 
   protected readonly tab = signal<'all' | 'unread'>('all');
+  protected readonly tabOptions = [
+    { value: 'all' as const, label: 'All' },
+    { value: 'unread' as const, label: 'Unread' },
+  ];
+
+  /** Clicking the selected option again deselects it in the toggle: keep a tab selected. */
+  protected selectTab(value: unknown): void {
+    if (value === 'all' || value === 'unread') this.tab.set(value);
+  }
   protected readonly list = pagedList(
     (page, limit) => this.inbox.page(page, limit, this.tab() === 'unread'),
     {

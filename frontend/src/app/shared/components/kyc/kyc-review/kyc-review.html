@@ -1,0 +1,87 @@
+<section class="bb-card kyc" aria-labelledby="kyc-title">
+  <header>
+    <h3 id="kyc-title">Verification</h3>
+    @if (data(); as s) {
+      <span class="bb-badge {{ s.complete ? 'tone-good' : 'tone-warn' }}">
+        {{ s.complete ? 'Complete' : 'Incomplete' }}
+      </span>
+    }
+  </header>
+
+  @if (loadError(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  } @else if (data(); as s) {
+    <ul class="rows">
+      @for (row of rows(); track row.kind) {
+        <li>
+          <span class="what">
+            <strong>{{ row.label }}</strong>
+            @if (row.doc; as d) {
+              <span class="bb-muted small">
+                Uploaded {{ d.uploadedAt | date: 'd MMM y, h:mm a' }}
+                @if (d.numberLast4) {
+                  · number ending {{ d.numberLast4 }}
+                }
+              </span>
+              @if (d.reviewNote) {
+                <span class="note">{{ d.reviewNote }}</span>
+              }
+            } @else {
+              <span class="bb-muted small">Not uploaded</span>
+            }
+          </span>
+          @if (row.status; as st) {
+            <span class="bb-badge {{ tone[st] }}">{{ statusLabel[st] }}</span>
+          }
+          @if (row.doc; as d) {
+            <span class="actions">
+              <np-button
+                size="small"
+                variant="text"
+                severity="secondary"
+                icon="eye"
+                label="View"
+                (clicked)="view(d)"
+              />
+              @if (canReview() && d.status !== 'approved') {
+                <np-button
+                  size="small"
+                  severity="success"
+                  label="Approve"
+                  [disabled]="busy() === d.id"
+                  (clicked)="approve(d)"
+                />
+              }
+              @if (canReview() && d.status !== 'rejected') {
+                <np-button
+                  size="small"
+                  variant="soft"
+                  severity="danger"
+                  label="Reject"
+                  [disabled]="busy() === d.id"
+                  (clicked)="reject(d)"
+                />
+              }
+            </span>
+          }
+        </li>
+      }
+    </ul>
+
+    <div class="bank">
+      <np-icon name="landmark" class="mat-icon" matButtonIcon />
+      @if (s.payoutAccount; as a) {
+        <span>
+          <strong>{{ a.holderName }}</strong> · •••• {{ a.accountLast4 }} · {{ a.ifsc }}
+          @if (a.bankName) {
+            · {{ a.bankName }}
+          }
+        </span>
+      } @else {
+        <span class="bb-muted">No bank account added yet</span>
+      }
+    </div>
+  } @else {
+    <span class="bb-skeleton" style="height: 140px"></span>
+  }
+</section>

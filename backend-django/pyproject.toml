@@ -47,5 +47,10 @@ exclude = ["\\.venv/", "/migrations/", "/tests/"]
 module = ["environ.*", "djangorestframework_camel_case.*", "channels.*", "channels_redis.*", "drf_spectacular.*", "corsheaders.*", "cloudinary", "cloudinary.*"]
 ignore_missing_imports = true
 
+# App test modules are excluded above, but the cross-cutting tests in tests/ import their helpers.
+[[tool.mypy.overrides]]
+module = ["apps.*.tests.*"]
+ignore_errors = true
+
 [tool.django-stubs]
 django_settings_module = "config.settings.test"

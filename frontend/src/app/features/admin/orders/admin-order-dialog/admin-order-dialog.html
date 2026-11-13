@@ -74,6 +74,14 @@
           @if (r.phone) {
             <a class="phone" [href]="'tel:' + r.phone">{{ r.phone }}</a>
           }
+          @if (o.arrivalDistanceMeters != null) {
+            <span class="arrival" [class.far]="o.arrivedFar">
+              @if (o.arrivedFar) {
+                <np-icon name="triangle-alert" class="mat-icon" matButtonIcon />
+              }
+              Marked arrived {{ o.arrivalDistanceMeters | distance }} from the restaurant
+            </span>
+          }
         } @else if (o.offer; as offer) {
           <span class="bb-muted"
             >Offered to {{ offer.rider?.name }} until
@@ -96,6 +104,7 @@
           [rider]="tracking.rider()"
           [riderStale]="tracking.riderStale()"
           [route]="tracking.plannedRoute()?.path ?? null"
+          [trail]="tracking.trail()"
           [label]="'Live map for order ' + o.orderNumber"
         />
         <p class="map-note">
@@ -189,7 +198,7 @@
         (clicked)="cancel(o)"
       />
     }
-    <np-button severity="primary" label="Close" (clicked)="ref.close(changed())" />
+    <np-button variant="soft" severity="secondary" label="Close" (clicked)="ref.close(changed())" />
   </div>
 } @else if (error(); as message) {
   <h2 bbDialogTitle class="bb-sr-only">Order</h2>
@@ -201,7 +210,7 @@
     </div>
   </div>
   <div class="bb-dialog__actions">
-    <np-button variant="text" severity="secondary" label="Close" (clicked)="ref.close(false)" />
+    <np-button variant="soft" severity="secondary" label="Close" (clicked)="ref.close(false)" />
   </div>
 } @else {
   <h2 bbDialogTitle class="bb-sr-only">Order</h2>

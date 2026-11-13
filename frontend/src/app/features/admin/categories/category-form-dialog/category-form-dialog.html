@@ -44,7 +44,7 @@
     <np-toggle [formField]="form.isActive" label="Active (visible to restaurants and customers)" />
   </div>
   <div class="bb-dialog__actions">
-    <np-button variant="text" severity="secondary" label="Cancel" (clicked)="ref.close()" />
+    <np-button variant="soft" severity="secondary" label="Cancel" (clicked)="ref.close()" />
     <button class="bb-btn" type="submit" [disabled]="form().submitting()">
       {{ data ? 'Save' : 'Create' }}
     </button>

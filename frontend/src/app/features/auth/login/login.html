@@ -15,45 +15,65 @@
     <span>Password updated. Sign in with your new password.</span>
   </div>
 }
-@if (error()) {
-  <div class="bb-alert error" role="alert">
-    <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
-    <span>{{ error() }}</span>
-  </div>
+<np-button-toggle
+  class="mode"
+  [options]="modes"
+  [value]="mode()"
+  (valueChange)="setMode($event)"
+  ariaLabel="Sign in with"
+  [showCheck]="false"
+/>
+
+@if (mode() === 'phone') {
+  @if (phoneCodes() === false) {
+    <div class="bb-alert info" role="status">
+      <np-icon name="message-square-off" class="mat-icon" matButtonIcon />
+      <span>Sign-in with a mobile number is not available yet. Please use your email for now.</span>
+    </div>
+  } @else {
+    <bb-phone-login (signedIn)="landed($event)" />
+  }
+} @else {
+  @if (error()) {
+    <div class="bb-alert error" role="alert">
+      <np-icon name="circle-alert" class="mat-icon" matButtonIcon />
+      <span>{{ error() }}</span>
+    </div>
+  }
+
+  <form class="bb-form" [formRoot]="form">
+    <np-text-input
+      [formField]="form.email"
+      label="Email"
+      type="email"
+      icon="mail"
+      placeholder="Enter your email address"
+      autocomplete="email"
+      inputmode="email"
+      [error]="shownError(form.email)"
+    />
+    <np-text-input
+      [formField]="form.password"
+      label="Password"
+      type="password"
+      icon="lock"
+      placeholder="••••••••"
+      autocomplete="current-password"
+      [error]="shownError(form.password)"
+    />
+
+    <div class="bb-form-actions">
+      <button mat-flat-button type="submit" [disabled]="form().submitting()">
+        @if (form().submitting()) {
+          <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Signing in" />
+        } @else {
+          Sign in
+        }
+      </button>
+      <a routerLink="/forgot-password" class="forgot">Forgot password?</a>
+    </div>
+  </form>
 }
-
-<form class="bb-form" [formRoot]="form">
-  <np-text-input
-    [formField]="form.email"
-    label="Email"
-    type="email"
-    icon="mail"
-    placeholder="Enter your email address"
-    autocomplete="email"
-    inputmode="email"
-    [error]="shownError(form.email)"
-  />
-  <np-text-input
-    [formField]="form.password"
-    label="Password"
-    type="password"
-    icon="lock"
-    placeholder="••••••••"
-    autocomplete="current-password"
-    [error]="shownError(form.password)"
-  />
-
-  <div class="bb-form-actions">
-    <button mat-flat-button type="submit" [disabled]="form().submitting()">
-      @if (form().submitting()) {
-        <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Signing in" />
-      } @else {
-        Sign in
-      }
-    </button>
-    <a routerLink="/forgot-password" class="forgot">Forgot password?</a>
-  </div>
-</form>
 
 <footer class="bb-form-footer">
   <span>New to BiteBox? <a routerLink="/register">Create an account</a></span>

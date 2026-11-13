@@ -12,7 +12,7 @@ from apps.restaurants.services import require_own_restaurant
 from common.api import ok
 from common.http import PublicCacheMixin
 from common.pagination import Page
-from common.permissions import permission_required, role_required
+from common.permissions import PUBLIC, permission_required, role_required
 from common.schema import envelope, errors
 from common.validation import parse_id, validated
 
@@ -37,12 +37,16 @@ LIST = [
 
 
 class CategoriesView(PublicCacheMixin, APIView):
+    permission_classes = PUBLIC
+
     @extend_schema(tags=["Catalogue"], responses={200: ANY})
     def get(self, request: Request) -> Response:
         return ok({"categories": services.list_active_categories()})
 
 
 class FoodSearchView(PublicCacheMixin, APIView):
+    permission_classes = PUBLIC
+
     @extend_schema(tags=["Catalogue"], parameters=LIST, responses={200: ANY, **errors(422)})
     def get(self, request: Request) -> Response:
         query = validated(PublicFoodQuery, request.query_params)
@@ -50,6 +54,8 @@ class FoodSearchView(PublicCacheMixin, APIView):
 
 
 class FoodDetailView(PublicCacheMixin, APIView):
+    permission_classes = PUBLIC
+
     @extend_schema(
         tags=["Catalogue"], operation_id="foods_detail", responses={200: ANY, **errors(404, 422)}
     )

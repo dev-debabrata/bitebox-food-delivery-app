@@ -13,72 +13,108 @@
   </div>
 }
 
-<form class="bb-form" [formRoot]="form">
-  <np-text-input
-    [formField]="form.name"
-    label="Full name"
-    icon="user"
-    placeholder="Enter your full name"
-    autocomplete="name"
-    [error]="shownError(form.name)"
-  />
-  <np-text-input
-    [formField]="form.email"
-    label="Email"
-    type="email"
-    icon="mail"
-    placeholder="Enter your email address"
-    autocomplete="email"
-    inputmode="email"
-    [error]="shownError(form.email)"
-  />
-  <bb-phone-input
-    [formField]="form.phone"
-    label="Mobile number (optional)"
-    [error]="shownError(form.phone)"
-  />
-  <np-text-input
-    [formField]="form.password"
-    label="Password"
-    type="password"
-    icon="lock"
-    placeholder="••••••••"
-    autocomplete="new-password"
-    hint="At least 8 characters, with a letter and a number"
-    [error]="shownError(form.password)"
-  />
-  <np-text-input
-    [formField]="form.confirmPassword"
-    label="Confirm password"
-    type="password"
-    icon="lock"
-    placeholder="••••••••"
-    autocomplete="new-password"
-    [error]="shownError(form.confirmPassword)"
-  />
-
-  @if (role() === 'customer') {
+@if (step() === 'details') {
+  <form class="bb-form" [formRoot]="form">
     <np-text-input
-      [formField]="form.referralCode"
-      label="Referral code (optional)"
-      icon="gift"
-      placeholder="e.g. BITEBOX-RIYA7K2Q"
-      autocapitalize="characters"
-      hint="Got an invite? You both earn coins after your first order."
-      [error]="shownError(form.referralCode)"
+      [formField]="form.name"
+      label="Full name"
+      icon="user"
+      placeholder="Enter your full name"
+      autocomplete="name"
+      [error]="shownError(form.name)"
     />
-  }
+    <np-text-input
+      [formField]="form.email"
+      label="Email"
+      type="email"
+      icon="mail"
+      placeholder="Enter your email address"
+      autocomplete="email"
+      inputmode="email"
+      [error]="shownError(form.email)"
+    />
+    <bb-phone-input
+      [formField]="form.phone"
+      label="Mobile number"
+      /* hint="We will text you a code to confirm it" */
+      [error]="shownError(form.phone)"
+    />
+    <np-text-input
+      [formField]="form.password"
+      label="Password"
+      type="password"
+      icon="lock"
+      placeholder="••••••••"
+      autocomplete="new-password"
+      hint="At least 8 characters, with a letter and a number"
+      [error]="shownError(form.password)"
+    />
+    <np-text-input
+      [formField]="form.confirmPassword"
+      label="Confirm password"
+      type="password"
+      icon="lock"
+      placeholder="••••••••"
+      autocomplete="new-password"
+      [error]="shownError(form.confirmPassword)"
+    />
 
-  <div class="bb-form-actions">
-    <button mat-flat-button type="submit" [disabled]="form().submitting()">
-      @if (form().submitting()) {
-        <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Creating account" />
-      } @else {
-        Create account
-      }
-    </button>
-  </div>
-</form>
+    @if (role() === 'customer') {
+      <np-text-input
+        [formField]="form.referralCode"
+        label="Referral code (optional)"
+        icon="gift"
+        placeholder="e.g. BITEBOX-DEVDEBABRATA079A"
+        autocapitalize="characters"
+        hint="Got an invite? You both earn coins after your first order."
+        [error]="shownError(form.referralCode)"
+      />
+    }
+
+    <div class="bb-form-actions">
+      <button mat-flat-button type="submit" [disabled]="form().submitting()">
+        @if (form().submitting()) {
+          <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Creating account" />
+        } @else {
+          Continue
+        }
+      </button>
+    </div>
+  </form>
+} @else {
+  @if (notice()) {
+    <div class="bb-alert info" role="status">
+      <np-icon name="message-square" class="mat-icon" matButtonIcon />
+      <span>{{ notice() }}</span>
+    </div>
+  }
+  <form class="bb-form" [formRoot]="codeForm">
+    <np-text-input
+      [formField]="codeForm.code"
+      label="6-digit code"
+      icon="key-round"
+      placeholder="••••••"
+      autocomplete="one-time-code"
+      inputmode="numeric"
+      [error]="shownError(codeForm.code)"
+    />
+    <div class="bb-form-actions">
+      <button mat-flat-button type="submit" [disabled]="codeForm().submitting()">
+        @if (codeForm().submitting()) {
+          <mat-progress-spinner mode="indeterminate" diameter="20" aria-label="Creating account" />
+        } @else {
+          Confirm and create account
+        }
+      </button>
+    </div>
+    <p class="bb-form-links">
+      <button type="button" class="bb-link-button" [disabled]="resendIn() > 0" (click)="resend()">
+        {{ resendIn() > 0 ? 'Resend code in ' + resendIn() + ' s' : 'Resend code' }}
+      </button>
+      <button type="button" class="bb-link-button" (click)="editDetails()">Change details</button>
+    </p>
+  </form>
+}
 
 <footer class="bb-form-footer">
   <span>Already have an account? <a [routerLink]="meta().login">Sign in</a></span>

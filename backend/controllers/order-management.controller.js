@@ -119,6 +119,20 @@ export const restaurantStats = respond((req) => orders.restaurantStats(req.user.
 export const adminRiderList = respond((req) =>
   riders.adminList(req.validatedQuery, page(req)),
 );
+export const adminRiderGet = respond((req) => riders.adminGet(req.params.id));
+export const adminRiderSetVerification = respond(
+  (req) => riders.adminSetVerification(req.params.id, req.body.status, req.body.reason ?? "", req.user._id),
+  "Verification updated",
+);
+export const riderUpdateDetails = respond(
+  async (req) => ({ profile: await riders.updateDetails(req.user._id, req.body.address) }),
+  "Details saved",
+);
+export const riderResubmit = respond(
+  async (req) => ({ profile: await riders.resubmit(req.user) }),
+  "Sent for review",
+);
+
 export const adminRiderSetStatus = respond(
   async (req) => ({
     user: await riders.adminSetStatus(req.params.id, req.body.status),
