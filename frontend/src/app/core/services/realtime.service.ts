@@ -40,8 +40,9 @@ export interface LocationAck {
 
 /** The socket URL for the configured backend (the API's origin; Django serves it at /ws/). */
 export function realtimeUrl(): string {
-  if (environment.realtime === 'django') {
-    const api = new URL(environment.djangoUrl, window.location.origin);
+  const env = environment as { baseUrl: string; realtime?: string; djangoUrl?: string };
+  if (env.realtime === 'django' && env.djangoUrl) {
+    const api = new URL(env.djangoUrl, window.location.origin);
     return `${api.protocol === 'https:' ? 'wss:' : 'ws:'}//${api.host}/ws/`;
   }
   return new URL(environment.baseUrl, window.location.origin).origin;
@@ -71,7 +72,8 @@ export class RealtimeService {
   /** Swappable in tests. */
   protected createTransport(): RealtimeTransport {
     const token = () => this.auth.accessToken;
-    return environment.realtime === 'django'
+    const env = environment as { realtime?: string };
+    return env.realtime === 'django'
       ? new DjangoSocketTransport(realtimeUrl(), token)
       : new SocketIoTransport(realtimeUrl(), token);
   }

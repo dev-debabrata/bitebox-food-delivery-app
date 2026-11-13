@@ -5,12 +5,15 @@ import { environment } from '../../../environments/environment';
 import { apiRouterInterceptor } from './api-router.interceptor';
 
 describe('apiRouterInterceptor', () => {
-  const routes = [...environment.djangoRoutes];
+  const env = environment as { baseUrl: string; djangoUrl?: string; djangoRoutes?: string[] };
+  const routes = [...(env.djangoRoutes ?? [])];
+  const originalDjangoUrl = env.djangoUrl;
   let http: HttpClient;
   let backend: HttpTestingController;
 
   beforeEach(() => {
-    environment.djangoRoutes = ['/health', '/auth'];
+    env.djangoRoutes = ['/health', '/auth'];
+    env.djangoUrl = 'http://localhost:8000/api/v1';
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptors([apiRouterInterceptor])),
@@ -23,7 +26,8 @@ describe('apiRouterInterceptor', () => {
 
   afterEach(() => {
     backend.verify();
-    environment.djangoRoutes = routes;
+    env.djangoRoutes = routes;
+    env.djangoUrl = originalDjangoUrl;
   });
 
   it('sends migrated paths to Django, keeping the method, body and headers', () => {
@@ -37,7 +41,7 @@ describe('apiRouterInterceptor', () => {
         },
       )
       .subscribe();
-    const req = backend.expectOne(`${environment.djangoUrl}/auth/login`);
+    const req = backend.expectOne(`${env.djangoUrl}/auth/login`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ email: 'asha@bitebox.test' });
     expect(req.request.headers.get('Authorization')).toBe('Bearer t');
@@ -50,8 +54,8 @@ describe('apiRouterInterceptor', () => {
     http.get(`${environment.baseUrl}/health?full=1`).subscribe();
     http.get(`${environment.baseUrl}/healthcheck`).subscribe(); // not /health
     http.get(`${environment.baseUrl}/authors`).subscribe(); // not /auth
-    backend.expectOne(`${environment.djangoUrl}/health`).flush({});
-    backend.expectOne(`${environment.djangoUrl}/health?full=1`).flush({});
+    backend.expectOne(`${env.djangoUrl}/health`).flush({});
+    backend.expectOne(`${env.djangoUrl}/health?full=1`).flush({});
     backend.expectOne(`${environment.baseUrl}/healthcheck`).flush({});
     backend.expectOne(`${environment.baseUrl}/authors`).flush({});
   });

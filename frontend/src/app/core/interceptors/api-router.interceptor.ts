@@ -9,13 +9,14 @@ import { environment } from '../../../environments/environment';
  * original URL and the request keeps them when it moves.
  */
 export const apiRouterInterceptor: HttpInterceptorFn = (req, next) => {
-  const { baseUrl, djangoUrl, djangoRoutes } = environment;
-  if (!djangoRoutes.length || djangoUrl === baseUrl || !req.url.startsWith(baseUrl))
+  const env = environment as { baseUrl: string; djangoUrl?: string; djangoRoutes?: string[] };
+  const { baseUrl, djangoUrl, djangoRoutes } = env;
+  if (!djangoRoutes?.length || !djangoUrl || djangoUrl === baseUrl || !req.url.startsWith(baseUrl))
     return next(req);
 
   const path = req.url.slice(baseUrl.length);
   const migrated = djangoRoutes.some(
-    (route) => path === route || path.startsWith(`${route}/`) || path.startsWith(`${route}?`),
+    (route: string) => path === route || path.startsWith(`${route}/`) || path.startsWith(`${route}?`),
   );
   return migrated ? next(req.clone({ url: djangoUrl + path })) : next(req);
 };
