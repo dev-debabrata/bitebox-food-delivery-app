@@ -3,14 +3,11 @@
 // switches together (sign-in, data and live updates).
 const backend = 'node' as 'node' | 'django';
 const api = {
-  node: 'http://localhost:5000/api/v1',
-  django: 'http://localhost:8000/api/v1',
-  // From a phone on the same Wi-Fi, use your PC's LAN IP instead, e.g.
-  // node: 'http://192.168.0.12:5000/api/v1', django: 'http://192.168.0.12:8000/api/v1',
-  // For same-origin deployment behind an nginx reverse proxy (e.g. Docker on :8080):
-  // node: '/api/v1', django: '/api/v1',
-  // For cloud deployments (e.g. Render / Railway / Vercel):
-  // node: 'https://api.yourdomain.com/api/v1', django: 'https://django.yourdomain.com/api/v1',
+  node: '/api/v1',
+  django: '/api/v1',
+  // Examples if connecting directly to a public cloud backend without same-origin rewrites:
+  // node: 'https://bitebox-backend-opal.vercel.app/api/v1',
+  // django: 'https://django-api.yourdomain.com/api/v1',
 };
 
 export const environment = {
@@ -19,7 +16,7 @@ export const environment = {
 
   // With backend 'node' only: these paths go to Django instead (step-by-step migration).
   djangoUrl: api.django,
-  djangoRoutes: ['/health'] as string[],
+  djangoRoutes: [] as string[],
   // Live updates: Socket.IO on Node, or the WebSocket at djangoUrl's /ws/ on Django.
   realtime: backend,
 
