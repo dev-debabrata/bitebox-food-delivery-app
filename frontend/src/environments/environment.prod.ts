@@ -1,19 +1,16 @@
-// Which API the production web app talks to: 'django' (backend-django on :8000 / PostgreSQL)
-// or 'node' (backend/ on :5000 / MongoDB). Accounts live in each API's own database,
-// so the whole app switches together (sign-in, data and live updates).
+// Which API the production web app talks to: 'django' (backend-django on :8000, PostgreSQL) or 'node'
+// (backend/ on :5000, MongoDB). Accounts live in each API's own database, so the whole app
+// switches together (sign-in, data and live updates).
 const backend = 'node' as 'node' | 'django';
-
-// In production behind a reverse proxy (nginx in Docker, or Vercel rewrites), '/api/v1' stays
-// on the same origin. If running standalone or on separate cloud hosts (e.g. Render, Railway,
-// Vercel), set the full public API URL here.
 const api = {
-  node: '/api/v1',
-  django: '/api/v1',
-  // Examples when backend runs on a separate host/port without an nginx reverse proxy:
-  // node: 'http://localhost:5000/api/v1',
-  // django: 'http://localhost:8000/api/v1',
-  // node: 'https://api.yourdomain.com/api/v1',
-  // django: 'https://django-api.yourdomain.com/api/v1',
+  node: 'http://localhost:5000/api/v1',
+  django: 'http://localhost:8000/api/v1',
+  // From a phone on the same Wi-Fi, use your PC's LAN IP instead, e.g.
+  // node: 'http://192.168.0.12:5000/api/v1', django: 'http://192.168.0.12:8000/api/v1',
+  // For same-origin deployment behind an nginx reverse proxy (e.g. Docker on :8080):
+  // node: '/api/v1', django: '/api/v1',
+  // For cloud deployments (e.g. Render / Railway / Vercel):
+  // node: 'https://api.yourdomain.com/api/v1', django: 'https://django.yourdomain.com/api/v1',
 };
 
 export const environment = {
@@ -22,7 +19,7 @@ export const environment = {
 
   // With backend 'node' only: these paths go to Django instead (step-by-step migration).
   djangoUrl: api.django,
-  djangoRoutes: [] as string[],
+  djangoRoutes: ['/health'] as string[],
   // Live updates: Socket.IO on Node, or the WebSocket at djangoUrl's /ws/ on Django.
   realtime: backend,
 
