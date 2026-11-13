@@ -168,6 +168,49 @@
   visibility: hidden;
 }
 
+.bb-btn-get-app {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #ff5200;
+  color: #ffffff !important;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-decoration: none !important;
+  border-radius: 8px;
+  border: 1.5px solid rgb(255 255 255 / 85%);
+  box-shadow: 0 2px 8px rgb(255 82 0 / 28%);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+
+  &:hover {
+    background: #e64a00;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgb(255 82 0 / 38%);
+    color: #ffffff !important;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  np-icon {
+    --bb-icon-size: 15px;
+    width: 15px !important;
+    height: 15px !important;
+    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+  }
+}
+
 .hide-phone {
   @include bp.phone-only {
     display: none !important;

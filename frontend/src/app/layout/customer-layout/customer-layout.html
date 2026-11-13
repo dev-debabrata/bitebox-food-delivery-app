@@ -51,6 +51,16 @@
             My panel
           </a>
         }
+        <a
+          routerLink="/"
+          fragment="app-download"
+          (click)="scrollToAppDownload($event)"
+          class="bb-btn-get-app hide-phone"
+          aria-label="Get the BiteBox App"
+        >
+          <span>Get the App</span>
+          <np-icon name="arrow-up-right" class="mat-icon" matButtonIcon />
+        </a>
         <bb-notification-bell />
         @if (showCart()) {
           <a
@@ -65,11 +75,7 @@
             }
           </a>
         }
-        <button
-          mat-button
-          [matMenuTriggerFor]="accountMenu"
-          class="account-button"
-        >
+        <button mat-button [matMenuTriggerFor]="accountMenu" class="account-button">
           <span class="bb-avatar avatar" aria-hidden="true">
             @if (photo(); as src) {
               <img [src]="src" alt="" />
@@ -130,7 +136,11 @@
           }
           <mat-divider />
           <button mat-menu-item (click)="themes.toggle()">
-            <np-icon [name]="themes.theme() === 'dark' ? 'sun' : 'moon'" class="mat-icon" matButtonIcon />
+            <np-icon
+              [name]="themes.theme() === 'dark' ? 'sun' : 'moon'"
+              class="mat-icon"
+              matButtonIcon
+            />
             <span>{{ themes.theme() === 'dark' ? 'Light theme' : 'Dark theme' }}</span>
           </button>
           @if (installer.canInstall()) {
@@ -145,8 +155,21 @@
           </button>
         </mat-menu>
       } @else {
-        <a mat-button routerLink="/login">Sign in</a>
-        <a mat-flat-button routerLink="/register" class="bb-btn-accent hide-phone">Sign up</a>
+        <!-- <a mat-button routerLink="/login">Sign in</a> -->
+        <a
+          routerLink="/"
+          fragment="app-download"
+          (click)="scrollToAppDownload($event)"
+          class="bb-btn-get-app hide-phone"
+          aria-label="Get the BiteBox App"
+        >
+          <span>Get the App</span>
+          <np-icon name="arrow-up-right" class="mat-icon" matButtonIcon />
+        </a>
+
+        <a mat-flat-button routerLink="/login" class="bb-btn-accent">Sign in</a>
+        <!-- <a mat-button routerLink="/login">Sign in</a> -->
+        <!-- <a mat-flat-button routerLink="/register" class="bb-btn-accent hide-phone">Sign up</a> -->
       }
     </div>
   </div>
@@ -187,7 +210,9 @@
       <span class="badge-host bb-badge-anchor">
         <np-icon name="shopping-bag" class="mat-icon" matButtonIcon />
         @if (cart.itemCount(); as n) {
-          <span class="bb-count-badge" [attr.aria-label]="n + ' items'">{{ n > 99 ? '99+' : n }}</span>
+          <span class="bb-count-badge" [attr.aria-label]="n + ' items'">{{
+            n > 99 ? '99+' : n
+          }}</span>
         }
       </span>
       <span>Cart</span>
@@ -199,9 +224,13 @@
       <span>{{ panelLink() ? 'Panel' : 'Account' }}</span>
     </a>
   } @else {
-    <a routerLink="/login" routerLinkActive="active">
+    <a routerLink="/" fragment="partners">
+      <np-icon name="handshake" [size]="24" />
+      <span>Partner with us</span>
+    </a>
+    <!-- <a routerLink="/login" routerLinkActive="active">
       <np-icon name="log-in" class="mat-icon" matButtonIcon />
       <span>Sign in</span>
-    </a>
+    </a> -->
   }
 </nav>

@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, PLATFORM_ID, computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
@@ -41,6 +42,7 @@ import { initialsOf } from '../../shared/models/user.models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CustomerLayout {
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly auth = inject(AuthService);
 
   protected readonly cart = inject(CartService);
@@ -76,5 +78,26 @@ export class CustomerLayout {
 
   protected logout(): void {
     this.auth.logout().subscribe();
+  }
+
+  protected scrollToAppDownload(event?: Event): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const current = this.url().split(/[?#]/)[0];
+    if (current === '' || current === '/') {
+      if (event) event.preventDefault();
+      const el = document.getElementById('app-download');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        try {
+          window.history.pushState(null, '', '/#app-download');
+        } catch {
+          // ignore
+        }
+        return;
+      }
+    }
+    setTimeout(() => {
+      document.getElementById('app-download')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
   }
 }
