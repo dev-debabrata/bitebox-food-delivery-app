@@ -73,12 +73,29 @@
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .closed {
   left: 8px;
-  background: rgb(29 22 34 / 80%);
+  background: rgb(106 37 60 / 92%);
+  backdrop-filter: blur(4px);
   color: #fff;
+  border: 1px solid rgb(255 255 255 / 15%);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 25%);
+
+  np-icon {
+    --bb-icon-size: 13px;
+    width: 13px !important;
+    height: 13px !important;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bb-amber);
+  }
 }
 
 .veg-tag {

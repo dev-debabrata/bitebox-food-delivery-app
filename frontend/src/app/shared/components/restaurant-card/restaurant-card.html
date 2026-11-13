@@ -10,7 +10,10 @@
       </div>
     }
     @if (!r.isOpenNow) {
-      <span class="closed">Closed now</span>
+      <span class="closed">
+        <!-- <np-icon name="door-closed" class="mat-icon" matButtonIcon /> -->
+        <span>Closed now</span>
+      </span>
     }
     @if (r.isPureVeg) {
       <span class="veg-tag"><np-icon name="leaf" class="mat-icon" matButtonIcon />Pure veg</span>
@@ -21,7 +24,11 @@
     <div class="title-row">
       <h3>{{ r.name }}</h3>
       @if (rating(); as stars) {
-        <span class="rating" role="img" [attr.aria-label]="'Rated ' + stars + ' out of 5 from ' + r.rating.count + ' reviews'">
+        <span
+          class="rating"
+          role="img"
+          [attr.aria-label]="'Rated ' + stars + ' out of 5 from ' + r.rating.count + ' reviews'"
+        >
           <np-icon name="star" class="mat-icon" matButtonIcon />{{ stars }}
           <span class="rating-count" aria-hidden="true">({{ r.rating.count }})</span>
         </span>
@@ -31,13 +38,18 @@
     </div>
     <p class="cuisines">{{ r.cuisines.join(' · ') }}</p>
     <p class="meta">
-      <span><np-icon name="clock" class="mat-icon" matButtonIcon />{{ r.avgPrepTimeMinutes }} min prep</span>
+      <span
+        ><np-icon name="clock" class="mat-icon" matButtonIcon />{{ r.avgPrepTimeMinutes }} min
+        prep</span
+      >
       <span>{{ r.costForTwoPaise | inr }} for two</span>
     </p>
     <p class="locality">
       {{ locality() }}
       @if (r.distanceMeters !== undefined) {
-        <span class="distance" title="Straight-line distance, not road distance">· {{ r.distanceMeters | distance }} away</span>
+        <span class="distance" title="Straight-line distance, not road distance"
+          >· {{ r.distanceMeters | distance }} away</span
+        >
       }
     </p>
   </div>
