@@ -83,16 +83,20 @@ export class CustomerLayout {
     this.auth.logout().subscribe();
   }
 
-  protected scrollToAppDownload(event?: Event): void {
+  protected scrollToSection(event: Event, id: string): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    event?.preventDefault();
+    event.preventDefault();
 
     const go = () => {
-      const banner = document.querySelector<HTMLElement>('#app-download .app-download-banner');
-      if (!banner) return;
+      const el = document.getElementById(id);
+      if (!el) return;
 
       const header = document.querySelector('.site-header')?.getBoundingClientRect().height ?? 0;
-      const target = () => banner.getBoundingClientRect().top + window.scrollY - header - 16;
+      const pad = parseFloat(getComputedStyle(el).paddingTop) || 0; // the section's 48px
+      const target = () => el.getBoundingClientRect().top + window.scrollY + pad - header - 16;
+
+      // const header = document.querySelector('.site-header')?.getBoundingClientRect().height ?? 0;
+      // const target = () => el.getBoundingClientRect().top + window.scrollY - header - 16;
 
       const from = window.scrollY;
       const start = performance.now();
@@ -132,7 +136,7 @@ export class CustomerLayout {
 
   //     const step = (now: number) => {
   //       const p = Math.min((now - start) / DURATION, 1);
-  //       const ease = 1 - (1 - p) ** 3; // ease-out
+  //       const ease = 1 - (1 - p) ** 3;
   //       window.scrollTo({
   //         top: from + (target() - from) * ease,
   //         behavior: 'instant' as ScrollBehavior,
@@ -140,60 +144,10 @@ export class CustomerLayout {
   //       if (p < 1) requestAnimationFrame(step);
   //     };
   //     requestAnimationFrame(step);
-
-  //     history.pushState(null, '', '/#app-download');
   //   };
 
-  //   ['', '/'].includes(this.url().split(/[?#]/)[0]) ? go() : setTimeout(go, 200);
-  // }
-
-  // protected scrollToAppDownload(event?: Event): void {
-  //   if (!isPlatformBrowser(this.platformId)) return;
-
-  //   event?.preventDefault();
-
-  //   const scrollToSection = () => {
-  //     const el = document.getElementById('app-download');
-
-  //     if (!el) return;
-
-  //     el.scrollIntoView({
-  //       behavior: 'smooth',
-  //       block: 'start',
-  //     });
-
-  //     window.history.pushState(null, '', '/#app-download');
-  //   };
-
-  //   const current = this.url().split(/[?#]/)[0];
-
-  //   if (current === '' || current === '/') {
-  //     scrollToSection();
-  //   } else {
-  //     setTimeout(scrollToSection, 200);
-  //   }
-  // }
-
-  // protected scrollToAppDownload(event?: Event): void {
-  //   if (!isPlatformBrowser(this.platformId)) return;
-  //   const current = this.url().split(/[?#]/)[0];
-  //   if (current === '' || current === '/') {
-  //     if (event) event.preventDefault();
-  //     const el = document.getElementById('app-download');
-  //     if (el) {
-  //       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  //       try {
-  //         window.history.pushState(null, '', '/#app-download');
-  //       } catch {
-  //         // ignore
-  //       }
-  //       return;
-  //     }
-  //   }
-  //   setTimeout(() => {
-  //     document
-  //       .getElementById('app-download')
-  //       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  //   }, 200);
+  //   const onHome = ['', '/'].includes(this.url().split(/[?#]/)[0]);
+  //   if (onHome) go();
+  //   else void this.router.navigateByUrl('/').then(() => setTimeout(go, 200));
   // }
 }

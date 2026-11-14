@@ -36,8 +36,9 @@
       >
       <a routerLink="/restaurants" routerLinkActive="active">Restaurants</a>
       <!-- Partner sign-up is shown to visitors only (the home page hides it once signed in). -->
+      <!-- header nav -->
       @if (ready() && !shown()) {
-        <a routerLink="/" fragment="partners">Partner with us</a>
+        <a href="/" (click)="scrollToSection($event, 'partners')">Partner with us</a>
       }
     </nav>
 
@@ -55,7 +56,7 @@
         <a
           mat-flat-button
           href="/"
-          (click)="scrollToAppDownload($event)"
+          (click)="scrollToSection($event, 'app-download')"
           class="bb-btn-accent hide-phone"
           aria-label="Get the BiteBox App"
         >
@@ -170,9 +171,8 @@
       } @else {
         <a
           mat-flat-button
-          routerLink="/"
-          fragment="app-download"
-          (click)="scrollToAppDownload($event)"
+          href="/"
+          (click)="scrollToSection($event, 'app-download')"
           class="bb-btn-accent hide-phone"
           aria-label="Get the BiteBox App"
         >
@@ -237,7 +237,7 @@
       <span>{{ panelLink() ? 'Panel' : 'Account' }}</span>
     </a>
   } @else {
-    <a routerLink="/" fragment="partners">
+    <a href="/" (click)="scrollToSection($event, 'partners')">
       <np-icon name="handshake" [size]="24" />
       <span>Partner with us</span>
     </a>
