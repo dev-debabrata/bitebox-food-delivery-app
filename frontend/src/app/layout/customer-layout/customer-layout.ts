@@ -99,7 +99,7 @@ export class CustomerLayout {
 
       const step = (now: number) => {
         const p = Math.min((now - start) / DURATION, 1);
-        const ease = 1 - (1 - p) ** 3; // ease-out
+        const ease = 1 - (1 - p) ** 3;
         window.scrollTo({
           top: from + (target() - from) * ease,
           behavior: 'instant' as ScrollBehavior,
@@ -107,12 +107,42 @@ export class CustomerLayout {
         if (p < 1) requestAnimationFrame(step);
       };
       requestAnimationFrame(step);
-
-      history.pushState(null, '', '/#app-download');
     };
 
     ['', '/'].includes(this.url().split(/[?#]/)[0]) ? go() : setTimeout(go, 200);
   }
+
+  // protected scrollToAppDownload(event?: Event): void {
+  //   if (!isPlatformBrowser(this.platformId)) return;
+  //   event?.preventDefault();
+
+  //   const go = () => {
+  //     const banner = document.querySelector<HTMLElement>('#app-download .app-download-banner');
+  //     if (!banner) return;
+
+  //     const header = document.querySelector('.site-header')?.getBoundingClientRect().height ?? 0;
+  //     const target = () => banner.getBoundingClientRect().top + window.scrollY - header - 16;
+
+  //     const from = window.scrollY;
+  //     const start = performance.now();
+  //     const DURATION = 600;
+
+  //     const step = (now: number) => {
+  //       const p = Math.min((now - start) / DURATION, 1);
+  //       const ease = 1 - (1 - p) ** 3; // ease-out
+  //       window.scrollTo({
+  //         top: from + (target() - from) * ease,
+  //         behavior: 'instant' as ScrollBehavior,
+  //       });
+  //       if (p < 1) requestAnimationFrame(step);
+  //     };
+  //     requestAnimationFrame(step);
+
+  //     history.pushState(null, '', '/#app-download');
+  //   };
+
+  //   ['', '/'].includes(this.url().split(/[?#]/)[0]) ? go() : setTimeout(go, 200);
+  // }
 
   // protected scrollToAppDownload(event?: Event): void {
   //   if (!isPlatformBrowser(this.platformId)) return;
