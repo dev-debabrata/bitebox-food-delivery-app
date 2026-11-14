@@ -284,3 +284,28 @@
     }
   }
 }
+
+.app-cta {
+  .icon-phone {
+    display: none;
+  }
+
+  // Phones: a round icon-only button, the same size as the bell and avatar.
+  @include bp.phone-only {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 !important;
+    border-radius: 50%;
+
+    .label,
+    .icon-desktop {
+      display: none;
+    }
+
+    .icon-phone {
+      display: inline-flex;
+      margin: 0 !important;
+    }
+  }
+}

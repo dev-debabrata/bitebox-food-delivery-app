@@ -57,11 +57,17 @@
           mat-flat-button
           href="/"
           (click)="scrollToSection($event, 'app-download')"
-          class="bb-btn-accent hide-phone"
+          class="bb-btn-accent app-cta"
           aria-label="Get the BiteBox App"
         >
-          Get the App
-          <np-icon name="arrow-up-right" class="mat-icon" iconPositionEnd matButtonIcon />
+          <span class="label">Get the App</span>
+          <np-icon
+            name="arrow-up-right"
+            class="mat-icon icon-desktop"
+            iconPositionEnd
+            matButtonIcon
+          />
+          <np-icon name="download" class="mat-icon icon-phone" matButtonIcon />
         </a>
 
         <!-- <a
@@ -173,11 +179,17 @@
           mat-flat-button
           href="/"
           (click)="scrollToSection($event, 'app-download')"
-          class="bb-btn-accent hide-phone"
+          class="bb-btn-accent app-cta"
           aria-label="Get the BiteBox App"
         >
-          Get the App
-          <np-icon name="arrow-up-right" class="mat-icon" iconPositionEnd matButtonIcon />
+          <span class="label">Get the App</span>
+          <np-icon
+            name="arrow-up-right"
+            class="mat-icon icon-desktop"
+            iconPositionEnd
+            matButtonIcon
+          />
+          <np-icon name="download" class="mat-icon icon-phone" matButtonIcon />
         </a>
 
         <a mat-flat-button routerLink="/login" class="bb-btn-accent">Sign in</a>
