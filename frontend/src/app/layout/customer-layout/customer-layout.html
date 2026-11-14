@@ -51,7 +51,19 @@
             My panel
           </a>
         }
+
         <a
+          mat-flat-button
+          href="/"
+          (click)="scrollToAppDownload($event)"
+          class="bb-btn-accent hide-phone"
+          aria-label="Get the BiteBox App"
+        >
+          Get the App
+          <np-icon name="arrow-up-right" class="mat-icon" iconPositionEnd matButtonIcon />
+        </a>
+
+        <!-- <a
           mat-flat-button
           routerLink="/"
           fragment="app-download"
@@ -61,7 +73,7 @@
         >
           Get the App
           <np-icon name="arrow-up-right" class="mat-icon" iconPositionEnd matButtonIcon />
-        </a>
+        </a> -->
         <bb-notification-bell />
         @if (showCart() && cart.itemCount() > 0) {
           <a

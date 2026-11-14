@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, PLATFORM_ID, computed, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDialog } from '@angular/material/dialog';
@@ -44,6 +44,7 @@ import { initialsOf } from '../../shared/models/user.models';
 export class CustomerLayout {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   protected readonly cart = inject(CartService);
   protected readonly installer = inject(InstallPromptService);
@@ -109,7 +110,9 @@ export class CustomerLayout {
       requestAnimationFrame(step);
     };
 
-    ['', '/'].includes(this.url().split(/[?#]/)[0]) ? go() : setTimeout(go, 200);
+    const onHome = ['', '/'].includes(this.url().split(/[?#]/)[0]);
+    if (onHome) go();
+    else void this.router.navigateByUrl('/').then(() => setTimeout(go, 200));
   }
 
   // protected scrollToAppDownload(event?: Event): void {
