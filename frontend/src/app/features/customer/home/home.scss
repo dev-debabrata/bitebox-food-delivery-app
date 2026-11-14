@@ -583,7 +583,6 @@ h1 {
   border-radius: 50%;
 }
 
-
 .popular {
   display: grid;
   gap: var(--bb-space-4);
@@ -838,9 +837,9 @@ h1 {
 }
 
 // App download section
-#app-download {
-  scroll-margin-top: 84px;
-}
+// #app-download {
+//   scroll-margin-top: 40px;
+// }
 
 .app-download-banner {
   position: relative;

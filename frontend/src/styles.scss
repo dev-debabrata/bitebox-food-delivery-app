@@ -223,6 +223,10 @@ html {
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html,
 body {
   height: 100%;
@@ -596,7 +600,8 @@ np-icon[matChipAvatar] {
   --bb-btn-radius: 12px;
 }
 
-np-button .np-button:is(.np-button--solid, .np-button--outlined, .np-button--text, .np-button--soft) {
+np-button
+  .np-button:is(.np-button--solid, .np-button--outlined, .np-button--text, .np-button--soft) {
   border-radius: var(--bb-btn-radius);
 }
 
@@ -981,7 +986,12 @@ np-time-picker .time-picker-field {
 .bb-skeleton {
   display: block;
   border-radius: var(--bb-radius-sm);
-  background: linear-gradient(90deg, var(--bb-skeleton) 25%, var(--bb-skeleton-shine) 37%, var(--bb-skeleton) 63%);
+  background: linear-gradient(
+    90deg,
+    var(--bb-skeleton) 25%,
+    var(--bb-skeleton-shine) 37%,
+    var(--bb-skeleton) 63%
+  );
   background-size: 400% 100%;
   animation: bb-shimmer 1.4s ease infinite;
 }

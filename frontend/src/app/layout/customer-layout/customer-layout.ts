@@ -66,7 +66,9 @@ export class CustomerLayout {
   /** Checkout gets the compact footer (no links pulling the customer away from paying). */
   protected readonly onCheckout = computed(() => this.url().startsWith('/checkout'));
   /** The install promo floats over the page, so only where nothing else sits at the bottom. */
-  protected readonly installPromo = computed(() => ['/', '/restaurants'].includes(this.url().split(/[?#]/)[0]));
+  protected readonly installPromo = computed(() =>
+    ['/', '/restaurants'].includes(this.url().split(/[?#]/)[0]),
+  );
 
   protected chooseLocation(): void {
     this.dialog.open(LocationPickerDialog, {
@@ -82,22 +84,83 @@ export class CustomerLayout {
 
   protected scrollToAppDownload(event?: Event): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    const current = this.url().split(/[?#]/)[0];
-    if (current === '' || current === '/') {
-      if (event) event.preventDefault();
-      const el = document.getElementById('app-download');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        try {
-          window.history.pushState(null, '', '/#app-download');
-        } catch {
-          // ignore
-        }
-        return;
-      }
-    }
-    setTimeout(() => {
-      document.getElementById('app-download')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 200);
+    event?.preventDefault();
+
+    const go = () => {
+      const banner = document.querySelector<HTMLElement>('#app-download .app-download-banner');
+      if (!banner) return;
+
+      const header = document.querySelector('.site-header')?.getBoundingClientRect().height ?? 0;
+      const target = () => banner.getBoundingClientRect().top + window.scrollY - header - 16;
+
+      const from = window.scrollY;
+      const start = performance.now();
+      const DURATION = 600;
+
+      const step = (now: number) => {
+        const p = Math.min((now - start) / DURATION, 1);
+        const ease = 1 - (1 - p) ** 3; // ease-out
+        window.scrollTo({
+          top: from + (target() - from) * ease,
+          behavior: 'instant' as ScrollBehavior,
+        });
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+
+      history.pushState(null, '', '/#app-download');
+    };
+
+    ['', '/'].includes(this.url().split(/[?#]/)[0]) ? go() : setTimeout(go, 200);
   }
+
+  // protected scrollToAppDownload(event?: Event): void {
+  //   if (!isPlatformBrowser(this.platformId)) return;
+
+  //   event?.preventDefault();
+
+  //   const scrollToSection = () => {
+  //     const el = document.getElementById('app-download');
+
+  //     if (!el) return;
+
+  //     el.scrollIntoView({
+  //       behavior: 'smooth',
+  //       block: 'start',
+  //     });
+
+  //     window.history.pushState(null, '', '/#app-download');
+  //   };
+
+  //   const current = this.url().split(/[?#]/)[0];
+
+  //   if (current === '' || current === '/') {
+  //     scrollToSection();
+  //   } else {
+  //     setTimeout(scrollToSection, 200);
+  //   }
+  // }
+
+  // protected scrollToAppDownload(event?: Event): void {
+  //   if (!isPlatformBrowser(this.platformId)) return;
+  //   const current = this.url().split(/[?#]/)[0];
+  //   if (current === '' || current === '/') {
+  //     if (event) event.preventDefault();
+  //     const el = document.getElementById('app-download');
+  //     if (el) {
+  //       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  //       try {
+  //         window.history.pushState(null, '', '/#app-download');
+  //       } catch {
+  //         // ignore
+  //       }
+  //       return;
+  //     }
+  //   }
+  //   setTimeout(() => {
+  //     document
+  //       .getElementById('app-download')
+  //       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  //   }, 200);
+  // }
 }
